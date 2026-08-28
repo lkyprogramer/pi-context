@@ -1,0 +1,13 @@
+{
+  "runId": "w2-synthetic-public",
+  "gate": "w2-compactor",
+  "decision": "proceed-to-semantic",
+  "hardGatePass": true,
+  "reasons": [
+    "PCR B1/B2 hard gates passed on the synthetic 100-pair corpus",
+    "reader polarity/time/update/abstention were non-inferior to synthetic B0 with margin 0.02",
+    "closed-loop success was non-inferior and constraint violations did not increase",
+    "B1 token median beat B0 by at least 15% on budget-matched pairs and realized net was positive"
+  ],
+  "reportSha256": "431d91637bd58b67edc40ff9e628754b7d571425063129740bb55b14bf1afca8"
+}
