@@ -1,0 +1,26 @@
+{
+  "taskId": "T07",
+  "status": "done",
+  "allowedFiles": [
+    "packages/storage/src/blob-store.ts",
+    "packages/storage/src/crypto.ts",
+    "packages/storage/src/key-provider.ts",
+    "packages/storage/test/blob-store.test.ts",
+    "packages/storage/src/index.ts",
+    "packages/storage/test/support.ts",
+    "artifacts/task-evidence/T07/red.txt",
+    "artifacts/task-evidence/T07/green.txt",
+    "artifacts/task-evidence/T07/full-gate.txt",
+    "artifacts/task-evidence/T07.json"
+  ],
+  "redLog": "artifacts/task-evidence/T07/red.txt",
+  "greenLog": "artifacts/task-evidence/T07/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T07/full-gate.txt",
+  "sourceDigest": "be7c8265ed075b1f4fcdb4fdb5d684861883feed0c7ee455d55b0796e54425e3",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

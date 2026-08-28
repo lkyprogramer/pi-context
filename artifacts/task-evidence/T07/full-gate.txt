@@ -1,0 +1,30 @@
+
+> @ check:boundaries /Users/luo/Documents/github/pi-context
+> node scripts/check-package-boundaries.mjs
+
+boundaries: ok
+
+> @ test /Users/luo/Documents/github/pi-context
+> vitest run --workspace vitest.workspace.ts
+
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 5ms
+(node:76636) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/contracts/test/canonical.test.ts (4 tests) 16ms
+ ✓ |0| packages/storage/test/blob-store.test.ts (5 tests) 72ms
+(node:76637) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/contracts/test/types.test.ts (4 tests) 7ms
+ ✓ |0| apps/pi-context-runtime/test/owner.test.ts (4 tests) 3ms
+ ✓ |0| tests/contract/pi-capability-probe.test.ts (4 tests) 3ms
+ ✓ |0| packages/storage/test/sqlite-store.test.ts (5 tests) 46ms
+
+ Test Files  7 passed (7)
+      Tests  30 passed (30)
+   Start at  10:24:03
+   Duration  1.41s (transform 162ms, setup 0ms, collect 363ms, tests 151ms, environment 1ms, prepare 718ms)
+
