@@ -1,0 +1,22 @@
+
+> @ check:boundaries /Users/luo/Documents/github/pi-context
+> node scripts/check-package-boundaries.mjs
+
+boundaries: ok
+
+> @ test /Users/luo/Documents/github/pi-context
+> vitest run --workspace vitest.workspace.ts
+
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 4ms
+ ✓ |0| packages/contracts/test/types.test.ts (4 tests) 2ms
+ ✓ |0| packages/contracts/test/canonical.test.ts (4 tests) 11ms
+
+ Test Files  3 passed (3)
+      Tests  12 passed (12)
+   Start at  10:18:06
+   Duration  463ms (transform 72ms, setup 0ms, collect 163ms, tests 17ms, environment 0ms, prepare 277ms)
+

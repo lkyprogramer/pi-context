@@ -1,0 +1,25 @@
+{
+  "taskId": "T03",
+  "status": "done",
+  "allowedFiles": [
+    "packages/contracts/src/canonical.ts",
+    "packages/contracts/src/hash.ts",
+    "packages/contracts/src/providers.ts",
+    "packages/contracts/test/canonical.test.ts",
+    "packages/contracts/src/index.ts",
+    "artifacts/task-evidence/T03/red.txt",
+    "artifacts/task-evidence/T03/green.txt",
+    "artifacts/task-evidence/T03/full-gate.txt",
+    "artifacts/task-evidence/T03.json"
+  ],
+  "redLog": "artifacts/task-evidence/T03/red.txt",
+  "greenLog": "artifacts/task-evidence/T03/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T03/full-gate.txt",
+  "sourceDigest": "abc655c73a1985bd1407b2e378f8324adfeca886b0a7e5b1653249b8d9c04412",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
