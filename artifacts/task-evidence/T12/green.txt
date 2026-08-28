@@ -1,0 +1,15 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| packages/kernel/test/reducer-registry.test.ts (5 tests) 62ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  10:32:11
+   Duration  666ms (transform 42ms, setup 0ms, collect 61ms, tests 62ms, environment 0ms, prepare 102ms)
+
+
+> @pcr/kernel@ typecheck /Users/luo/Documents/github/pi-context/packages/kernel
+> node -e "process.exit(0)"
+

@@ -1,0 +1,25 @@
+{
+  "taskId": "T12",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/reducers/types.ts",
+    "packages/kernel/src/reducers/registry.ts",
+    "packages/kernel/src/reducers/default.ts",
+    "packages/kernel/test/reducer-registry.test.ts",
+    "packages/kernel/src/index.ts",
+    "artifacts/task-evidence/T12/red.txt",
+    "artifacts/task-evidence/T12/green.txt",
+    "artifacts/task-evidence/T12/full-gate.txt",
+    "artifacts/task-evidence/T12.json"
+  ],
+  "redLog": "artifacts/task-evidence/T12/red.txt",
+  "greenLog": "artifacts/task-evidence/T12/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T12/full-gate.txt",
+  "sourceDigest": "d82d44b88beaebda7a9a07d22500ae143b1541288d32efb9d0a31127b376c5b9",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
