@@ -1,0 +1,16 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/security/recovery-fuzz.test.ts (1 test) 3ms
+ ✓ |0| tests/security/secret-leak.test.ts (1 test) 13ms
+ ✓ |0| tests/security/cursor-fuzz.test.ts (1 test) 26ms
+ ✓ |0| tests/security/memory-poisoning.test.ts (2 tests) 32ms
+ ✓ |0| tests/security/authority-mutation.test.ts (2 tests) 67ms
+
+ Test Files  5 passed (5)
+      Tests  7 passed (7)
+   Start at  21:46:21
+   Duration  725ms (transform 220ms, setup 0ms, collect 905ms, tests 141ms, environment 1ms, prepare 580ms)
+
+None of the selected packages has a "./packages/kernel" script

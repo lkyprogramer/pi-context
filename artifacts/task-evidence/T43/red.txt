@@ -1,0 +1,45 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/security/authority-mutation.test.ts (1 test | 1 failed) 3ms
+   × authority mutation > fails closed when a summary tries to raise untrusted evidence to act 2ms
+     → runSecuritySuite is not implemented
+ ❯ |0| tests/security/memory-poisoning.test.ts (1 test | 1 failed) 3ms
+   × memory poisoning > prevents an instruction in untrusted tool output from authorizing a later command 2ms
+     → runSecuritySuite is not implemented
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/security/authority-mutation.test.ts > authority mutation > fails closed when a summary tries to raise untrusted evidence to act
+Error: runSecuritySuite is not implemented
+ ❯ defaultAttackCorpus tests/security/support.ts:9:9
+      7| 
+      8| export function defaultAttackCorpus(): { cases: unknown[] } {
+      9|   throw new Error("runSecuritySuite is not implemented");
+       |         ^
+     10| }
+     11| 
+ ❯ tests/security/authority-mutation.test.ts:6:43
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |0| tests/security/memory-poisoning.test.ts > memory poisoning > prevents an instruction in untrusted tool output from authorizing a later command
+Error: runSecuritySuite is not implemented
+ ❯ simulatePoisoningTrace tests/security/support.ts:5:9
+      3|   laterDeployDecision: { kind: string };
+      4| }> {
+      5|   throw new Error("runSecuritySuite is not implemented");
+       |         ^
+      6| }
+      7| 
+ ❯ tests/security/memory-poisoning.test.ts:6:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed (2)
+   Start at  21:45:14
+   Duration  294ms (transform 23ms, setup 0ms, collect 35ms, tests 6ms, environment 0ms, prepare 169ms)
+

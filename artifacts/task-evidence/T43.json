@@ -1,0 +1,28 @@
+{
+  "taskId": "T43",
+  "status": "done",
+  "allowedFiles": [
+    "tests/security/memory-poisoning.test.ts",
+    "tests/security/secret-leak.test.ts",
+    "tests/security/authority-mutation.test.ts",
+    "tests/security/cursor-fuzz.test.ts",
+    "tests/security/recovery-fuzz.test.ts",
+    "scripts/run-security-suite.mjs",
+    "package.json",
+    "tests/security/support.ts",
+    "artifacts/task-evidence/T43/red.txt",
+    "artifacts/task-evidence/T43/green.txt",
+    "artifacts/task-evidence/T43/full-gate.txt",
+    "artifacts/task-evidence/T43.json"
+  ],
+  "redLog": "artifacts/task-evidence/T43/red.txt",
+  "greenLog": "artifacts/task-evidence/T43/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T43/full-gate.txt",
+  "sourceDigest": "0d98e008e81735b940fbe13b2043055066c5349f1d0ce15d0a34a9f8fce770e0",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
