@@ -15,3 +15,11 @@ export {
 } from "./security/action-gate.js";
 export { classifyTool, effectiveToolClass, TOOL_TAXONOMY_VERSION } from "./security/tool-taxonomy.js";
 export { attestOutcome } from "./security/outcome-attestation.js";
+export {
+  computeEffectiveInputBudget,
+  estimateMessages,
+  estimateTextTokens,
+  pressure,
+} from "./budget/token-counter.js";
+export { CalibrationBucket, safeUsageDelta } from "./budget/calibration.js";
+export { predictNextStepGrowth } from "./budget/growth.js";

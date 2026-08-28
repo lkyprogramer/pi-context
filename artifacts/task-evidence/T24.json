@@ -1,0 +1,25 @@
+{
+  "taskId": "T24",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/budget/token-counter.ts",
+    "packages/kernel/src/budget/calibration.ts",
+    "packages/kernel/src/budget/growth.ts",
+    "packages/kernel/test/token-budget.test.ts",
+    "packages/kernel/src/index.ts",
+    "artifacts/task-evidence/T24/red.txt",
+    "artifacts/task-evidence/T24/green.txt",
+    "artifacts/task-evidence/T24/full-gate.txt",
+    "artifacts/task-evidence/T24.json"
+  ],
+  "redLog": "artifacts/task-evidence/T24/red.txt",
+  "greenLog": "artifacts/task-evidence/T24/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T24/full-gate.txt",
+  "sourceDigest": "da9fc0c30f623cc5a7135db2b1d81faf5b3cf8238e806a728211d50cf41916b4",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
