@@ -132,3 +132,42 @@ export interface StoredDirective {
   status: string;
   sourceContentHash: string;
 }
+
+export type GenerationState = "prepared" | "committed" | "stale" | "rejected";
+
+export interface ContextHead {
+  hash: string;
+  generationId?: string;
+  fencingKey: string;
+}
+
+export interface GenerationManifest {
+  generationId: string;
+  candidateKey: string;
+  sourceHead: string;
+  fencingKey: string;
+  schemaVersion: string;
+  configFingerprint: string;
+  reducerRevisionSet: string;
+  modelKey: string;
+}
+
+export interface PublishResult {
+  kind: "committed" | "stale" | "rejected";
+  reason?: string;
+  head?: ContextHead;
+  receipt?: { generationId: string; headHash: string };
+}
+
+export interface GenerationTransaction {
+  getContextHead(cursor: unknown): Promise<ContextHead>;
+  markGenerationStale(generationId: string, reason: string): Promise<PublishResult>;
+  compareAndSwapContextHead(expectedHash: string, next: ContextHead, generationId: string): Promise<PublishResult>;
+  insertGeneration?(manifest: GenerationManifest, state: GenerationState): Promise<void>;
+  getGeneration?(generationId: string): Promise<{ state: GenerationState; manifest: GenerationManifest } | undefined>;
+}
+
+export interface GenerationStore {
+  rejectGeneration(generationId: string, reason: string): Promise<PublishResult>;
+  transaction<T>(work: (tx: GenerationTransaction) => Promise<T>): Promise<T>;
+}

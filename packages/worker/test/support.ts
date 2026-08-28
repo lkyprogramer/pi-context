@@ -1,10 +1,13 @@
 import { candidateKey, type CandidateSnapshot } from "../src/candidate-key.js";
+import { fencingKey } from "../src/generation/head.js";
+import { publishVerifiedGeneration, recoverHalfPublished, type PublishInput } from "../src/generation/publish.js";
 import {
   CandidateWorker,
   type CandidateRecord,
   type CandidateStore,
   type WorkerBudgets,
 } from "../src/candidate-worker.js";
+import type { ContextHead, GenerationManifest, GenerationState, GenerationStore, PublishResult } from "../../storage/src/protocol.js";
 
 export function fixtureSnapshot(partial: Partial<CandidateSnapshot> = {}): CandidateSnapshot {
   return {
@@ -117,3 +120,136 @@ export function candidateWorkerFixture(opts: { budgets?: Partial<WorkerBudgets>;
     worker,
   };
 }
+
+export function generationFixture() {
+  const snapshot = fixtureSnapshot();
+  const fence = fencingKey({
+    candidateKey: candidateKey(snapshot),
+    modelKey: snapshot.modelKey,
+    configFingerprint: snapshot.configFingerprint,
+    reducerRevisionSet: snapshot.reducerRevisionSet,
+    schemaVersion: snapshot.schemaVersion,
+  });
+  let head: ContextHead = { hash: "head_0", fencingKey: fence };
+  const generations = new Map<string, { state: GenerationState; manifest: GenerationManifest }>();
+  let seq = 0;
+  const materialized: string[] = [];
+
+  const store: GenerationStore & {
+    crashBeforeCas?: boolean;
+    head: () => ContextHead;
+    setHead: (next: ContextHead) => void;
+  } = {
+    head: () => head,
+    setHead(next) {
+      head = next;
+    },
+    async rejectGeneration(generationId, reason) {
+      generations.set(generationId, {
+        state: "rejected",
+        manifest: generations.get(generationId)?.manifest ?? {
+          generationId,
+          candidateKey: candidateKey(snapshot),
+          sourceHead: snapshot.sourceHead,
+          fencingKey: fence,
+          schemaVersion: snapshot.schemaVersion,
+          configFingerprint: snapshot.configFingerprint,
+          reducerRevisionSet: snapshot.reducerRevisionSet,
+          modelKey: snapshot.modelKey,
+        },
+      });
+      return { kind: "rejected", reason };
+    },
+    async transaction(work) {
+      return work({
+        async getContextHead() {
+          return head;
+        },
+        async markGenerationStale(generationId, reason) {
+          const current = generations.get(generationId);
+          if (current) current.state = "stale";
+          else generations.set(generationId, { state: "stale", manifest: { generationId, candidateKey: candidateKey(snapshot), sourceHead: snapshot.sourceHead, fencingKey: fence, schemaVersion: snapshot.schemaVersion, configFingerprint: snapshot.configFingerprint, reducerRevisionSet: snapshot.reducerRevisionSet, modelKey: snapshot.modelKey } });
+          return { kind: "stale", reason };
+        },
+        async insertGeneration(manifest, state) {
+          generations.set(manifest.generationId, { state, manifest });
+        },
+        async getGeneration(generationId) {
+          return generations.get(generationId);
+        },
+        async compareAndSwapContextHead(expectedHash, next, generationId) {
+          if (store.crashBeforeCas) {
+            store.crashBeforeCas = false;
+            throw new Error("crash-after-insert");
+          }
+          if (head.hash !== expectedHash) {
+            const current = generations.get(generationId);
+            if (current) current.state = "stale";
+            return { kind: "stale", reason: "head-changed" };
+          }
+          head = next;
+          const current = generations.get(generationId);
+          if (current) current.state = "committed";
+          materialized.push(generationId);
+          return { kind: "committed", head, receipt: { generationId, headHash: next.hash } };
+        },
+      });
+    },
+  };
+
+  function manifest(generationId: string): GenerationManifest {
+    return {
+      generationId,
+      candidateKey: candidateKey(snapshot),
+      sourceHead: snapshot.sourceHead,
+      fencingKey: fence,
+      schemaVersion: snapshot.schemaVersion,
+      configFingerprint: snapshot.configFingerprint,
+      reducerRevisionSet: snapshot.reducerRevisionSet,
+      modelKey: snapshot.modelKey,
+    };
+  }
+
+  return {
+    async prepare(): Promise<PublishInput> {
+      const generationId = `gen_${++seq}`;
+      const prepared = manifest(generationId);
+      await store.transaction(async (tx) => tx.insertGeneration?.(prepared, "prepared"));
+      return {
+        generationId,
+        cursor: { sessionId: snapshot.sessionId, leafId: snapshot.leafId },
+        expectedHeadHash: head.hash,
+        report: { ok: true },
+        manifest: prepared,
+      };
+    },
+    async appendDirective() {
+      head = { hash: `head_dir_${head.hash}`, fencingKey: fence };
+    },
+    changeFence(next: Partial<Pick<CandidateSnapshot, "modelKey" | "configFingerprint" | "reducerRevisionSet" | "schemaVersion">>) {
+      const shifted = fencingKey({
+        candidateKey: candidateKey(snapshot),
+        modelKey: next.modelKey ?? snapshot.modelKey,
+        configFingerprint: next.configFingerprint ?? snapshot.configFingerprint,
+        reducerRevisionSet: next.reducerRevisionSet ?? snapshot.reducerRevisionSet,
+        schemaVersion: next.schemaVersion ?? snapshot.schemaVersion,
+      });
+      head = { ...head, fencingKey: shifted };
+    },
+    publish(prepared: PublishInput) {
+      return publishVerifiedGeneration(prepared, { store });
+    },
+    crashBeforeCas() {
+      store.crashBeforeCas = true;
+    },
+    recover(generationId: string) {
+      return recoverHalfPublished(generationId, { store }, { sessionId: snapshot.sessionId, leafId: snapshot.leafId });
+    },
+    materialized: () => [...materialized],
+    generationState: (id: string) => generations.get(id)?.state,
+    resultOf(result: PublishResult) {
+      return result;
+    },
+  };
+}
+

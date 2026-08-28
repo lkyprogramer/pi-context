@@ -1,0 +1,6 @@
+PASS (0) FAIL (1)
+[full output: ~/Library/Application Support/rtk/tee/1787890417_vitest_run.log]
+TypeError: (0 , generationFixture) is not a function
+    at packages/worker/test/generation-fencing.test.ts:6:16
+{"numTotalTestSuites":2,"numPassedTestSuites":0,"numFailedTestSuites":2,"numTotalTests":1,"numPassedTests":0,"numFailedTests":1,"success":false,"testResults":[{"status":"failed","name":"/Users/luo/Documents/github/pi-context/packages/worker/test/generation-fencing.test.ts","assertionResults":[{"status":"failed","title":"loses CAS when a newer user directive advances the head","failureMessages":["TypeError: (0 , generationFixture) is not a function"]}]}]}
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.

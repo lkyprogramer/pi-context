@@ -1,0 +1,25 @@
+{
+  "taskId": "T37",
+  "status": "done",
+  "allowedFiles": [
+    "packages/worker/src/generation/publish.ts",
+    "packages/worker/src/generation/head.ts",
+    "packages/worker/test/generation-fencing.test.ts",
+    "packages/storage/src/protocol.ts",
+    "packages/worker/test/support.ts",
+    "artifacts/task-evidence/T37/red.txt",
+    "artifacts/task-evidence/T37/green.txt",
+    "artifacts/task-evidence/T37/full-gate.txt",
+    "artifacts/task-evidence/T37.json"
+  ],
+  "redLog": "artifacts/task-evidence/T37/red.txt",
+  "greenLog": "artifacts/task-evidence/T37/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T37/full-gate.txt",
+  "sourceDigest": "a59f0224c86592edaaef446fa17c829e163873b4566b9a55a7492f383eceadc9",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
