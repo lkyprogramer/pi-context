@@ -25,3 +25,5 @@ export { CalibrationBucket, safeUsageDelta } from "./budget/calibration.js";
 export { predictNextStepGrowth } from "./budget/growth.js";
 export { buildExactActiveSuffix } from "./materialization/active-suffix.js";
 export { validateToolPairs } from "./materialization/atomic-groups.js";
+export { ContextMaterializer } from "./materialization/materializer.js";
+export { REDUCTION_LADDER } from "./materialization/reduction.js";

@@ -1,0 +1,26 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| packages/kernel/test/materializer.test.ts (4 tests) 16ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  11:16:34
+   Duration  437ms (transform 61ms, setup 0ms, collect 88ms, tests 16ms, environment 0ms, prepare 73ms)
+
+Scope: 7 of 8 workspace projects
+apps/pi-context-runtime typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/extension.ts src/owner.ts src/runtime.ts
+packages/contracts typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+packages/kernel typecheck$ node -e "process.exit(0)"
+packages/pi-adapter typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts
+packages/kernel typecheck: Done
+packages/storage typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/sqlite-store.ts src/worker.ts src/protocol.ts
+packages/pi-adapter typecheck: Done
+packages/testkit typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts
+apps/pi-context-runtime typecheck: Done
+packages/worker typecheck$ node -e "process.exit(0)"
+packages/contracts typecheck: Done
+packages/worker typecheck: Done
+packages/storage typecheck: Done
+packages/testkit typecheck: Done

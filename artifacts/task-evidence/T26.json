@@ -1,0 +1,25 @@
+{
+  "taskId": "T26",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/materialization/materializer.ts",
+    "packages/kernel/src/materialization/cache-plan.ts",
+    "packages/kernel/src/materialization/reduction.ts",
+    "packages/kernel/test/materializer.test.ts",
+    "packages/kernel/src/index.ts",
+    "artifacts/task-evidence/T26/red.txt",
+    "artifacts/task-evidence/T26/green.txt",
+    "artifacts/task-evidence/T26/full-gate.txt",
+    "artifacts/task-evidence/T26.json"
+  ],
+  "redLog": "artifacts/task-evidence/T26/red.txt",
+  "greenLog": "artifacts/task-evidence/T26/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T26/full-gate.txt",
+  "sourceDigest": "ed519798913981d44b2370efe63f96b795889cc023994120ad925beb4726a98a",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
