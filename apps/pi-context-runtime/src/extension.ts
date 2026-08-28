@@ -10,8 +10,10 @@ import {
   registerContextHook,
   type ExtensionAPI,
 } from "../../../packages/pi-adapter/src/context-hook.js";
+import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
 import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { toHostMessages, toPiMessages } from "../../../packages/pi-adapter/src/message-conversion.js";
+import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { claimPiContextOwner } from "./owner.js";
 
 export interface ExtensionFactoryOptions {
@@ -121,6 +123,57 @@ export function createPiContextExtension(options: ExtensionFactoryOptions = {}):
     async switchBranch() {},
     async closeSession() {},
     async invalidateRouteCandidates() {},
+  });
+  let worker: CandidateWorker | undefined;
+  const backgroundSnapshot = (): CandidateSnapshot => ({
+    workspaceId: "ws_0123456789abcdef",
+    sessionId: "s1",
+    leafId: "leaf-a",
+    lineageHash: "1111111111111111111111111111111111111111111111111111111111111111",
+    sourceHead: "src_runtime",
+    modelKey: "pcr",
+    thinkingLevel: "off",
+    contextWindow: 128000,
+    systemPromptHash: "sys_runtime",
+    activeToolSetHash: "tools_runtime",
+    reducerRevisionSet: "red_runtime",
+    extractorRevision: "ext_runtime",
+    schemaVersion: "1",
+    configFingerprint: "cfg_runtime",
+  });
+  registerBackgroundHook(pi as never, {
+    isHardPath: isHardBackgroundPath,
+    snapshot: backgroundSnapshot,
+    get worker() {
+      worker ??= new CandidateWorker({
+        store: {
+          async findCandidate() {
+            return undefined;
+          },
+          async markPreparing(key) {
+            return { id: `c_${key.slice(0, 8)}`, key, phase: "preparing" };
+          },
+          async markPrepared(prepared) {
+            return { ...prepared, phase: "prepared" };
+          },
+          async markStale(id, reason) {
+            return { id, key: id, phase: "stale", reason };
+          },
+          async markCancelled(id) {
+            return { id, key: id, phase: "cancelled" };
+          },
+          async markFailed(id, reason) {
+            return { id, key: id, phase: "failed", reason };
+          },
+        },
+        snapshotProvider: { current: backgroundSnapshot },
+        async prepare(snapshot, signal) {
+          if (signal.aborted) throw new Error("aborted");
+          return { id: `prep_${snapshot.leafId}`, key: candidateKey(snapshot) };
+        },
+      });
+      return worker;
+    },
   });
   return { name: "pi-context-runtime", hooks, claimed: true, release: owner.release };
 }

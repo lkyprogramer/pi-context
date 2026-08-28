@@ -1,0 +1,28 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| packages/worker/test/candidate-worker.test.ts (7 tests) 67ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  12:06:48
+   Duration  353ms (transform 44ms, setup 0ms, collect 64ms, tests 67ms, environment 0ms, prepare 68ms)
+
+Scope: 6 of 8 workspace projects
+packages/contracts typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+packages/storage typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/sqlite-store.ts src/worker.ts src/protocol.ts
+packages/pi-adapter typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts
+packages/kernel typecheck$ node -e "process.exit(0)"
+packages/kernel typecheck: Done
+packages/testkit typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts
+packages/pi-adapter typecheck: Done
+packages/worker typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/candidate-worker.ts src/candidate-key.ts
+packages/storage typecheck: Done
+packages/contracts typecheck: Done
+packages/testkit typecheck: Done
+packages/worker typecheck: Done
+
+> pi-context-runtime@0.1.0-alpha.1 typecheck /Users/luo/Documents/github/pi-context/apps/pi-context-runtime
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/extension.ts src/owner.ts src/runtime.ts
+

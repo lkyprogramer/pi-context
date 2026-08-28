@@ -2,7 +2,10 @@
   "name": "@pcr/worker",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/candidate-worker.ts"
+  },
   "scripts": {
-    "typecheck": "node -e \"process.exit(0)\""
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/candidate-worker.ts src/candidate-key.ts"
   }
 }

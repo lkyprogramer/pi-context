@@ -1,0 +1,27 @@
+{
+  "taskId": "T34",
+  "status": "done",
+  "allowedFiles": [
+    "packages/worker/src/candidate-worker.ts",
+    "packages/worker/src/candidate-key.ts",
+    "packages/worker/test/candidate-worker.test.ts",
+    "packages/pi-adapter/src/background-hook.ts",
+    "packages/worker/package.json",
+    "apps/pi-context-runtime/src/extension.ts",
+    "packages/worker/test/support.ts",
+    "artifacts/task-evidence/T34/red.txt",
+    "artifacts/task-evidence/T34/green.txt",
+    "artifacts/task-evidence/T34/full-gate.txt",
+    "artifacts/task-evidence/T34.json"
+  ],
+  "redLog": "artifacts/task-evidence/T34/red.txt",
+  "greenLog": "artifacts/task-evidence/T34/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T34/full-gate.txt",
+  "sourceDigest": "4ee3a526190fa4799425fe63bea568bb0d56f86c34f69584820f01566f4632bf",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
