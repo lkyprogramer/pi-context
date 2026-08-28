@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-scoring/test/recoverability.test.ts > recoverability > recovers exact bytes and verifies sha256 1ms
+ ✓ packages/benchmark-scoring/test/recoverability.test.ts > recoverability > rejects the same handle from another workspace 0ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  09:58:27
+   Duration  285ms (transform 41ms, setup 0ms, collect 39ms, tests 2ms, environment 0ms, prepare 67ms)
+

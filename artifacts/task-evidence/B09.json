@@ -1,0 +1,17 @@
+{
+  "taskId": "B09",
+  "allowedFiles": [
+    "packages/benchmark-scoring/src/recoverability.ts",
+    "packages/benchmark-scoring/src/blob-faults.ts",
+    "packages/benchmark-scoring/test/recoverability.test.ts",
+    "packages/benchmark-scoring/test/fixtures/raw.bin"
+  ],
+  "sourceDigest": "b2b7fd845e5ea1f550c0437f4cba26e600c3b1791611be3ad1a5ab02dcc06b56",
+  "redLog": "artifacts/task-evidence/B09/red.txt",
+  "greenLog": "artifacts/task-evidence/B09/green.txt",
+  "negativeLog": "artifacts/task-evidence/B09/negative.txt",
+  "fullGateLog": "artifacts/task-evidence/B09/full-gate.txt",
+  "testsPassed": true,
+  "typecheckPassed": true,
+  "scopePassed": true
+}

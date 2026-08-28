@@ -1,0 +1,18 @@
+{
+  "taskId": "B15",
+  "allowedFiles": [
+    "packages/benchmark-stats/src/paired.ts",
+    "packages/benchmark-stats/src/bootstrap.ts",
+    "packages/benchmark-stats/src/mcnemar.ts",
+    "packages/benchmark-stats/test/paired.test.ts",
+    "packages/benchmark-stats/test/golden-vectors.json"
+  ],
+  "sourceDigest": "7c7435d0cdea28b30a4e03e2d98ee7ad9890ff033dce11ea9150e222c1ebea87",
+  "redLog": "artifacts/task-evidence/B15/red.txt",
+  "greenLog": "artifacts/task-evidence/B15/green.txt",
+  "negativeLog": "artifacts/task-evidence/B15/negative.txt",
+  "fullGateLog": "artifacts/task-evidence/B15/full-gate.txt",
+  "testsPassed": true,
+  "typecheckPassed": true,
+  "scopePassed": true
+}
