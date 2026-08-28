@@ -1,0 +1,19 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/contract/pi-capability-probe.test.ts (4 tests) 2ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  10:20:09
+   Duration  396ms (transform 25ms, setup 0ms, collect 31ms, tests 2ms, environment 0ms, prepare 57ms)
+
+
+> @pcr/pi-adapter@ typecheck /Users/luo/Documents/github/pi-context/packages/pi-adapter
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts
+
+
+> @pcr/testkit@ typecheck /Users/luo/Documents/github/pi-context/packages/testkit
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts
+

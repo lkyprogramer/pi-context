@@ -1,0 +1,26 @@
+{
+  "taskId": "T05",
+  "status": "done",
+  "allowedFiles": [
+    "packages/pi-adapter/src/capabilities.ts",
+    "packages/testkit/src/fake-pi-host.ts",
+    "packages/testkit/src/pi-contract-harness.ts",
+    "tests/contract/pi-capability-probe.test.ts",
+    "packages/pi-adapter/package.json",
+    "packages/testkit/package.json",
+    "artifacts/task-evidence/T05/red.txt",
+    "artifacts/task-evidence/T05/green.txt",
+    "artifacts/task-evidence/T05/full-gate.txt",
+    "artifacts/task-evidence/T05.json"
+  ],
+  "redLog": "artifacts/task-evidence/T05/red.txt",
+  "greenLog": "artifacts/task-evidence/T05/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T05/full-gate.txt",
+  "sourceDigest": "1d890d0415570f36e0498e354a4cc15f7741ab9a5005f93061f38265f72a2ba0",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
