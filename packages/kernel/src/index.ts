@@ -5,3 +5,4 @@ export { captureObservation } from "./ingress/raw-capture.js";
 export { ReducerRegistry } from "./reducers/registry.js";
 export { defaultPointerReducer } from "./reducers/default.js";
 export type { ObservationReducer, ReducedObservation, CapturedObservation } from "./reducers/types.js";
+export { readEvidenceById } from "./retrieval/exact-read.js";

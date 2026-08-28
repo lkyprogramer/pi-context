@@ -1,0 +1,23 @@
+{
+  "taskId": "T16",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/retrieval/exact-read.ts",
+    "packages/kernel/test/exact-read.test.ts",
+    "packages/kernel/src/index.ts",
+    "artifacts/task-evidence/T16/red.txt",
+    "artifacts/task-evidence/T16/green.txt",
+    "artifacts/task-evidence/T16/full-gate.txt",
+    "artifacts/task-evidence/T16.json"
+  ],
+  "redLog": "artifacts/task-evidence/T16/red.txt",
+  "greenLog": "artifacts/task-evidence/T16/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T16/full-gate.txt",
+  "sourceDigest": "c81e0dd3626caf7a55e85ee8ecd8a0a4dc86fc2b120920da131c574505a25c47",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
