@@ -202,3 +202,81 @@ export interface MaterializedView {
   cachePlan: PromptCachePlan;
   omissions: MaterializationOmission[];
 }
+
+export type TaskFrontStatus = "active" | "parked" | "completed" | "superseded";
+export type SideEffectStatus = "running-unverified" | "verified" | "rolled-back" | "failed";
+export type ErrorStage = "observed" | "diagnosed" | "fix-applied" | "revalidated" | "resolved";
+
+export interface TaskFront {
+  id: string;
+  title: string;
+  status: TaskFrontStatus;
+  goalClaimId: string;
+  evidenceIds: string[];
+}
+
+export interface TaskFronts {
+  active: TaskFront[];
+  parked: TaskFront[];
+  completed: TaskFront[];
+  superseded: TaskFront[];
+}
+
+export interface ErrorState {
+  id: string;
+  stage: ErrorStage;
+  message?: string;
+}
+
+export interface SideEffectState {
+  id: string;
+  kind: string;
+  status: SideEffectStatus;
+  toolEvidenceId?: string;
+}
+
+export interface ValidationState {
+  id: string;
+  status: "pending" | "passed" | "failed";
+  evidenceId?: string;
+}
+
+export interface ArtifactState {
+  id: string;
+  path: string;
+}
+
+export interface DelegationState {
+  id: string;
+  to: string;
+}
+
+export interface SafeAction {
+  text: string;
+  requires: string[];
+  forbiddenRepeat?: string[];
+}
+
+export interface ContinuityRevision {
+  revisionId: string;
+  parentRevisionId?: string | null;
+  cursor: HostSessionCursor;
+  taskFronts: TaskFronts;
+  constraints: string[];
+  decisions: string[];
+  unresolvedErrors: ErrorState[];
+  externalSideEffects: SideEffectState[];
+  validationState: ValidationState[];
+  changedArtifacts: ArtifactState[];
+  delegations: DelegationState[];
+  nextSafeActions: SafeAction[];
+}
+
+export type ContinuityEvent =
+  | { type: "user-goal-change"; newGoal: string; evidenceId?: string }
+  | { type: "complete-front"; frontId: string; evidenceId: string }
+  | { type: "reactivate-front"; frontId: string; evidenceId?: string; sourceClass?: SourceClass }
+  | { type: "error-observed"; error: ErrorState }
+  | { type: "reword-target"; text: string }
+  | { type: "side-effect-update"; id: string; status: SideEffectStatus; toolEvidenceId?: string }
+  | { type: "overflow" };

@@ -1,0 +1,26 @@
+{
+  "taskId": "T23",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/continuity/model.ts",
+    "packages/kernel/src/continuity/reducer.ts",
+    "packages/kernel/src/continuity/store.ts",
+    "packages/kernel/test/continuity-ledger.test.ts",
+    "packages/contracts/src/types.ts",
+    "packages/storage/src/protocol.ts",
+    "artifacts/task-evidence/T23/red.txt",
+    "artifacts/task-evidence/T23/green.txt",
+    "artifacts/task-evidence/T23/full-gate.txt",
+    "artifacts/task-evidence/T23.json"
+  ],
+  "redLog": "artifacts/task-evidence/T23/red.txt",
+  "greenLog": "artifacts/task-evidence/T23/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T23/full-gate.txt",
+  "sourceDigest": "d3838fd227c659d882711902b8d1cca8149c8f2f918b349a527726dddfa4d4ef",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

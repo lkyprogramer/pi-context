@@ -106,6 +106,13 @@ export interface ClaimWriteStore {
   listClaims(): Promise<StoredClaimRecord[]>;
 }
 
+export interface StoredContinuityRevision {
+  revisionId: string;
+  parentRevisionId?: string | null;
+  payload: unknown;
+  contentHash: string;
+}
+
 export interface StoredDirective {
   directiveId: string;
   quote: string;
