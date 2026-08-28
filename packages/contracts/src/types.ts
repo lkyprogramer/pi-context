@@ -280,3 +280,57 @@ export type ContinuityEvent =
   | { type: "reword-target"; text: string }
   | { type: "side-effect-update"; id: string; status: SideEffectStatus; toolEvidenceId?: string }
   | { type: "overflow" };
+
+export interface HostCheckpointDirective {
+  directiveId: string;
+  quote: string;
+  polarity?: string;
+  status?: string;
+}
+
+export interface HostCheckpointClaim {
+  claimId: string;
+  key: string;
+  polarity: string;
+  status: string;
+  value: unknown;
+  validTime?: { start: number; end?: number | null };
+}
+
+export interface HostCheckpointPointer {
+  ref: string;
+  kind: string;
+}
+
+export interface HostCheckpointHeads {
+  contextHead: string;
+  directiveHead: string;
+  claimHead: string;
+  continuityHead: string;
+  catalogHead?: string;
+}
+
+export interface HostCheckpoint {
+  directives: HostCheckpointDirective[];
+  continuity: {
+    revisionId: string;
+    markdown?: string;
+    unresolvedErrors?: ErrorState[];
+    externalSideEffects?: SideEffectState[];
+  };
+  claims: HostCheckpointClaim[];
+  pointers: HostCheckpointPointer[];
+  heads: HostCheckpointHeads;
+  maxCheckpointTokens?: number;
+  secrets?: Record<string, string>;
+}
+
+export interface HostCheckpointDetails {
+  schemaVersion: 1;
+  directiveHead: string;
+  claimHead: string;
+  continuityHead: string;
+  catalogHead: string;
+  outputHash: string;
+  reducerRevisions: string[];
+}

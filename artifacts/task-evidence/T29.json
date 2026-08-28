@@ -1,0 +1,24 @@
+{
+  "taskId": "T29",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/compaction/host-checkpoint.ts",
+    "packages/kernel/src/compaction/render.ts",
+    "packages/kernel/test/host-checkpoint-render.test.ts",
+    "packages/contracts/src/types.ts",
+    "artifacts/task-evidence/T29/red.txt",
+    "artifacts/task-evidence/T29/green.txt",
+    "artifacts/task-evidence/T29/full-gate.txt",
+    "artifacts/task-evidence/T29.json"
+  ],
+  "redLog": "artifacts/task-evidence/T29/red.txt",
+  "greenLog": "artifacts/task-evidence/T29/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T29/full-gate.txt",
+  "sourceDigest": "bbb107d84688e5160458600c35347a287edde0926eaa9455735cd28f4e990d9f",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
