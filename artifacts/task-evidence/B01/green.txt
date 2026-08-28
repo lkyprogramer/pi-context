@@ -1,0 +1,19 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > rejects an oracle with a missing sourceRef 1ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > canonicalizes object key order without mutating input 1ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > parses all public examples 3ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > rejects unknown fields 0ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > rejects empty or duplicate IDs 0ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > keeps canonical hash stable across key order and does not mutate input 0ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > rejects non-canonical numeric values 0ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > returns deep-frozen clones 0ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts > benchmark contracts > fails CI when schema enums drift from exported consts 42ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  09:37:41
+   Duration  429ms (transform 80ms, setup 0ms, collect 59ms, tests 50ms, environment 0ms, prepare 89ms)
+
+
