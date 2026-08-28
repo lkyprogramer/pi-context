@@ -1,0 +1,13 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/compat/pi-version-contract.test.ts (3 tests) 7ms
+ ✓ |0| tests/compat/provider-payload-probe.test.ts (3 tests) 3ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  21:48:22
+   Duration  371ms (transform 81ms, setup 0ms, collect 128ms, tests 10ms, environment 0ms, prepare 163ms)
+
+None of the selected packages has a "./packages/kernel" script

@@ -1,0 +1,28 @@
+{
+  "taskId": "T44",
+  "status": "done",
+  "allowedFiles": [
+    "scripts/install-pi-version.mjs",
+    "scripts/check-public-pi-imports.mjs",
+    "tests/compat/pi-version-contract.test.ts",
+    "tests/compat/provider-payload-probe.test.ts",
+    ".github/workflows/compatibility.yml",
+    "compat/pi.lock.json",
+    "package.json",
+    "reference/ci-matrix.yml",
+    "artifacts/task-evidence/T44/red.txt",
+    "artifacts/task-evidence/T44/green.txt",
+    "artifacts/task-evidence/T44/full-gate.txt",
+    "artifacts/task-evidence/T44.json"
+  ],
+  "redLog": "artifacts/task-evidence/T44/red.txt",
+  "greenLog": "artifacts/task-evidence/T44/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T44/full-gate.txt",
+  "sourceDigest": "724eb181fcb6367d5358437cdf538ce6e2abf57d3f0e51f216b2c970cc90773c",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

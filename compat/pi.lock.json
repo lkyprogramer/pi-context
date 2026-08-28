@@ -1,0 +1,43 @@
+{
+  "adapterApiVersion": 1,
+  "baseline": {
+    "version": "0.84.3",
+    "commit": "938109e7259068ff736dbba3bed14c81af25abbe"
+  },
+  "tested": [
+    "0.84.3"
+  ],
+  "supportedRange": ">=0.84.3 <0.85.0",
+  "requiredHooks": [
+    "context",
+    "tool_result",
+    "tool_call",
+    "session_before_compact",
+    "session_compact",
+    "session_start",
+    "session_tree",
+    "agent_settled",
+    "session_shutdown"
+  ],
+  "requiredContext": [
+    "sessionManager.getSessionId",
+    "sessionManager.getSessionDir",
+    "sessionManager.getLeafId",
+    "model",
+    "getContextUsage",
+    "compact",
+    "abort",
+    "appendEntry"
+  ],
+  "modes": ["tui", "rpc", "print"],
+  "node": ["22.19.0", "24.18.1", "26.5.1"],
+  "lanes": {
+    "min": "0.84.3",
+    "current": "0.84.3",
+    "latest": "advisory"
+  },
+  "forbiddenImports": [
+    "@earendil-works/pi-coding-agent/src",
+    "@earendil-works/pi-agent-core/src"
+  ]
+}

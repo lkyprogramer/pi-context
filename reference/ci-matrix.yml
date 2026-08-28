@@ -1,0 +1,21 @@
+node:
+  - 22.19.0
+  - 24.18.1
+  - 26.5.1
+os:
+  - ubuntu-latest
+  - macos-latest
+pi:
+  min: "0.84.3"
+  current: "0.84.3"
+  latest: advisory
+modes:
+  - print
+  - rpc
+  - tui
+packedInstall: true
+blockingLanes:
+  - min
+  - current
+advisoryLanes:
+  - latest

@@ -12,7 +12,9 @@
     "live:verify": "node scripts/run-live-verification.mjs",
     "live:compact": "node scripts/run-live-compact.mjs",
     "perf:spikes": "node scripts/run-performance-spikes.mjs",
-    "security:suite": "node scripts/run-security-suite.mjs"
+    "security:suite": "node scripts/run-security-suite.mjs",
+    "compat:scan": "node scripts/check-public-pi-imports.mjs",
+    "compat:lock": "node scripts/install-pi-version.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",

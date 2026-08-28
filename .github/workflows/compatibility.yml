@@ -1,0 +1,30 @@
+name: compatibility
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  pi-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22.19.0", "24.18.1"]
+        lane: [min, current]
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - node: "22.19.0"
+            lane: latest
+            os: ubuntu-latest
+            advisory: true
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.advisory == true }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/install-pi-version.mjs 0.84.3
+      - run: pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts
+      - run: node scripts/check-public-pi-imports.mjs
