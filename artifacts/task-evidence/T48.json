@@ -1,0 +1,32 @@
+{
+  "taskId": "T48",
+  "status": "done",
+  "allowedFiles": [
+    "scripts/release/build-release.mjs",
+    "scripts/release/verify-release.mjs",
+    "docs/INSTALL.md",
+    "docs/CONFIGURATION.md",
+    "docs/SECURITY.md",
+    "docs/OPERATIONS.md",
+    "docs/COMPATIBILITY.md",
+    "CHANGELOG.md",
+    "tests/release/package-artifact.test.ts",
+    "apps/pi-context-runtime/package.json",
+    "README.md",
+    "tests/release/support.ts",
+    "artifacts/task-evidence/T48/red.txt",
+    "artifacts/task-evidence/T48/green.txt",
+    "artifacts/task-evidence/T48/full-gate.txt",
+    "artifacts/task-evidence/T48.json"
+  ],
+  "redLog": "artifacts/task-evidence/T48/red.txt",
+  "greenLog": "artifacts/task-evidence/T48/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T48/full-gate.txt",
+  "sourceDigest": "2c94b6c80ee73d794b934909027e64bc4742df82e0e48aa590292b12fd8404a8",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

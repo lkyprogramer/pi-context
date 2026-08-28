@@ -1,0 +1,20 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/release/package-artifact.test.ts (4 tests) 2052ms
+   ✓ release package > contains one extension entry, runtime dependencies and no source-private imports  741ms
+   ✓ release package > verifies clean-home extract, uninstall/reinstall, and temporary pi -e entry  439ms
+   ✓ release package > keeps the Node/OS matrix and does not hide unsupported Pi versions  432ms
+   ✓ release package > ships license/security docs and the gate-derived semantic default  439ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  22:01:00
+   Duration  2.62s (transform 175ms, setup 0ms, collect 272ms, tests 2.05s, environment 0ms, prepare 83ms)
+
+None of the selected packages has a "./packages/kernel" script
+
+> pi-context-runtime@0.1.0-alpha.1 typecheck /Users/luo/Documents/github/pi-context/apps/pi-context-runtime
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/extension.ts src/owner.ts src/runtime.ts src/doctor.ts src/conflicts.ts
+
