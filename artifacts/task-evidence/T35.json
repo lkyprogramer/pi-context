@@ -1,0 +1,25 @@
+{
+  "taskId": "T35",
+  "status": "done",
+  "allowedFiles": [
+    "packages/worker/src/semantic/proposal.ts",
+    "packages/worker/src/semantic/provider.ts",
+    "packages/worker/src/semantic/prompt.ts",
+    "packages/worker/test/semantic-proposal.test.ts",
+    "packages/worker/src/index.ts",
+    "artifacts/task-evidence/T35/red.txt",
+    "artifacts/task-evidence/T35/green.txt",
+    "artifacts/task-evidence/T35/full-gate.txt",
+    "artifacts/task-evidence/T35.json"
+  ],
+  "redLog": "artifacts/task-evidence/T35/red.txt",
+  "greenLog": "artifacts/task-evidence/T35/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T35/full-gate.txt",
+  "sourceDigest": "5cf14cedb0c85c805518ef4212471bd1a445129dbfd5ef3b91a247f87a0d4680",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
