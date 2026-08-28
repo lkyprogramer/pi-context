@@ -1,0 +1,18 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > uses the pre-reducer raw tool observation 2ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > round-trips message order, toolCallId and branch leaf 0ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > is idempotent across repeated captures 1ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > preserves parallel tool result order and CJK/ANSI/image metadata 1ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > marks missing raw observation degraded instead of fabricating bytes 0ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > does not publish a partial trace after cancel 1ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > retains compaction entries and branch metadata 1ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts > raw trace capture > does not leak oracle or hidden continuation into the raw trace 0ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  09:41:24
+   Duration  387ms (transform 65ms, setup 0ms, collect 70ms, tests 6ms, environment 0ms, prepare 60ms)
+
+

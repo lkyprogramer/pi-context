@@ -1,0 +1,23 @@
+
+> pi-context@ typecheck /Users/luo/Documents/github/pi-context
+> tsc -p tsconfig.base.json --noEmit
+
+
+> pi-context@ test /Users/luo/Documents/github/pi-context
+> vitest run
+
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts (8 tests) 6ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts (9 tests) 52ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  09:41:34
+   Duration  757ms (transform 149ms, setup 0ms, collect 225ms, tests 58ms, environment 0ms, prepare 255ms)
+
+contract drift: ok
+PASS: 1228 checks
+files: 160
+tasks: 18 schemas: 18 examples: 18 scenarios: 12
