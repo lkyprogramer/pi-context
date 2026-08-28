@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LlmJudgeRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "judgeId": {
+      "type": "string"
+    },
+    "artifactXHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifactYHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "preference": {
+      "enum": [
+        "X",
+        "Y",
+        "tie"
+      ]
+    },
+    "coverage": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "causalContinuity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "actionability": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    },
+    "rationale": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "runId",
+    "scenarioId",
+    "judgeId",
+    "artifactXHash",
+    "artifactYHash",
+    "preference",
+    "coverage",
+    "causalContinuity",
+    "actionability",
+    "rationale"
+  ]
+}

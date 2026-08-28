@@ -1,0 +1,26 @@
+{
+  "profile": "w1-gate",
+  "arms": [
+    "A0",
+    "A1",
+    "A2"
+  ],
+  "scenarioFamilies": [
+    "tool-heavy",
+    "delayed-constraint",
+    "recall-needed",
+    "recall-not-needed"
+  ],
+  "replicates": 3,
+  "bootstrapSamples": 10000,
+  "qualityNonInferiorityMargin": 0.03,
+  "cacheMode": "both",
+  "readerModels": [
+    "reader-fixed-1",
+    "reader-fixed-2"
+  ],
+  "judgeModels": [
+    "judge-1",
+    "judge-2"
+  ]
+}

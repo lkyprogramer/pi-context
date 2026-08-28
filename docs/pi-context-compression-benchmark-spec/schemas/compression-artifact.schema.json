@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CompressionArtifact",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "armId": {
+      "type": "string"
+    },
+    "outputHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sourceTraceHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "boundaryLeafId": {
+      "type": "string"
+    },
+    "visibleTokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "messages": {
+      "type": "array"
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "omissions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": [
+    "runId",
+    "scenarioId",
+    "armId",
+    "outputHash",
+    "sourceTraceHash",
+    "boundaryLeafId",
+    "visibleTokens",
+    "messages",
+    "evidenceRefs",
+    "omissions"
+  ]
+}

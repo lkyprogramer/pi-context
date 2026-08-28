@@ -1,0 +1,25 @@
+{
+  "claimId": "cl_12345678",
+  "key": "validation/tests",
+  "claimType": "validation",
+  "value": {
+    "status": "failed",
+    "failed": 2
+  },
+  "polarity": "is",
+  "status": "active",
+  "validTime": {
+    "start": 1787700000000,
+    "end": null
+  },
+  "systemTime": {
+    "start": 1787700000000,
+    "end": null
+  },
+  "support": [
+    "ev_12345678"
+  ],
+  "authority": "inform",
+  "supersedes": [],
+  "conflictsWith": []
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GateDecision",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "gate": {
+      "enum": [
+        "w1-early-net-value",
+        "w2-compactor",
+        "semantic-beta"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "proceed-to-w2",
+        "keep-reducers-only",
+        "keep-recovery-only",
+        "stop",
+        "repeat-after-infrastructure-fix",
+        "adopt-pcr-compactor",
+        "keep-pi-native",
+        "proceed-to-semantic"
+      ]
+    },
+    "hardGatePass": {
+      "type": "boolean"
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "reportSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "runId",
+    "gate",
+    "decision",
+    "hardGatePass",
+    "reasons",
+    "reportSha256"
+  ]
+}

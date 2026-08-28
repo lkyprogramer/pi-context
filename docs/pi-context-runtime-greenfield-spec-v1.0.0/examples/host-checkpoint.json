@@ -1,0 +1,27 @@
+{
+  "checkpointId": "hc_12345678",
+  "generationId": "gen_12345678",
+  "cursor": {
+    "workspaceId": "ws_0123456789abcdef",
+    "sessionId": "01991f00-test",
+    "leafId": "a1b2c3d4",
+    "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "modelKey": "anthropic/claude-example",
+    "thinkingLevel": "high"
+  },
+  "summary": "## Active directives\n- Do not change public API\n\n## Continue\n- Run contract tests\n\nHistory: use context_search/context_read.",
+  "firstKeptEntryId": "a1b2c3d4",
+  "tokensBefore": 120000,
+  "estimatedTokensAfter": 18000,
+  "details": {
+    "schemaVersion": 1,
+    "directiveHead": "dh_1",
+    "claimHead": "ch_1",
+    "continuityHead": "cth_1",
+    "catalogHead": "cah_1",
+    "outputHash": "7777777777777777777777777777777777777777777777777777777777777777",
+    "reducerRevisions": [
+      "shell-test@1.0.0"
+    ]
+  }
+}

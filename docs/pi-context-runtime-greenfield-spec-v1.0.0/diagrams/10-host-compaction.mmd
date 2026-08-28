@@ -1,0 +1,9 @@
+sequenceDiagram
+  participant PCR
+  participant Pi
+  PCR->>Pi: ctx.compact() at settled boundary
+  Pi->>PCR: session_before_compact
+  PCR-->>Pi: CompactionResult + heads
+  Pi->>Pi: append CompactionEntry / rebuild messages
+  Pi->>PCR: session_compact
+  PCR->>PCR: commit generation

@@ -1,0 +1,10 @@
+{
+  "taskId": "T01",
+  "status": "pending",
+  "owner": null,
+  "startedAt": null,
+  "completedAt": null,
+  "commitSha": null,
+  "evidenceDir": null,
+  "blocker": null
+}

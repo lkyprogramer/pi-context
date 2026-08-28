@@ -1,0 +1,58 @@
+{
+  "scenarioId": "large-build-log",
+  "family": "tool-heavy",
+  "description": "数万行构建日志仅保留失败窗口、退出码、目标和 Blob 指针。",
+  "boundaryKind": "native-threshold",
+  "requiredFeatures": [
+    "reducer",
+    "recoverability"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "数万行构建日志仅保留失败窗口、退出码、目标和 Blob 指针。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "数万行构建日志仅保留失败窗口、退出码、目标和 Blob 指针。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "diagnose",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "tool-heavy",
+    "reducer",
+    "recoverability"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "armId": "A0",
+  "stage": "w1",
+  "ingress": "pass-through",
+  "recall": "off",
+  "compactor": "pi-native",
+  "materializer": "off",
+  "configSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}

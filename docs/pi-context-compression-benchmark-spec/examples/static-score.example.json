@@ -1,0 +1,12 @@
+{
+  "scenarioId": "deploy-constraint-001",
+  "armId": "A2",
+  "mandatoryCoverage": 1.0,
+  "polarityAccuracy": 1.0,
+  "temporalAccuracy": 1.0,
+  "contradictionRate": 0.0,
+  "unsupportedOutcomeRate": 0.0,
+  "toolPairViolations": 0,
+  "mustOmitLeaks": 0,
+  "compressionRatio": 0.1875
+}

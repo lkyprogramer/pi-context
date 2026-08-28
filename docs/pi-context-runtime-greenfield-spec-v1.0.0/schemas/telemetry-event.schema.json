@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TelemetryEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^te_[a-f0-9]{8,64}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "workspaceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "viewId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    }
+  },
+  "required": [
+    "eventId",
+    "name",
+    "timestamp",
+    "workspaceId",
+    "sessionId",
+    "viewId",
+    "dimensions",
+    "metrics"
+  ]
+}

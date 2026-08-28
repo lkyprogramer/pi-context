@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "supersedes": {
+    "38-benchmark-evaluation.md": [
+      "03-evaluation-layers.md",
+      "04-experimental-arms-and-factorial-design.md",
+      "15-statistics-and-noninferiority.md"
+    ],
+    "tasks/T42-benchmark-harness.md": [
+      "B12",
+      "B15",
+      "B16"
+    ],
+    "tasks/T45-deterministic-mvp-gate.md": [
+      "B17"
+    ]
+  },
+  "insertBeforeW1": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05"
+  ],
+  "w1GateTasks": [
+    "B06",
+    "B08",
+    "B09",
+    "B10",
+    "B12",
+    "B13",
+    "B15",
+    "B16",
+    "B17"
+  ],
+  "w2GateTasks": [
+    "B07",
+    "B08",
+    "B11",
+    "B12",
+    "B13",
+    "B15",
+    "B16",
+    "B17"
+  ]
+}

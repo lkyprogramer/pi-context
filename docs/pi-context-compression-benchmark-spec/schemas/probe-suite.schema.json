@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProbeSuite",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scenarioId": {
+      "type": "string"
+    },
+    "probes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "probeId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "expected": {},
+          "sourceItemIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowAbstain": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "probeId",
+          "kind",
+          "question",
+          "expected",
+          "sourceItemIds",
+          "allowAbstain"
+        ]
+      }
+    }
+  },
+  "required": [
+    "scenarioId",
+    "probes"
+  ]
+}

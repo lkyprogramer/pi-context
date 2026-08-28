@@ -1,0 +1,8 @@
+flowchart TD
+  PI[Pi Session and Agent] --> A[Single Pi Adapter]
+  A --> K[Host-agnostic Kernel]
+  K --> DB[(Workspace SQLite)]
+  K --> CAS[(Encrypted CAS)]
+  K --> M[Materializer]
+  M --> A
+  A --> P[Provider Request]

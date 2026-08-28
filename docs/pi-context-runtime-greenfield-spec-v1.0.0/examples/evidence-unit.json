@@ -1,0 +1,30 @@
+{
+  "evidenceId": "ev_12345678",
+  "workspaceId": "ws_0123456789abcdef",
+  "sessionId": "01991f00-test",
+  "branchScope": "br_1",
+  "kind": "test-result",
+  "sourceClass": "trusted-tool",
+  "authority": "inform",
+  "sourceRefs": [
+    {
+      "kind": "observation",
+      "id": "ob_12345678",
+      "contentHash": "3333333333333333333333333333333333333333333333333333333333333333"
+    }
+  ],
+  "contentHash": "4444444444444444444444444444444444444444444444444444444444444444",
+  "payload": {
+    "status": "failed",
+    "failed": 2
+  },
+  "observedAt": 1787700000000,
+  "validTime": {
+    "start": 1787700000000,
+    "end": null
+  },
+  "reducer": {
+    "id": "shell-test",
+    "revision": "1.0.0"
+  }
+}

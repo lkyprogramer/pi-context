@@ -1,0 +1,20 @@
+{
+  "reportId": "vr_12345678",
+  "generationId": "gen_12345678",
+  "ok": true,
+  "checks": [
+    {
+      "id": "authority-non-escalation",
+      "status": "pass",
+      "detailsHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    {
+      "id": "directive-coverage",
+      "status": "pass",
+      "detailsHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    }
+  ],
+  "repairs": [],
+  "rejectedClaimIds": [],
+  "createdAt": 1787700000000
+}

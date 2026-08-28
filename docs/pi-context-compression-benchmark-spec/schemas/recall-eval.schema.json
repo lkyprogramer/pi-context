@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RecallEval",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scenarioId": {
+      "type": "string"
+    },
+    "armId": {
+      "type": "string"
+    },
+    "needed": {
+      "type": "boolean"
+    },
+    "recallAt5": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "mrr": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "pagePrecision": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "injectedTokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "taskSuccess": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "scenarioId",
+    "armId",
+    "needed",
+    "recallAt5",
+    "mrr",
+    "pagePrecision",
+    "injectedTokens",
+    "taskSuccess"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContinuationResult",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "armId": {
+      "type": "string"
+    },
+    "replicate": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "success": {
+      "type": "boolean"
+    },
+    "constraintViolations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "forbiddenActions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blockedActions": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "repeatedToolCalls": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "steps": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "inputTokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "wallTimeMs": {
+      "type": "number",
+      "minimum": 0
+    },
+    "failureAttribution": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "runId",
+    "scenarioId",
+    "armId",
+    "replicate",
+    "success",
+    "constraintViolations",
+    "forbiddenActions",
+    "blockedActions",
+    "repeatedToolCalls",
+    "steps",
+    "inputTokens",
+    "wallTimeMs",
+    "failureAttribution"
+  ]
+}

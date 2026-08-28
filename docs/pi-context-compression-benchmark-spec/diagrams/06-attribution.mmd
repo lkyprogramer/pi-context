@@ -1,0 +1,8 @@
+flowchart TD
+  O[Oracle item needed] --> V{Visible in artifact?}
+  V -->|no| C[Compressor/Ingress failure]
+  V -->|yes| R{Reader probe correct?}
+  R -->|no| RR[Reader failure]
+  R -->|yes| X{Closed-loop succeeds?}
+  X -->|no| E[Executor/Tool/Environment failure]
+  X -->|yes| OK[Success]

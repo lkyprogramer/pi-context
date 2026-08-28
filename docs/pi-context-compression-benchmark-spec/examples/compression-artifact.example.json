@@ -1,0 +1,25 @@
+{
+  "runId": "run-example",
+  "scenarioId": "deploy-constraint-001",
+  "armId": "A2",
+  "outputHash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "sourceTraceHash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "boundaryLeafId": "u2",
+  "visibleTokens": 12000,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Constraint: do not deploy until tests pass. Current state: tests failed."
+    }
+  ],
+  "evidenceRefs": [
+    "u1",
+    "t1"
+  ],
+  "omissions": [
+    {
+      "entryId": "t1",
+      "reason": "raw blob externalized"
+    }
+  ]
+}

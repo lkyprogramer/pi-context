@@ -1,0 +1,315 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RuntimeConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "profile": {
+      "type": "string",
+      "enum": [
+        "deterministic-minimal",
+        "balanced",
+        "quality-first",
+        "cost-first",
+        "security-strict"
+      ]
+    },
+    "compatibility": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "CompatibilityConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "supportedPiRange": {
+          "type": "string",
+          "minLength": 1
+        },
+        "knownConflictPolicy": {
+          "type": "string",
+          "enum": [
+            "deny-known",
+            "warn",
+            "allow-unsupported"
+          ]
+        },
+        "providerPayloadProbe": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "supportedPiRange",
+        "knownConflictPolicy",
+        "providerPayloadProbe"
+      ]
+    },
+    "storage": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "StorageConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requireFts5": {
+          "type": "boolean"
+        },
+        "synchronous": {
+          "type": "string",
+          "enum": [
+            "FULL",
+            "NORMAL"
+          ]
+        },
+        "minimumFreeDiskBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rawEvidenceRetentionDays": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "viewRetentionDays": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "requireFts5",
+        "synchronous",
+        "minimumFreeDiskBytes",
+        "rawEvidenceRetentionDays",
+        "viewRetentionDays"
+      ]
+    },
+    "observation": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "ObservationConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "failurePolicy": {
+          "type": "string",
+          "enum": [
+            "fail-closed",
+            "bounded-emergency",
+            "use-original"
+          ]
+        },
+        "maxVisibleTokens": {
+          "type": "integer",
+          "minimum": 128
+        },
+        "maxRawBytes": {
+          "type": "integer",
+          "minimum": 1024
+        },
+        "reducerTimeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "failurePolicy",
+        "maxVisibleTokens",
+        "maxRawBytes",
+        "reducerTimeoutMs"
+      ]
+    },
+    "budget": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "BudgetConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "targetRatio": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "softRatio": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "hardRatio": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "outputReserveTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "directiveMaxTokens": {
+          "type": "integer",
+          "minimum": 128
+        },
+        "activeTurnMinTokens": {
+          "type": "integer",
+          "minimum": 128
+        },
+        "historicalTailMaxTokens": {
+          "type": "integer",
+          "minimum": 128
+        }
+      },
+      "required": [
+        "targetRatio",
+        "softRatio",
+        "hardRatio",
+        "outputReserveTokens",
+        "directiveMaxTokens",
+        "activeTurnMinTokens",
+        "historicalTailMaxTokens"
+      ]
+    },
+    "retrieval": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "RetrievalConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fts": {
+          "type": "boolean"
+        },
+        "proactive": {
+          "type": "boolean"
+        },
+        "proactiveBudgetTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxRecallTokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxHits": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "leaseTokenTurnBudget": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "fts",
+        "proactive",
+        "proactiveBudgetTokens",
+        "maxRecallTokens",
+        "maxHits",
+        "leaseTokenTurnBudget"
+      ]
+    },
+    "hostCompaction": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostCompactionConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "afterMessages": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "afterEstimatedTokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimumShrinkRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "settledOnly": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled",
+        "afterMessages",
+        "afterEstimatedTokens",
+        "minimumShrinkRatio",
+        "settledOnly"
+      ]
+    },
+    "semantic": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "SemanticConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "background": {
+          "type": "boolean"
+        },
+        "maxConcurrentJobs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxTokensPerJob": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "verifierRequired": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled",
+        "background",
+        "maxConcurrentJobs",
+        "maxTokensPerJob",
+        "verifierRequired"
+      ]
+    },
+    "security": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "SecurityConfig",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strict": {
+          "type": "boolean"
+        },
+        "trustedRpc": {
+          "type": "boolean"
+        },
+        "actionGate": {
+          "type": "boolean"
+        },
+        "secretScrub": {
+          "type": "boolean"
+        },
+        "egressAllowlist": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "strict",
+        "trustedRpc",
+        "actionGate",
+        "secretScrub",
+        "egressAllowlist"
+      ]
+    }
+  },
+  "required": [
+    "profile",
+    "compatibility",
+    "storage",
+    "observation",
+    "budget",
+    "retrieval",
+    "hostCompaction",
+    "semantic",
+    "security"
+  ]
+}

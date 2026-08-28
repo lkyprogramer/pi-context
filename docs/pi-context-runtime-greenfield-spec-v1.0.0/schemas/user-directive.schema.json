@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UserDirective",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "directiveId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^ud_[a-f0-9]{8,64}$"
+    },
+    "workspaceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceInputId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceContentHash": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "quote": {
+      "type": "string",
+      "minLength": 1
+    },
+    "byteRange": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "ByteRange",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "goal",
+        "constraint",
+        "permission",
+        "prohibition",
+        "format",
+        "correction",
+        "preference",
+        "acceptance-criterion"
+      ]
+    },
+    "polarity": {
+      "type": "string",
+      "enum": [
+        "must",
+        "must-not",
+        "may",
+        "is",
+        "is-not",
+        "unknown"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "superseded",
+        "resolved",
+        "retracted",
+        "contested"
+      ]
+    },
+    "scope": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "DirectiveScope",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "session",
+            "task-front",
+            "artifact",
+            "tool",
+            "action"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ]
+    },
+    "sourceClass": {
+      "const": "authenticated-user"
+    },
+    "authority": {
+      "const": "act"
+    }
+  },
+  "required": [
+    "directiveId",
+    "workspaceId",
+    "sessionId",
+    "sourceInputId",
+    "sourceContentHash",
+    "quote",
+    "byteRange",
+    "kind",
+    "polarity",
+    "status",
+    "scope",
+    "sourceClass",
+    "authority"
+  ]
+}

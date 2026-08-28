@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RunManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "configSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "corpusSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "piVersion": {
+      "type": "string"
+    },
+    "piCommit": {
+      "type": "string"
+    },
+    "nodeVersion": {
+      "type": "string"
+    },
+    "os": {
+      "type": "string"
+    },
+    "arch": {
+      "type": "string"
+    },
+    "arms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "seeds": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    }
+  },
+  "required": [
+    "runId",
+    "createdAt",
+    "configSha256",
+    "corpusSha256",
+    "piVersion",
+    "piCommit",
+    "nodeVersion",
+    "os",
+    "arch",
+    "arms",
+    "seeds"
+  ]
+}

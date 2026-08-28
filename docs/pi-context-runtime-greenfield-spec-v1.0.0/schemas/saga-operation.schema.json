@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SagaOperation",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "operationId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^op_[a-f0-9]{8,64}$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "observation",
+        "input",
+        "host-compaction",
+        "generation-publish"
+      ]
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "prepared",
+        "host-visible",
+        "acknowledged",
+        "committed",
+        "recovered",
+        "stale",
+        "quarantined"
+      ]
+    },
+    "cursor": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostSessionCursor",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^ws_[a-f0-9]{16,64}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leafId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lineageHash": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "modelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thinkingLevel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspaceId",
+        "sessionId",
+        "leafId",
+        "lineageHash",
+        "modelKey",
+        "thinkingLevel"
+      ]
+    },
+    "sourceHash": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "hostRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "createdAt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "updatedAt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lastErrorCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "operationId",
+    "kind",
+    "state",
+    "cursor",
+    "sourceHash",
+    "hostRef",
+    "createdAt",
+    "updatedAt",
+    "attempts",
+    "lastErrorCode"
+  ]
+}

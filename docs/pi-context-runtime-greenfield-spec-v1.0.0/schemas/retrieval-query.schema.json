@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RetrievalQuery",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "queryId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^rq_[a-f0-9]{8,64}$"
+    },
+    "cursor": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostSessionCursor",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^ws_[a-f0-9]{16,64}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leafId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lineageHash": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "modelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thinkingLevel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspaceId",
+        "sessionId",
+        "leafId",
+        "lineageHash",
+        "modelKey",
+        "thinkingLevel"
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "exact-id",
+        "literal",
+        "fts",
+        "historical-review"
+      ]
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "filters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "RetrievalFilters",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kinds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "sourceClasses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "system",
+              "authenticated-user",
+              "untrusted-user",
+              "trusted-tool",
+              "untrusted-tool",
+              "external-content",
+              "agent-derived"
+            ]
+          },
+          "minItems": 0
+        },
+        "fromTime": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "toTime": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kinds",
+        "statuses",
+        "sourceClasses",
+        "fromTime",
+        "toTime"
+      ]
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "maxTokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32000
+    }
+  },
+  "required": [
+    "queryId",
+    "cursor",
+    "mode",
+    "text",
+    "filters",
+    "limit",
+    "maxTokens"
+  ]
+}

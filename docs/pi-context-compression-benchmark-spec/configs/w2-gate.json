@@ -1,0 +1,27 @@
+{
+  "profile": "w2-gate",
+  "arms": [
+    "B0",
+    "B1",
+    "B2"
+  ],
+  "scenarioFamilies": [
+    "tool-heavy",
+    "constraint",
+    "temporal-update",
+    "branch",
+    "overflow"
+  ],
+  "replicates": 3,
+  "bootstrapSamples": 10000,
+  "qualityNonInferiorityMargin": 0.02,
+  "cacheMode": "both",
+  "readerModels": [
+    "reader-fixed-1",
+    "reader-fixed-2"
+  ],
+  "judgeModels": [
+    "judge-1",
+    "judge-2"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "leaseId": "ls_12345678",
+  "purpose": "continue adapter implementation",
+  "taskFrontId": "tf_12345678",
+  "evidenceIds": [
+    "ev_12345678"
+  ],
+  "createdAt": 1787700000000,
+  "expiresAt": 1787703600000,
+  "turnDeadline": 4,
+  "tokenTurnBudget": 4000,
+  "consumedTokenTurns": 1200,
+  "releaseConditions": [
+    "task-completed",
+    "ttl",
+    "token-cap"
+  ]
+}

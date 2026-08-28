@@ -1,0 +1,9 @@
+flowchart LR
+  S[Stable Prefix] --> H[Append-only History]
+  H --> V[Volatile Augmentation]
+  V --> A[Exact Active Turn]
+  S:::stable
+  H:::stable
+  V:::volatile
+  classDef stable stroke-width:2px
+  classDef volatile stroke-dasharray: 5 5

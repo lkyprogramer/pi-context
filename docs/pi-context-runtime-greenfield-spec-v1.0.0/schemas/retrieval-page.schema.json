@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RetrievalPage",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pageId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^rp_[a-f0-9]{8,64}$"
+    },
+    "queryId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hits": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "RetrievalHit",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "score": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceClass": {
+            "type": "string",
+            "enum": [
+              "system",
+              "authenticated-user",
+              "untrusted-user",
+              "trusted-tool",
+              "untrusted-tool",
+              "external-content",
+              "agent-derived"
+            ]
+          },
+          "authority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "inform",
+              "propose",
+              "act"
+            ]
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "score",
+          "status",
+          "sourceClass",
+          "authority",
+          "excerpt",
+          "evidenceIds"
+        ]
+      },
+      "minItems": 0
+    },
+    "nextCursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "estimatedTokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "generatedAt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expiresAt": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "pageId",
+    "queryId",
+    "hits",
+    "nextCursor",
+    "estimatedTokens",
+    "generatedAt",
+    "expiresAt"
+  ]
+}

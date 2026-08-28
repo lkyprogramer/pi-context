@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RawInputReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "inputId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^in_[a-f0-9]{8,64}$"
+    },
+    "cursor": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostSessionCursor",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^ws_[a-f0-9]{16,64}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leafId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lineageHash": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "modelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thinkingLevel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspaceId",
+        "sessionId",
+        "leafId",
+        "lineageHash",
+        "modelKey",
+        "thinkingLevel"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "interactive",
+        "rpc",
+        "extension"
+      ]
+    },
+    "sourceClass": {
+      "type": "string",
+      "enum": [
+        "system",
+        "authenticated-user",
+        "untrusted-user",
+        "trusted-tool",
+        "untrusted-tool",
+        "external-content",
+        "agent-derived"
+      ]
+    },
+    "rawTextHash": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rawTextBlobId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^bl_[a-f0-9]{8,64}$"
+    },
+    "imageHashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "minItems": 0
+    },
+    "receivedAt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "correlatedHostMessageId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "inputId",
+    "cursor",
+    "source",
+    "sourceClass",
+    "rawTextHash",
+    "rawTextBlobId",
+    "imageHashes",
+    "receivedAt",
+    "correlatedHostMessageId"
+  ]
+}

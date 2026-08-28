@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EnvironmentAssertionResult",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "armId": {
+      "type": "string"
+    },
+    "assertionId": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "observed": {},
+    "expected": {}
+  },
+  "required": [
+    "runId",
+    "scenarioId",
+    "armId",
+    "assertionId",
+    "kind",
+    "passed",
+    "observed",
+    "expected"
+  ]
+}

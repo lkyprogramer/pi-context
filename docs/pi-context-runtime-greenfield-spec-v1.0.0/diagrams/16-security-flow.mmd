@@ -1,0 +1,8 @@
+flowchart TD
+  U[Untrusted Content] --> W[Write-time Source Binding]
+  W --> E[Evidence/Claim with Authority]
+  E --> M[Materialized View]
+  M --> P[Proposal]
+  P --> G[Action Gate]
+  G -->|allow| T[Tool]
+  G -->|deny| X[Blocked Result]

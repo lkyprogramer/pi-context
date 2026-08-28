@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PromptCachePlan",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "layoutVersion": {
+      "const": 1
+    },
+    "sectionOrder": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "eligiblePrefixTokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "firstDifferentSection": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "previousViewId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "providerCapability": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "automatic-prefix",
+        "explicit-breakpoint",
+        "disabled"
+      ]
+    }
+  },
+  "required": [
+    "layoutVersion",
+    "sectionOrder",
+    "eligiblePrefixTokens",
+    "firstDifferentSection",
+    "previousViewId",
+    "providerCapability"
+  ]
+}

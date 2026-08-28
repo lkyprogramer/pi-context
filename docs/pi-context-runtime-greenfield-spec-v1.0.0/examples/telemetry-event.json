@@ -1,0 +1,17 @@
+{
+  "eventId": "te_12345678",
+  "name": "pcr.materialization",
+  "timestamp": 1787700000000,
+  "workspaceId": "ws_0123456789abcdef",
+  "sessionId": "01991f00-test",
+  "viewId": "vw_12345678",
+  "dimensions": {
+    "model": "model-hash",
+    "cacheZone": "stable-prefix"
+  },
+  "metrics": {
+    "durationMs": 23.4,
+    "tokens": 18000,
+    "eligiblePrefixTokens": 12000
+  }
+}

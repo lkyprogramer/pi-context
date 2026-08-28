@@ -1,0 +1,19 @@
+{
+  "operationId": "op_0123456789abcdef",
+  "kind": "observation",
+  "state": "committed",
+  "cursor": {
+    "workspaceId": "ws_0123456789abcdef",
+    "sessionId": "01991f00-test",
+    "leafId": "a1b2c3d4",
+    "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "modelKey": "anthropic/claude-example",
+    "thinkingLevel": "high"
+  },
+  "sourceHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "hostRef": "call_1",
+  "createdAt": 1787700000000,
+  "updatedAt": 1787700001000,
+  "attempts": 1,
+  "lastErrorCode": null
+}

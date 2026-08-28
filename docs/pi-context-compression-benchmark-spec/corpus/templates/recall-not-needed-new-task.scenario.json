@@ -1,0 +1,58 @@
+{
+  "scenarioId": "recall-not-needed-new-task",
+  "family": "recall-not-needed",
+  "description": "新任务与旧历史无关，主动召回应保持沉默。",
+  "boundaryKind": "pre-threshold",
+  "requiredFeatures": [
+    "silence",
+    "new-task"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "新任务与旧历史无关，主动召回应保持沉默。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "新任务与旧历史无关，主动召回应保持沉默。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "implement-independent",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "recall-not-needed",
+    "silence",
+    "new-task"
+  ]
+}

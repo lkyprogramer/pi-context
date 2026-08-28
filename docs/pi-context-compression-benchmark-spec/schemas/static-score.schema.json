@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StaticScore",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scenarioId": {
+      "type": "string"
+    },
+    "armId": {
+      "type": "string"
+    },
+    "mandatoryCoverage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "polarityAccuracy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "temporalAccuracy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "contradictionRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "unsupportedOutcomeRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "toolPairViolations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mustOmitLeaks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "compressionRatio": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "scenarioId",
+    "armId",
+    "mandatoryCoverage",
+    "polarityAccuracy",
+    "temporalAccuracy",
+    "contradictionRate",
+    "unsupportedOutcomeRate",
+    "toolPairViolations",
+    "mustOmitLeaks",
+    "compressionRatio"
+  ]
+}

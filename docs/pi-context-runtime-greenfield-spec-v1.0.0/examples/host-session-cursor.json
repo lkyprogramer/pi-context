@@ -1,0 +1,8 @@
+{
+  "workspaceId": "ws_0123456789abcdef",
+  "sessionId": "01991f00-test",
+  "leafId": "a1b2c3d4",
+  "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "modelKey": "anthropic/claude-example",
+  "thinkingLevel": "high"
+}

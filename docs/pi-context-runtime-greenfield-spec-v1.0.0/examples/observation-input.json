@@ -1,0 +1,25 @@
+{
+  "operationId": "op_0123456789abcdef",
+  "cursor": {
+    "workspaceId": "ws_0123456789abcdef",
+    "sessionId": "01991f00-test",
+    "leafId": "a1b2c3d4",
+    "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "modelKey": "anthropic/claude-example",
+    "thinkingLevel": "high"
+  },
+  "toolCallId": "call_1",
+  "toolName": "bash",
+  "args": {
+    "command": "pnpm test"
+  },
+  "content": [
+    {
+      "type": "text",
+      "text": "FAIL foo.spec.ts\n2 failed"
+    }
+  ],
+  "details": {},
+  "isError": true,
+  "capturedAt": 1787700000000
+}

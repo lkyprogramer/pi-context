@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ObservationProjection",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "operationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observationId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^ob_[a-f0-9]{8,64}$"
+    },
+    "rawBlobId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^bl_[a-f0-9]{8,64}$"
+    },
+    "evidenceIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^ev_[a-f0-9]{8,64}$"
+      },
+      "minItems": 0
+    },
+    "visibleContent": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image-ref",
+              "tool-call-ref",
+              "pointer"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "text"
+            ]
+          },
+          {
+            "required": [
+              "ref"
+            ]
+          }
+        ]
+      },
+      "minItems": 1
+    },
+    "isError": {
+      "type": "boolean"
+    },
+    "reducer": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "ReducerRef",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ]
+    }
+  },
+  "required": [
+    "operationId",
+    "observationId",
+    "rawBlobId",
+    "evidenceIds",
+    "visibleContent",
+    "isError",
+    "reducer"
+  ]
+}

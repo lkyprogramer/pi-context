@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BenchmarkReport",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "stage": {
+      "enum": [
+        "w1",
+        "w2",
+        "semantic"
+      ]
+    },
+    "baselineArm": {
+      "type": "string"
+    },
+    "candidateArms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hardGatePass": {
+      "type": "boolean"
+    },
+    "qualityCiLower": {
+      "type": "number"
+    },
+    "qualityMargin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "medianTokenDelta": {
+      "type": "number"
+    },
+    "realizedNetMedian": {
+      "type": "number"
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "artifactHashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    }
+  },
+  "required": [
+    "runId",
+    "stage",
+    "baselineArm",
+    "candidateArms",
+    "hardGatePass",
+    "qualityCiLower",
+    "qualityMargin",
+    "medianTokenDelta",
+    "realizedNetMedian",
+    "failures",
+    "artifactHashes"
+  ]
+}

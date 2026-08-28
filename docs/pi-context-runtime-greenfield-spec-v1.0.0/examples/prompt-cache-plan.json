@@ -1,0 +1,15 @@
+{
+  "layoutVersion": 1,
+  "sectionOrder": [
+    "runtime-preamble",
+    "hard-directives",
+    "stable-continuity",
+    "historical-tail",
+    "retrieval-page",
+    "active-turn"
+  ],
+  "eligiblePrefixTokens": 12000,
+  "firstDifferentSection": "retrieval-page",
+  "previousViewId": "vw_previous",
+  "providerCapability": "automatic-prefix"
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pi-context-runtime.dev/schemas/benchmark-scenario.schema.json",
+  "title": "BenchmarkScenario",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]+$"
+    },
+    "family": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "boundaryKind": {
+      "enum": [
+        "pre-threshold",
+        "native-threshold",
+        "overflow-recovery",
+        "semantic-boundary",
+        "branch-boundary",
+        "single-huge-turn"
+      ]
+    },
+    "requiredFeatures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "traceTemplate": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "oracleItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "hiddenContinuation": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "environmentAssertions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "scenarioId",
+    "family",
+    "description",
+    "boundaryKind",
+    "requiredFeatures",
+    "traceTemplate",
+    "oracleItems",
+    "hiddenContinuation",
+    "environmentAssertions",
+    "tags"
+  ]
+}

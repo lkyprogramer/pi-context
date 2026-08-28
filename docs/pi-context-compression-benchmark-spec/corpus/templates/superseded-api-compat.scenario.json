@@ -1,0 +1,58 @@
+{
+  "scenarioId": "superseded-api-compat",
+  "family": "update-supersession",
+  "description": "用户先要求兼容 API，后明确允许破坏兼容；系统必须保留 supersession。",
+  "boundaryKind": "semantic-boundary",
+  "requiredFeatures": [
+    "supersession",
+    "temporal"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "用户先要求兼容 API，后明确允许破坏兼容；系统必须保留 supersession。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "用户先要求兼容 API，后明确允许破坏兼容；系统必须保留 supersession。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "change-api",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "update-supersession",
+    "supersession",
+    "temporal"
+  ]
+}

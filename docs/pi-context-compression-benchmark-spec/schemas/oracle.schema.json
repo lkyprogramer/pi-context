@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Oracle",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scenarioId": {
+      "type": "string"
+    },
+    "oracleVersion": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "canonical": {},
+          "polarity": {
+            "enum": [
+              "must",
+              "must-not",
+              "may",
+              "is",
+              "is-not",
+              "unknown"
+            ]
+          },
+          "status": {
+            "enum": [
+              "active",
+              "superseded",
+              "resolved",
+              "retracted",
+              "contested",
+              "unknown"
+            ]
+          },
+          "sourceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "visibility": {
+            "enum": [
+              "must-visible",
+              "recallable",
+              "must-omit"
+            ]
+          },
+          "risk": {
+            "enum": [
+              "ordinary",
+              "hard-directive",
+              "high-risk-outcome",
+              "secret"
+            ]
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supersededBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "canonical",
+          "polarity",
+          "status",
+          "sourceRefs",
+          "visibility",
+          "risk",
+          "aliases",
+          "supersededBy"
+        ]
+      }
+    },
+    "environmentAssertions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "kind"
+        ]
+      }
+    },
+    "forbiddenActions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "pattern"
+        ]
+      }
+    }
+  },
+  "required": [
+    "scenarioId",
+    "oracleVersion",
+    "items",
+    "environmentAssertions",
+    "forbiddenActions"
+  ]
+}

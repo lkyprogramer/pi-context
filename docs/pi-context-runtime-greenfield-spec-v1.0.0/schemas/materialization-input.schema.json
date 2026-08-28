@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MaterializationInput",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "cursor": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostSessionCursor",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^ws_[a-f0-9]{16,64}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leafId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lineageHash": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "modelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thinkingLevel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspaceId",
+        "sessionId",
+        "leafId",
+        "lineageHash",
+        "modelKey",
+        "thinkingLevel"
+      ]
+    },
+    "canonicalMessages": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "HostMessage",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hostMessageId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^hm_[a-f0-9]{16,64}$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "tool-result",
+              "custom"
+            ]
+          },
+          "timestamp": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "image-ref",
+                    "tool-call-ref",
+                    "pointer"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "anyOf": [
+                {
+                  "required": [
+                    "text"
+                  ]
+                },
+                {
+                  "required": [
+                    "ref"
+                  ]
+                }
+              ]
+            },
+            "minItems": 1
+          },
+          "sourceClass": {
+            "type": "string",
+            "enum": [
+              "system",
+              "authenticated-user",
+              "untrusted-user",
+              "trusted-tool",
+              "untrusted-tool",
+              "external-content",
+              "agent-derived"
+            ]
+          },
+          "toolCallId": {
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          },
+          "isError": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hostMessageId",
+          "role",
+          "timestamp",
+          "content",
+          "sourceClass"
+        ]
+      },
+      "minItems": 0
+    },
+    "currentContextWindow": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maxOutputTokens": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "overflow-retry",
+        "manual-preview"
+      ]
+    },
+    "now": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "cursor",
+    "canonicalMessages",
+    "currentContextWindow",
+    "maxOutputTokens",
+    "reason",
+    "now"
+  ]
+}

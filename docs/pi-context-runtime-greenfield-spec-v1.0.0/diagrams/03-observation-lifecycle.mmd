@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant Tool
+  participant Pi
+  participant Adapter
+  participant Store
+  Tool-->>Pi: result
+  Pi->>Adapter: tool_result
+  Adapter->>Store: prepare + raw CAS
+  Adapter->>Store: reducer + evidence
+  Adapter-->>Pi: compact result
+  Pi->>Store: message/turn acknowledgment

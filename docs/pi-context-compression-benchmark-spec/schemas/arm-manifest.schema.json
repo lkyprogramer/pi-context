@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ArmManifest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "armId": {
+      "type": "string"
+    },
+    "stage": {
+      "enum": [
+        "w1",
+        "w2",
+        "semantic",
+        "oracle"
+      ]
+    },
+    "ingress": {
+      "enum": [
+        "pass-through",
+        "w1"
+      ]
+    },
+    "recall": {
+      "enum": [
+        "off",
+        "manual-only",
+        "proactive"
+      ]
+    },
+    "compactor": {
+      "enum": [
+        "pi-native",
+        "pcr-deterministic",
+        "pcr-semantic",
+        "none"
+      ]
+    },
+    "materializer": {
+      "enum": [
+        "off",
+        "identity",
+        "pcr-deterministic",
+        "pcr-semantic"
+      ]
+    },
+    "configSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "armId",
+    "stage",
+    "ingress",
+    "recall",
+    "compactor",
+    "materializer",
+    "configSha256"
+  ]
+}

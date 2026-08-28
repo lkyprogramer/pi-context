@@ -1,0 +1,58 @@
+{
+  "scenarioId": "single-huge-turn-tools",
+  "family": "single-huge-turn",
+  "description": "一个超大 Turn 包含多个闭合 Tool Pair，切点不得产生孤儿。",
+  "boundaryKind": "single-huge-turn",
+  "requiredFeatures": [
+    "split-turn",
+    "tool-pair"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "一个超大 Turn 包含多个闭合 Tool Pair，切点不得产生孤儿。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "一个超大 Turn 包含多个闭合 Tool Pair，切点不得产生孤儿。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "continue",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "single-huge-turn",
+    "split-turn",
+    "tool-pair"
+  ]
+}

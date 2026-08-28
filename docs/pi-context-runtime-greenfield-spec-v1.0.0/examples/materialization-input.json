@@ -1,0 +1,31 @@
+{
+  "cursor": {
+    "workspaceId": "ws_0123456789abcdef",
+    "sessionId": "01991f00-test",
+    "leafId": "a1b2c3d4",
+    "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "modelKey": "anthropic/claude-example",
+    "thinkingLevel": "high"
+  },
+  "canonicalMessages": [
+    {
+      "hostMessageId": "hm_0123456789abcdef",
+      "role": "tool-result",
+      "timestamp": 1787700000000,
+      "content": [
+        {
+          "type": "text",
+          "text": "tests failed: 2; full: ctx://observation/ob_123"
+        }
+      ],
+      "sourceClass": "trusted-tool",
+      "toolCallId": "call_1",
+      "toolName": "bash",
+      "isError": true
+    }
+  ],
+  "currentContextWindow": 200000,
+  "maxOutputTokens": 16000,
+  "reason": "normal",
+  "now": 1787700000000
+}

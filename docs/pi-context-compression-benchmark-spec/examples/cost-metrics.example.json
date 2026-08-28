@@ -1,0 +1,12 @@
+{
+  "runId": "run-example",
+  "scenarioId": "deploy-constraint-001",
+  "armId": "A2",
+  "inputTokens": 15000,
+  "outputTokens": 800,
+  "cacheReadTokens": 9000,
+  "cacheWriteTokens": 1500,
+  "providerCost": 0.032,
+  "hookLatencyMs": 28.4,
+  "compactionLatencyMs": 1250.0
+}

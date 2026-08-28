@@ -1,0 +1,6 @@
+flowchart LR
+  W[W1-shaped state] --> OFF[Recall off]
+  W --> ON[Recall on]
+  OFF --> N[Needed / Not-needed subsets]
+  ON --> N
+  N --> M[Recall + task + token metrics]

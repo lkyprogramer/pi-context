@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BenchmarkConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "profile": {
+      "enum": [
+        "ci",
+        "smoke",
+        "w1-gate",
+        "w2-gate",
+        "publication"
+      ]
+    },
+    "arms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2
+    },
+    "scenarioFamilies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "replicates": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "bootstrapSamples": {
+      "type": "integer",
+      "minimum": 1000
+    },
+    "qualityNonInferiorityMargin": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.2
+    },
+    "cacheMode": {
+      "enum": [
+        "off",
+        "production",
+        "both"
+      ]
+    },
+    "readerModels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "judgeModels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "profile",
+    "arms",
+    "scenarioFamilies",
+    "replicates",
+    "bootstrapSamples",
+    "qualityNonInferiorityMargin",
+    "cacheMode",
+    "readerModels",
+    "judgeModels"
+  ]
+}

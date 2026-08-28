@@ -1,0 +1,6 @@
+flowchart LR
+  R[Same W1ShapedTrace] --> B0[Pi Native Compactor]
+  R --> B1[PCR Deterministic Compactor]
+  B0 --> S[Static/Reader/Closed-loop]
+  B1 --> S
+  S --> G[W2 Gate]

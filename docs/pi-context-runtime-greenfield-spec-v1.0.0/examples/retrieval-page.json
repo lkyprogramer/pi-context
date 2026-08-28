@@ -1,0 +1,20 @@
+{
+  "pageId": "rp_12345678",
+  "queryId": "rq_12345678",
+  "hits": [
+    {
+      "id": "ud_12345678",
+      "kind": "user-directive",
+      "score": 1.0,
+      "status": "active",
+      "sourceClass": "authenticated-user",
+      "authority": "act",
+      "excerpt": "不得修改公开 API",
+      "evidenceIds": []
+    }
+  ],
+  "nextCursor": null,
+  "estimatedTokens": 20,
+  "generatedAt": 1787700000000,
+  "expiresAt": 1787703600000
+}

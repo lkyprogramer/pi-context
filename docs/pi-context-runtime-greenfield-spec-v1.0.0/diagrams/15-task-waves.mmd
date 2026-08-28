@@ -1,0 +1,8 @@
+flowchart LR
+  W0[W0 Foundation] --> W1[W1 Deterministic Value]
+  W1 --> G{Early Net Value Gate}
+  G -->|pass| W2[W2 State Runtime]
+  G -->|fail| K[Keep reducers/exact recall only]
+  W2 --> W3[W3 Semantic]
+  W3 --> W4[W4 Productization]
+  W4 --> W5[W5 Release]

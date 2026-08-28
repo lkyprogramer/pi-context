@@ -1,0 +1,6 @@
+flowchart LR
+  P[Pi Release] --> C[Contract CI]
+  C --> E[Packed E2E]
+  E --> B[Benchmark Smoke]
+  B --> L[Update compat lock]
+  L --> R[PCR Release]

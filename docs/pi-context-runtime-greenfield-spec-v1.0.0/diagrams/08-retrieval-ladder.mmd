@@ -1,0 +1,7 @@
+flowchart TD
+  Q[Query] --> ID[ID/Exact]
+  ID -->|miss| L[Literal/Path/Error]
+  L -->|miss| F[FTS + filters]
+  F --> E[Exact Evidence Read]
+  ID --> E
+  L --> E

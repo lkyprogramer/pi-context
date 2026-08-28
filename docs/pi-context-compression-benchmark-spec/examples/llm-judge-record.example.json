@@ -1,0 +1,12 @@
+{
+  "runId": "run-example",
+  "scenarioId": "deploy-constraint-001",
+  "judgeId": "judge-1",
+  "artifactXHash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "artifactYHash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "preference": "Y",
+  "coverage": 4,
+  "causalContinuity": 4,
+  "actionability": 4,
+  "rationale": "Y retains the active prohibition and failed-test prerequisite."
+}

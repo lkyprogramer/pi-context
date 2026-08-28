@@ -1,0 +1,701 @@
+{
+  "schemaVersion": 1,
+  "project": "pi-context-runtime",
+  "taskCount": 48,
+  "waves": {
+    "W0": [
+      "T01",
+      "T02",
+      "T03",
+      "T04",
+      "T05",
+      "T06",
+      "T07",
+      "T08"
+    ],
+    "W1": [
+      "T09",
+      "T10",
+      "T11",
+      "T12",
+      "T13",
+      "T14",
+      "T15",
+      "T16",
+      "T17",
+      "T18",
+      "T19"
+    ],
+    "W2": [
+      "T20",
+      "T21",
+      "T22",
+      "T23",
+      "T24",
+      "T25",
+      "T26",
+      "T27",
+      "T28",
+      "T29",
+      "T30",
+      "T31",
+      "T32",
+      "T33"
+    ],
+    "W3": [
+      "T34",
+      "T35",
+      "T36",
+      "T37",
+      "T38"
+    ],
+    "W4": [
+      "T39",
+      "T40",
+      "T41",
+      "T42",
+      "T43",
+      "T44"
+    ],
+    "W5": [
+      "T45",
+      "T46",
+      "T47",
+      "T48"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "T01",
+      "slug": "workspace-scaffold",
+      "title": "创建 Monorepo、包边界与基础 CI",
+      "wave": "W0",
+      "dependsOn": [],
+      "taskFile": "tasks/T01-workspace-scaffold.md",
+      "primarySymbol": "assertWorkspaceLayout"
+    },
+    {
+      "id": "T02",
+      "slug": "canonical-contracts",
+      "title": "实现唯一 Canonical Type、ID 与错误词汇",
+      "wave": "W0",
+      "dependsOn": [
+        "T01"
+      ],
+      "taskFile": "tasks/T02-canonical-contracts.md",
+      "primarySymbol": "SourceClass"
+    },
+    {
+      "id": "T03",
+      "slug": "canonical-encoding-hashes",
+      "title": "实现确定性编码、域隔离哈希、时钟与 ID Provider",
+      "wave": "W0",
+      "dependsOn": [
+        "T02"
+      ],
+      "taskFile": "tasks/T03-canonical-encoding-hashes.md",
+      "primarySymbol": "domainHash"
+    },
+    {
+      "id": "T04",
+      "slug": "single-extension-orchestrator",
+      "title": "实现单一 Pi Extension Orchestrator 与进程级 Owner Claim",
+      "wave": "W0",
+      "dependsOn": [
+        "T01",
+        "T02"
+      ],
+      "taskFile": "tasks/T04-single-extension-orchestrator.md",
+      "primarySymbol": "claimPiContextOwner"
+    },
+    {
+      "id": "T05",
+      "slug": "pi-contract-harness",
+      "title": "实现 Pi Public API Capability Probe 与契约测试宿主",
+      "wave": "W0",
+      "dependsOn": [
+        "T01",
+        "T04"
+      ],
+      "taskFile": "tasks/T05-pi-contract-harness.md",
+      "primarySymbol": "probePiCapabilities"
+    },
+    {
+      "id": "T06",
+      "slug": "sqlite-store",
+      "title": "实现单写 Worker、SQLite Schema 与事务 RPC",
+      "wave": "W0",
+      "dependsOn": [
+        "T02",
+        "T03"
+      ],
+      "taskFile": "tasks/T06-sqlite-store.md",
+      "primarySymbol": "SqliteStore"
+    },
+    {
+      "id": "T07",
+      "slug": "encrypted-blob-cas",
+      "title": "实现加密 Content-addressed Blob Store 与 Key Provider",
+      "wave": "W0",
+      "dependsOn": [
+        "T02",
+        "T03"
+      ],
+      "taskFile": "tasks/T07-encrypted-blob-cas.md",
+      "primarySymbol": "EncryptedBlobStore"
+    },
+    {
+      "id": "T08",
+      "slug": "saga-recovery",
+      "title": "实现跨 Pi JSONL 与 Runtime Store 的可恢复 Saga",
+      "wave": "W0",
+      "dependsOn": [
+        "T05",
+        "T06",
+        "T07"
+      ],
+      "taskFile": "tasks/T08-saga-recovery.md",
+      "primarySymbol": "SagaCoordinator"
+    },
+    {
+      "id": "T09",
+      "slug": "raw-input-receipt",
+      "title": "捕获原始 Input Receipt 并关联 Pi 展开后的 User Message",
+      "wave": "W1",
+      "dependsOn": [
+        "T02",
+        "T05",
+        "T06",
+        "T08"
+      ],
+      "taskFile": "tasks/T09-raw-input-receipt.md",
+      "primarySymbol": "InputCorrelator"
+    },
+    {
+      "id": "T10",
+      "slug": "user-directive-capture",
+      "title": "实现 Authenticated User Directive Lane 与 Quote/Byte-range 不变量",
+      "wave": "W1",
+      "dependsOn": [
+        "T09"
+      ],
+      "taskFile": "tasks/T10-user-directive-capture.md",
+      "primarySymbol": "captureUserDirectives"
+    },
+    {
+      "id": "T11",
+      "slug": "tool-result-raw-capture",
+      "title": "在 Pi `tool_result` 写入前完成原文捕获、CAS 与 Prepared Receipt",
+      "wave": "W1",
+      "dependsOn": [
+        "T05",
+        "T07",
+        "T08"
+      ],
+      "taskFile": "tasks/T11-tool-result-raw-capture.md",
+      "primarySymbol": "captureObservation"
+    },
+    {
+      "id": "T12",
+      "slug": "reducer-registry",
+      "title": "实现确定性 Reducer Registry、Revision 路由与资源限制",
+      "wave": "W1",
+      "dependsOn": [
+        "T02",
+        "T11"
+      ],
+      "taskFile": "tasks/T12-reducer-registry.md",
+      "primarySymbol": "ReducerRegistry"
+    },
+    {
+      "id": "T13",
+      "slug": "shell-build-test-reducers",
+      "title": "实现 Bash/构建/测试日志 Reducers",
+      "wave": "W1",
+      "dependsOn": [
+        "T12"
+      ],
+      "taskFile": "tasks/T13-shell-build-test-reducers.md",
+      "primarySymbol": "reduceTestLog"
+    },
+    {
+      "id": "T14",
+      "slug": "builtin-tool-reducers",
+      "title": "实现 read/grep/find/ls/edit/write 的结构化 Reducers",
+      "wave": "W1",
+      "dependsOn": [
+        "T12"
+      ],
+      "taskFile": "tasks/T14-builtin-tool-reducers.md",
+      "primarySymbol": "reduceSearchResult"
+    },
+    {
+      "id": "T15",
+      "slug": "evidence-units",
+      "title": "实现 EvidenceUnit Admission、Provenance 与 Observation Projection",
+      "wave": "W1",
+      "dependsOn": [
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T06"
+      ],
+      "taskFile": "tasks/T15-evidence-units.md",
+      "primarySymbol": "admitEvidence"
+    },
+    {
+      "id": "T16",
+      "slug": "exact-evidence-read",
+      "title": "实现 Evidence/Blob/Range 的精确读取与 Scope Enforcement",
+      "wave": "W1",
+      "dependsOn": [
+        "T15",
+        "T07"
+      ],
+      "taskFile": "tasks/T16-exact-evidence-read.md",
+      "primarySymbol": "readEvidenceById"
+    },
+    {
+      "id": "T17",
+      "slug": "literal-search-index",
+      "title": "实现 Literal/Path/Error/Command 倒排索引与时间过滤",
+      "wave": "W1",
+      "dependsOn": [
+        "T15",
+        "T06"
+      ],
+      "taskFile": "tasks/T17-literal-search-index.md",
+      "primarySymbol": "LiteralIndex"
+    },
+    {
+      "id": "T18",
+      "slug": "fts-catalog",
+      "title": "实现 Workspace-scoped FTS5 Catalog、Rebuild 与 Fallback",
+      "wave": "W1",
+      "dependsOn": [
+        "T17",
+        "T06"
+      ],
+      "taskFile": "tasks/T18-fts-catalog.md",
+      "primarySymbol": "FtsCatalog"
+    },
+    {
+      "id": "T19",
+      "slug": "proactive-recall",
+      "title": "实现每个顶层 User Turn 的主动 Recall Query 与有界 Page",
+      "wave": "W1",
+      "dependsOn": [
+        "T10",
+        "T16",
+        "T18"
+      ],
+      "taskFile": "tasks/T19-proactive-recall.md",
+      "primarySymbol": "buildProactiveRecallPage"
+    },
+    {
+      "id": "T20",
+      "slug": "claim-ledger",
+      "title": "实现 Bitemporal Claim Ledger 与 Support Closure",
+      "wave": "W2",
+      "dependsOn": [
+        "T15",
+        "T06"
+      ],
+      "taskFile": "tasks/T20-claim-ledger.md",
+      "primarySymbol": "ClaimLedger"
+    },
+    {
+      "id": "T21",
+      "slug": "claim-conflict-supersession",
+      "title": "实现 Claim 冲突、Supersession、Retraction 与 Audit Slice",
+      "wave": "W2",
+      "dependsOn": [
+        "T20"
+      ],
+      "taskFile": "tasks/T21-claim-conflict-supersession.md",
+      "primarySymbol": "applyClaimTransition"
+    },
+    {
+      "id": "T22",
+      "slug": "outcome-attestation-action-gate",
+      "title": "实现 Outcome Attestation 与 Side-effecting Tool Action Gate",
+      "wave": "W2",
+      "dependsOn": [
+        "T15",
+        "T20",
+        "T21",
+        "T05"
+      ],
+      "taskFile": "tasks/T22-outcome-attestation-action-gate.md",
+      "primarySymbol": "authorizeToolCall"
+    },
+    {
+      "id": "T23",
+      "slug": "continuity-ledger",
+      "title": "实现 Task Fronts、External Side Effects 与 Next Safe Action Ledger",
+      "wave": "W2",
+      "dependsOn": [
+        "T10",
+        "T20",
+        "T21"
+      ],
+      "taskFile": "tasks/T23-continuity-ledger.md",
+      "primarySymbol": "reduceContinuityRevision"
+    },
+    {
+      "id": "T24",
+      "slug": "token-accounting",
+      "title": "实现有效输入预算、Provider Usage 校准与预测增长",
+      "wave": "W2",
+      "dependsOn": [
+        "T03",
+        "T05"
+      ],
+      "taskFile": "tasks/T24-token-accounting.md",
+      "primarySymbol": "computeEffectiveInputBudget"
+    },
+    {
+      "id": "T25",
+      "slug": "active-turn-suffix",
+      "title": "实现 Exact Active Turn Suffix 与 Tool Pairing Atomicity",
+      "wave": "W2",
+      "dependsOn": [
+        "T02",
+        "T15",
+        "T23",
+        "T24"
+      ],
+      "taskFile": "tasks/T25-active-turn-suffix.md",
+      "primarySymbol": "buildExactActiveSuffix"
+    },
+    {
+      "id": "T26",
+      "slug": "materializer",
+      "title": "实现四区 Cache-aware Request Materializer 与 Reduction Ladder",
+      "wave": "W2",
+      "dependsOn": [
+        "T19",
+        "T23",
+        "T24",
+        "T25"
+      ],
+      "taskFile": "tasks/T26-materializer.md",
+      "primarySymbol": "ContextMaterializer"
+    },
+    {
+      "id": "T27",
+      "slug": "context-hook-integration",
+      "title": "接入 Pi `context` Hook，处理 Fail-open 宿主与 Safe Abort",
+      "wave": "W2",
+      "dependsOn": [
+        "T04",
+        "T05",
+        "T26"
+      ],
+      "taskFile": "tasks/T27-context-hook-integration.md",
+      "primarySymbol": "registerContextHook"
+    },
+    {
+      "id": "T28",
+      "slug": "retrieval-leases",
+      "title": "实现 Purpose-bound Retrieval Lease 生命周期与 Token-turn Cap",
+      "wave": "W2",
+      "dependsOn": [
+        "T19",
+        "T23",
+        "T26"
+      ],
+      "taskFile": "tasks/T28-retrieval-leases.md",
+      "primarySymbol": "LeasePolicy"
+    },
+    {
+      "id": "T29",
+      "slug": "host-checkpoint-renderer",
+      "title": "实现 Pi Host Checkpoint Schema 与 Cache-stable Renderer",
+      "wave": "W2",
+      "dependsOn": [
+        "T10",
+        "T20",
+        "T23",
+        "T24"
+      ],
+      "taskFile": "tasks/T29-host-checkpoint-renderer.md",
+      "primarySymbol": "renderHostCheckpoint"
+    },
+    {
+      "id": "T30",
+      "slug": "deterministic-host-checkpoint",
+      "title": "构建 Deterministic Host Compaction Candidate 与 Must-shrink Gate",
+      "wave": "W2",
+      "dependsOn": [
+        "T29",
+        "T15",
+        "T16"
+      ],
+      "taskFile": "tasks/T30-deterministic-host-checkpoint.md",
+      "primarySymbol": "buildDeterministicCheckpointCandidate"
+    },
+    {
+      "id": "T31",
+      "slug": "compaction-takeover",
+      "title": "接管 Pi Manual/Threshold/Overflow Compaction 与 Commit Acknowledgment",
+      "wave": "W2",
+      "dependsOn": [
+        "T04",
+        "T05",
+        "T30"
+      ],
+      "taskFile": "tasks/T31-compaction-takeover.md",
+      "primarySymbol": "registerCompactionHooks"
+    },
+    {
+      "id": "T32",
+      "slug": "host-convergence-controller",
+      "title": "实现周期性 Pi Host 收敛策略与 Clone-cost Backpressure",
+      "wave": "W2",
+      "dependsOn": [
+        "T24",
+        "T27",
+        "T31"
+      ],
+      "taskFile": "tasks/T32-host-convergence-controller.md",
+      "primarySymbol": "decideHostConvergence"
+    },
+    {
+      "id": "T33",
+      "slug": "session-lifecycle",
+      "title": "实现 Session Start/Tree/Fork/Shutdown 的 Scope、Catch-up 与 Recovery",
+      "wave": "W2",
+      "dependsOn": [
+        "T08",
+        "T27",
+        "T31",
+        "T32"
+      ],
+      "taskFile": "tasks/T33-session-lifecycle.md",
+      "primarySymbol": "registerSessionLifecycle"
+    },
+    {
+      "id": "T34",
+      "slug": "background-candidates",
+      "title": "实现 `agent_settled` 后的可取消 Background Candidate Worker",
+      "wave": "W3",
+      "dependsOn": [
+        "T08",
+        "T23",
+        "T30",
+        "T33"
+      ],
+      "taskFile": "tasks/T34-background-candidates.md",
+      "primarySymbol": "CandidateWorker"
+    },
+    {
+      "id": "T35",
+      "slug": "semantic-proposal",
+      "title": "实现 Semantic Proposal Schema 与受限生成 Adapter",
+      "wave": "W3",
+      "dependsOn": [
+        "T20",
+        "T23",
+        "T34"
+      ],
+      "taskFile": "tasks/T35-semantic-proposal.md",
+      "primarySymbol": "generateSemanticProposal"
+    },
+    {
+      "id": "T36",
+      "slug": "verifier",
+      "title": "实现 结构/证据/极性/时间/Authority Verifier 与 Deterministic Floor",
+      "wave": "W3",
+      "dependsOn": [
+        "T15",
+        "T20",
+        "T21",
+        "T23",
+        "T35"
+      ],
+      "taskFile": "tasks/T36-verifier.md",
+      "primarySymbol": "verifySemanticProposal"
+    },
+    {
+      "id": "T37",
+      "slug": "generation-fencing",
+      "title": "实现 Verified Generation CAS Publish、Head Fencing 与 Stale Discard",
+      "wave": "W3",
+      "dependsOn": [
+        "T34",
+        "T36",
+        "T08"
+      ],
+      "taskFile": "tasks/T37-generation-fencing.md",
+      "primarySymbol": "publishVerifiedGeneration"
+    },
+    {
+      "id": "T38",
+      "slug": "telemetry-economics",
+      "title": "实现脱敏 Telemetry、Cache/Economics 与 Realized Net Value Controller",
+      "wave": "W3",
+      "dependsOn": [
+        "T24",
+        "T26",
+        "T31",
+        "T37"
+      ],
+      "taskFile": "tasks/T38-telemetry-economics.md",
+      "primarySymbol": "calculateRealizedNetValue"
+    },
+    {
+      "id": "T39",
+      "slug": "runtime-tools-commands",
+      "title": "实现 Recall/Search/Status/Pin 工具与运维命令",
+      "wave": "W4",
+      "dependsOn": [
+        "T16",
+        "T18",
+        "T19",
+        "T22",
+        "T28"
+      ],
+      "taskFile": "tasks/T39-runtime-tools-commands.md",
+      "primarySymbol": "registerRuntimeTools"
+    },
+    {
+      "id": "T40",
+      "slug": "package-install-conflicts",
+      "title": "实现 Pi Package 安装、Runtime Doctor 与 Known Owner Conflict 管理",
+      "wave": "W4",
+      "dependsOn": [
+        "T04",
+        "T05",
+        "T27",
+        "T31",
+        "T39"
+      ],
+      "taskFile": "tasks/T40-package-install-conflicts.md",
+      "primarySymbol": "runRuntimeDoctor"
+    },
+    {
+      "id": "T41",
+      "slug": "performance-spikes",
+      "title": "运行 Clone/CAS/SQLite/FTS/Materialization/Compaction 性能 Spike 并冻结 SLO",
+      "wave": "W4",
+      "dependsOn": [
+        "T06",
+        "T07",
+        "T18",
+        "T26",
+        "T31"
+      ],
+      "taskFile": "tasks/T41-performance-spikes.md",
+      "primarySymbol": "runPerformanceSpikes"
+    },
+    {
+      "id": "T42",
+      "slug": "benchmark-harness",
+      "title": "实现 Paired Long-horizon Benchmark、Ablation 与 Quality Attribution",
+      "wave": "W4",
+      "dependsOn": [
+        "T27",
+        "T31",
+        "T38",
+        "T41"
+      ],
+      "taskFile": "tasks/T42-benchmark-harness.md",
+      "primarySymbol": "runBenchmarkSuite"
+    },
+    {
+      "id": "T43",
+      "slug": "security-fuzz",
+      "title": "实现 Memory Poisoning、Secret、Authority、Cursor 与 Recovery Fuzz/Mutation Suite",
+      "wave": "W4",
+      "dependsOn": [
+        "T07",
+        "T10",
+        "T15",
+        "T22",
+        "T31",
+        "T36"
+      ],
+      "taskFile": "tasks/T43-security-fuzz.md",
+      "primarySymbol": "runSecuritySuite"
+    },
+    {
+      "id": "T44",
+      "slug": "pi-compatibility-ci",
+      "title": "实现 Pi 版本矩阵、Public-import Scan、Runtime Probe 与 Payload Integrity Diagnostics",
+      "wave": "W4",
+      "dependsOn": [
+        "T05",
+        "T27",
+        "T31",
+        "T40"
+      ],
+      "taskFile": "tasks/T44-pi-compatibility-ci.md",
+      "primarySymbol": "verifyPiCompatibility"
+    },
+    {
+      "id": "T45",
+      "slug": "deterministic-mvp-gate",
+      "title": "执行 Deterministic MVP Release Gate 与 Stop/Continue 决策",
+      "wave": "W5",
+      "dependsOn": [
+        "T33",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T43",
+        "T44"
+      ],
+      "taskFile": "tasks/T45-deterministic-mvp-gate.md",
+      "primarySymbol": "evaluateDeterministicMvpGate"
+    },
+    {
+      "id": "T46",
+      "slug": "semantic-beta-gate",
+      "title": "执行 Semantic/Background Beta Gate 与 Ablation 决策",
+      "wave": "W5",
+      "dependsOn": [
+        "T34",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T45"
+      ],
+      "taskFile": "tasks/T46-semantic-beta-gate.md",
+      "primarySymbol": "evaluateSemanticBetaGate"
+    },
+    {
+      "id": "T47",
+      "slug": "operations-cli",
+      "title": "实现 Doctor、Recovery、Backup/Restore、GC、Key Rotation 运维工具",
+      "wave": "W5",
+      "dependsOn": [
+        "T06",
+        "T07",
+        "T08",
+        "T40",
+        "T45"
+      ],
+      "taskFile": "tasks/T47-operations-cli.md",
+      "primarySymbol": "createWorkspaceBackup"
+    },
+    {
+      "id": "T48",
+      "slug": "release-packaging",
+      "title": "完成 Release Artifact、文档、SBOM、Manifest 与可复现安装验证",
+      "wave": "W5",
+      "dependsOn": [
+        "T44",
+        "T45",
+        "T46",
+        "T47"
+      ],
+      "taskFile": "tasks/T48-release-packaging.md",
+      "primarySymbol": "buildReleaseArtifact"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "scenarioId": "branch-side-effect",
+  "family": "branch-external-state",
+  "description": "会话分支回退但文件系统副作用仍存在，Continuation 必须重新验证。",
+  "boundaryKind": "branch-boundary",
+  "requiredFeatures": [
+    "branch",
+    "external-side-effect"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "会话分支回退但文件系统副作用仍存在，Continuation 必须重新验证。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "会话分支回退但文件系统副作用仍存在，Continuation 必须重新验证。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "resume-branch",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "branch-external-state",
+    "branch",
+    "external-side-effect"
+  ]
+}

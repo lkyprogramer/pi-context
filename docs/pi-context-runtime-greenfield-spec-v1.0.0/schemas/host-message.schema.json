@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HostMessage",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "hostMessageId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^hm_[a-f0-9]{16,64}$"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant",
+        "tool-result",
+        "custom"
+      ]
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "content": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "image-ref",
+              "tool-call-ref",
+              "pointer"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "text"
+            ]
+          },
+          {
+            "required": [
+              "ref"
+            ]
+          }
+        ]
+      },
+      "minItems": 1
+    },
+    "sourceClass": {
+      "type": "string",
+      "enum": [
+        "system",
+        "authenticated-user",
+        "untrusted-user",
+        "trusted-tool",
+        "untrusted-tool",
+        "external-content",
+        "agent-derived"
+      ]
+    },
+    "toolCallId": {
+      "type": "string"
+    },
+    "toolName": {
+      "type": "string"
+    },
+    "isError": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "hostMessageId",
+    "role",
+    "timestamp",
+    "content",
+    "sourceClass"
+  ]
+}

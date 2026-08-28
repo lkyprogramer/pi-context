@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TraceSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "traceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "pi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "commit"
+      ]
+    },
+    "rawTraceSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "entryId",
+          "role",
+          "contentSha256"
+        ],
+        "properties": {
+          "entryId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "contentSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "leafId": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "pre-threshold",
+            "native-threshold",
+            "overflow-recovery",
+            "semantic-boundary",
+            "branch-boundary",
+            "single-huge-turn"
+          ]
+        },
+        "sourceTokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "leafId",
+        "kind",
+        "sourceTokens"
+      ]
+    },
+    "workspaceSnapshotSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "traceId",
+    "scenarioId",
+    "seed",
+    "pi",
+    "rawTraceSha256",
+    "entries",
+    "boundary",
+    "workspaceSnapshotSha256"
+  ]
+}

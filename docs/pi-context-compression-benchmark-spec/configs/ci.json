@@ -1,0 +1,18 @@
+{
+  "profile": "ci",
+  "arms": [
+    "A0",
+    "A1"
+  ],
+  "scenarioFamilies": [
+    "synthetic-exact"
+  ],
+  "replicates": 1,
+  "bootstrapSamples": 2000,
+  "qualityNonInferiorityMargin": 0.05,
+  "cacheMode": "off",
+  "readerModels": [
+    "reader-fixed-1"
+  ],
+  "judgeModels": []
+}

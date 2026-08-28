@@ -1,0 +1,10 @@
+stateDiagram-v2
+  [*] --> active
+  active --> superseded
+  active --> resolved
+  active --> contested
+  contested --> active
+  active --> retracted
+  superseded --> [*]
+  resolved --> [*]
+  retracted --> [*]

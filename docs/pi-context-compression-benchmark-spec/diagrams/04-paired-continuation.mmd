@@ -1,0 +1,9 @@
+flowchart TD
+  S[Boundary Snapshot] --> C1[Clone Arm X]
+  S --> C2[Clone Arm Y]
+  C1 --> T1[Same hidden task]
+  C2 --> T2[Same hidden task]
+  T1 --> E1[Environment assertions]
+  T2 --> E2[Environment assertions]
+  E1 --> P[Paired statistics]
+  E2 --> P

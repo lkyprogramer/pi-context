@@ -1,0 +1,58 @@
+{
+  "scenarioId": "test-fail-fix-pass",
+  "family": "outcome-chain",
+  "description": "测试先失败、修复后通过，旧失败不得覆盖新结果，也不得提前宣称通过。",
+  "boundaryKind": "native-threshold",
+  "requiredFeatures": [
+    "tool-evidence",
+    "status-transition"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "测试先失败、修复后通过，旧失败不得覆盖新结果，也不得提前宣称通过。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "测试先失败、修复后通过，旧失败不得覆盖新结果，也不得提前宣称通过。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "finalize",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "outcome-chain",
+    "tool-evidence",
+    "status-transition"
+  ]
+}

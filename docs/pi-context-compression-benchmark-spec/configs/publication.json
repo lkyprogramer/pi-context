@@ -1,0 +1,26 @@
+{
+  "profile": "publication",
+  "arms": [
+    "A0",
+    "A1",
+    "A2",
+    "B0",
+    "B1",
+    "B2"
+  ],
+  "scenarioFamilies": [
+    "all"
+  ],
+  "replicates": 5,
+  "bootstrapSamples": 20000,
+  "qualityNonInferiorityMargin": 0.02,
+  "cacheMode": "both",
+  "readerModels": [
+    "reader-fixed-1",
+    "reader-fixed-2"
+  ],
+  "judgeModels": [
+    "judge-1",
+    "judge-2"
+  ]
+}

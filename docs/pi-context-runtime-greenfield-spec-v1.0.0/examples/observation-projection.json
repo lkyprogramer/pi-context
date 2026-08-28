@@ -1,0 +1,19 @@
+{
+  "operationId": "op_0123456789abcdef",
+  "observationId": "ob_12345678",
+  "rawBlobId": "bl_12345678",
+  "evidenceIds": [
+    "ev_12345678"
+  ],
+  "visibleContent": [
+    {
+      "type": "text",
+      "text": "status: failed; full: ctx://observation/ob_12345678"
+    }
+  ],
+  "isError": true,
+  "reducer": {
+    "id": "shell-test",
+    "revision": "1.0.0"
+  }
+}

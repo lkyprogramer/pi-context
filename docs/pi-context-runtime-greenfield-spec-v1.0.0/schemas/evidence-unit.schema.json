@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EvidenceUnit",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "evidenceId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^ev_[a-f0-9]{8,64}$"
+    },
+    "workspaceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branchScope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "user-directive",
+        "tool-outcome",
+        "synthetic-tool-outcome",
+        "file-state",
+        "error",
+        "test-result",
+        "external-content",
+        "agent-note"
+      ]
+    },
+    "sourceClass": {
+      "type": "string",
+      "enum": [
+        "system",
+        "authenticated-user",
+        "untrusted-user",
+        "trusted-tool",
+        "untrusted-tool",
+        "external-content",
+        "agent-derived"
+      ]
+    },
+    "authority": {
+      "type": "string",
+      "enum": [
+        "none",
+        "inform",
+        "propose",
+        "act"
+      ]
+    },
+    "sourceRefs": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "SourceRef",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pi-entry",
+              "input",
+              "observation",
+              "blob",
+              "directive",
+              "evidence"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contentHash": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "contentHash"
+        ]
+      },
+      "minItems": 1
+    },
+    "contentHash": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "payload": {},
+    "observedAt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "validTime": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "reducer": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "evidenceId",
+    "workspaceId",
+    "sessionId",
+    "branchScope",
+    "kind",
+    "sourceClass",
+    "authority",
+    "sourceRefs",
+    "contentHash",
+    "payload",
+    "observedAt",
+    "validTime",
+    "reducer"
+  ]
+}

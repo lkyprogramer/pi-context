@@ -1,0 +1,21 @@
+{
+  "directiveId": "ud_12345678",
+  "workspaceId": "ws_0123456789abcdef",
+  "sessionId": "01991f00-test",
+  "sourceInputId": "in_12345678",
+  "sourceContentHash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "quote": "不得修改公开 API",
+  "byteRange": {
+    "start": 0,
+    "end": 25
+  },
+  "kind": "prohibition",
+  "polarity": "must-not",
+  "status": "active",
+  "scope": {
+    "kind": "artifact",
+    "value": "public-api"
+  },
+  "sourceClass": "authenticated-user",
+  "authority": "act"
+}

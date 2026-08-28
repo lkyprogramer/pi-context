@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProbeResult",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "scenarioId": {
+      "type": "string"
+    },
+    "armId": {
+      "type": "string"
+    },
+    "readerId": {
+      "type": "string"
+    },
+    "probeId": {
+      "type": "string"
+    },
+    "answer": {},
+    "abstain": {
+      "type": "boolean"
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "correct": {
+      "type": "boolean"
+    },
+    "latencyMs": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "runId",
+    "scenarioId",
+    "armId",
+    "readerId",
+    "probeId",
+    "answer",
+    "abstain",
+    "evidenceRefs",
+    "correct",
+    "latencyMs"
+  ]
+}

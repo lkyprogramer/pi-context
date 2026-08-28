@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContinuityLedger",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "revisionId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^cr_[a-f0-9]{8,64}$"
+    },
+    "parentRevisionId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cursor": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostSessionCursor",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^ws_[a-f0-9]{16,64}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leafId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lineageHash": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "modelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thinkingLevel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspaceId",
+        "sessionId",
+        "leafId",
+        "lineageHash",
+        "modelKey",
+        "thinkingLevel"
+      ]
+    },
+    "taskFronts": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "TaskFronts",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "active": {
+          "type": "array",
+          "items": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "TaskFront",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^tf_[a-f0-9]{8,64}$"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "parked",
+                  "completed",
+                  "superseded"
+                ]
+              },
+              "goalClaimId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^cl_[a-f0-9]{8,64}$"
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^ev_[a-f0-9]{8,64}$"
+                },
+                "minItems": 0
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "status",
+              "goalClaimId",
+              "evidenceIds"
+            ]
+          },
+          "minItems": 0
+        },
+        "parked": {
+          "type": "array",
+          "items": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "TaskFront",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^tf_[a-f0-9]{8,64}$"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "parked",
+                  "completed",
+                  "superseded"
+                ]
+              },
+              "goalClaimId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^cl_[a-f0-9]{8,64}$"
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^ev_[a-f0-9]{8,64}$"
+                },
+                "minItems": 0
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "status",
+              "goalClaimId",
+              "evidenceIds"
+            ]
+          },
+          "minItems": 0
+        },
+        "completed": {
+          "type": "array",
+          "items": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "TaskFront",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^tf_[a-f0-9]{8,64}$"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "parked",
+                  "completed",
+                  "superseded"
+                ]
+              },
+              "goalClaimId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^cl_[a-f0-9]{8,64}$"
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^ev_[a-f0-9]{8,64}$"
+                },
+                "minItems": 0
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "status",
+              "goalClaimId",
+              "evidenceIds"
+            ]
+          },
+          "minItems": 0
+        },
+        "superseded": {
+          "type": "array",
+          "items": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "TaskFront",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^tf_[a-f0-9]{8,64}$"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "parked",
+                  "completed",
+                  "superseded"
+                ]
+              },
+              "goalClaimId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^cl_[a-f0-9]{8,64}$"
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^ev_[a-f0-9]{8,64}$"
+                },
+                "minItems": 0
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "status",
+              "goalClaimId",
+              "evidenceIds"
+            ]
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "active",
+        "parked",
+        "completed",
+        "superseded"
+      ]
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^cl_[a-f0-9]{8,64}$"
+      },
+      "minItems": 0
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^cl_[a-f0-9]{8,64}$"
+      },
+      "minItems": 0
+    },
+    "unresolvedErrors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 0
+    },
+    "externalSideEffects": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 0
+    },
+    "validationState": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 0
+    },
+    "changedArtifacts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 0
+    },
+    "delegations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 0
+    },
+    "nextSafeActions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "revisionId",
+    "parentRevisionId",
+    "cursor",
+    "taskFronts",
+    "constraints",
+    "decisions",
+    "unresolvedErrors",
+    "externalSideEffects",
+    "validationState",
+    "changedArtifacts",
+    "delegations",
+    "nextSafeActions"
+  ]
+}

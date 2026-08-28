@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HostSessionCursor",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "workspaceId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^ws_[a-f0-9]{16,64}$"
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "leafId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lineageHash": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "modelKey": {
+      "type": "string",
+      "minLength": 1
+    },
+    "thinkingLevel": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "workspaceId",
+    "sessionId",
+    "leafId",
+    "lineageHash",
+    "modelKey",
+    "thinkingLevel"
+  ]
+}

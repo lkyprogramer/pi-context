@@ -1,0 +1,58 @@
+{
+  "scenarioId": "recall-needed-old-error",
+  "family": "recall-needed",
+  "description": "后续任务引用旧错误根因，当前热区没有它，主动召回应命中。",
+  "boundaryKind": "pre-threshold",
+  "requiredFeatures": [
+    "proactive-recall",
+    "error"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "后续任务引用旧错误根因，当前热区没有它，主动召回应命中。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "后续任务引用旧错误根因，当前热区没有它，主动召回应命中。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "fix-regression",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "recall-needed",
+    "proactive-recall",
+    "error"
+  ]
+}

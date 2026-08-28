@@ -1,0 +1,15 @@
+{
+  "runId": "run-example",
+  "scenarioId": "deploy-constraint-001",
+  "armId": "A2",
+  "readerId": "reader-fixed",
+  "probeId": "p1",
+  "answer": "no",
+  "abstain": false,
+  "evidenceRefs": [
+    "u1",
+    "t1"
+  ],
+  "correct": true,
+  "latencyMs": 120.5
+}

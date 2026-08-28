@@ -1,0 +1,10 @@
+flowchart TD
+  R[RawTrace + Oracle] --> A[Arm Artifact]
+  A --> L0[L0 Static deterministic]
+  A --> L1[L1 Reader isolated]
+  A --> L2[L2 Paired closed-loop]
+  L0 --> G[Lexicographic Gate]
+  L1 --> G
+  L2 --> G
+  A --> J[L3 Blind LLM Judge]
+  J -. supplemental .-> G

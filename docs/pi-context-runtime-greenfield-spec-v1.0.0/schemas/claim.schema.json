@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Claim",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "claimId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^cl_[a-f0-9]{8,64}$"
+    },
+    "key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claimType": {
+      "type": "string",
+      "enum": [
+        "goal",
+        "constraint",
+        "decision",
+        "outcome",
+        "file-state",
+        "error-state",
+        "validation",
+        "preference"
+      ]
+    },
+    "value": {},
+    "polarity": {
+      "type": "string",
+      "enum": [
+        "must",
+        "must-not",
+        "is",
+        "is-not",
+        "unknown"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "superseded",
+        "resolved",
+        "retracted",
+        "contested"
+      ]
+    },
+    "validTime": {
+      "anyOf": [
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "title": "TimeRange",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "start": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "end": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "systemTime": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "TimeRange",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ]
+    },
+    "support": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(ev|ud)_[a-f0-9]{8,64}$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "authority": {
+      "type": "string",
+      "enum": [
+        "none",
+        "inform",
+        "propose",
+        "act"
+      ]
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^cl_[a-f0-9]{8,64}$"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "conflictsWith": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^cl_[a-f0-9]{8,64}$"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "claimId",
+    "key",
+    "claimType",
+    "value",
+    "polarity",
+    "status",
+    "validTime",
+    "systemTime",
+    "support",
+    "authority",
+    "supersedes",
+    "conflictsWith"
+  ]
+}

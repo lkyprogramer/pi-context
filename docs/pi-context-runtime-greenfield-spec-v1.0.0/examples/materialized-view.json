@@ -1,0 +1,50 @@
+{
+  "viewId": "vw_12345678",
+  "outputHash": "5555555555555555555555555555555555555555555555555555555555555555",
+  "messages": [
+    {
+      "hostMessageId": "hm_0123456789abcdef",
+      "role": "tool-result",
+      "timestamp": 1787700000000,
+      "content": [
+        {
+          "type": "text",
+          "text": "tests failed: 2; full: ctx://observation/ob_123"
+        }
+      ],
+      "sourceClass": "trusted-tool",
+      "toolCallId": "call_1",
+      "toolName": "bash",
+      "isError": true
+    }
+  ],
+  "sections": [
+    {
+      "kind": "active-turn",
+      "cacheZone": "active-turn",
+      "contentHash": "6666666666666666666666666666666666666666666666666666666666666666",
+      "estimatedTokens": 30,
+      "messageIds": [
+        "hm_0123456789abcdef"
+      ]
+    }
+  ],
+  "tokenEstimate": 30,
+  "cachePlan": {
+    "layoutVersion": 1,
+    "sectionOrder": [
+      "runtime-preamble",
+      "hard-directives",
+      "stable-continuity",
+      "historical-tail",
+      "retrieval-page",
+      "active-turn"
+    ],
+    "eligiblePrefixTokens": 12000,
+    "firstDifferentSection": "retrieval-page",
+    "previousViewId": "vw_previous",
+    "providerCapability": "automatic-prefix"
+  },
+  "omissions": [],
+  "createdAt": 1787700000000
+}

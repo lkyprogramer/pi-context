@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MaterializedView",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "viewId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^vw_[a-f0-9]{8,64}$"
+    },
+    "outputHash": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "HostMessage",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hostMessageId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^hm_[a-f0-9]{16,64}$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "tool-result",
+              "custom"
+            ]
+          },
+          "timestamp": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "image-ref",
+                    "tool-call-ref",
+                    "pointer"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "ref": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "anyOf": [
+                {
+                  "required": [
+                    "text"
+                  ]
+                },
+                {
+                  "required": [
+                    "ref"
+                  ]
+                }
+              ]
+            },
+            "minItems": 1
+          },
+          "sourceClass": {
+            "type": "string",
+            "enum": [
+              "system",
+              "authenticated-user",
+              "untrusted-user",
+              "trusted-tool",
+              "untrusted-tool",
+              "external-content",
+              "agent-derived"
+            ]
+          },
+          "toolCallId": {
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          },
+          "isError": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hostMessageId",
+          "role",
+          "timestamp",
+          "content",
+          "sourceClass"
+        ]
+      },
+      "minItems": 1
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "MaterializedSection",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "runtime-preamble",
+              "hard-directives",
+              "stable-continuity",
+              "historical-tail",
+              "continuity-delta",
+              "directory",
+              "retrieval-page",
+              "runtime-warning",
+              "active-turn"
+            ]
+          },
+          "cacheZone": {
+            "type": "string",
+            "enum": [
+              "stable-prefix",
+              "append-only-history",
+              "volatile-augmentation",
+              "active-turn"
+            ]
+          },
+          "contentHash": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "estimatedTokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "messageIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "kind",
+          "cacheZone",
+          "contentHash",
+          "estimatedTokens",
+          "messageIds"
+        ]
+      },
+      "minItems": 1
+    },
+    "tokenEstimate": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cachePlan": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "PromptCachePlan",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "layoutVersion": {
+          "const": 1
+        },
+        "sectionOrder": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "eligiblePrefixTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "firstDifferentSection": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "previousViewId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "providerCapability": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "automatic-prefix",
+            "explicit-breakpoint",
+            "disabled"
+          ]
+        }
+      },
+      "required": [
+        "layoutVersion",
+        "sectionOrder",
+        "eligiblePrefixTokens",
+        "firstDifferentSection",
+        "previousViewId",
+        "providerCapability"
+      ]
+    },
+    "omissions": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Omission",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "kind",
+          "reason",
+          "count"
+        ]
+      },
+      "minItems": 0
+    },
+    "createdAt": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "viewId",
+    "outputHash",
+    "messages",
+    "sections",
+    "tokenEstimate",
+    "cachePlan",
+    "omissions",
+    "createdAt"
+  ]
+}

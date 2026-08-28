@@ -1,0 +1,58 @@
+{
+  "scenarioId": "same-basename-files",
+  "family": "exact-identity",
+  "description": "两个不同目录的同名文件不能因 basename 归一化而混淆。",
+  "boundaryKind": "semantic-boundary",
+  "requiredFeatures": [
+    "path",
+    "collision"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "两个不同目录的同名文件不能因 basename 归一化而混淆。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "两个不同目录的同名文件不能因 basename 归一化而混淆。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "edit-correct-file",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "exact-identity",
+    "path",
+    "collision"
+  ]
+}

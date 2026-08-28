@@ -1,0 +1,29 @@
+{
+  "specVersion": "1.0.0",
+  "productVersion": "0.1.0-alpha.1",
+  "piBaseline": {
+    "version": "0.84.3",
+    "commit": "938109e7259068ff736dbba3bed14c81af25abbe"
+  },
+  "contentFilesExcludingManifest": 269,
+  "totalFilesIncludingManifest": 270,
+  "markdownFiles": 175,
+  "numberedDocs": 46,
+  "adrs": 22,
+  "tasks": 48,
+  "waves": 6,
+  "plans": 8,
+  "schemas": 23,
+  "configs": 5,
+  "jsonExamples": 23,
+  "jsonlExamples": 2,
+  "diagrams": 16,
+  "checklists": 9,
+  "piAdapterDocs": 13,
+  "agentPlaybooks": 7,
+  "userProvidedSourceSnapshots": 5,
+  "taskGraph": {
+    "nodes": 48,
+    "waves": 6
+  }
+}

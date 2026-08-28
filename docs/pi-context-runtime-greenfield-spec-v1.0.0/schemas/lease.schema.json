@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RetrievalLease",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "leaseId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^ls_[a-f0-9]{8,64}$"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "taskFrontId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^tf_[a-f0-9]{8,64}$"
+    },
+    "evidenceIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^ev_[a-f0-9]{8,64}$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "createdAt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expiresAt": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "turnDeadline": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tokenTurnBudget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "consumedTokenTurns": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "releaseConditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "task-completed",
+          "evidence-superseded",
+          "ttl",
+          "turn-deadline",
+          "token-cap",
+          "manual"
+        ]
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "leaseId",
+    "purpose",
+    "taskFrontId",
+    "evidenceIds",
+    "createdAt",
+    "expiresAt",
+    "turnDeadline",
+    "tokenTurnBudget",
+    "consumedTokenTurns",
+    "releaseConditions"
+  ]
+}

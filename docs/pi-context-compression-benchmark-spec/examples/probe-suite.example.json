@@ -1,0 +1,16 @@
+{
+  "scenarioId": "deploy-constraint-001",
+  "probes": [
+    {
+      "probeId": "p1",
+      "kind": "polarity",
+      "question": "May the agent deploy now?",
+      "expected": "no",
+      "sourceItemIds": [
+        "c1",
+        "o1"
+      ],
+      "allowAbstain": false
+    }
+  ]
+}

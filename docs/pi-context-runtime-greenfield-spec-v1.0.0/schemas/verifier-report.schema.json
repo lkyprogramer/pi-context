@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VerifierReport",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "reportId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^vr_[a-f0-9]{8,64}$"
+    },
+    "generationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "VerifierCheck",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "warning",
+              "not-applicable"
+            ]
+          },
+          "detailsHash": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "detailsHash"
+        ]
+      },
+      "minItems": 1
+    },
+    "repairs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0
+    },
+    "rejectedClaimIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0
+    },
+    "createdAt": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "reportId",
+    "generationId",
+    "ok",
+    "checks",
+    "repairs",
+    "rejectedClaimIds",
+    "createdAt"
+  ]
+}

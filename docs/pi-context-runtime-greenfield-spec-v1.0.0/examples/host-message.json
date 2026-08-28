@@ -1,0 +1,15 @@
+{
+  "hostMessageId": "hm_0123456789abcdef",
+  "role": "tool-result",
+  "timestamp": 1787700000000,
+  "content": [
+    {
+      "type": "text",
+      "text": "tests failed: 2; full: ctx://observation/ob_123"
+    }
+  ],
+  "sourceClass": "trusted-tool",
+  "toolCallId": "call_1",
+  "toolName": "bash",
+  "isError": true
+}

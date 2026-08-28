@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant Pi
+  participant Adapter
+  participant Kernel
+  participant Store
+  Pi->>Adapter: context(messages clone)
+  Adapter->>Kernel: materialize(input)
+  Kernel->>Store: directives/continuity/retrieval
+  Store-->>Kernel: bounded state
+  Kernel-->>Adapter: MaterializedView
+  Adapter-->>Pi: AgentMessage[]

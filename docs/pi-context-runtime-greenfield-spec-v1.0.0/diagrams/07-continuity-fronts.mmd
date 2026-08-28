@@ -1,0 +1,7 @@
+flowchart LR
+  A[Active] --> C[Completed]
+  A --> P[Parked]
+  A --> S[Superseded]
+  P --> A
+  A --> E[External Side Effects]
+  A --> V[Validation State]

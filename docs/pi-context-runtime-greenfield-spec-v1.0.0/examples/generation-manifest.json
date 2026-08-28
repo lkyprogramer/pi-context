@@ -1,0 +1,25 @@
+{
+  "generationId": "gen_12345678",
+  "state": "ready",
+  "cursor": {
+    "workspaceId": "ws_0123456789abcdef",
+    "sessionId": "01991f00-test",
+    "leafId": "a1b2c3d4",
+    "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "modelKey": "anthropic/claude-example",
+    "thinkingLevel": "high"
+  },
+  "sourceHead": "src_1",
+  "directiveHead": "dh_1",
+  "claimHead": "ch_1",
+  "continuityHead": "cth_1",
+  "catalogHead": "cah_1",
+  "modelKey": "anthropic/claude-example",
+  "thinkingLevel": "high",
+  "systemPromptHash": "8888888888888888888888888888888888888888888888888888888888888888",
+  "activeToolSetHash": "9999999999999999999999999999999999999999999999999999999999999999",
+  "configFingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "schemaVersion": 1,
+  "createdAt": 1787700000000,
+  "updatedAt": 1787700010000
+}

@@ -1,0 +1,21 @@
+{
+  "profile": "smoke",
+  "arms": [
+    "A0",
+    "A1",
+    "A2"
+  ],
+  "scenarioFamilies": [
+    "tool-heavy",
+    "delayed-constraint",
+    "recall-needed"
+  ],
+  "replicates": 2,
+  "bootstrapSamples": 5000,
+  "qualityNonInferiorityMargin": 0.05,
+  "cacheMode": "off",
+  "readerModels": [
+    "reader-fixed-1"
+  ],
+  "judgeModels": []
+}

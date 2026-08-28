@@ -1,0 +1,6 @@
+flowchart TD
+  I[input raw] --> R[Raw Input Receipt]
+  E[expanded user message] --> C[Correlation]
+  R --> C
+  C --> D[User Directive]
+  D --> M[Materializer hard pin]

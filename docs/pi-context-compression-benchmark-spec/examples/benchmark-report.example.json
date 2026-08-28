@@ -1,0 +1,19 @@
+{
+  "runId": "run-example",
+  "stage": "w1",
+  "baselineArm": "A0",
+  "candidateArms": [
+    "A1",
+    "A2"
+  ],
+  "hardGatePass": true,
+  "qualityCiLower": -0.01,
+  "qualityMargin": 0.03,
+  "medianTokenDelta": -0.24,
+  "realizedNetMedian": 0.012,
+  "failures": [],
+  "artifactHashes": [
+    "1111111111111111111111111111111111111111111111111111111111111111",
+    "2222222222222222222222222222222222222222222222222222222222222222"
+  ]
+}

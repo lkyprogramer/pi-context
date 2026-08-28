@@ -1,0 +1,10 @@
+{
+  "scenarioId": "deploy-constraint-001",
+  "armId": "A2",
+  "needed": true,
+  "recallAt5": 1.0,
+  "mrr": 1.0,
+  "pagePrecision": 1.0,
+  "injectedTokens": 280,
+  "taskSuccess": true
+}

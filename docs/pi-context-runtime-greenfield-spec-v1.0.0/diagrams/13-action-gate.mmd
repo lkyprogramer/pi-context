@@ -1,0 +1,6 @@
+flowchart TD
+  C[Tool Call] --> T{Query or Command}
+  T -->|Query| A[Allow with read policy]
+  T -->|Command| D[Dependency/Authority Check]
+  D -->|act support| A
+  D -->|missing| U[Require approval or deny]

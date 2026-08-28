@@ -1,0 +1,58 @@
+{
+  "scenarioId": "temporal-deadline-update",
+  "family": "temporal",
+  "description": "日期和截止时间被更新，旧时间必须标 superseded。",
+  "boundaryKind": "semantic-boundary",
+  "requiredFeatures": [
+    "time",
+    "update"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "日期和截止时间被更新，旧时间必须标 superseded。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "日期和截止时间被更新，旧时间必须标 superseded。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "schedule",
+    "allowed": true,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": true
+    }
+  ],
+  "tags": [
+    "temporal",
+    "time",
+    "update"
+  ]
+}

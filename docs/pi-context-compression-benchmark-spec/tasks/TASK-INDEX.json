@@ -1,0 +1,460 @@
+{
+  "version": "1.1.0",
+  "tasks": [
+    {
+      "id": "B01",
+      "title": "Benchmark Scaffold and Contracts",
+      "dependsOn": [],
+      "goal": "建立唯一公共合同，保证 TypeScript、JSON Schema、Examples 和后续 Task 使用同一字段与枚举。",
+      "publicSymbols": [
+        "RawTrace",
+        "BoundarySnapshot",
+        "Oracle",
+        "ArmManifest",
+        "CompressionArtifact",
+        "RunManifest",
+        "BenchmarkReport",
+        "GateDecision",
+        "defineBenchmarkContracts()"
+      ],
+      "allowedFiles": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        "tsconfig.base.json",
+        "packages/benchmark-contracts/package.json",
+        "packages/benchmark-contracts/src/index.ts",
+        "packages/benchmark-contracts/test/contracts.test.ts",
+        "scripts/check-contract-drift.mjs"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B02",
+      "title": "RawTrace Capture and Replay",
+      "dependsOn": [
+        "B01"
+      ],
+      "goal": "在任何 W1 reducer、Pi compaction 或 context rewrite 前捕获完整规范轨迹，并可重放为相同消息序列。",
+      "publicSymbols": [
+        "captureRawTrace()",
+        "replayRawTrace()",
+        "RawTraceCaptureReceipt"
+      ],
+      "allowedFiles": [
+        "packages/pi-benchmark-adapter/src/raw-trace.ts",
+        "packages/pi-benchmark-adapter/src/pi-message-codec.ts",
+        "packages/pi-benchmark-adapter/test/raw-trace.test.ts",
+        "packages/pi-benchmark-adapter/test/fixtures/session-v3.jsonl"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B03",
+      "title": "Boundary Snapshot and Restore",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "goal": "冻结 Pi Home、Session Tree、Workspace、Runtime Store 与环境元数据，使每个 Arm 从同一物理状态启动。",
+      "publicSymbols": [
+        "createBoundarySnapshot()",
+        "restoreBoundarySnapshot()",
+        "verifyBoundarySnapshot()"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-harness/src/snapshot.ts",
+        "packages/benchmark-harness/src/archive.ts",
+        "packages/benchmark-harness/test/snapshot.test.ts",
+        "packages/benchmark-harness/test/fixtures/workspace/.keep"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B04",
+      "title": "Oracle Annotation and Validation",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "goal": "建立可机器评分的 Claim/Directive/Outcome/Secret/Environment Oracle，并验证 source closure。",
+      "publicSymbols": [
+        "validateOracle()",
+        "normalizeOracleValue()",
+        "OracleValidationReport"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-oracle/src/oracle.ts",
+        "packages/benchmark-oracle/src/normalizers.ts",
+        "packages/benchmark-oracle/test/oracle.test.ts",
+        "packages/benchmark-oracle/test/normalizers.test.ts"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B05",
+      "title": "Pi Native Arm Runner",
+      "dependsOn": [
+        "B02",
+        "B03"
+      ],
+      "goal": "只使用 Pi Public API 在隔离环境运行真实 Pi Native Compaction，捕获输入、Preparation、CompactionEntry、Usage 和日志。",
+      "publicSymbols": [
+        "runPiNativeArm()",
+        "PiNativeArmReceipt",
+        "CompressionArtifact"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-arms/src/pi-native.ts",
+        "packages/benchmark-arms/src/pi-host.ts",
+        "packages/benchmark-arms/test/pi-native.test.ts",
+        "packages/benchmark-arms/test/fakes/recorded-provider.ts"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B06",
+      "title": "W1 Arms A1/A2",
+      "dependsOn": [
+        "B05"
+      ],
+      "goal": "从同一 RawTrace 运行 W1 入口降噪与主动召回两种变体，仍使用 Pi Native Compaction。",
+      "publicSymbols": [
+        "runW1Arm()",
+        "W1ShapedTrace",
+        "RecallInjectionReceipt"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-arms/src/w1.ts",
+        "packages/benchmark-arms/src/composition-guard.ts",
+        "packages/benchmark-arms/test/w1.test.ts",
+        "packages/benchmark-arms/test/fixtures/tool-heavy.json"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B07",
+      "title": "W2 Compactor Arms B0/B1/B2",
+      "dependsOn": [
+        "B05",
+        "B06"
+      ],
+      "goal": "在相同 W1ShapedTrace、source span、retained tail 和目标预算下运行 Pi Native 与 PCR deterministic compactor/materializer。",
+      "publicSymbols": [
+        "runW2CompactorArm()",
+        "BudgetMatchReport",
+        "B0/B1/B2 CompressionArtifact"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-arms/src/w2.ts",
+        "packages/benchmark-arms/src/budget-match.ts",
+        "packages/benchmark-arms/test/w2.test.ts",
+        "packages/benchmark-arms/test/fixtures/w1-shaped.json"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B08",
+      "title": "Static Artifact Scoring",
+      "dependsOn": [
+        "B04",
+        "B05"
+      ],
+      "goal": "以完全确定性算法计算结构、Oracle Coverage、极性/时间/状态、泄漏、Tool Pair 和压缩率。",
+      "publicSymbols": [
+        "scoreStaticArtifact()",
+        "StaticScore",
+        "ItemMatchRecord[]"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-scoring/src/static.ts",
+        "packages/benchmark-scoring/src/matchers.ts",
+        "packages/benchmark-scoring/test/static.test.ts",
+        "packages/benchmark-scoring/test/matchers.test.ts"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B09",
+      "title": "Recoverability Suite",
+      "dependsOn": [
+        "B04",
+        "B06"
+      ],
+      "goal": "证明被 W1 移出 Pi Context 的原始 Tool Result 可按 scope/handle/range 逐字恢复。",
+      "publicSymbols": [
+        "scoreRecoverability()",
+        "RecoverabilityReport",
+        "BlobRecoveryRecord[]"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-scoring/src/recoverability.ts",
+        "packages/benchmark-scoring/src/blob-faults.ts",
+        "packages/benchmark-scoring/test/recoverability.test.ts",
+        "packages/benchmark-scoring/test/fixtures/raw.bin"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B10",
+      "title": "Proactive Recall Evaluation",
+      "dependsOn": [
+        "B04",
+        "B06"
+      ],
+      "goal": "分别测量需要召回时的命中和不需要召回时的沉默，证明主动召回的正增量。",
+      "publicSymbols": [
+        "scoreProactiveRecall()",
+        "RecallEval",
+        "RecallDecisionRecord[]"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-scoring/src/recall.ts",
+        "packages/benchmark-scoring/src/ranking.ts",
+        "packages/benchmark-scoring/test/recall.test.ts",
+        "packages/benchmark-scoring/test/fixtures/queries.json"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B11",
+      "title": "Reader-isolated Probe Runner",
+      "dependsOn": [
+        "B04",
+        "B08"
+      ],
+      "goal": "固定 Reader 只读 Artifact 回答 Probe，并用 Full-context Ceiling 排除 Reader 本身不会的问题。",
+      "publicSymbols": [
+        "runReaderProbes()",
+        "ProbeResult[]",
+        "ReaderEvaluationReport"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-reader/src/runner.ts",
+        "packages/benchmark-reader/src/prompt.ts",
+        "packages/benchmark-reader/test/runner.test.ts",
+        "packages/benchmark-reader/test/fixtures/responses.jsonl"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B12",
+      "title": "Paired Closed-loop Continuation",
+      "dependsOn": [
+        "B03",
+        "B05",
+        "B06"
+      ],
+      "goal": "从同一 BoundarySnapshot 为各 Arm 运行相同隐藏后续任务，用环境断言评估真实行为。",
+      "publicSymbols": [
+        "runPairedContinuation()",
+        "ContinuationResult[]",
+        "ActionTrace"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-continuation/src/runner.ts",
+        "packages/benchmark-continuation/src/assertions.ts",
+        "packages/benchmark-continuation/src/sandbox.ts",
+        "packages/benchmark-continuation/test/runner.test.ts",
+        "packages/benchmark-continuation/test/assertions.test.ts"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B13",
+      "title": "Token Cache Cost Latency Instrumentation",
+      "dependsOn": [
+        "B05",
+        "B06",
+        "B07"
+      ],
+      "goal": "统一采集输入/输出/cache/费用、Hook 各阶段延迟和宿主 full-history clone 成本。",
+      "publicSymbols": [
+        "measureEconomics()",
+        "CostMetrics",
+        "RealizedNetRecord"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-metrics/src/economics.ts",
+        "packages/benchmark-metrics/src/timing.ts",
+        "packages/benchmark-metrics/src/pricing.ts",
+        "packages/benchmark-metrics/test/economics.test.ts",
+        "packages/benchmark-metrics/test/pricing.test.ts"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B14",
+      "title": "Blind LLM Judge",
+      "dependsOn": [
+        "B04",
+        "B08"
+      ],
+      "goal": "提供受限盲评，评估因果连续性与可执行性，同时保留 deterministic veto。",
+      "publicSymbols": [
+        "runBlindJudge()",
+        "LlmJudgeRecord[]",
+        "JudgeAgreementReport"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-judge/src/judge.ts",
+        "packages/benchmark-judge/src/blinding.ts",
+        "packages/benchmark-judge/src/rubric.ts",
+        "packages/benchmark-judge/test/judge.test.ts",
+        "packages/benchmark-judge/test/fixtures/ratings.json"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B15",
+      "title": "Paired Statistics and Non-inferiority",
+      "dependsOn": [
+        "B08",
+        "B11",
+        "B12",
+        "B13"
+      ],
+      "goal": "实现配对 Bootstrap、McNemar、非劣 margin、失败策略和样本完整性检查。",
+      "publicSymbols": [
+        "computePairedStatistics()",
+        "PairedMetricReport[]",
+        "SampleIntegrityReport"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-stats/src/paired.ts",
+        "packages/benchmark-stats/src/bootstrap.ts",
+        "packages/benchmark-stats/src/mcnemar.ts",
+        "packages/benchmark-stats/test/paired.test.ts",
+        "packages/benchmark-stats/test/golden-vectors.json"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B16",
+      "title": "Corpus and External Adapters",
+      "dependsOn": [
+        "B02",
+        "B03",
+        "B04"
+      ],
+      "goal": "构建版本化 Synthetic/Template/Real-redacted/External 语料，并隔离 public dev 与 sealed gate。",
+      "publicSymbols": [
+        "loadBenchmarkCorpus()",
+        "generateScenario()",
+        "CorpusManifest"
+      ],
+      "allowedFiles": [
+        "benchmarks/corpus/manifest.json",
+        "benchmarks/corpus/public/.gitkeep",
+        "benchmarks/corpus/sealed/.gitkeep",
+        "packages/benchmark-corpus/src/adapters.ts",
+        "packages/benchmark-corpus/src/generator.ts",
+        "packages/benchmark-corpus/test/adapters.test.ts",
+        "packages/benchmark-corpus/test/generator.test.ts"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B17",
+      "title": "Report and Gate Engine",
+      "dependsOn": [
+        "B09",
+        "B10",
+        "B15",
+        "B16"
+      ],
+      "goal": "从不可变结果生成 JSON-first 报告和词典序 W1/W2 Gate Decision。",
+      "publicSymbols": [
+        "evaluateBenchmarkGate()",
+        "BenchmarkReport",
+        "GateDecision",
+        "renderReportMarkdown()"
+      ],
+      "allowedFiles": [
+        "packages/benchmark-report/src/report.ts",
+        "packages/benchmark-report/src/gates.ts",
+        "packages/benchmark-report/src/failure-attribution.ts",
+        "packages/benchmark-report/test/report.test.ts",
+        "packages/benchmark-report/test/gates.test.ts",
+        "scripts/run-gate.mjs"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    },
+    {
+      "id": "B18",
+      "title": "PCR Integration and Release",
+      "dependsOn": [
+        "B17"
+      ],
+      "goal": "把 Benchmark Workstream 接入 PCR Roadmap，并验证 clean install、包完整性、SBOM 和 smoke replay。",
+      "publicSymbols": [
+        "buildBenchmarkRelease()",
+        "release manifest",
+        "PCR integration patch",
+        "installable tarball/zip"
+      ],
+      "allowedFiles": [
+        "docs/pcr-integration.md",
+        "docs/release-runbook.md",
+        "scripts/validate-release.mjs",
+        "scripts/build-release.mjs",
+        "tests/release/package.test.ts",
+        "tests/release/clean-install.test.ts"
+      ],
+      "requiredSpecSections": [
+        "28-reference-algorithms-and-formulas.md",
+        "29-benchmark-runbook.md"
+      ]
+    }
+  ]
+}

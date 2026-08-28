@@ -1,0 +1,12 @@
+stateDiagram-v2
+  [*] --> idle
+  idle --> preparing
+  preparing --> prepared
+  prepared --> verifying
+  verifying --> ready
+  ready --> publishing
+  publishing --> committed
+  preparing --> stale
+  prepared --> stale
+  ready --> stale
+  verifying --> rejected

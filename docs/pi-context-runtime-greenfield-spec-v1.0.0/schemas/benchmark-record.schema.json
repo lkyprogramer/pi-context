@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BenchmarkRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "recordId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^bm_[a-f0-9]{8,64}$"
+    },
+    "benchmark": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "variant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "piVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nodeVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "taskSuccess": {
+      "type": "boolean"
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "latency": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "artifactsHash": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "recordId",
+    "benchmark",
+    "scenarioId",
+    "seed",
+    "variant",
+    "piVersion",
+    "nodeVersion",
+    "taskSuccess",
+    "quality",
+    "cost",
+    "latency",
+    "memory",
+    "artifactsHash"
+  ]
+}

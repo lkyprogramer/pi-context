@@ -1,0 +1,38 @@
+{
+  "traceId": "trace-deploy-constraint-001",
+  "scenarioId": "deploy-constraint-001",
+  "seed": 42,
+  "pi": {
+    "version": "0.84.3",
+    "commit": "ccfe79ed238674f760c986e3a61493aab794000a"
+  },
+  "rawTraceSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "entries": [
+    {
+      "entryId": "u1",
+      "role": "user",
+      "contentSha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "entryId": "a1",
+      "role": "assistant",
+      "contentSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    },
+    {
+      "entryId": "t1",
+      "role": "toolResult",
+      "contentSha256": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    {
+      "entryId": "u2",
+      "role": "user",
+      "contentSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "boundary": {
+    "leafId": "u2",
+    "kind": "native-threshold",
+    "sourceTokens": 64000
+  },
+  "workspaceSnapshotSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+}

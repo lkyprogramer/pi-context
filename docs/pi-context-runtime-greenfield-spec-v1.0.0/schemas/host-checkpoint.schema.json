@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HostCheckpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "checkpointId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^hc_[a-f0-9]{8,64}$"
+    },
+    "generationId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^gen_[a-f0-9]{8,64}$"
+    },
+    "cursor": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostSessionCursor",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^ws_[a-f0-9]{16,64}$"
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leafId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lineageHash": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "modelKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "thinkingLevel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "workspaceId",
+        "sessionId",
+        "leafId",
+        "lineageHash",
+        "modelKey",
+        "thinkingLevel"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "firstKeptEntryId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tokensBefore": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "estimatedTokensAfter": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "details": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "HostCheckpointDetails",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "directiveHead": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claimHead": {
+          "type": "string",
+          "minLength": 1
+        },
+        "continuityHead": {
+          "type": "string",
+          "minLength": 1
+        },
+        "catalogHead": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputHash": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "reducerRevisions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "directiveHead",
+        "claimHead",
+        "continuityHead",
+        "catalogHead",
+        "outputHash",
+        "reducerRevisions"
+      ]
+    }
+  },
+  "required": [
+    "checkpointId",
+    "generationId",
+    "cursor",
+    "summary",
+    "firstKeptEntryId",
+    "tokensBefore",
+    "estimatedTokensAfter",
+    "details"
+  ]
+}

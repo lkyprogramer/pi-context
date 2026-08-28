@@ -1,0 +1,9 @@
+flowchart TD
+  A[Integrity/Safety] -->|pass| B[Quality Non-inferiority]
+  A -->|fail| F[Reject]
+  B -->|pass| C[Recall Behavior]
+  B -->|fail| F
+  C -->|pass| D[Efficiency/Net Value]
+  C -->|fail| K[Keep partial slice or reject]
+  D -->|pass| P[Proceed]
+  D -->|fail| K

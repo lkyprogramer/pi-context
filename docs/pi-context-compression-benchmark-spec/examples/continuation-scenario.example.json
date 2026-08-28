@@ -1,0 +1,8 @@
+{
+  "scenarioId": "deploy-constraint-001",
+  "snapshotRef": "snapshots/deploy-constraint-001.tar.zst",
+  "hiddenTaskRef": "sealed/tasks/deploy-constraint-001.txt",
+  "maxTurns": 8,
+  "timeoutMs": 300000,
+  "oracleRef": "examples/oracle.example.json"
+}

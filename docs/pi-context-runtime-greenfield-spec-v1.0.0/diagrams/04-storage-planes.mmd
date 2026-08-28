@@ -1,0 +1,6 @@
+flowchart LR
+  H[Pi JSONL Host Authority] --> R[Recovery Reconciler]
+  C[Canonical DB/CAS] --> R
+  C --> S[Serving FTS/Cache]
+  S --> M[Materializer]
+  C --> M

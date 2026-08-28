@@ -1,0 +1,50 @@
+{
+  "revisionId": "cr_12345678",
+  "parentRevisionId": null,
+  "cursor": {
+    "workspaceId": "ws_0123456789abcdef",
+    "sessionId": "01991f00-test",
+    "leafId": "a1b2c3d4",
+    "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "modelKey": "anthropic/claude-example",
+    "thinkingLevel": "high"
+  },
+  "taskFronts": {
+    "active": [
+      {
+        "id": "tf_12345678",
+        "title": "Implement Pi adapter",
+        "status": "active",
+        "goalClaimId": "cl_12345678",
+        "evidenceIds": [
+          "ev_12345678"
+        ]
+      }
+    ],
+    "parked": [],
+    "completed": [],
+    "superseded": []
+  },
+  "constraints": [
+    "cl_12345678"
+  ],
+  "decisions": [],
+  "unresolvedErrors": [
+    {
+      "id": "err_1",
+      "stage": "observed"
+    }
+  ],
+  "externalSideEffects": [],
+  "validationState": [],
+  "changedArtifacts": [],
+  "delegations": [],
+  "nextSafeActions": [
+    {
+      "text": "Run contract test",
+      "requires": [
+        "ev_12345678"
+      ]
+    }
+  ]
+}

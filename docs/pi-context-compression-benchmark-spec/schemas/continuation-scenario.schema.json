@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContinuationScenario",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scenarioId": {
+      "type": "string"
+    },
+    "snapshotRef": {
+      "type": "string"
+    },
+    "hiddenTaskRef": {
+      "type": "string"
+    },
+    "maxTurns": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timeoutMs": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "oracleRef": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "scenarioId",
+    "snapshotRef",
+    "hiddenTaskRef",
+    "maxTurns",
+    "timeoutMs",
+    "oracleRef"
+  ]
+}

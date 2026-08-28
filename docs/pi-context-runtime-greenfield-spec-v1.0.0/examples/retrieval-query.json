@@ -1,0 +1,28 @@
+{
+  "queryId": "rq_12345678",
+  "cursor": {
+    "workspaceId": "ws_0123456789abcdef",
+    "sessionId": "01991f00-test",
+    "leafId": "a1b2c3d4",
+    "lineageHash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "modelKey": "anthropic/claude-example",
+    "thinkingLevel": "high"
+  },
+  "mode": "literal",
+  "text": "不得修改公开 API",
+  "filters": {
+    "kinds": [
+      "user-directive"
+    ],
+    "statuses": [
+      "active"
+    ],
+    "sourceClasses": [
+      "authenticated-user"
+    ],
+    "fromTime": null,
+    "toTime": null
+  },
+  "limit": 10,
+  "maxTokens": 2000
+}

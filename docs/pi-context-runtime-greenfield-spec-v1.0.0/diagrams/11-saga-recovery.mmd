@@ -1,0 +1,9 @@
+stateDiagram-v2
+  [*] --> prepared
+  prepared --> hostVisible
+  hostVisible --> acknowledged
+  acknowledged --> committed
+  prepared --> stale
+  hostVisible --> recovered
+  acknowledged --> recovered
+  prepared --> quarantined

@@ -1,0 +1,13 @@
+{
+  "specVersion": "1.0.0",
+  "productVersion": "0.1.0-alpha.1",
+  "productName": "pi-context-runtime",
+  "architecture": "host-agnostic-kernel-with-pi-first-adapter",
+  "piBaseline": {
+    "repository": "earendil-works/pi",
+    "commit": "938109e7259068ff736dbba3bed14c81af25abbe",
+    "packageVersion": "0.84.3"
+  },
+  "node": "^22.23.2 || ^24.18.1 || >=26.5.1",
+  "generatedAt": "2026-08-26T00:00:00+08:00"
+}

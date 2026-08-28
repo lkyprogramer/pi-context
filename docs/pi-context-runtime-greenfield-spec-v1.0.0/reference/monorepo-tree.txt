@@ -1,0 +1,8 @@
+apps/pi-context-runtime/
+packages/contracts/
+packages/kernel/src/{directives,evidence,claims,continuity,reducers,retrieval,materialization,security}/
+packages/storage/src/{worker,sqlite,blob,key,recovery}/
+packages/worker/src/{candidate,maintenance,telemetry}/
+packages/pi-adapter/src/{conversion,hooks,lifecycle,compaction,compat,commands,tools}/
+packages/testkit/src/{fake-pi,faults,fixtures,assertions}/
+tests/{contract,e2e,compat,performance,security,benchmark}/

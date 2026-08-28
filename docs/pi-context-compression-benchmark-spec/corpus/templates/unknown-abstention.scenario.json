@@ -1,0 +1,57 @@
+{
+  "scenarioId": "unknown-abstention",
+  "family": "abstention",
+  "description": "历史中不存在用户询问的事实，Reader 和 Executor 应拒答而非猜测。",
+  "boundaryKind": "native-threshold",
+  "requiredFeatures": [
+    "unknown",
+    "abstention"
+  ],
+  "traceTemplate": [
+    {
+      "role": "user",
+      "id": "u1",
+      "content": "历史中不存在用户询问的事实，Reader 和 Executor 应拒答而非猜测。"
+    },
+    {
+      "role": "assistant",
+      "id": "a1",
+      "content": "acknowledged"
+    },
+    {
+      "role": "toolResult",
+      "id": "t1",
+      "toolName": "fixture",
+      "contentRef": "fixtures/tool-output.txt"
+    }
+  ],
+  "oracleItems": [
+    {
+      "id": "o1",
+      "kind": "scenario-control",
+      "canonical": "历史中不存在用户询问的事实，Reader 和 Executor 应拒答而非猜测。",
+      "visibility": "must-visible",
+      "polarity": "is",
+      "status": "active",
+      "sourceRefs": [
+        "u1"
+      ]
+    }
+  ],
+  "hiddenContinuation": {
+    "action": "answer",
+    "allowed": false,
+    "sealed": true
+  },
+  "environmentAssertions": [
+    {
+      "id": "e1",
+      "kind": "action-policy",
+      "expectedAllowed": false
+    }
+  ],
+  "tags": [
+    "abstention",
+    "unknown"
+  ]
+}
