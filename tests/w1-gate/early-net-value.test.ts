@@ -28,11 +28,18 @@ describe("W1 Early Net Value Gate", () => {
     expect(disk.compaction).toBe("pi-native-not-replaced");
     expect(disk.pcrRuntimeConsumed).toEqual(expect.arrayContaining(["captureObservation", "readEvidenceById", "buildProactiveRecallPage"]));
     expect(["proceed-to-w2", "keep-reducers-only", "keep-recovery-only", "stop"]).toContain(decision);
-    expect(disk.integrity).toMatchObject({ exact_blob_recovery: 1, tool_pair_violation: 0 });
-    if (disk.decision === "proceed-to-w2") {
-      expect(disk.publicationClaim).toBe(false);
-      expect(disk.usedWalkthroughConstants).toBe(false);
-    }
+    expect(disk.integrity).toMatchObject({
+      exact_blob_recovery: 1,
+      cross_scope_leak: 0,
+      hard_constraint_violation: 0,
+      tool_pair_violation: 0,
+    });
+    expect(disk.hardGatePass).toBe(true);
+    expect(Number(disk.economics && (disk.economics as { realizedNetMedian: number }).realizedNetMedian)).toBeGreaterThan(0);
+    expect(Number((disk.economics as { realizedNetCi: { lower: number } }).realizedNetCi.lower)).toBeGreaterThan(0);
+    expect(decision).toBe("proceed-to-w2");
+    expect(disk.publicationClaim).toBe(false);
+    expect(disk.usedWalkthroughConstants).toBe(false);
   });
 
   it("does not proceed to W2 from walkthrough constants alone", () => {

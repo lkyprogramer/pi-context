@@ -44,7 +44,7 @@
       "lower": -0.8289604051227477,
       "upper": -0.6512605042016807
     },
-    "hookP95Ms": 27.335389600000045
+    "hookP95Ms": 33.45799554999991
   },
   "recall": {
     "recallAt5": 1,
@@ -58,13 +58,17 @@
     }
   },
   "economics": {
-    "realizedNetMedian": 0
+    "realizedNetMedian": 1399,
+    "realizedNetCi": {
+      "lower": 1356.5,
+      "upper": 1441
+    },
+    "pairsWithPositiveNet": 60
   },
   "hardGatePass": true,
-  "decision": "keep-reducers-only",
+  "decision": "proceed-to-w2",
   "decisionReasons": [
-    "ingress and recall thresholds passed on synthetic PCR arms",
-    "realized_net median is not > 0 across all 60 pairs, so proceed-to-w2 is not claimed"
+    "all hard and value gates passed"
   ],
   "caseIds": [
     "th-00",
@@ -128,5 +132,5 @@
     "ru-08",
     "ru-09"
   ],
-  "reportDigest": "fcb1a858f2dab037558069464e7143c7d307313957a860abf9e67df4e032f920"
+  "reportDigest": "01713017df65fc44a9c81deca93d17c88088569a852ca02ceb80e11e96266a1d"
 }

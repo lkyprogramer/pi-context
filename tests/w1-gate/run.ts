@@ -63,7 +63,11 @@ export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthet
   );
   const recallNeededSuccessDelta = needed.reduce((sum, row) => sum + (row.a2.quality - row.a1.quality), 0) / needed.length;
   const realized = rows.map((row) => row.a0.tokens - row.a1.tokens);
-  const realizedNetMedian = median(realized);
+  const realizedCi = pairedBootstrapCi(
+    realized.map(() => 0),
+    realized,
+  );
+  const realizedNetMedian = realizedCi.estimate;
 
   const gateInput = {
     integrityPass,
@@ -109,7 +113,11 @@ export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthet
       neededSuccessDelta: recallNeededSuccessDelta,
       qualityCi: recallQuality,
     },
-    economics: { realizedNetMedian },
+    economics: {
+      realizedNetMedian,
+      realizedNetCi: { lower: realizedCi.lower, upper: realizedCi.upper },
+      pairsWithPositiveNet: realized.filter((value) => value > 0).length,
+    },
     hardGatePass: integrityPass && quality.lower >= -0.03,
     decision,
     decisionReasons:

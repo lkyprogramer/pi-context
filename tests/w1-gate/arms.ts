@@ -3,6 +3,8 @@ import { captureUserDirectives } from "../../packages/kernel/src/directives/capt
 import { admitEvidence } from "../../packages/kernel/src/evidence/admit.js";
 import { captureObservation, decodeObservationText } from "../../packages/kernel/src/ingress/raw-capture.js";
 import { reduceBashLog } from "../../packages/kernel/src/reducers/bash.js";
+import { reduceMutationResult } from "../../packages/kernel/src/reducers/file-mutation.js";
+import { reduceReadResult } from "../../packages/kernel/src/reducers/read.js";
 import { reduceSearchResult } from "../../packages/kernel/src/reducers/search.js";
 import { reduceTestLog } from "../../packages/kernel/src/reducers/test-log.js";
 import { buildProactiveRecallPage } from "../../packages/kernel/src/retrieval/proactive-query.js";
@@ -32,6 +34,12 @@ function reduceRaw(item: SyntheticCase): { visibleText: string; facts: unknown[]
   if (item.toolName === "test") return reduceTestLog(item.raw, { exitCode: 1, rawBlobId: "blob_eval" });
   if (item.toolName === "bash") return reduceBashLog(item.raw, { exitCode: 1, rawBlobId: "blob_eval" });
   if (item.toolName === "grep") return reduceSearchResult(item.raw, { query: item.path });
+  if (item.toolName === "read") {
+    return reduceReadResult(item.raw, { path: item.path, truncated: item.raw.length > 4000 });
+  }
+  if (item.toolName === "ls") {
+    return reduceMutationResult(item.raw, { toolName: "ls", path: item.path === "." ? "." : item.path });
+  }
   return { visibleText: item.raw.slice(0, 200), facts: [{ kind: "note", value: "ok" }] };
 }
 
