@@ -1,0 +1,17 @@
+{
+  "taskId": "B04",
+  "allowedFiles": [
+    "packages/benchmark-oracle/src/oracle.ts",
+    "packages/benchmark-oracle/src/normalizers.ts",
+    "packages/benchmark-oracle/test/oracle.test.ts",
+    "packages/benchmark-oracle/test/normalizers.test.ts"
+  ],
+  "sourceDigest": "35972e5ad5e9cb0460fb6e3690319b546d4857634606843e326efeab85cec34d",
+  "redLog": "artifacts/task-evidence/B04/red.txt",
+  "greenLog": "artifacts/task-evidence/B04/green.txt",
+  "negativeLog": "artifacts/task-evidence/B04/negative.txt",
+  "fullGateLog": "artifacts/task-evidence/B04/full-gate.txt",
+  "testsPassed": true,
+  "typecheckPassed": true,
+  "scopePassed": true
+}

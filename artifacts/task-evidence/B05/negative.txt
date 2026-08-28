@@ -1,0 +1,12 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-arms/test/pi-native.test.ts > pi native arm > runs Pi native compaction and records the real CompactionEntry 2ms
+ ✓ packages/benchmark-arms/test/pi-native.test.ts > pi native arm > does not load PCR context or compaction extensions 1ms
+ ✓ packages/benchmark-arms/test/pi-native.test.ts > pi native arm > fails closed on provider error, abort, and capability mismatch 1ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  09:49:06
+   Duration  409ms (transform 89ms, setup 0ms, collect 85ms, tests 5ms, environment 0ms, prepare 84ms)
+

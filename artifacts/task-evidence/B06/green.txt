@@ -1,0 +1,12 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-arms/test/w1.test.ts > w1 arms > A1 stores raw bytes but sends the reduced tool result to Pi 4ms
+ ✓ packages/benchmark-arms/test/w1.test.ts > w1 arms > A2 injects only the relevant old error and keeps the latest user message last 1ms
+ ✓ packages/benchmark-arms/test/w1.test.ts > w1 arms > scrubs secrets and does not leak CJK raw logs into the host view 0ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  09:49:07
+   Duration  357ms (transform 62ms, setup 0ms, collect 78ms, tests 5ms, environment 0ms, prepare 49ms)
+
