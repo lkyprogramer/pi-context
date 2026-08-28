@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ benchmarks/test/scoring.test.ts (3 tests) 4ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:50:03
+   Duration  413ms (transform 43ms, setup 0ms, collect 47ms, tests 4ms, environment 0ms, prepare 84ms)
+
+None of the selected packages has a "./packages/kernel" script

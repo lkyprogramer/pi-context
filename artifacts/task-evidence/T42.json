@@ -1,0 +1,27 @@
+{
+  "taskId": "T42",
+  "status": "done",
+  "allowedFiles": [
+    "benchmarks/src/runner.ts",
+    "benchmarks/src/scenarios.ts",
+    "benchmarks/src/scoring.ts",
+    "benchmarks/src/paired-continuation.ts",
+    "benchmarks/test/scoring.test.ts",
+    "scripts/run-benchmarks.mjs",
+    "benchmarks/package.json",
+    "artifacts/task-evidence/T42/red.txt",
+    "artifacts/task-evidence/T42/green.txt",
+    "artifacts/task-evidence/T42/full-gate.txt",
+    "artifacts/task-evidence/T42.json"
+  ],
+  "redLog": "artifacts/task-evidence/T42/red.txt",
+  "greenLog": "artifacts/task-evidence/T42/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T42/full-gate.txt",
+  "sourceDigest": "b7035d228d55604ea48ce355bc5f8b1789c3eccc581702d6d35fa070ca9b2f3e",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
