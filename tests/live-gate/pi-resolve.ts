@@ -12,13 +12,25 @@ export function resolvePiBin(): string {
   throw new Error("pi binary not found; run `nvm use v22.19.0` first");
 }
 
-export function resolvePiPackageEntry(): string {
+export function resolvePiPackageRoot(): string {
   const bin = resolvePiBin();
   const candidates = [
-    join(dirname(bin), "../lib/node_modules/@earendil-works/pi-coding-agent/dist/index.js"),
-    join(homedir(), ".nvm/versions/node", process.version, "lib/node_modules/@earendil-works/pi-coding-agent/dist/index.js"),
+    join(dirname(bin), "../lib/node_modules/@earendil-works/pi-coding-agent"),
+    join(homedir(), ".nvm/versions/node", process.version, "lib/node_modules/@earendil-works/pi-coding-agent"),
   ];
-  const found = candidates.find((file) => existsSync(file));
+  const found = candidates.find((file) => existsSync(join(file, "dist/index.js")));
   if (!found) throw new Error("pi-coding-agent package not found next to the pi binary");
+  return found;
+}
+
+export function resolvePiPackageEntry(): string {
+  return join(resolvePiPackageRoot(), "dist/index.js");
+}
+
+export function resolvePiCli(): string {
+  const root = resolvePiPackageRoot();
+  const candidates = [join(root, "dist/cli.js"), join(root, "dist/bundle/cli.js")];
+  const found = candidates.find((file) => existsSync(file));
+  if (!found) throw new Error("pi-coding-agent CLI entry not found");
   return found;
 }

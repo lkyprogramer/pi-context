@@ -11,3 +11,4 @@ coverage
 *.tsbuildinfo
 artifacts/runs/live-compact/
 artifacts/runs/live-verification/
+artifacts/runs/w2-live-native/
