@@ -6,7 +6,8 @@
     "check:boundaries": "node scripts/check-package-boundaries.mjs",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run --workspace vitest.workspace.ts",
-    "check:all": "pnpm check:boundaries && pnpm typecheck && pnpm test"
+    "check:all": "pnpm check:boundaries && pnpm typecheck && pnpm test",
+    "w1:gate": "node scripts/run-w1-gate.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",

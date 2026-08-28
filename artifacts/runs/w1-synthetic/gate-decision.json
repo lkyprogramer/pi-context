@@ -1,0 +1,5 @@
+{
+  "gate": "w1-early-net-value",
+  "decision": "keep-reducers-only",
+  "hardGatePass": true
+}
