@@ -6,7 +6,7 @@ import { mustShrink } from "./shrink-gate.js";
 export interface HostCompactionPreparation {
   tokensBefore: number;
   firstKeptEntryId: string;
-  retainedTail: HostMessage[];
+  retainedTail?: HostMessage[];
   branchScope?: string;
   head?: string;
   directives?: Array<{ directiveId: string; quote: string }>;
@@ -66,7 +66,9 @@ export async function buildDeterministicCheckpointCandidate(
     return { kind: "rejected", code: "PCR_CHECKPOINT_DIRECTIVE_COVERAGE" };
   }
   const summary = renderHostCheckpoint(checkpoint);
-  const tokensAfter = state.renderedTokens ?? state.counter.countText(summary) + state.counter.countMessages(preparation.retainedTail);
+  const tokensAfter =
+    state.renderedTokens ??
+    state.counter.countText(summary) + state.counter.countMessages(preparation.retainedTail ?? []);
   if (!mustShrink(tokensAfter, preparation.tokensBefore)) {
     return { kind: "rejected", code: "PCR_HOST_COMPACTION_NOT_SHRINKING" };
   }

@@ -1,4 +1,9 @@
-import type { HostCheckpoint, HostCheckpointClaim, HostCheckpointDirective } from "../../../contracts/src/index.js";
+import type {
+  HostCheckpoint,
+  HostCheckpointClaim,
+  HostCheckpointDirective,
+  HostCheckpointPointer,
+} from "../../../contracts/src/index.js";
 import { checkpointTokenPrice, hashCheckpointBody, sortByKeyThenId } from "./host-checkpoint.js";
 
 export function renderHostCheckpoint(checkpoint: HostCheckpoint): string {
@@ -66,7 +71,7 @@ export function renderActiveClaims(claims: readonly HostCheckpointClaim[]): stri
   ].join("\n");
 }
 
-export function renderPointers(pointers: readonly HostCheckpoint["pointers"]): string {
+export function renderPointers(pointers: readonly HostCheckpointPointer[]): string {
   return [
     "## Pointers",
     "Use context_search/context_read with the listed opaque IDs when exact history is needed.",

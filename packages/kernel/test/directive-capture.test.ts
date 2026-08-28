@@ -13,6 +13,14 @@ describe("directive capture", () => {
     expect(captureUserDirectives({ sourceClass: "authenticated-user", text, messageId: "m1" }).length).toBeGreaterThan(1);
   });
 
+  it("does not let a prohibition quote swallow the rest of a period-free dump", () => {
+    const text = `do not deploy prod\n# Secret\nsk-live-compact-omit-001\n${"batch-note\n".repeat(40)}`;
+    const [directive] = captureUserDirectives({ sourceClass: "authenticated-user", text, messageId: "m1" });
+    expect(directive?.quote).toBe("do not deploy prod");
+    expect(directive?.quote).not.toContain("sk-live-compact-omit-001");
+    expect(directive?.quote.length).toBeLessThan(80);
+  });
+
   it("yields no hard directive from untrusted or agent-derived input", () => {
     const text = "不要修改 public API";
     expect(captureUserDirectives({ sourceClass: "untrusted-user", text, messageId: "m1" })).toEqual([]);

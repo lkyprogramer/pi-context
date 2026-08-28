@@ -1,10 +1,30 @@
 import type { HostMessage, SourceClass } from "../../contracts/src/index.js";
 
+export interface PiUsage {
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+  totalTokens: number;
+  cost: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    total: number;
+  };
+}
+
 export interface PiAgentMessage {
   role: string;
-  content: unknown;
+  content?: unknown;
   timestamp?: number;
   toolCallId?: string;
+  usage?: PiUsage;
+  stopReason?: string;
+  errorMessage?: string;
+  summary?: string;
+  tokensBefore?: number;
 }
 
 export function toHostMessages(messages: readonly PiAgentMessage[]): HostMessage[] {
@@ -23,11 +43,31 @@ export function toHostMessages(messages: readonly PiAgentMessage[]): HostMessage
 
 export function toPiMessages(messages: readonly HostMessage[]): PiAgentMessage[] {
   return messages.map((message) => ({
-    role: message.role,
-    content: message.content.map((block) => (block.type === "text" ? block.text : block)).join(""),
+    role: message.role === "tool-result" ? "toolResult" : message.role,
+    content: toPiContent(message.role, message.content),
     timestamp: message.timestamp,
     toolCallId: message.toolCallId,
   }));
+}
+
+function toPiContent(role: HostMessage["role"], content: HostMessage["content"]): unknown {
+  const texts = content
+    .map((block) => {
+      if (block.type === "text") return block.text;
+      if ("ref" in block && typeof block.ref === "string") return `${block.type}:${block.ref}`;
+      return "";
+    })
+    .filter((text) => text.length > 0);
+  if (role === "assistant") {
+    if (content.some((block) => {
+      const type = "type" in block ? String(block.type) : "";
+      return type === "thinking" || type === "toolCall";
+    })) {
+      return content;
+    }
+    return (texts.length > 0 ? texts : [""]).map((text) => ({ type: "text", text }));
+  }
+  return texts.join("");
 }
 
 function normalizeRole(role: string): HostMessage["role"] {

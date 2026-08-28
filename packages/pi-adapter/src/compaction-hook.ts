@@ -1,6 +1,7 @@
 import type { ContextHookCtx } from "./context-hook.js";
 import {
   ackHostCompaction,
+  emptyPiCompactionUsage,
   failStagedCompaction,
   type HostCompactionCandidate,
   type PiCompactionResult,
@@ -11,7 +12,8 @@ export type { HostCompactionCandidate, PiCompactionResult };
 export interface CompactionPreparation {
   tokensBefore: number;
   firstKeptEntryId: string;
-  retainedTail: unknown[];
+  retainedTail?: unknown[];
+  messagesToSummarize?: unknown[];
   branchScope?: string;
   head?: string;
   directives?: Array<{ directiveId: string; quote: string }>;
@@ -55,6 +57,7 @@ export function toPiCompactionResult(candidate: HostCompactionCandidate): PiComp
     estimatedTokensAfter: candidate.estimatedTokensAfter,
     fromExtension: true,
     details: candidate.details,
+    usage: emptyPiCompactionUsage(),
   };
 }
 

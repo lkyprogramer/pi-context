@@ -8,6 +8,21 @@ export interface HostCompactionCandidate {
   details: HostCheckpointDetails;
 }
 
+export interface PiCompactionUsage {
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
+  totalTokens: number;
+  cost: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    total: number;
+  };
+}
+
 export interface PiCompactionResult {
   firstKeptEntryId: string;
   summary: string;
@@ -15,6 +30,18 @@ export interface PiCompactionResult {
   estimatedTokensAfter: number;
   fromExtension: true;
   details: HostCheckpointDetails;
+  usage: PiCompactionUsage;
+}
+
+export function emptyPiCompactionUsage(): PiCompactionUsage {
+  return {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalTokens: 0,
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+  };
 }
 
 export interface StagedCompaction {

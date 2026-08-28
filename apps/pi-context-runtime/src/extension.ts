@@ -15,7 +15,9 @@ import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/
 import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { toHostMessages, toPiMessages } from "../../../packages/pi-adapter/src/message-conversion.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
+import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
 import { claimPiContextOwner } from "./owner.js";
+import { captureUserDirectives } from "../../../packages/kernel/src/directives/capture.js";
 
 export interface ExtensionFactoryOptions {
   claimOnCreate?: boolean;
@@ -77,6 +79,40 @@ export function register(pi: HostExtensionAPI): PiContextExtension {
   return createPiContextExtension(pi);
 }
 
+function messageText(message: unknown): string {
+  if (!message || typeof message !== "object" || !("content" in message)) return "";
+  const content = message.content;
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((block) => {
+      if (typeof block === "string") return block;
+      if (block && typeof block === "object" && "text" in block) return String(block.text ?? "");
+      return "";
+    })
+    .join("\n");
+}
+
+function directivesFromPreparation(preparation: {
+  directives?: Array<{ directiveId: string; quote: string }>;
+  messagesToSummarize?: unknown[];
+}): Array<{ directiveId: string; quote: string }> {
+  if (preparation.directives && preparation.directives.length > 0) return preparation.directives;
+  const found: Array<{ directiveId: string; quote: string }> = [];
+  for (const [index, message] of (preparation.messagesToSummarize ?? []).entries()) {
+    const role = message && typeof message === "object" && "role" in message ? String(message.role) : "";
+    if (role !== "user") continue;
+    for (const item of captureUserDirectives({
+      sourceClass: "authenticated-user",
+      text: messageText(message),
+      messageId: `prep_${index}`,
+    })) {
+      found.push({ directiveId: item.directiveId, quote: item.quote });
+    }
+  }
+  return found;
+}
+
 function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   const owner = claimPiContextOwner("pi-context-runtime");
   const materializer = new ContextMaterializer({ directives: "keep" });
@@ -107,42 +143,53 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   let staged: StagedCompaction | null = null;
   registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
     async buildCheckpoint(preparation, reason) {
-      const spec = new URL("../../../packages/kernel/src/compaction/candidate.js", import.meta.url).href;
-      const loaded = (await import(spec)) as {
-        buildDeterministicCheckpointCandidate: (
-          preparation: unknown,
-          state: unknown,
-        ) => Promise<{ kind: "ready"; candidate: StagedCompaction["candidate"] } | { kind: "rejected"; code: string }>;
-      };
-      return loaded.buildDeterministicCheckpointCandidate(
-        {
-          tokensBefore: preparation.tokensBefore,
-          firstKeptEntryId: preparation.firstKeptEntryId,
-          retainedTail: preparation.retainedTail,
-          branchScope: preparation.branchScope ?? "main",
-          head: preparation.head ?? "leaf-a",
-          directives: preparation.directives,
-          reason,
-        },
-        {
-          checkpoint: {
-            directives: preparation.directives?.map((item) => ({ ...item, polarity: "must-not", status: "active" })) ?? [],
-            continuity: { revisionId: "cr_runtime" },
-            claims: [],
-            pointers: [],
-            heads: {
-              contextHead: "ctx_runtime",
-              directiveHead: "dh_runtime",
-              claimHead: "ch_runtime",
-              continuityHead: "cth_runtime",
+      try {
+        const spec = new URL("../../../packages/kernel/src/compaction/candidate.js", import.meta.url).href;
+        const loaded = (await import(spec)) as {
+          buildDeterministicCheckpointCandidate: (
+            preparation: unknown,
+            state: unknown,
+          ) => Promise<{ kind: "ready"; candidate: StagedCompaction["candidate"] } | { kind: "rejected"; code: string }>;
+        };
+        const directives = directivesFromPreparation(preparation);
+        return await loaded.buildDeterministicCheckpointCandidate(
+          {
+            tokensBefore: preparation.tokensBefore,
+            firstKeptEntryId: preparation.firstKeptEntryId,
+            retainedTail: preparation.retainedTail ?? [],
+            branchScope: preparation.branchScope ?? "main",
+            head: preparation.head ?? "leaf-a",
+            directives,
+            reason,
+          },
+          {
+            checkpoint: {
+              directives: directives.map((item) => ({
+                ...item,
+                quote: item.quote.slice(0, 240),
+                polarity: "must-not" as const,
+                status: "active" as const,
+              })),
+              continuity: { revisionId: "cr_runtime" },
+              maxCheckpointTokens: 1024,
+              claims: [],
+              pointers: [],
+              heads: {
+                contextHead: "ctx_runtime",
+                directiveHead: "dh_runtime",
+                claimHead: "ch_runtime",
+                continuityHead: "cth_runtime",
+              },
+            },
+            counter: {
+              countText: (text: string) => Math.ceil(text.length / 4),
+              countMessages: (messages: readonly unknown[]) => (Array.isArray(messages) ? messages.length : 0) * 10,
             },
           },
-          counter: {
-            countText: (text: string) => Math.ceil(text.length / 4),
-            countMessages: (messages: readonly unknown[]) => messages.length * 10,
-          },
-        },
-      );
+        );
+      } catch {
+        return { kind: "rejected", code: "PCR_CHECKPOINT_LOAD_FAILED" };
+      }
     },
     async stageCompaction(candidate) {
       staged = { candidate, result: toPiCompactionResult(candidate) };
@@ -216,7 +263,30 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       return worker;
     },
   });
-  registerRuntimeTools(pi, { workspaceId: "ws_0123456789abcdef", claimed: true });
+  registerRuntimeTools(pi, {
+    workspaceId: "ws_0123456789abcdef",
+    claimed: true,
+    commands: {
+      status: (ctx) =>
+        JSON.stringify({ ok: true, command: "context", workspaceId: ctx.workspaceId ?? "ws_0123456789abcdef", claimed: true }),
+      doctor: async (ctx) =>
+        JSON.stringify({
+          command: "context-doctor",
+          workspaceId: ctx.workspaceId ?? "ws_0123456789abcdef",
+          ...(await runRuntimeDoctor(
+            fixtureEnvironment({
+              nodeVersion: process.versions.node,
+              piVersion: "0.84.3",
+              packages: [],
+              trusted: true,
+            }),
+            { conflictPolicy: "strict" },
+          )),
+        }),
+      compact: (ctx) =>
+        JSON.stringify({ ok: true, command: "context-compact", workspaceId: ctx.workspaceId ?? "ws_0123456789abcdef" }),
+    },
+  });
   return { name: "pi-context-runtime", hooks: {}, claimed: true, release: owner.release };
 }
 

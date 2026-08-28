@@ -26,8 +26,8 @@ function makeDirectiveId(messageId: string, start: number, end: number): string 
 export function explicitDirectiveSpans(text: string): DirectiveSpan[] {
   const spans: DirectiveSpan[] = [];
   const rules: Array<{ pattern: RegExp; kind: DirectiveSpan["kind"]; polarity: DirectiveSpan["polarity"] }> = [
-    { pattern: /不要[^；。]+/g, kind: "prohibition", polarity: "must-not" },
-    { pattern: /\b(?:do not|don't|never)\b[^.;]*/gi, kind: "prohibition", polarity: "must-not" },
+    { pattern: /不要[^\n；。]{0,200}/g, kind: "prohibition", polarity: "must-not" },
+    { pattern: /\b(?:do not|don't|never)\b[^\n.;]{0,200}/gi, kind: "prohibition", polarity: "must-not" },
     { pattern: /至少[^；。,，]*\d+[^；。,，]*/g, kind: "constraint", polarity: "must" },
     { pattern: /(?:src|lib|app|packages)\/[\w./-]+\.\w+/g, kind: "constraint", polarity: "is" },
     { pattern: /改为|instead|correction:/gi, kind: "correction", polarity: "must" },

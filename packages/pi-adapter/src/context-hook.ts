@@ -45,13 +45,67 @@ export function normalizePcrError(error: unknown): NormalizedPcrError {
   return { code, severity: HARD_CODES.has(code) ? "hard" : "soft" };
 }
 
+const OPAQUE_PI_ROLES = new Set(["compactionSummary", "branchSummary", "bashExecution"]);
+
+export function isOpaquePiRole(role: string): boolean {
+  return OPAQUE_PI_ROLES.has(role);
+}
+
+function hasThinkingOrToolCall(content: unknown): boolean {
+  return (
+    Array.isArray(content) &&
+    content.some((block) => {
+      const type = block && typeof block === "object" && "type" in block ? String(block.type) : "";
+      return type === "thinking" || type === "toolCall";
+    })
+  );
+}
+
+export function isOpaquePiMessage(message: PiAgentMessage): boolean {
+  return isOpaquePiRole(message.role) || (message.role === "assistant" && hasThinkingOrToolCall(message.content));
+}
+
+function withAssistantMeta(original: PiAgentMessage, converted: PiAgentMessage): PiAgentMessage {
+  if (original.role !== "assistant" || converted.role !== "assistant") return converted;
+  return {
+    ...converted,
+    usage: converted.usage ?? original.usage,
+    stopReason: converted.stopReason ?? original.stopReason,
+    errorMessage: converted.errorMessage ?? original.errorMessage,
+    timestamp: converted.timestamp ?? original.timestamp,
+  };
+}
+
+export function stitchContextMessages(
+  original: readonly PiAgentMessage[],
+  converted: readonly PiAgentMessage[],
+): PiAgentMessage[] {
+  const out: PiAgentMessage[] = [];
+  let convertedIndex = 0;
+  for (const message of original) {
+    if (isOpaquePiMessage(message)) {
+      out.push(message);
+      continue;
+    }
+    const next = convertedIndex < converted.length ? converted[convertedIndex++] : message;
+    out.push(next ? withAssistantMeta(message, next) : message);
+  }
+  while (convertedIndex < converted.length) {
+    const extra = converted[convertedIndex++];
+    if (extra) out.push(extra);
+  }
+  return out;
+}
+
 export function registerContextHook(pi: ExtensionAPI, runtime: PiRuntime): void {
   pi.on("context", async (event, ctx) => {
     try {
-      const input = await runtime.buildMaterializationInput(event.messages, ctx);
+      const convertible = event.messages.filter((message) => !isOpaquePiMessage(message));
+      if (convertible.length === 0) return { messages: [...event.messages] };
+      const input = await runtime.buildMaterializationInput(convertible, ctx);
       const view = await runtime.kernel.materialize(input);
       await runtime.stageViewReceipt(view, ctx);
-      return { messages: runtime.converter.toPi(view.messages) };
+      return { messages: stitchContextMessages(event.messages, runtime.converter.toPi(view.messages)) };
     } catch (error) {
       const pcr = normalizePcrError(error);
       if (pcr.severity === "hard") {

@@ -76,6 +76,12 @@ describe("checkpoint candidate", () => {
     expect(result).toMatchObject({ kind: "rejected", code: "PCR_CHECKPOINT_DIRECTIVE_COVERAGE" });
   });
 
+  it("treats a missing retained tail as empty instead of throwing", async () => {
+    const { retainedTail: _omitted, ...preparation } = fixturePreparation({ tokensBefore: 500 });
+    const result = await buildDeterministicCheckpointCandidate(preparation, fixtureState({ renderedTokens: 80 }));
+    expect(result.kind).toBe("ready");
+  });
+
   it("never waits for a semantic worker on overflow", async () => {
     const state = fixtureState({ renderedTokens: 80, waitForSemantic: true });
     const result = await buildDeterministicCheckpointCandidate(fixturePreparation({ reason: "overflow", tokensBefore: 500 }), state);
