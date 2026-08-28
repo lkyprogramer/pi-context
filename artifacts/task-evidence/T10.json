@@ -1,0 +1,25 @@
+{
+  "taskId": "T10",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/directives/capture.ts",
+    "packages/kernel/src/directives/store.ts",
+    "packages/kernel/test/directive-capture.test.ts",
+    "packages/contracts/src/types.ts",
+    "packages/storage/src/protocol.ts",
+    "artifacts/task-evidence/T10/red.txt",
+    "artifacts/task-evidence/T10/green.txt",
+    "artifacts/task-evidence/T10/full-gate.txt",
+    "artifacts/task-evidence/T10.json"
+  ],
+  "redLog": "artifacts/task-evidence/T10/red.txt",
+  "greenLog": "artifacts/task-evidence/T10/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T10/full-gate.txt",
+  "sourceDigest": "8212bde8f7070daab21dcf9230cd6504319286b802617349a67dfaf6d3359f68",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

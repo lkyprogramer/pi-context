@@ -70,3 +70,10 @@ export interface RecoveryAction {
 export interface RecoveryReport {
   actions: RecoveryAction[];
 }
+
+export interface StoredDirective {
+  directiveId: string;
+  quote: string;
+  status: string;
+  sourceContentHash: string;
+}

@@ -150,6 +150,36 @@ export interface MaterializationOmission {
   count: number;
 }
 
+export type DirectiveKind =
+  | "goal"
+  | "constraint"
+  | "permission"
+  | "prohibition"
+  | "format"
+  | "correction"
+  | "preference"
+  | "acceptance-criterion";
+
+export type DirectivePolarity = "must" | "must-not" | "may" | "is" | "is-not" | "unknown";
+export type DirectiveStatus = "active" | "superseded" | "resolved" | "retracted" | "contested";
+
+export interface UserDirective {
+  directiveId: string;
+  workspaceId?: string;
+  sessionId?: string;
+  sourceInputId: string;
+  sourceMessageId: string;
+  sourceContentHash: string;
+  quote: string;
+  byteRange: { start: number; end: number };
+  kind: DirectiveKind;
+  polarity: DirectivePolarity;
+  status: DirectiveStatus;
+  scope: { kind: "session" | "task-front" | "artifact" | "tool" | "action"; value: string };
+  sourceClass: "authenticated-user";
+  authority: "act";
+}
+
 export interface MaterializedView {
   viewId: string;
   outputHash: string;
