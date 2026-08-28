@@ -1,0 +1,26 @@
+{
+  "taskId": "T11",
+  "status": "done",
+  "allowedFiles": [
+    "packages/pi-adapter/src/tool-result-hook.ts",
+    "packages/kernel/src/ingress/raw-capture.ts",
+    "packages/kernel/test/raw-capture.test.ts",
+    "tests/contract/pi-tool-result-order.test.ts",
+    "packages/pi-adapter/src/index.ts",
+    "packages/kernel/test/support.ts",
+    "artifacts/task-evidence/T11/red.txt",
+    "artifacts/task-evidence/T11/green.txt",
+    "artifacts/task-evidence/T11/full-gate.txt",
+    "artifacts/task-evidence/T11.json"
+  ],
+  "redLog": "artifacts/task-evidence/T11/red.txt",
+  "greenLog": "artifacts/task-evidence/T11/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T11/full-gate.txt",
+  "sourceDigest": "481874e08969a7bc401e435323621d1cceec1f097aefa83e3d27c67b3b9c01ea",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

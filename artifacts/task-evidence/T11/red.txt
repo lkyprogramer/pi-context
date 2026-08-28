@@ -1,0 +1,40 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/contract/pi-tool-result-order.test.ts [ tests/contract/pi-tool-result-order.test.ts ]
+Error: Cannot find module '../../packages/pi-adapter/src/tool-result-hook.js' imported from '/Users/luo/Documents/github/pi-context/tests/contract/pi-tool-result-order.test.ts'
+ ❯ tests/contract/pi-tool-result-order.test.ts:2:1
+      1| import { describe, expect, it } from "vitest";
+      2| import { bindToolResultCapture } from "../../packages/pi-adapter/src/t…
+       | ^
+      3| import { createPiContractHarness } from "../../packages/testkit/src/pi…
+      4| 
+
+Caused by: Error: Failed to load url ../../packages/pi-adapter/src/tool-result-hook.js (resolved id: ../../packages/pi-adapter/src/tool-result-hook.js) in /Users/luo/Documents/github/pi-context/tests/contract/pi-tool-result-order.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1/node_modules/vite/dist/node/chunks/config.js:22739:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |0| packages/kernel/test/raw-capture.test.ts [ packages/kernel/test/raw-capture.test.ts ]
+Error: Cannot find module '../src/ingress/raw-capture.js' imported from '/Users/luo/Documents/github/pi-context/packages/kernel/test/support.ts'
+ ❯ packages/kernel/test/support.ts:1:1
+      1| import { observationFixture } from "../src/ingress/raw-capture.js";
+       | ^
+      2| 
+      3| export { observationFixture };
+
+Caused by: Error: Failed to load url ../src/ingress/raw-capture.js (resolved id: ../src/ingress/raw-capture.js) in /Users/luo/Documents/github/pi-context/packages/kernel/test/support.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1/node_modules/vite/dist/node/chunks/config.js:22739:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  10:30:29
+   Duration  353ms (transform 21ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 188ms)
+

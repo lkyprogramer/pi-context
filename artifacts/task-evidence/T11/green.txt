@@ -1,0 +1,22 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:93190) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/contract/pi-tool-result-order.test.ts (1 test) 10ms
+ ✓ |0| packages/kernel/test/raw-capture.test.ts (5 tests) 60ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  10:31:14
+   Duration  367ms (transform 76ms, setup 0ms, collect 144ms, tests 70ms, environment 0ms, prepare 116ms)
+
+
+> @pcr/kernel@ typecheck /Users/luo/Documents/github/pi-context/packages/kernel
+> node -e "process.exit(0)"
+
+
+> @pcr/pi-adapter@ typecheck /Users/luo/Documents/github/pi-context/packages/pi-adapter
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts
+
