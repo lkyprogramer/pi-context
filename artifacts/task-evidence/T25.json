@@ -1,0 +1,24 @@
+{
+  "taskId": "T25",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/materialization/active-suffix.ts",
+    "packages/kernel/src/materialization/atomic-groups.ts",
+    "packages/kernel/test/active-suffix.test.ts",
+    "packages/kernel/src/index.ts",
+    "artifacts/task-evidence/T25/red.txt",
+    "artifacts/task-evidence/T25/green.txt",
+    "artifacts/task-evidence/T25/full-gate.txt",
+    "artifacts/task-evidence/T25.json"
+  ],
+  "redLog": "artifacts/task-evidence/T25/red.txt",
+  "greenLog": "artifacts/task-evidence/T25/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T25/full-gate.txt",
+  "sourceDigest": "355cdbc1fbbc4e322af13a3fa25a2e1e7c688575d3aac4f00f161e75d42d30e0",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

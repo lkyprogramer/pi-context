@@ -23,3 +23,5 @@ export {
 } from "./budget/token-counter.js";
 export { CalibrationBucket, safeUsageDelta } from "./budget/calibration.js";
 export { predictNextStepGrowth } from "./budget/growth.js";
+export { buildExactActiveSuffix } from "./materialization/active-suffix.js";
+export { validateToolPairs } from "./materialization/atomic-groups.js";
