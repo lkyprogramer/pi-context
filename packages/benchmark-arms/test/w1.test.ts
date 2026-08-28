@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { defineBenchmarkContracts, type ArmManifest, type RawTrace } from "../../benchmark-contracts/src/index.js";
-import { textOf, runW1Arm } from "../src/w1.js";
+import { exactSearch, ftsSearch, literalSearch, textOf, runW1Arm } from "../src/w1.js";
 import type { ArmRunInput } from "../src/pi-native.js";
 import { recordedProvider } from "./fakes/recorded-provider.js";
 
@@ -79,9 +79,21 @@ describe("w1 arms", () => {
 
   it("A2 injects only the relevant old error and keeps the latest user message last", async () => {
     const result = await runW1Arm(w1Fixture("A2"));
-    expect(result.recallInjections.map((x) => x.itemId)).toContain("old-error-1");
+    expect(result.recallInjections.map((x) => x.itemId)).toEqual(["old-error-1"]);
     const last = result.artifact.messages.at(-1) as { role?: string } | undefined;
     expect(last?.role).toBe("user");
+  });
+
+  it("exposes exact, literal, and FTS search over admitted evidence", () => {
+    const corpus = [
+      { id: "old-error-1", text: "old EADDRINUSE 127.0.0.1:8080" },
+      { id: "t-now", text: "progress only" },
+    ];
+    expect(exactSearch(corpus, "Eaddrinuse")).toEqual(["old-error-1"]);
+    expect(literalSearch(corpus, "EADDRINUSE")).toEqual(["old-error-1"]);
+    expect(literalSearch(corpus, "eaddrinuse")).toEqual([]);
+    expect(ftsSearch(corpus, "eaddrinuse 8080")).toEqual(["old-error-1"]);
+    expect(ftsSearch(corpus, "eaddrinuse missing")).toEqual([]);
   });
 
   it("scrubs secrets and does not leak CJK raw logs into the host view", async () => {

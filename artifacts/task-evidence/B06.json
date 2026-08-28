@@ -6,7 +6,7 @@
     "packages/benchmark-arms/test/w1.test.ts",
     "packages/benchmark-arms/test/fixtures/tool-heavy.json"
   ],
-  "sourceDigest": "b06-local",
+  "sourceDigest": "9da6bb0764455ad67c9eb908a7bce9e08f935cd3345e60be8e30fd9919964d8d",
   "redLog": "artifacts/task-evidence/B06/red.txt",
   "greenLog": "artifacts/task-evidence/B06/green.txt",
   "negativeLog": "artifacts/task-evidence/B06/negative.txt",

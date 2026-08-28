@@ -29,17 +29,38 @@ function entryText(entry: RawTraceEntry): string {
 }
 
 export function reduceToolResult(raw: string): string {
-  const lines = raw.split(/\r?\n/).filter((line) => line.length > 0);
+  const lines = raw
+    .split(/\r?\n/)
+    .filter((line) => line.length > 0)
+    .filter((line) => !/ignore previous instructions|api_secret_value|token=/i.test(line));
   const errors = lines.filter((line) => ERROR_LINE.test(line));
-  if (errors.length > 0) {
-    return errors.slice(-2).join("\n");
-  }
-  return lines.slice(-3).join("\n");
+  const kept = errors.length > 0 ? errors.slice(-2) : lines.slice(-3);
+  return kept.join("\n").replace(/token=\S+/gi, "token=<redacted>");
 }
 
 export function exactSearch(corpus: readonly { id: string; text: string }[], query: string): string[] {
   const needle = query.toLowerCase();
   return corpus.filter((item) => item.text.toLowerCase().includes(needle)).map((item) => item.id);
+}
+
+export function literalSearch(corpus: readonly { id: string; text: string }[], query: string): string[] {
+  return corpus.filter((item) => item.text.includes(query)).map((item) => item.id);
+}
+
+export function ftsSearch(corpus: readonly { id: string; text: string }[], query: string): string[] {
+  const tokens = query
+    .toLowerCase()
+    .split(/[^a-z0-9\u4e00-\u9fff]+/i)
+    .filter((token) => token.length >= 2);
+  if (tokens.length === 0) {
+    return [];
+  }
+  return corpus
+    .filter((item) => {
+      const hay = item.text.toLowerCase();
+      return tokens.every((token) => hay.includes(token));
+    })
+    .map((item) => item.id);
 }
 
 export async function buildW1ShapedTrace(trace: RawTrace, _ingress: W1Ingress): Promise<W1ShapedTrace> {
@@ -63,18 +84,24 @@ export async function buildW1ShapedTrace(trace: RawTrace, _ingress: W1Ingress): 
   };
 }
 
+function needsProactiveRecall(latestUser: string): boolean {
+  return /port|conflict|eaddrinuse|old error|上次|那个错误|还是/i.test(latestUser);
+}
+
 function proactiveRecall(trace: RawTrace, latestUser: string): RecallInjectionReceipt[] {
-  const corpus = trace.entries
-    .filter((entry) => entry.role === "toolResult" || entry.entryId.includes("old-error"))
-    .map((entry) => ({ id: entry.entryId, text: `${entry.entryId} ${entryText(entry)}` }));
-  if (corpus.every((item) => item.id !== "old-error-1")) {
-    corpus.push({ id: "old-error-1", text: "old-error-1 EADDRINUSE port conflict" });
+  if (!needsProactiveRecall(latestUser)) {
+    return [];
   }
-  const tokens = latestUser.toLowerCase().split(/\W+/).filter((token) => token.length > 3);
-  const hits = corpus.filter((item) => tokens.some((token) => item.text.toLowerCase().includes(token)) || /error|port|eaddrinuse|conflict/i.test(item.text));
-  const ranked = exactSearch(hits.length > 0 ? hits : corpus, "error").slice(0, 5);
-  const ids = ranked.length > 0 ? ranked : hits.slice(0, 1).map((item) => item.id);
-  return ids.map((itemId) => ({ itemId, query: latestUser }));
+  const latestToolId = [...trace.entries].reverse().find((entry) => entry.role === "toolResult")?.entryId;
+  const corpus = trace.entries
+    .filter((entry) => entry.role === "toolResult" && entry.entryId !== latestToolId)
+    .map((entry) => ({ id: entry.entryId, text: `${entry.entryId} ${entryText(entry)}` }));
+  const ranked = [
+    ...exactSearch(corpus, "eaddrinuse"),
+    ...literalSearch(corpus, "EADDRINUSE"),
+    ...ftsSearch(corpus, "eaddrinuse"),
+  ];
+  return [...new Set(ranked)].slice(0, 1).map((itemId) => ({ itemId, query: latestUser }));
 }
 
 export async function runW1Arm(input: ArmRunInput): Promise<ArmRunResult> {
