@@ -1,0 +1,25 @@
+{
+  "taskId": "T36",
+  "status": "done",
+  "allowedFiles": [
+    "packages/worker/src/verifier/verifier.ts",
+    "packages/worker/src/verifier/repairs.ts",
+    "packages/worker/src/verifier/deterministic-floor.ts",
+    "packages/worker/test/verifier.test.ts",
+    "packages/worker/src/index.ts",
+    "artifacts/task-evidence/T36/red.txt",
+    "artifacts/task-evidence/T36/green.txt",
+    "artifacts/task-evidence/T36/full-gate.txt",
+    "artifacts/task-evidence/T36.json"
+  ],
+  "redLog": "artifacts/task-evidence/T36/red.txt",
+  "greenLog": "artifacts/task-evidence/T36/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T36/full-gate.txt",
+  "sourceDigest": "2c7e540dab8ca4f2b494f0e45e653cadc1c1c6e31d80e1ef6bf9a59dabfde5e6",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
