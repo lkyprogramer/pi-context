@@ -1,0 +1,27 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| apps/pi-context-runtime/test/owner.test.ts [ apps/pi-context-runtime/test/owner.test.ts ]
+Error: Cannot find module '../src/extension.js' imported from '/Users/luo/Documents/github/pi-context/apps/pi-context-runtime/test/owner.test.ts'
+ ❯ apps/pi-context-runtime/test/owner.test.ts:2:1
+      1| import { afterEach, describe, expect, it } from "vitest";
+      2| import { createPiContextExtension } from "../src/extension.js";
+       | ^
+      3| import { claimPiContextOwner, resetOwnerForTest } from "../src/owner.j…
+      4| import { createSessionRuntime } from "../src/runtime.js";
+
+Caused by: Error: Failed to load url ../src/extension.js (resolved id: ../src/extension.js) in /Users/luo/Documents/github/pi-context/apps/pi-context-runtime/test/owner.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1/node_modules/vite/dist/node/chunks/config.js:22739:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  10:18:34
+   Duration  294ms (transform 13ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 63ms)
+

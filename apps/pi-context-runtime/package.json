@@ -6,7 +6,10 @@
   "pi": {
     "extensions": ["./dist/extension.js"]
   },
+  "exports": {
+    ".": "./src/extension.ts"
+  },
   "scripts": {
-    "typecheck": "node -e \"process.exit(0)\""
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/extension.ts src/owner.ts src/runtime.ts"
   }
 }

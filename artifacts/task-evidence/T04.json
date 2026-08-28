@@ -1,0 +1,25 @@
+{
+  "taskId": "T04",
+  "status": "done",
+  "allowedFiles": [
+    "apps/pi-context-runtime/src/extension.ts",
+    "apps/pi-context-runtime/src/owner.ts",
+    "apps/pi-context-runtime/src/runtime.ts",
+    "apps/pi-context-runtime/test/owner.test.ts",
+    "apps/pi-context-runtime/package.json",
+    "artifacts/task-evidence/T04/red.txt",
+    "artifacts/task-evidence/T04/green.txt",
+    "artifacts/task-evidence/T04/full-gate.txt",
+    "artifacts/task-evidence/T04.json"
+  ],
+  "redLog": "artifacts/task-evidence/T04/red.txt",
+  "greenLog": "artifacts/task-evidence/T04/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T04/full-gate.txt",
+  "sourceDigest": "e9c11765825adffb84cf865e56f5bff2d7ba6025d963b4896ed790959a1ac292",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
