@@ -2,7 +2,10 @@
   "name": "@pcr/contracts",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "typecheck": "node -e \"process.exit(0)\""
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts"
   }
 }

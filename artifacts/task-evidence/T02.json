@@ -1,0 +1,26 @@
+{
+  "taskId": "T02",
+  "status": "done",
+  "allowedFiles": [
+    "packages/contracts/src/types.ts",
+    "packages/contracts/src/errors.ts",
+    "packages/contracts/src/ids.ts",
+    "packages/contracts/src/index.ts",
+    "packages/contracts/test/types.test.ts",
+    "packages/contracts/package.json",
+    "artifacts/task-evidence/T02/red.txt",
+    "artifacts/task-evidence/T02/green.txt",
+    "artifacts/task-evidence/T02/full-gate.txt",
+    "artifacts/task-evidence/T02.json"
+  ],
+  "redLog": "artifacts/task-evidence/T02/red.txt",
+  "greenLog": "artifacts/task-evidence/T02/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T02/full-gate.txt",
+  "sourceDigest": "399b1efb2d66e6b939e5b3d480f1264b325b40a136323d517115c9eaef496cbb",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

@@ -1,0 +1,15 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| packages/contracts/test/types.test.ts (4 tests) 2ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  10:16:46
+   Duration  295ms (transform 22ms, setup 0ms, collect 29ms, tests 2ms, environment 0ms, prepare 80ms)
+
+
+> @pcr/contracts@ typecheck /Users/luo/Documents/github/pi-context/packages/contracts
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+
