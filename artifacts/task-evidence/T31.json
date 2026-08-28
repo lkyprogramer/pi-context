@@ -1,0 +1,25 @@
+{
+  "taskId": "T31",
+  "status": "done",
+  "allowedFiles": [
+    "packages/pi-adapter/src/compaction-hook.ts",
+    "packages/pi-adapter/src/compaction-ack.ts",
+    "tests/contract/pi-compaction-takeover.test.ts",
+    "apps/pi-context-runtime/src/extension.ts",
+    "tests/support/pi.ts",
+    "artifacts/task-evidence/T31/red.txt",
+    "artifacts/task-evidence/T31/green.txt",
+    "artifacts/task-evidence/T31/full-gate.txt",
+    "artifacts/task-evidence/T31.json"
+  ],
+  "redLog": "artifacts/task-evidence/T31/red.txt",
+  "greenLog": "artifacts/task-evidence/T31/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T31/full-gate.txt",
+  "sourceDigest": "dd77d1dd962d12405aa4c2bd5834c7f83153ad8b1ab63dad5e0bcae88b332026",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

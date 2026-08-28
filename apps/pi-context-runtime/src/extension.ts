@@ -1,4 +1,10 @@
 import { ContextMaterializer } from "../../../packages/kernel/src/materialization/materializer.js";
+import { ackHostCompaction, failStagedCompaction, type StagedCompaction } from "../../../packages/pi-adapter/src/compaction-ack.js";
+import {
+  registerCompactionHooks,
+  toPiCompactionResult,
+  type CompactionExtensionAPI,
+} from "../../../packages/pi-adapter/src/compaction-hook.js";
 import {
   defaultSafeDiagnostic,
   registerContextHook,
@@ -53,6 +59,61 @@ export function createPiContextExtension(options: ExtensionFactoryOptions = {}):
     converter: { toPi: toPiMessages },
     safeDiagnostic: defaultSafeDiagnostic,
     deterministicFallback: (messages) => messages,
+  });
+  let staged: StagedCompaction | null = null;
+  registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
+    async buildCheckpoint(preparation, reason) {
+      const spec = new URL("../../../packages/kernel/src/compaction/candidate.js", import.meta.url).href;
+      const loaded = (await import(spec)) as {
+        buildDeterministicCheckpointCandidate: (
+          preparation: unknown,
+          state: unknown,
+        ) => Promise<{ kind: "ready"; candidate: StagedCompaction["candidate"] } | { kind: "rejected"; code: string }>;
+      };
+      return loaded.buildDeterministicCheckpointCandidate(
+        {
+          tokensBefore: preparation.tokensBefore,
+          firstKeptEntryId: preparation.firstKeptEntryId,
+          retainedTail: preparation.retainedTail,
+          branchScope: preparation.branchScope ?? "main",
+          head: preparation.head ?? "leaf-a",
+          directives: preparation.directives,
+          reason,
+        },
+        {
+          checkpoint: {
+            directives: preparation.directives?.map((item) => ({ ...item, polarity: "must-not", status: "active" })) ?? [],
+            continuity: { revisionId: "cr_runtime" },
+            claims: [],
+            pointers: [],
+            heads: {
+              contextHead: "ctx_runtime",
+              directiveHead: "dh_runtime",
+              claimHead: "ch_runtime",
+              continuityHead: "cth_runtime",
+            },
+          },
+          counter: {
+            countText: (text: string) => Math.ceil(text.length / 4),
+            countMessages: (messages: readonly unknown[]) => messages.length * 10,
+          },
+        },
+      );
+    },
+    async stageCompaction(candidate) {
+      staged = { candidate, result: toPiCompactionResult(candidate) };
+    },
+    toPiCompactionResult,
+    async ackHostCompaction(entry) {
+      ackHostCompaction(staged, entry, () => {
+        staged = null;
+      });
+    },
+    async failStagedCompaction() {
+      failStagedCompaction(staged, () => {
+        staged = null;
+      });
+    },
   });
   return { name: "pi-context-runtime", hooks, claimed: true, release: owner.release };
 }
