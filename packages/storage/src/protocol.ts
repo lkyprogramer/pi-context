@@ -71,6 +71,12 @@ export interface RecoveryReport {
   actions: RecoveryAction[];
 }
 
+export interface LiteralTokenFilter {
+  statuses?: string[];
+  after?: number;
+  before?: number;
+}
+
 export interface EvidenceAdmissionRecord {
   evidenceId: string;
   sourceClass: string;

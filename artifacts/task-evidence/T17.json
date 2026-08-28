@@ -1,0 +1,24 @@
+{
+  "taskId": "T17",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/retrieval/literal-index.ts",
+    "packages/kernel/src/retrieval/normalizers.ts",
+    "packages/kernel/test/literal-index.test.ts",
+    "packages/storage/src/protocol.ts",
+    "artifacts/task-evidence/T17/red.txt",
+    "artifacts/task-evidence/T17/green.txt",
+    "artifacts/task-evidence/T17/full-gate.txt",
+    "artifacts/task-evidence/T17.json"
+  ],
+  "redLog": "artifacts/task-evidence/T17/red.txt",
+  "greenLog": "artifacts/task-evidence/T17/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T17/full-gate.txt",
+  "sourceDigest": "319b498801fb413858af843772a7b9fabe1b7ddf59ee1222c793d52da75d832b",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
