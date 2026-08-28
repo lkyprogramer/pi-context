@@ -1,0 +1,12 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/release/deterministic-mvp-gate.test.ts (9 tests) 7ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  21:53:04
+   Duration  400ms (transform 22ms, setup 0ms, collect 28ms, tests 7ms, environment 0ms, prepare 78ms)
+
+None of the selected packages has a "./packages/kernel" script

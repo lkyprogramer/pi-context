@@ -14,7 +14,8 @@
     "perf:spikes": "node scripts/run-performance-spikes.mjs",
     "security:suite": "node scripts/run-security-suite.mjs",
     "compat:scan": "node scripts/check-public-pi-imports.mjs",
-    "compat:lock": "node scripts/install-pi-version.mjs"
+    "compat:lock": "node scripts/install-pi-version.mjs",
+    "gate:mvp": "node scripts/gates/deterministic-mvp.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",

@@ -1,0 +1,24 @@
+{
+  "taskId": "T45",
+  "status": "done",
+  "allowedFiles": [
+    "scripts/gates/deterministic-mvp.mjs",
+    "reports/gates/deterministic-mvp/.gitkeep",
+    "tests/release/deterministic-mvp-gate.test.ts",
+    "package.json",
+    "artifacts/task-evidence/T45/red.txt",
+    "artifacts/task-evidence/T45/green.txt",
+    "artifacts/task-evidence/T45/full-gate.txt",
+    "artifacts/task-evidence/T45.json"
+  ],
+  "redLog": "artifacts/task-evidence/T45/red.txt",
+  "greenLog": "artifacts/task-evidence/T45/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T45/full-gate.txt",
+  "sourceDigest": "a10509e8e069928bc5253eb6a0baa9d3754fe84f8d5a410ef447fc609bdee161",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

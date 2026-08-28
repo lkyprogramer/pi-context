@@ -1,0 +1,27 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/release/deterministic-mvp-gate.test.ts [ tests/release/deterministic-mvp-gate.test.ts ]
+Error: Cannot find module '../../scripts/gates/deterministic-mvp.mjs' imported from '/Users/luo/Documents/github/pi-context/tests/release/deterministic-mvp-gate.test.ts'
+ ❯ tests/release/deterministic-mvp-gate.test.ts:2:1
+      1| import { describe, expect, it } from "vitest";
+      2| import { evaluateDeterministicMvpGate } from "../../scripts/gates/dete…
+       | ^
+      3| 
+      4| function fixtureGateEvidence(overrides = {}) {
+
+Caused by: Error: Failed to load url ../../scripts/gates/deterministic-mvp.mjs (resolved id: ../../scripts/gates/deterministic-mvp.mjs) in /Users/luo/Documents/github/pi-context/tests/release/deterministic-mvp-gate.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1/node_modules/vite/dist/node/chunks/config.js:22739:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  21:52:04
+   Duration  290ms (transform 14ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 67ms)
+
