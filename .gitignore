@@ -6,5 +6,8 @@ dist
 coverage
 .benchmark
 .pcr
+.pi
 .venv
 *.tsbuildinfo
+artifacts/runs/live-compact/
+artifacts/runs/live-verification/

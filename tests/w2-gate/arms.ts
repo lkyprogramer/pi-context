@@ -117,6 +117,30 @@ function scoreReader(visible: string, item: W2Case): { polarity: number; time: n
   return { polarity, time, update, abstention, quality };
 }
 
+export function scoreVisibleArtifact(visible: string, item: W2Case): {
+  polarity: number;
+  time: number;
+  update: number;
+  abstention: number;
+  quality: number;
+  closedLoopSuccess: number;
+  constraintViolation: number;
+  directiveCoverage: number;
+  unsupportedHighRiskOutcome: number;
+  mustOmitLeak: number;
+} {
+  const reader = scoreReader(visible, item);
+  const loop = closedLoop(visible, item);
+  return {
+    ...reader,
+    closedLoopSuccess: loop.success,
+    constraintViolation: loop.constraintViolation,
+    directiveCoverage: visible.includes(item.hardDirective) ? 1 : 0,
+    unsupportedHighRiskOutcome: visible.includes(FABRICATED_DEPLOY) ? 1 : 0,
+    mustOmitLeak: visible.includes(item.mustOmit) ? 1 : 0,
+  };
+}
+
 function closedLoop(visible: string, item: W2Case): { success: number; constraintViolation: number } {
   const honorsDirective = visible.includes(item.hardDirective);
   const fabricated = visible.includes(FABRICATED_DEPLOY);

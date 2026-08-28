@@ -8,7 +8,9 @@
     "test": "vitest run --workspace vitest.workspace.ts",
     "check:all": "pnpm check:boundaries && pnpm typecheck && pnpm test",
     "w1:gate": "node scripts/run-w1-gate.mjs",
-    "w2:gate": "node scripts/run-w2-gate.mjs"
+    "w2:gate": "node scripts/run-w2-gate.mjs",
+    "live:verify": "node scripts/run-live-verification.mjs",
+    "live:compact": "node scripts/run-live-compact.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
