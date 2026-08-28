@@ -6,3 +6,12 @@ export { ReducerRegistry } from "./reducers/registry.js";
 export { defaultPointerReducer } from "./reducers/default.js";
 export type { ObservationReducer, ReducedObservation, CapturedObservation } from "./reducers/types.js";
 export { readEvidenceById } from "./retrieval/exact-read.js";
+export {
+  authorizeToolCall,
+  bindToolCallGate,
+  blockedToolResult,
+  type ActionDecision,
+  type ActionGateDeps,
+} from "./security/action-gate.js";
+export { classifyTool, effectiveToolClass, TOOL_TAXONOMY_VERSION } from "./security/tool-taxonomy.js";
+export { attestOutcome } from "./security/outcome-attestation.js";

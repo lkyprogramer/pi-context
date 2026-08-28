@@ -1,0 +1,45 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/contract/pi-tool-call-gate.test.ts (1 test | 1 failed) 3ms
+   × Pi tool_call gate > returns a model-visible safe error instead of executing a blocked call 2ms
+     → (0 , bindToolCallGate) is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| packages/kernel/test/action-gate.test.ts [ packages/kernel/test/action-gate.test.ts ]
+Error: Cannot find module '../src/security/action-gate.js' imported from '/Users/luo/Documents/github/pi-context/packages/kernel/test/action-gate.test.ts'
+ ❯ packages/kernel/test/action-gate.test.ts:2:1
+      1| import { describe, expect, it } from "vitest";
+      2| import { authorizeToolCall, type ActionGateDeps } from "../src/securit…
+       | ^
+      3| import type { ActionAuthority } from "../../../packages/contracts/src/…
+      4| 
+
+Caused by: Error: Failed to load url ../src/security/action-gate.js (resolved id: ../src/security/action-gate.js) in /Users/luo/Documents/github/pi-context/packages/kernel/test/action-gate.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1/node_modules/vite/dist/node/chunks/config.js:22739:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/contract/pi-tool-call-gate.test.ts > Pi tool_call gate > returns a model-visible safe error instead of executing a blocked call
+TypeError: (0 , bindToolCallGate) is not a function
+ ❯ tests/contract/pi-tool-call-gate.test.ts:9:5
+      7|     const host = createFakePiHost();
+      8|     const seen: unknown[] = [];
+      9|     bindToolCallGate(host, {
+       |     ^
+     10|       authorize: async () => ({ kind: "deny", code: "PCR_ACTION_AUTHOR…
+     11|       onBlocked: (result) => seen.push(result),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed (1)
+   Start at  11:08:24
+   Duration  426ms (transform 66ms, setup 0ms, collect 82ms, tests 3ms, environment 0ms, prepare 210ms)
+

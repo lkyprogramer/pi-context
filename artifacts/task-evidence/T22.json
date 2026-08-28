@@ -1,0 +1,27 @@
+{
+  "taskId": "T22",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/security/tool-taxonomy.ts",
+    "packages/kernel/src/security/outcome-attestation.ts",
+    "packages/kernel/src/security/action-gate.ts",
+    "packages/kernel/test/action-gate.test.ts",
+    "tests/contract/pi-tool-call-gate.test.ts",
+    "packages/kernel/src/index.ts",
+    "packages/pi-adapter/src/index.ts",
+    "artifacts/task-evidence/T22/red.txt",
+    "artifacts/task-evidence/T22/green.txt",
+    "artifacts/task-evidence/T22/full-gate.txt",
+    "artifacts/task-evidence/T22.json"
+  ],
+  "redLog": "artifacts/task-evidence/T22/red.txt",
+  "greenLog": "artifacts/task-evidence/T22/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T22/full-gate.txt",
+  "sourceDigest": "74fd0d01ffa1687cad6f7596c3d2c3c6999b12005c97ca41bc241109da60d038",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
