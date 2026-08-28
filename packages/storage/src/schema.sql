@@ -131,4 +131,4 @@ CREATE TABLE fts_document (
 ) STRICT;
 
 -- Created only after startup capability probe succeeds:
--- CREATE VIRTUAL TABLE fts_document_index USING fts5(body, content='fts_document', content_rowid='rowid');
+CREATE VIRTUAL TABLE IF NOT EXISTS fts_document_index USING fts5(body, content='fts_document', content_rowid='rowid');

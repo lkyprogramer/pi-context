@@ -89,3 +89,8 @@ export function observationFixture(input?: { profile?: "strict" | "cost"; failin
     },
   };
 }
+
+export async function createCatalogFixture() {
+  const { FtsCatalog } = await import("../src/retrieval/fts-catalog.js");
+  return FtsCatalog.fixture();
+}

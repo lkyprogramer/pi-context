@@ -1,0 +1,26 @@
+{
+  "taskId": "T18",
+  "status": "done",
+  "allowedFiles": [
+    "packages/storage/src/fts.ts",
+    "packages/kernel/src/retrieval/fts-catalog.ts",
+    "packages/kernel/test/fts-catalog.test.ts",
+    "scripts/rebuild-catalog.mjs",
+    "packages/storage/src/schema.sql",
+    "packages/kernel/test/support.ts",
+    "artifacts/task-evidence/T18/red.txt",
+    "artifacts/task-evidence/T18/green.txt",
+    "artifacts/task-evidence/T18/full-gate.txt",
+    "artifacts/task-evidence/T18.json"
+  ],
+  "redLog": "artifacts/task-evidence/T18/red.txt",
+  "greenLog": "artifacts/task-evidence/T18/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T18/full-gate.txt",
+  "sourceDigest": "0560fa5676ab980d513801248a43d67bf5d6f2d0982a263f32603aaac1a3396b",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
