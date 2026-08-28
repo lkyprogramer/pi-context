@@ -1,0 +1,35 @@
+{
+  "taskId": "T01",
+  "status": "done",
+  "allowedFiles": [
+    "package.json",
+    "pnpm-workspace.yaml",
+    "tsconfig.base.json",
+    "vitest.workspace.ts",
+    ".npmrc",
+    ".gitignore",
+    "scripts/check-package-boundaries.mjs",
+    "apps/pi-context-runtime/package.json",
+    "packages/contracts/package.json",
+    "packages/kernel/package.json",
+    "packages/storage/package.json",
+    "packages/worker/package.json",
+    "packages/pi-adapter/package.json",
+    "packages/testkit/package.json",
+    "tests/meta/workspace-layout.test.ts",
+    "artifacts/task-evidence/T01/red.txt",
+    "artifacts/task-evidence/T01/green.txt",
+    "artifacts/task-evidence/T01/full-gate.txt",
+    "artifacts/task-evidence/T01.json"
+  ],
+  "redLog": "artifacts/task-evidence/T01/red.txt",
+  "greenLog": "artifacts/task-evidence/T01/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T01/full-gate.txt",
+  "sourceDigest": "0ec7576b455a3dd7247dcd7a6aa0c1b595ede704c24d0a631bd3765fa02da6c8",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

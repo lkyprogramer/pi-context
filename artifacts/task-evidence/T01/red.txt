@@ -1,0 +1,99 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ tests/meta/workspace-layout.test.ts (4 tests | 4 failed) 9ms
+   × workspace layout > declares every frozen package and one Pi extension entry 6ms
+     → expected 'packages:\n  - packages/*\n' to contain 'apps/*'
+   × workspace layout > rejects packages/kernel importing @earendil-works/* 2ms
+     → expected [Function] to throw error matching /@earendil-works/ but got 'assertWorkspaceLayout not implemented'
+   × workspace layout > fails when the app manifest has two extension entries 0ms
+     → expected [Function] to throw error matching /extension/ but got 'assertWorkspaceLayout not implemented'
+   × workspace layout > fails when a frozen workspace package is missing 1ms
+     → expected [Function] to throw error matching /kernel/ but got 'assertWorkspaceLayout not implemented'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/meta/workspace-layout.test.ts > workspace layout > declares every frozen package and one Pi extension entry
+AssertionError: expected 'packages:\n  - packages/*\n' to contain 'apps/*'
+
+- Expected
++ Received
+
+- apps/*
++ packages:
++   - packages/*
++
+
+ ❯ tests/meta/workspace-layout.test.ts:8:68
+      6|   it("declares every frozen package and one Pi extension entry", () =>…
+      7|     const workspace = readFileSync("pnpm-workspace.yaml", "utf8");
+      8|     for (const path of ["apps/*", "packages/*"]) expect(workspace).toC…
+       |                                                                    ^
+      9|     for (const dir of ["contracts", "kernel", "storage", "worker", "pi…
+     10|       expect(existsSync(`packages/${dir}/package.json`)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/meta/workspace-layout.test.ts > workspace layout > rejects packages/kernel importing @earendil-works/*
+AssertionError: expected [Function] to throw error matching /@earendil-works/ but got 'assertWorkspaceLayout not implemented'
+
+- Expected: 
+/@earendil-works/
+
++ Received: 
+"assertWorkspaceLayout not implemented"
+
+ ❯ tests/meta/workspace-layout.test.ts:22:7
+     20|         kernelSources: ['import { Agent } from "@earendil-works/pi-cod…
+     21|       }),
+     22|     ).toThrow(/@earendil-works/);
+       |       ^
+     23|   });
+     24| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/meta/workspace-layout.test.ts > workspace layout > fails when the app manifest has two extension entries
+AssertionError: expected [Function] to throw error matching /extension/ but got 'assertWorkspaceLayout not implemented'
+
+- Expected: 
+/extension/
+
++ Received: 
+"assertWorkspaceLayout not implemented"
+
+ ❯ tests/meta/workspace-layout.test.ts:30:7
+     28|         appManifest: { pi: { extensions: ["./dist/extension.js", "./di…
+     29|       }),
+     30|     ).toThrow(/extension/);
+       |       ^
+     31|   });
+     32| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/meta/workspace-layout.test.ts > workspace layout > fails when a frozen workspace package is missing
+AssertionError: expected [Function] to throw error matching /kernel/ but got 'assertWorkspaceLayout not implemented'
+
+- Expected: 
+/kernel/
+
++ Received: 
+"assertWorkspaceLayout not implemented"
+
+ ❯ tests/meta/workspace-layout.test.ts:34:71
+     32| 
+     33|   it("fails when a frozen workspace package is missing", () => {
+     34|     expect(() => assertWorkspaceLayout({ missingPackage: "kernel" })).…
+       |                                                                       ^
+     35|   });
+     36| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  10:13:35
+   Duration  476ms (transform 96ms, setup 0ms, collect 81ms, tests 9ms, environment 0ms, prepare 94ms)
+

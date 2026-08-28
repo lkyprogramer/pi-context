@@ -1,0 +1,16 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  10:14:30
+   Duration  313ms (transform 17ms, setup 0ms, collect 17ms, tests 3ms, environment 0ms, prepare 61ms)
+
+None of the selected packages has a "./packages/kernel" script
+
+> pi-context-runtime@0.1.0-alpha.1 typecheck /Users/luo/Documents/github/pi-context/apps/pi-context-runtime
+> node -e "process.exit(0)"
+

@@ -1,0 +1,12 @@
+{
+  "name": "pi-context-runtime",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": ["./dist/extension.js"]
+  },
+  "scripts": {
+    "typecheck": "node -e \"process.exit(0)\""
+  }
+}

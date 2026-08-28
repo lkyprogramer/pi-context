@@ -1,11 +1,12 @@
 {
-  "name": "pi-context",
   "private": true,
+  "packageManager": "pnpm@10.15.0",
   "type": "module",
-  "packageManager": "pnpm@10.23.0",
   "scripts": {
-    "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.base.json --noEmit"
+    "check:boundaries": "node scripts/check-package-boundaries.mjs",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run --workspace vitest.workspace.ts",
+    "check:all": "pnpm check:boundaries && pnpm typecheck && pnpm test"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
