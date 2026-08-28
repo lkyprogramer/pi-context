@@ -108,6 +108,19 @@ export interface ObservationInput {
   capturedAt: number;
 }
 
+export interface EvidenceUnit {
+  evidenceId: string;
+  observationId: string;
+  kind: string;
+  value: unknown;
+  sourceClass: SourceClass;
+  authority: ActionAuthority;
+  sourceRefs: string[];
+  observedAt: number;
+  validity: { kind: string; at?: number };
+  contentHash?: string;
+}
+
 export interface ObservationProjection {
   operationId: string;
   observationId: string;

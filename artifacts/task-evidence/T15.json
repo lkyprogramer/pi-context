@@ -1,0 +1,26 @@
+{
+  "taskId": "T15",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/evidence/model.ts",
+    "packages/kernel/src/evidence/admit.ts",
+    "packages/kernel/src/ingress/project.ts",
+    "packages/kernel/test/evidence-admission.test.ts",
+    "packages/storage/src/protocol.ts",
+    "packages/contracts/src/types.ts",
+    "artifacts/task-evidence/T15/red.txt",
+    "artifacts/task-evidence/T15/green.txt",
+    "artifacts/task-evidence/T15/full-gate.txt",
+    "artifacts/task-evidence/T15.json"
+  ],
+  "redLog": "artifacts/task-evidence/T15/red.txt",
+  "greenLog": "artifacts/task-evidence/T15/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T15/full-gate.txt",
+  "sourceDigest": "5026c807c5a853d414715eeaa20a9d1d1b8bb023b90ea1dd16b22c6e011e2543",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

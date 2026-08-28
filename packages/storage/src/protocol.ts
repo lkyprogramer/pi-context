@@ -71,6 +71,13 @@ export interface RecoveryReport {
   actions: RecoveryAction[];
 }
 
+export interface EvidenceAdmissionRecord {
+  evidenceId: string;
+  sourceClass: string;
+  authority: string;
+  contentHash: string;
+}
+
 export interface StoredDirective {
   directiveId: string;
   quote: string;
