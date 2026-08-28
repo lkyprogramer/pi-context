@@ -1,0 +1,24 @@
+{
+  "taskId": "T28",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/retrieval/lease-store.ts",
+    "packages/kernel/src/retrieval/lease-policy.ts",
+    "packages/kernel/test/lease-lifecycle.test.ts",
+    "packages/storage/src/protocol.ts",
+    "artifacts/task-evidence/T28/red.txt",
+    "artifacts/task-evidence/T28/green.txt",
+    "artifacts/task-evidence/T28/full-gate.txt",
+    "artifacts/task-evidence/T28.json"
+  ],
+  "redLog": "artifacts/task-evidence/T28/red.txt",
+  "greenLog": "artifacts/task-evidence/T28/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T28/full-gate.txt",
+  "sourceDigest": "6453ce8b9f5f5e0106628f201f424d32ea0fab92141c8d1685adf8a52a3ef832",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

@@ -113,6 +113,19 @@ export interface StoredContinuityRevision {
   contentHash: string;
 }
 
+export interface StoredRetrievalLease {
+  leaseId: string;
+  pageId: string;
+  purpose: string;
+  sessionId: string;
+  branchScope: string;
+  authority: string;
+  turns: number;
+  tokenTurns: number;
+  expiresAt: number;
+  omittedReason?: string;
+}
+
 export interface StoredDirective {
   directiveId: string;
   quote: string;
