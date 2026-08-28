@@ -16,8 +16,18 @@ export interface ToolExecuteArgs {
   approved?: boolean;
 }
 
+export interface ToolJsonSchema {
+  type: "object";
+  properties: Record<string, { type: string; description?: string }>;
+  required?: string[];
+  additionalProperties?: boolean;
+}
+
 export interface RuntimeTool {
   name: string;
+  label: string;
+  description: string;
+  parameters: ToolJsonSchema;
   execute(
     callId: string,
     args: ToolExecuteArgs,
@@ -25,6 +35,13 @@ export interface RuntimeTool {
     _b?: unknown,
     ctx?: RuntimeToolCtx,
   ): Promise<{ content: Array<{ type: "text"; text: string }> }>;
+}
+
+export function objectParameters(
+  properties: ToolJsonSchema["properties"] = {},
+  required: string[] = [],
+): ToolJsonSchema {
+  return { type: "object", properties, required, additionalProperties: false };
 }
 
 export interface ToolsRuntime {
@@ -44,6 +61,9 @@ export interface ToolsRuntime {
 export function createStatusTool(runtime: ToolsRuntime): RuntimeTool {
   return {
     name: "context_status",
+    label: "Context Status",
+    description: "Show Pi Context Runtime claim and workspace status.",
+    parameters: objectParameters(),
     async execute(_callId, _args, _a, _b, ctx) {
       const payload = {
         workspaceId: ctx?.workspaceId ?? runtime.workspaceId,

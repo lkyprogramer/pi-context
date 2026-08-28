@@ -78,6 +78,30 @@ describe("Pi context hook", () => {
     expect(stitched[0]).toBe(original[0]);
   });
 
+  it("passes toolResult through so Pi keeps tool pairing and usage", () => {
+    const original = [
+      {
+        role: "assistant",
+        content: [{ type: "toolCall", id: "call_1", name: "context_status", arguments: {} }],
+        usage: { input: 10, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 11, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+        stopReason: "toolUse",
+      },
+      { role: "toolResult", toolCallId: "call_1", content: [{ type: "text", text: "{\"ok\":true}" }] },
+      { role: "user", content: "continue" },
+    ];
+    const converted = toPiMessages(toHostMessages([{ role: "user", content: "continue" }]));
+    const stitched = stitchContextMessages(original, converted);
+    expect(stitched[0]).toBe(original[0]);
+    expect(stitched[1]).toMatchObject({ role: "toolResult", toolCallId: "call_1" });
+    expect(stitched[0]?.usage?.totalTokens).toBe(11);
+  });
+
+  it("never rematerializes an assistant without usage.totalTokens", () => {
+    const original = [{ role: "assistant", content: [{ type: "text", text: "ACK" }], stopReason: "stop" }];
+    const converted = [{ role: "assistant", content: [{ type: "text", text: "ACK" }] }];
+    expect(stitchContextMessages(original, converted)[0]?.usage?.totalTokens).toBe(0);
+  });
+
   it("restores assistant usage after rematerialization", () => {
     const original = [
       {

@@ -1,8 +1,17 @@
-import type { RuntimeTool, ToolsRuntime } from "./status.js";
+import { objectParameters, type RuntimeTool, type ToolsRuntime } from "./status.js";
 
 export function createPinTool(_runtime: ToolsRuntime): RuntimeTool {
   return {
     name: "context_pin",
+    label: "Context Pin",
+    description: "Pin a user-approved directive into the runtime.",
+    parameters: objectParameters(
+      {
+        directive: { type: "string", description: "Directive text" },
+        approved: { type: "boolean", description: "User confirmation" },
+      },
+      ["directive"],
+    ),
     async execute(_callId, args, _a, _b, ctx) {
       if (ctx?.channel !== "authenticated-user" || args.approved !== true) {
         throw Object.assign(new Error("pin requires authenticated user confirmation"), { code: "PCR_PIN_DENIED" });

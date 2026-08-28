@@ -1,8 +1,18 @@
-import type { RuntimeTool, ToolsRuntime } from "./status.js";
+import { objectParameters, type RuntimeTool, type ToolsRuntime } from "./status.js";
 
 export function createSearchTool(runtime: ToolsRuntime): RuntimeTool {
   return {
     name: "context_search",
+    label: "Context Search",
+    description: "Literal search over scoped evidence snippets. Rejects SQL and regex.",
+    parameters: objectParameters(
+      {
+        query: { type: "string", description: "Literal query" },
+        limit: { type: "number", description: "Hit cap, max 20" },
+        timeoutMs: { type: "number", description: "Timeout cap, max 250ms" },
+      },
+      ["query"],
+    ),
     async execute(_callId, args, _a, _b, ctx) {
       const query = String(args.query ?? "");
       if (!query || /select\s|drop\s|\/.+\/[gimsuy]*/i.test(query)) {

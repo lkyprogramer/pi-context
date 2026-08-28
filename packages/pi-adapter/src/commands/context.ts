@@ -1,7 +1,7 @@
 import { createPinTool } from "../tools/pin.js";
 import { createRecallTool } from "../tools/recall.js";
 import { createSearchTool } from "../tools/search.js";
-import { createStatusTool, type RuntimeTool, type RuntimeToolCtx, type ToolsRuntime } from "../tools/status.js";
+import { createStatusTool, objectParameters, type RuntimeTool, type RuntimeToolCtx, type ToolJsonSchema, type ToolsRuntime } from "../tools/status.js";
 
 export interface ToolingExtensionAPI {
   registerTool(tool: RuntimeTool): void;
@@ -45,5 +45,5 @@ export function registerRuntimeTools(pi: ToolingExtensionAPI, runtime: ToolsRunt
   pi.registerCommand("context-compact", { description: "Request settled host convergence", handler: (_args, ctx) => commands.compact(ctx) });
 }
 
-export { createRecallTool, createSearchTool, createStatusTool, createPinTool };
-export type { RuntimeTool, RuntimeToolCtx, ToolsRuntime };
+export { createRecallTool, createSearchTool, createStatusTool, createPinTool, objectParameters };
+export type { RuntimeTool, RuntimeToolCtx, ToolsRuntime, ToolJsonSchema };

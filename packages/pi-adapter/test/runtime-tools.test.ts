@@ -93,6 +93,12 @@ describe("runtime tools", () => {
     registerRuntimeTools(pi, fixtureRuntime());
     expect(names).toEqual(["context_recall", "context_search", "context_status", "context_pin"]);
     expect(commands).toEqual(["context", "context-doctor", "context-compact"]);
+    const tools = createRegisteredRuntimeTools(fixtureRuntime());
+    for (const tool of tools) {
+      expect(tool.parameters.type).toBe("object");
+      expect(tool.label.length).toBeGreaterThan(0);
+      expect(tool.description.length).toBeGreaterThan(0);
+    }
     expect(() => registerRuntimeTools(pi, fixtureRuntime())).toThrow(/collision/);
   });
 });

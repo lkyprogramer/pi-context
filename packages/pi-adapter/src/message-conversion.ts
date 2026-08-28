@@ -41,13 +41,29 @@ export function toHostMessages(messages: readonly PiAgentMessage[]): HostMessage
   });
 }
 
+export function emptyPiUsage(): PiUsage {
+  return {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalTokens: 0,
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+  };
+}
+
 export function toPiMessages(messages: readonly HostMessage[]): PiAgentMessage[] {
-  return messages.map((message) => ({
-    role: message.role === "tool-result" ? "toolResult" : message.role,
-    content: toPiContent(message.role, message.content),
-    timestamp: message.timestamp,
-    toolCallId: message.toolCallId,
-  }));
+  return messages.map((message) => {
+    const role = message.role === "tool-result" ? "toolResult" : message.role;
+    const converted: PiAgentMessage = {
+      role,
+      content: toPiContent(message.role, message.content),
+      timestamp: message.timestamp,
+      toolCallId: message.toolCallId,
+    };
+    if (role === "assistant") converted.usage = emptyPiUsage();
+    return converted;
+  });
 }
 
 function toPiContent(role: HostMessage["role"], content: HostMessage["content"]): unknown {
@@ -72,6 +88,7 @@ function toPiContent(role: HostMessage["role"], content: HostMessage["content"])
 
 function normalizeRole(role: string): HostMessage["role"] {
   if (role === "user" || role === "assistant" || role === "tool-result" || role === "custom") return role;
+  if (role === "toolResult") return "tool-result";
   if (role === "compaction" || role === "branch-summary" || role === "system") return "custom";
   return "custom";
 }

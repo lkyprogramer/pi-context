@@ -1,5 +1,5 @@
 import type { HostMessage, MaterializationInput, MaterializedView } from "../../contracts/src/index.js";
-import { toHostMessages, toPiMessages, type PiAgentMessage } from "./message-conversion.js";
+import { emptyPiUsage, toHostMessages, toPiMessages, type PiAgentMessage } from "./message-conversion.js";
 
 export interface ExtensionAPI {
   on(
@@ -45,7 +45,7 @@ export function normalizePcrError(error: unknown): NormalizedPcrError {
   return { code, severity: HARD_CODES.has(code) ? "hard" : "soft" };
 }
 
-const OPAQUE_PI_ROLES = new Set(["compactionSummary", "branchSummary", "bashExecution"]);
+const OPAQUE_PI_ROLES = new Set(["compactionSummary", "branchSummary", "bashExecution", "toolResult"]);
 
 export function isOpaquePiRole(role: string): boolean {
   return OPAQUE_PI_ROLES.has(role);
@@ -65,15 +65,21 @@ export function isOpaquePiMessage(message: PiAgentMessage): boolean {
   return isOpaquePiRole(message.role) || (message.role === "assistant" && hasThinkingOrToolCall(message.content));
 }
 
+function withAssistantUsage(message: PiAgentMessage): PiAgentMessage {
+  if (message.role !== "assistant") return message;
+  if (message.usage && typeof message.usage.totalTokens === "number") return message;
+  return { ...message, usage: emptyPiUsage() };
+}
+
 function withAssistantMeta(original: PiAgentMessage, converted: PiAgentMessage): PiAgentMessage {
   if (original.role !== "assistant" || converted.role !== "assistant") return converted;
-  return {
+  return withAssistantUsage({
     ...converted,
     usage: converted.usage ?? original.usage,
     stopReason: converted.stopReason ?? original.stopReason,
     errorMessage: converted.errorMessage ?? original.errorMessage,
     timestamp: converted.timestamp ?? original.timestamp,
-  };
+  });
 }
 
 export function stitchContextMessages(
@@ -84,15 +90,15 @@ export function stitchContextMessages(
   let convertedIndex = 0;
   for (const message of original) {
     if (isOpaquePiMessage(message)) {
-      out.push(message);
+      out.push(withAssistantUsage(message));
       continue;
     }
     const next = convertedIndex < converted.length ? converted[convertedIndex++] : message;
-    out.push(next ? withAssistantMeta(message, next) : message);
+    out.push(next ? withAssistantMeta(message, next) : withAssistantUsage(message));
   }
   while (convertedIndex < converted.length) {
     const extra = converted[convertedIndex++];
-    if (extra) out.push(extra);
+    if (extra) out.push(withAssistantUsage(extra));
   }
   return out;
 }
