@@ -1,6 +1,0 @@
-{"type":"session","version":3,"id":"s1","leafId":"u2"}
-{"type":"message","id":"u1","parentId":null,"message":{"role":"user","content":"fix 构建","timestamp":1}}
-{"type":"message","id":"a1","parentId":"u1","message":{"role":"assistant","content":"running tests","timestamp":2}}
-{"type":"message","id":"tool-1","parentId":"a1","message":{"role":"toolResult","toolCallId":"call-1","toolName":"bash","content":[{"type":"text","text":"ERROR TS2322"}],"isError":true,"timestamp":3}}
-{"type":"compaction","id":"cmp-1","parentId":"tool-1","summary":"compacted build metadata","timestamp":4}
-{"type":"message","id":"u2","parentId":"cmp-1","message":{"role":"user","content":"continue","timestamp":5}}

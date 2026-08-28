@@ -1,4 +1,0 @@
-reconstructed-red: implementation already present when evidence was sealed (2026-08-28)
-status=reconstructed
-note=Live RED was not captured at first implementation of B12. GREEN/NEGATIVE/FULL-GATE below are contemporaneous command output.
-protocol-required-assertions=see docs/pi-context-compression-benchmark-spec/tasks for B12 Step 1

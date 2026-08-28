@@ -1,19 +1,14 @@
 # pi-context
 
-Public specifications and W1 implementation for Pi context runtime and compression evaluation.
+Pi Context Runtime (PCR) — host-agnostic context kernel with Pi as the first adapter.
 
 ## Specs
 
-- [`docs/pi-context-runtime-greenfield-spec-v1.0.0`](docs/pi-context-runtime-greenfield-spec-v1.0.0) — runtime greenfield spec
-- [`docs/pi-context-compression-benchmark-spec`](docs/pi-context-compression-benchmark-spec) — compression comparison and Early Net Value Gate spec
+- [`docs/pi-context-runtime-greenfield-spec-v1.0.0`](docs/pi-context-runtime-greenfield-spec-v1.0.0) — product implementation
+- [`docs/pi-context-compression-benchmark-spec`](docs/pi-context-compression-benchmark-spec) — W1/W2 evaluation and gates
 
-## W1 implementation
+## Status
 
-TypeScript workspace (`pnpm test`, `pnpm typecheck`) covering:
+Previous `packages/benchmark-*` stubs were removed. Implementation restarts from greenfield T01.
 
-- contracts, RawTrace capture, boundary snapshot, oracle validation
-- A0 Pi Native arm and A1/A2 W1 ingress (CAS, reducers, evidence, exact/FTS, proactive recall)
-- static / recoverability / recall scoring, paired continuation, economics, paired stats, corpus adapters
-- machine-readable W1 Early Net Value Gate (`scripts/run-gate.mjs`)
-
-W1 still uses Pi Native compaction. No W2 materializer is implemented. Gate decisions from fixture metrics are not a 60-boundary publication claim.
+W1 product path: T01–T19 in the greenfield spec. Benchmark packages consume the runtime; they are not the runtime.

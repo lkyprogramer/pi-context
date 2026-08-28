@@ -1,5 +1,0 @@
-{
-  "scenarioId": "large-build-log",
-  "family": "tool-heavy",
-  "fullLog": "progress 1\nprogress 2\nERROR EADDRINUSE 127.0.0.1:8080\n"
-}
