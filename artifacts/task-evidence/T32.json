@@ -1,0 +1,24 @@
+{
+  "taskId": "T32",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/control/convergence.ts",
+    "packages/pi-adapter/src/convergence-controller.ts",
+    "packages/kernel/test/convergence.test.ts",
+    "packages/kernel/src/index.ts",
+    "artifacts/task-evidence/T32/red.txt",
+    "artifacts/task-evidence/T32/green.txt",
+    "artifacts/task-evidence/T32/full-gate.txt",
+    "artifacts/task-evidence/T32.json"
+  ],
+  "redLog": "artifacts/task-evidence/T32/red.txt",
+  "greenLog": "artifacts/task-evidence/T32/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T32/full-gate.txt",
+  "sourceDigest": "d1e0ac793c0aaa5983b1c106258e6fd3085827cf604533e438d04009778c20d5",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
