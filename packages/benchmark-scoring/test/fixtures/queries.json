@@ -1,0 +1,6 @@
+{
+  "queries": [
+    { "queryId": "q1", "needed": true, "relevantItemIds": ["old-error-1"] },
+    { "queryId": "q2", "needed": false, "relevantItemIds": [] }
+  ]
+}

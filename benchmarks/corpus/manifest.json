@@ -1,0 +1,5 @@
+{
+  "version": "1.0.0",
+  "public": "benchmarks/corpus/public",
+  "sealed": "benchmarks/corpus/sealed"
+}
