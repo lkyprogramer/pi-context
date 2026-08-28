@@ -1,0 +1,21 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:90356) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/storage/test/saga-recovery.test.ts (7 tests) 83ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  10:27:14
+   Duration  424ms (transform 56ms, setup 0ms, collect 87ms, tests 83ms, environment 0ms, prepare 48ms)
+
+
+> @pcr/storage@ typecheck /Users/luo/Documents/github/pi-context/packages/storage
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/sqlite-store.ts src/worker.ts src/protocol.ts
+
+
+> @pcr/testkit@ typecheck /Users/luo/Documents/github/pi-context/packages/testkit
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts
+

@@ -1,0 +1,33 @@
+
+> @ check:boundaries /Users/luo/Documents/github/pi-context
+> node scripts/check-package-boundaries.mjs
+
+boundaries: ok
+
+> @ test /Users/luo/Documents/github/pi-context
+> vitest run --workspace vitest.workspace.ts
+
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 3ms
+ ✓ |0| tests/contract/pi-capability-probe.test.ts (4 tests) 3ms
+ ✓ |0| apps/pi-context-runtime/test/owner.test.ts (4 tests) 3ms
+ ✓ |0| packages/contracts/test/types.test.ts (4 tests) 2ms
+(node:90481) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/contracts/test/canonical.test.ts (4 tests) 11ms
+(node:90479) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:90480) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/storage/test/blob-store.test.ts (5 tests) 62ms
+ ✓ |0| packages/storage/test/sqlite-store.test.ts (5 tests) 77ms
+ ✓ |0| packages/storage/test/saga-recovery.test.ts (7 tests) 135ms
+
+ Test Files  8 passed (8)
+      Tests  37 passed (37)
+   Start at  10:27:19
+   Duration  560ms (transform 227ms, setup 0ms, collect 628ms, tests 297ms, environment 1ms, prepare 845ms)
+

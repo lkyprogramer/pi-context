@@ -1,0 +1,28 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| packages/storage/test/saga-recovery.test.ts [ packages/storage/test/saga-recovery.test.ts ]
+Error: Cannot find module '../src/saga.js' imported from '/Users/luo/Documents/github/pi-context/packages/storage/test/support.ts'
+ ❯ packages/storage/test/support.ts:6:1
+      4| import { EncryptedBlobStore } from "../src/blob-store.js";
+      5| import { TestKeyProvider } from "../src/key-provider.js";
+      6| import { SagaCoordinator } from "../src/saga.js";
+       | ^
+      7| import { openSqliteStore, type SqliteStore } from "../src/sqlite-store…
+      8| 
+
+Caused by: Error: Failed to load url ../src/saga.js (resolved id: ../src/saga.js) in /Users/luo/Documents/github/pi-context/packages/storage/test/support.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1/node_modules/vite/dist/node/chunks/config.js:22739:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  10:25:50
+   Duration  394ms (transform 56ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 96ms)
+

@@ -1,0 +1,26 @@
+{
+  "taskId": "T08",
+  "status": "done",
+  "allowedFiles": [
+    "packages/storage/src/saga.ts",
+    "packages/storage/src/recovery.ts",
+    "packages/storage/test/saga-recovery.test.ts",
+    "packages/testkit/src/fault-plan.ts",
+    "packages/storage/src/protocol.ts",
+    "packages/storage/test/support.ts",
+    "artifacts/task-evidence/T08/red.txt",
+    "artifacts/task-evidence/T08/green.txt",
+    "artifacts/task-evidence/T08/full-gate.txt",
+    "artifacts/task-evidence/T08.json"
+  ],
+  "redLog": "artifacts/task-evidence/T08/red.txt",
+  "greenLog": "artifacts/task-evidence/T08/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T08/full-gate.txt",
+  "sourceDigest": "ffdedb10eaa2168e3c6fcf9cf7e770e09c8b6c2802f3b564e34f723da5b69591",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
