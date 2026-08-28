@@ -1,0 +1,16 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-report/test/gates.test.ts > w1 gate > stops on integrity failure despite large token savings 1ms
+ ✓ packages/benchmark-report/test/gates.test.ts > w1 gate > returns keep-reducers-only when ingress passes but proactive recall fails 0ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > stops on integrity failure despite large token savings 1ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > returns keep-reducers-only when ingress passes but proactive recall fails 0ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > builds a machine-readable report 0ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > runs the synthetic 60-boundary engine without a publication claim 114ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > does not claim proceed-to-w2 from an unverified 60-boundary run 0ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  09:58:36
+   Duration  536ms (transform 141ms, setup 0ms, collect 216ms, tests 119ms, environment 0ms, prepare 169ms)
+

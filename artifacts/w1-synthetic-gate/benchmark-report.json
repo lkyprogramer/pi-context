@@ -1,0 +1,19 @@
+{
+  "runId": "w1-synthetic-60",
+  "stage": "w1",
+  "baselineArm": "A0",
+  "candidateArms": [
+    "A1",
+    "A2"
+  ],
+  "hardGatePass": true,
+  "qualityCiLower": 0,
+  "qualityMargin": 0.03,
+  "medianTokenDelta": -0.9820426487093153,
+  "realizedNetMedian": 3.7880000000000003,
+  "failures": [],
+  "artifactHashes": [
+    "1111111111111111111111111111111111111111111111111111111111111111",
+    "2222222222222222222222222222222222222222222222222222222222222222"
+  ]
+}
