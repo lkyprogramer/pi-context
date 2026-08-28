@@ -1,0 +1,24 @@
+{
+  "taskId": "T21",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/claims/resolve.ts",
+    "packages/kernel/src/claims/transitions.ts",
+    "packages/kernel/test/claim-transitions.test.ts",
+    "packages/kernel/src/claims/index.ts",
+    "artifacts/task-evidence/T21/red.txt",
+    "artifacts/task-evidence/T21/green.txt",
+    "artifacts/task-evidence/T21/full-gate.txt",
+    "artifacts/task-evidence/T21.json"
+  ],
+  "redLog": "artifacts/task-evidence/T21/red.txt",
+  "greenLog": "artifacts/task-evidence/T21/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T21/full-gate.txt",
+  "sourceDigest": "4a28e89561f1fc2b72d710d32c7693f614596540635e494b7ef3f659ef9b01f4",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

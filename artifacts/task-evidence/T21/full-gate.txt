@@ -1,0 +1,54 @@
+
+> @ check:boundaries /Users/luo/Documents/github/pi-context
+> node scripts/check-package-boundaries.mjs
+
+boundaries: ok
+
+> @ test /Users/luo/Documents/github/pi-context
+> vitest run --workspace vitest.workspace.ts
+
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:61874) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/kernel/test/directive-capture.test.ts (5 tests) 16ms
+ ✓ |0| packages/kernel/test/evidence-admission.test.ts (5 tests) 12ms
+ ✓ |0| tests/contract/pi-tool-result-order.test.ts (1 test) 13ms
+(node:61875) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:61873) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:61872) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/kernel/test/reducer-registry.test.ts (5 tests) 63ms
+ ✓ |0| packages/storage/test/blob-store.test.ts (5 tests) 78ms
+ ✓ |0| packages/storage/test/sqlite-store.test.ts (5 tests) 97ms
+ ✓ |0| packages/kernel/test/raw-capture.test.ts (5 tests) 136ms
+ ✓ |0| packages/storage/test/saga-recovery.test.ts (7 tests) 233ms
+ ✓ |0| tests/contract/pi-input-correlation.test.ts (1 test) 11ms
+(node:61913) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/kernel/test/raw-input.test.ts (5 tests) 15ms
+ ✓ |0| packages/contracts/test/canonical.test.ts (4 tests) 14ms
+ ✓ |0| packages/kernel/test/claim-ledger.test.ts (9 tests) 21ms
+ ✓ |0| packages/kernel/test/literal-index.test.ts (5 tests) 8ms
+ ✓ |0| packages/kernel/test/fts-catalog.test.ts (5 tests) 19ms
+ ✓ |0| packages/kernel/test/builtin-reducers.test.ts (5 tests) 4ms
+ ✓ |0| apps/pi-context-runtime/test/owner.test.ts (4 tests) 7ms
+ ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 7ms
+ ✓ |0| packages/kernel/test/claim-transitions.test.ts (7 tests) 7ms
+ ✓ |0| packages/kernel/test/shell-reducers.test.ts (6 tests) 4ms
+ ✓ |0| tests/contract/pi-capability-probe.test.ts (4 tests) 4ms
+ ✓ |0| packages/contracts/test/types.test.ts (4 tests) 2ms
+ ✓ |0| packages/kernel/test/proactive-recall.test.ts (5 tests) 3ms
+ ✓ |0| packages/kernel/test/exact-read.test.ts (5 tests) 5ms
+ ✓ |0| tests/w1-gate/early-net-value.test.ts (3 tests) 1231ms
+   ✓ W1 Early Net Value Gate > evaluates live PCR arms and writes a machine-readable report  1223ms
+
+ Test Files  24 passed (24)
+      Tests  114 passed (114)
+   Start at  11:07:34
+   Duration  2.40s (transform 735ms, setup 0ms, collect 2.14s, tests 2.01s, environment 4ms, prepare 3.66s)
+
