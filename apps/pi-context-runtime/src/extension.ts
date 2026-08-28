@@ -15,6 +15,7 @@ import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/
 import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { toHostMessages, toPiMessages } from "../../../packages/pi-adapter/src/message-conversion.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
+import { registerOperationsCommands } from "./commands/operations.js";
 import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
 import { claimPiContextOwner } from "./owner.js";
 import { captureUserDirectives } from "../../../packages/kernel/src/directives/capture.js";
@@ -287,6 +288,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         JSON.stringify({ ok: true, command: "context-compact", workspaceId: ctx.workspaceId ?? "ws_0123456789abcdef" }),
     },
   });
+  registerOperationsCommands(pi, { workspaceId: "ws_0123456789abcdef" });
   return { name: "pi-context-runtime", hooks: {}, claimed: true, release: owner.release };
 }
 

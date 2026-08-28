@@ -1,0 +1,28 @@
+{
+  "taskId": "T47",
+  "status": "done",
+  "allowedFiles": [
+    "packages/storage/src/operations/backup.ts",
+    "packages/storage/src/operations/restore.ts",
+    "packages/storage/src/operations/gc.ts",
+    "packages/storage/src/operations/key-rotation.ts",
+    "apps/pi-context-runtime/src/commands/operations.ts",
+    "tests/e2e/operations.test.ts",
+    "apps/pi-context-runtime/src/extension.ts",
+    "tests/e2e/support.ts",
+    "artifacts/task-evidence/T47/red.txt",
+    "artifacts/task-evidence/T47/green.txt",
+    "artifacts/task-evidence/T47/full-gate.txt",
+    "artifacts/task-evidence/T47.json"
+  ],
+  "redLog": "artifacts/task-evidence/T47/red.txt",
+  "greenLog": "artifacts/task-evidence/T47/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T47/full-gate.txt",
+  "sourceDigest": "3a79e321755ae496d982198622ad907b2659e7a9bded9d6d736720c9c7a694ec",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
