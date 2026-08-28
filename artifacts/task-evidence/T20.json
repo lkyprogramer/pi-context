@@ -1,0 +1,25 @@
+{
+  "taskId": "T20",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/claims/model.ts",
+    "packages/kernel/src/claims/store.ts",
+    "packages/kernel/src/claims/admit.ts",
+    "packages/kernel/test/claim-ledger.test.ts",
+    "packages/storage/src/protocol.ts",
+    "artifacts/task-evidence/T20/red.txt",
+    "artifacts/task-evidence/T20/green.txt",
+    "artifacts/task-evidence/T20/full-gate.txt",
+    "artifacts/task-evidence/T20.json"
+  ],
+  "redLog": "artifacts/task-evidence/T20/red.txt",
+  "greenLog": "artifacts/task-evidence/T20/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T20/full-gate.txt",
+  "sourceDigest": "9add39bfdfa823e17e5e0a3c3954ac371afbcab2086be444389777d07b35fddb",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

@@ -84,6 +84,28 @@ export interface EvidenceAdmissionRecord {
   contentHash: string;
 }
 
+export interface StoredClaimRecord {
+  claimId: string;
+  key: string;
+  claimType: string;
+  polarity: string;
+  status: string;
+  authority: string;
+  value: unknown;
+  validStart?: number | null;
+  validEnd?: number | null;
+  systemStart: number;
+  systemEnd?: number | null;
+  supportIds: string[];
+  supersedes: string[];
+  conflictsWith: string[];
+}
+
+export interface ClaimWriteStore {
+  insertClaim(claim: StoredClaimRecord): Promise<void>;
+  listClaims(): Promise<StoredClaimRecord[]>;
+}
+
 export interface StoredDirective {
   directiveId: string;
   quote: string;
