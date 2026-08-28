@@ -15,7 +15,8 @@
     "security:suite": "node scripts/run-security-suite.mjs",
     "compat:scan": "node scripts/check-public-pi-imports.mjs",
     "compat:lock": "node scripts/install-pi-version.mjs",
-    "gate:mvp": "node scripts/gates/deterministic-mvp.mjs"
+    "gate:mvp": "node scripts/gates/deterministic-mvp.mjs",
+    "gate:semantic": "node scripts/gates/semantic-beta.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",

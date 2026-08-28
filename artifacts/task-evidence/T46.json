@@ -1,0 +1,24 @@
+{
+  "taskId": "T46",
+  "status": "done",
+  "allowedFiles": [
+    "scripts/gates/semantic-beta.mjs",
+    "reports/gates/semantic-beta/.gitkeep",
+    "tests/release/semantic-beta-gate.test.ts",
+    "package.json",
+    "artifacts/task-evidence/T46/red.txt",
+    "artifacts/task-evidence/T46/green.txt",
+    "artifacts/task-evidence/T46/full-gate.txt",
+    "artifacts/task-evidence/T46.json"
+  ],
+  "redLog": "artifacts/task-evidence/T46/red.txt",
+  "greenLog": "artifacts/task-evidence/T46/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T46/full-gate.txt",
+  "sourceDigest": "968ee3c7ceb419ac8a0d21eadf42ebd51fea6e6010bd3e57c79f14391207767e",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
