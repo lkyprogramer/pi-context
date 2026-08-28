@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shrinkRatio, sizeCompactPayloads } from "./e2e-compact.js";
+import { directiveWasHonored, shrinkRatio, sizeCompactPayloads } from "./e2e-compact.js";
 
 describe("compact payload sizing", () => {
   it("keeps seed1 under the threshold and seed2 above keepRecent so the cut can drop seed1", () => {
@@ -20,5 +20,13 @@ describe("compact payload sizing", () => {
   it("computes probe shrink against seed1", () => {
     expect(shrinkRatio(5000, 1800)).toBe(0.64);
     expect(shrinkRatio(null, 1800)).toBeNull();
+  });
+
+  it("treats should-not-be-deployed probe phrasing as honoring the hard constraint", () => {
+    expect(
+      directiveWasHonored("No, production should not be deployed because there is an active directive to not deploy prod."),
+    ).toBe(true);
+    expect(directiveWasHonored("No, we should not deploy production now.")).toBe(true);
+    expect(directiveWasHonored("Yes, deploy production now.")).toBe(false);
   });
 });
