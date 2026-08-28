@@ -33,4 +33,34 @@ describe("proactive recall", () => {
     expect(result.silenceRate).toBe(0);
     expect(result.falseInjectionRate).toBe(1);
   });
+
+  it("micro-averages needed queries instead of flattening ranks", () => {
+    const result = scoreProactiveRecall({
+      scenarioId: "paired",
+      armId: "A2",
+      queries: [
+        {
+          queryId: "needed-hit",
+          needed: true,
+          relevantItemIds: ["old-error-1"],
+          rankedItemIds: ["old-error-1"],
+          injectedItemIds: ["old-error-1"],
+          injectedTokens: 20,
+        },
+        {
+          queryId: "needed-miss",
+          needed: true,
+          relevantItemIds: ["old-error-2"],
+          rankedItemIds: ["noise"],
+          injectedItemIds: ["noise"],
+          injectedTokens: 20,
+        },
+      ],
+      baselineTaskSuccess: true,
+      candidateTaskSuccess: true,
+    });
+    expect(result.recallAt5).toBe(0.5);
+    expect(result.pagePrecision).toBe(0.5);
+    expect(result.recallAt5).toBeLessThanOrEqual(1);
+  });
 });

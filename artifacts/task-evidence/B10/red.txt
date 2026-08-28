@@ -1,0 +1,104 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-scoring/test/recall.test.ts > proactive recall > computes recall@5 and mrr from oracle item ids 1ms
+ ✓ packages/benchmark-scoring/test/recall.test.ts > proactive recall > penalizes injection on recall-not-needed turns 0ms
+ × packages/benchmark-scoring/test/recall.test.ts > proactive recall > micro-averages needed queries instead of flattening ranks 4ms
+   → expected undefined to be 0.5 // Object.is equality
+ ✓ packages/benchmark-arms/test/w1.test.ts > w1 arms > A1 stores raw bytes but sends the reduced tool result to Pi 4ms
+ × packages/benchmark-arms/test/w1.test.ts > w1 arms > A2 injects only the relevant old error and keeps the latest user message last 5ms
+   → expected [ 'old-error-1', 't-now' ] to deeply equal [ 'old-error-1' ]
+ ✓ packages/benchmark-arms/test/w1.test.ts > w1 arms > scrubs secrets and does not leak CJK raw logs into the host view 2ms
+ × packages/benchmark-corpus/test/adapters.test.ts > corpus adapters > loads public templates and 60 synthetic paired boundaries 72ms
+   → expected Set{ 2 } to deeply equal Set{ 10, 50, 100 }
+ ✓ packages/benchmark-corpus/test/adapters.test.ts > corpus adapters > does not expose sealed hidden tasks through the public loader 52ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > stops on integrity failure despite large token savings 2ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > returns keep-reducers-only when ingress passes but proactive recall fails 0ms
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > builds a machine-readable report 0ms
+ × packages/benchmark-report/test/report.test.ts > report and gate engine > runs the synthetic 60-boundary engine without a publication claim 112ms
+   → expected 3 to be less than or equal to 1
+ ✓ packages/benchmark-report/test/report.test.ts > report and gate engine > does not claim proceed-to-w2 from an unverified 60-boundary run 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/benchmark-arms/test/w1.test.ts > w1 arms > A2 injects only the relevant old error and keeps the latest user message last
+AssertionError: expected [ 'old-error-1', 't-now' ] to deeply equal [ 'old-error-1' ]
+
+- Expected
++ Received
+
+  [
+    "old-error-1",
++   "t-now",
+  ]
+
+ ❯ packages/benchmark-arms/test/w1.test.ts:82:58
+     80|   it("A2 injects only the relevant old error and keeps the latest user…
+     81|     const result = await runW1Arm(w1Fixture("A2"));
+     82|     expect(result.recallInjections.map((x) => x.itemId)).toEqual(["old…
+       |                                                          ^
+     83|     const last = result.artifact.messages.at(-1) as { role?: string } …
+     84|     expect(last?.role).toBe("user");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  packages/benchmark-corpus/test/adapters.test.ts > corpus adapters > loads public templates and 60 synthetic paired boundaries
+AssertionError: expected Set{ 2 } to deeply equal Set{ 10, 50, 100 }
+
+- Expected
++ Received
+
+  Set {
+-   10,
+-   100,
+-   50,
++   2,
+  }
+
+ ❯ packages/benchmark-corpus/test/adapters.test.ts:21:30
+     19|         .map((s) => s.trace.entries.filter((entry) => entry.role === "…
+     20|     );
+     21|     expect(delayedUserTurns).toEqual(new Set([10, 50, 100]));
+       |                              ^
+     22|   });
+     23| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  packages/benchmark-report/test/report.test.ts > report and gate engine > runs the synthetic 60-boundary engine without a publication claim
+AssertionError: expected 3 to be less than or equal to 1
+ ❯ packages/benchmark-report/test/report.test.ts:31:40
+     29|     expect(result.gateInput.ingressTokenMedianDelta).toBeLessThanOrEqu…
+     30|     expect(result.gateInput.recallAt5).toBeGreaterThanOrEqual(0);
+     31|     expect(result.gateInput.recallAt5).toBeLessThanOrEqual(1);
+       |                                        ^
+     32|   });
+     33| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  packages/benchmark-scoring/test/recall.test.ts > proactive recall > micro-averages needed queries instead of flattening ranks
+AssertionError: expected undefined to be 0.5 // Object.is equality
+
+- Expected: 
+0.5
+
++ Received: 
+undefined
+
+ ❯ packages/benchmark-scoring/test/recall.test.ts:63:34
+     61|     });
+     62|     expect(result.recallAt5).toBe(0.5);
+     63|     expect(result.pagePrecision).toBe(0.5);
+       |                                  ^
+     64|     expect(result.recallAt5).toBeLessThanOrEqual(1);
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  4 failed | 9 passed (13)
+   Start at  09:55:51
+   Duration  591ms (transform 354ms, setup 0ms, collect 479ms, tests 260ms, environment 0ms, prepare 329ms)
+

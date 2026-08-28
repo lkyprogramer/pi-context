@@ -1,0 +1,17 @@
+{
+  "taskId": "B10",
+  "allowedFiles": [
+    "packages/benchmark-scoring/src/recall.ts",
+    "packages/benchmark-scoring/src/ranking.ts",
+    "packages/benchmark-scoring/test/recall.test.ts",
+    "packages/benchmark-scoring/test/fixtures/queries.json"
+  ],
+  "sourceDigest": "c1b832d4c4759462e49f33c573c3752a825ea8e231f8860b34db777a8974098f",
+  "redLog": "artifacts/task-evidence/B10/red.txt",
+  "greenLog": "artifacts/task-evidence/B10/green.txt",
+  "negativeLog": "artifacts/task-evidence/B10/negative.txt",
+  "fullGateLog": "artifacts/task-evidence/B10/full-gate.txt",
+  "testsPassed": true,
+  "typecheckPassed": true,
+  "scopePassed": true
+}

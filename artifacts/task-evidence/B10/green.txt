@@ -1,0 +1,12 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-scoring/test/recall.test.ts > proactive recall > computes recall@5 and mrr from oracle item ids 1ms
+ ✓ packages/benchmark-scoring/test/recall.test.ts > proactive recall > penalizes injection on recall-not-needed turns 0ms
+ ✓ packages/benchmark-scoring/test/recall.test.ts > proactive recall > micro-averages needed queries instead of flattening ranks 0ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  09:58:28
+   Duration  308ms (transform 41ms, setup 0ms, collect 37ms, tests 2ms, environment 0ms, prepare 66ms)
+
