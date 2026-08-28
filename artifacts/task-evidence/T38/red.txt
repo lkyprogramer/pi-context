@@ -1,0 +1,5 @@
+PASS (0) FAIL (0)
+[full output: ~/Library/Application Support/rtk/tee/1787890538_vitest_run.log]
+Cannot find module '../src/control/economics.js' imported from '/Users/luo/Documents/github/pi-context/packages/worker/test/telemetry-economics.test.ts'
+{"success":false,"numFailedTestSuites":1,"numPassedTests":0,"numTotalTests":0}
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.

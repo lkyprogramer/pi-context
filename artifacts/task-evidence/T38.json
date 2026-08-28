@@ -1,0 +1,25 @@
+{
+  "taskId": "T38",
+  "status": "done",
+  "allowedFiles": [
+    "packages/worker/src/telemetry/events.ts",
+    "packages/worker/src/telemetry/sink.ts",
+    "packages/kernel/src/control/economics.ts",
+    "packages/worker/test/telemetry-economics.test.ts",
+    "packages/worker/src/index.ts",
+    "artifacts/task-evidence/T38/red.txt",
+    "artifacts/task-evidence/T38/green.txt",
+    "artifacts/task-evidence/T38/full-gate.txt",
+    "artifacts/task-evidence/T38.json"
+  ],
+  "redLog": "artifacts/task-evidence/T38/red.txt",
+  "greenLog": "artifacts/task-evidence/T38/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T38/full-gate.txt",
+  "sourceDigest": "6d09992fcc3e19e229f07394ffa705816074a415f61bd7665fbdaf1a0ad61ac1",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
