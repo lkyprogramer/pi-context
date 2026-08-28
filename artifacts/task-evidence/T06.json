@@ -1,0 +1,27 @@
+{
+  "taskId": "T06",
+  "status": "done",
+  "allowedFiles": [
+    "packages/storage/src/protocol.ts",
+    "packages/storage/src/worker.ts",
+    "packages/storage/src/sqlite-store.ts",
+    "packages/storage/src/schema.sql",
+    "packages/storage/test/sqlite-store.test.ts",
+    "packages/storage/package.json",
+    "packages/storage/test/support.ts",
+    "artifacts/task-evidence/T06/red.txt",
+    "artifacts/task-evidence/T06/green.txt",
+    "artifacts/task-evidence/T06/full-gate.txt",
+    "artifacts/task-evidence/T06.json"
+  ],
+  "redLog": "artifacts/task-evidence/T06/red.txt",
+  "greenLog": "artifacts/task-evidence/T06/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T06/full-gate.txt",
+  "sourceDigest": "5a217d5035f190154e6ff5cc7a4da56a6ffae889c8c9c70a79d29d3038117a9e",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

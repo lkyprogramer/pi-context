@@ -2,7 +2,10 @@
   "name": "@pcr/storage",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/sqlite-store.ts"
+  },
   "scripts": {
-    "typecheck": "node -e \"process.exit(0)\""
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/sqlite-store.ts src/worker.ts src/protocol.ts"
   }
 }
