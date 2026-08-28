@@ -1,0 +1,26 @@
+
+> pi-context@ typecheck /Users/luo/Documents/github/pi-context
+> tsc -p tsconfig.base.json --noEmit
+
+
+> pi-context@ test /Users/luo/Documents/github/pi-context
+> vitest run
+
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-oracle/test/normalizers.test.ts (1 test) 2ms
+ ✓ packages/benchmark-oracle/test/oracle.test.ts (5 tests) 4ms
+ ✓ packages/pi-benchmark-adapter/test/raw-trace.test.ts (8 tests) 7ms
+ ✓ packages/benchmark-contracts/test/contracts.test.ts (9 tests) 48ms
+ ✓ packages/benchmark-harness/test/snapshot.test.ts (5 tests) 33ms
+
+ Test Files  5 passed (5)
+      Tests  28 passed (28)
+   Start at  09:44:00
+   Duration  426ms (transform 254ms, setup 0ms, collect 373ms, tests 94ms, environment 1ms, prepare 466ms)
+
+contract drift: ok
+PASS: 1228 checks
+files: 160
+tasks: 18 schemas: 18 examples: 18 scenarios: 12

@@ -1,0 +1,102 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ × packages/benchmark-oracle/test/normalizers.test.ts > oracle normalizers > normalizes paths, hashes, numbers, commands and errors 2ms
+   → not implemented
+ × packages/benchmark-oracle/test/oracle.test.ts > oracle validation > rejects a must-not constraint whose quote is not in its source 4ms
+   → not implemented
+ × packages/benchmark-oracle/test/oracle.test.ts > oracle validation > requires tool evidence for a high-risk test-passed outcome 1ms
+   → not implemented
+ × packages/benchmark-oracle/test/oracle.test.ts > oracle validation > accepts a closed hard directive with matching user source 0ms
+   → not implemented
+ × packages/benchmark-oracle/test/oracle.test.ts > oracle validation > rejects missing sources, supersession cycles, and must-omit probe leakage 0ms
+   → not implemented
+ × packages/benchmark-oracle/test/oracle.test.ts > oracle validation > rejects conflicting active values that are not contested 0ms
+   → not implemented
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/benchmark-oracle/test/normalizers.test.ts > oracle normalizers > normalizes paths, hashes, numbers, commands and errors
+Error: not implemented
+ ❯ normalizeOracleValue packages/benchmark-oracle/src/normalizers.ts:9:9
+      7| 
+      8| export function normalizeOracleValue(_kind: OracleItemKind, _value: un…
+      9|   throw new Error("not implemented");
+       |         ^
+     10| }
+     11| 
+ ❯ packages/benchmark-oracle/test/normalizers.test.ts:6:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  packages/benchmark-oracle/test/oracle.test.ts > oracle validation > rejects a must-not constraint whose quote is not in its source
+Error: not implemented
+ ❯ validateOracle packages/benchmark-oracle/src/oracle.ts:18:9
+     16| 
+     17| export function validateOracle(_oracle: Oracle, _trace: RawTrace): Ora…
+     18|   throw new Error("not implemented");
+       |         ^
+     19| }
+     20| 
+ ❯ packages/benchmark-oracle/test/oracle.test.ts:83:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  packages/benchmark-oracle/test/oracle.test.ts > oracle validation > requires tool evidence for a high-risk test-passed outcome
+Error: not implemented
+ ❯ validateOracle packages/benchmark-oracle/src/oracle.ts:18:9
+     16| 
+     17| export function validateOracle(_oracle: Oracle, _trace: RawTrace): Ora…
+     18|   throw new Error("not implemented");
+       |         ^
+     19| }
+     20| 
+ ❯ packages/benchmark-oracle/test/oracle.test.ts:89:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  packages/benchmark-oracle/test/oracle.test.ts > oracle validation > accepts a closed hard directive with matching user source
+Error: not implemented
+ ❯ validateOracle packages/benchmark-oracle/src/oracle.ts:18:9
+     16| 
+     17| export function validateOracle(_oracle: Oracle, _trace: RawTrace): Ora…
+     18|   throw new Error("not implemented");
+       |         ^
+     19| }
+     20| 
+ ❯ packages/benchmark-oracle/test/oracle.test.ts:94:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  packages/benchmark-oracle/test/oracle.test.ts > oracle validation > rejects missing sources, supersession cycles, and must-omit probe leakage
+Error: not implemented
+ ❯ validateOracle packages/benchmark-oracle/src/oracle.ts:18:9
+     16| 
+     17| export function validateOracle(_oracle: Oracle, _trace: RawTrace): Ora…
+     18|   throw new Error("not implemented");
+       |         ^
+     19| }
+     20| 
+ ❯ packages/benchmark-oracle/test/oracle.test.ts:100:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  packages/benchmark-oracle/test/oracle.test.ts > oracle validation > rejects conflicting active values that are not contested
+Error: not implemented
+ ❯ validateOracle packages/benchmark-oracle/src/oracle.ts:18:9
+     16| 
+     17| export function validateOracle(_oracle: Oracle, _trace: RawTrace): Ora…
+     18|   throw new Error("not implemented");
+       |         ^
+     19| }
+     20| 
+ ❯ packages/benchmark-oracle/test/oracle.test.ts:132:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed (6)
+   Start at  09:43:36
+   Duration  482ms (transform 180ms, setup 0ms, collect 191ms, tests 9ms, environment 0ms, prepare 188ms)
+

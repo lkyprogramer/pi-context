@@ -1,0 +1,17 @@
+{
+  "taskId": "B03",
+  "allowedFiles": [
+    "packages/benchmark-harness/src/snapshot.ts",
+    "packages/benchmark-harness/src/archive.ts",
+    "packages/benchmark-harness/test/snapshot.test.ts",
+    "packages/benchmark-harness/test/fixtures/workspace/.keep"
+  ],
+  "sourceDigest": "0f1921155bafdfe91b2b719b8be3e9e977c5dd9aa4fbc02583837e108f9d2e44",
+  "redLog": "artifacts/task-evidence/B03/red.txt",
+  "greenLog": "artifacts/task-evidence/B03/green.txt",
+  "negativeLog": "artifacts/task-evidence/B03/negative.txt",
+  "fullGateLog": "artifacts/task-evidence/B03/full-gate.txt",
+  "testsPassed": true,
+  "typecheckPassed": true,
+  "scopePassed": true
+}
