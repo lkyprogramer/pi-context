@@ -1,0 +1,24 @@
+{
+  "taskId": "T30",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/compaction/candidate.ts",
+    "packages/kernel/src/compaction/shrink-gate.ts",
+    "packages/kernel/test/checkpoint-candidate.test.ts",
+    "packages/kernel/src/compaction/index.ts",
+    "artifacts/task-evidence/T30/red.txt",
+    "artifacts/task-evidence/T30/green.txt",
+    "artifacts/task-evidence/T30/full-gate.txt",
+    "artifacts/task-evidence/T30.json"
+  ],
+  "redLog": "artifacts/task-evidence/T30/red.txt",
+  "greenLog": "artifacts/task-evidence/T30/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T30/full-gate.txt",
+  "sourceDigest": "9e9811a02a0c17ce16e160ceb865798cd5299fa72f744e311f09f305ef46d5fa",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
