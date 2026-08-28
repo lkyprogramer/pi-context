@@ -1,0 +1,27 @@
+{
+  "taskId": "T39",
+  "status": "done",
+  "allowedFiles": [
+    "packages/pi-adapter/src/tools/recall.ts",
+    "packages/pi-adapter/src/tools/search.ts",
+    "packages/pi-adapter/src/tools/status.ts",
+    "packages/pi-adapter/src/tools/pin.ts",
+    "packages/pi-adapter/src/commands/context.ts",
+    "packages/pi-adapter/test/runtime-tools.test.ts",
+    "apps/pi-context-runtime/src/extension.ts",
+    "artifacts/task-evidence/T39/red.txt",
+    "artifacts/task-evidence/T39/green.txt",
+    "artifacts/task-evidence/T39/full-gate.txt",
+    "artifacts/task-evidence/T39.json"
+  ],
+  "redLog": "artifacts/task-evidence/T39/red.txt",
+  "greenLog": "artifacts/task-evidence/T39/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T39/full-gate.txt",
+  "sourceDigest": "f9a077b6cf986426cc760401246603854ee2ce7abee88483624bb8952ecccb55",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

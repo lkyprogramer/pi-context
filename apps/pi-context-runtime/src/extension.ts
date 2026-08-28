@@ -11,6 +11,7 @@ import {
   type ExtensionAPI,
 } from "../../../packages/pi-adapter/src/context-hook.js";
 import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
+import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
 import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { toHostMessages, toPiMessages } from "../../../packages/pi-adapter/src/message-conversion.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
@@ -33,9 +34,22 @@ export function createPiContextExtension(options: ExtensionFactoryOptions = {}):
   }
   const owner = claimPiContextOwner("pi-context-runtime");
   const hooks: Record<string, unknown> = {};
-  const pi: ExtensionAPI = {
+  const registeredToolNames = new Set<string>();
+  const pi: ExtensionAPI & {
+    registerTool: (tool: { name: string }) => void;
+    registerCommand: (name: string, spec: { description: string; handler: unknown }) => void;
+    hasTool: (name: string) => boolean;
+  } = {
     on(hook, handler) {
       hooks[hook] = handler;
+    },
+    registerTool(tool) {
+      if (registeredToolNames.has(tool.name)) throw new Error(`tool name collision: ${tool.name}`);
+      registeredToolNames.add(tool.name);
+    },
+    registerCommand() {},
+    hasTool(name) {
+      return registeredToolNames.has(name);
     },
   };
   const materializer = new ContextMaterializer({ directives: "keep" });
@@ -175,6 +189,7 @@ export function createPiContextExtension(options: ExtensionFactoryOptions = {}):
       return worker;
     },
   });
+  registerRuntimeTools(pi, { workspaceId: "ws_0123456789abcdef", claimed: true });
   return { name: "pi-context-runtime", hooks, claimed: true, release: owner.release };
 }
 

@@ -1,0 +1,5 @@
+PASS (0) FAIL (0)
+[full output: ~/Library/Application Support/rtk/tee/1787890641_vitest_run.log]
+Cannot find module '../src/tools/index.js' imported from '/Users/luo/Documents/github/pi-context/packages/pi-adapter/test/runtime-tools.test.ts'
+{"success":false,"numFailedTestSuites":1,"numTotalTests":0}
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
