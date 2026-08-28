@@ -1,0 +1,25 @@
+{
+  "taskId": "T09",
+  "status": "done",
+  "allowedFiles": [
+    "packages/pi-adapter/src/input-correlation.ts",
+    "packages/kernel/src/directives/raw-input.ts",
+    "packages/kernel/test/raw-input.test.ts",
+    "tests/contract/pi-input-correlation.test.ts",
+    "packages/pi-adapter/src/index.ts",
+    "artifacts/task-evidence/T09/red.txt",
+    "artifacts/task-evidence/T09/green.txt",
+    "artifacts/task-evidence/T09/full-gate.txt",
+    "artifacts/task-evidence/T09.json"
+  ],
+  "redLog": "artifacts/task-evidence/T09/red.txt",
+  "greenLog": "artifacts/task-evidence/T09/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T09/full-gate.txt",
+  "sourceDigest": "de0cc3b4532fc48c8692593f2a64ef47385dc3b5889681179c20be961a3e3958",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
