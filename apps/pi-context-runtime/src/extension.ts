@@ -10,6 +10,7 @@ import {
   registerContextHook,
   type ExtensionAPI,
 } from "../../../packages/pi-adapter/src/context-hook.js";
+import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { toHostMessages, toPiMessages } from "../../../packages/pi-adapter/src/message-conversion.js";
 import { claimPiContextOwner } from "./owner.js";
 
@@ -114,6 +115,12 @@ export function createPiContextExtension(options: ExtensionFactoryOptions = {}):
         staged = null;
       });
     },
+  });
+  registerSessionLifecycle(pi as never, {
+    async openSession() {},
+    async switchBranch() {},
+    async closeSession() {},
+    async invalidateRouteCandidates() {},
   });
   return { name: "pi-context-runtime", hooks, claimed: true, release: owner.release };
 }

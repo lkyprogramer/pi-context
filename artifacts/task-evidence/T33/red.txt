@@ -1,0 +1,8 @@
+PASS (0) FAIL (1)
+
+1. session lifecycle switches branch scope without pretending external side effects rolled back
+   TypeError: host.navigateTree is not a function
+       at /Users/luo/Documents/github/pi-context/tests/contract/pi-session-lifecycle.test.ts:7:16
+       at processTicksAndRejections (node:internal/process/task_queues:105:5)
+       at file:///Users/luo/Documents/github/pi-context/node_modules/.pnpm/@vitest+runner@3.2.4/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20
+[full output: ~/Library/Application Support/rtk/tee/1787889580_vitest_run.log]

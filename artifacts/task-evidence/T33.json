@@ -1,0 +1,26 @@
+{
+  "taskId": "T33",
+  "status": "done",
+  "allowedFiles": [
+    "packages/pi-adapter/src/lifecycle.ts",
+    "packages/kernel/src/lifecycle/catch-up.ts",
+    "packages/kernel/src/lifecycle/branch-scope.ts",
+    "tests/contract/pi-session-lifecycle.test.ts",
+    "apps/pi-context-runtime/src/extension.ts",
+    "tests/support/pi.ts",
+    "artifacts/task-evidence/T33/red.txt",
+    "artifacts/task-evidence/T33/green.txt",
+    "artifacts/task-evidence/T33/full-gate.txt",
+    "artifacts/task-evidence/T33.json"
+  ],
+  "redLog": "artifacts/task-evidence/T33/red.txt",
+  "greenLog": "artifacts/task-evidence/T33/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T33/full-gate.txt",
+  "sourceDigest": "c1a1539195b9c46294066379697a2d7ee96ec2f2f619104c123f19bea91057ca",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}

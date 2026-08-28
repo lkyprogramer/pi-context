@@ -14,6 +14,9 @@ import {
   type ExtensionAPI,
   type PiRuntime,
 } from "../../packages/pi-adapter/src/context-hook.js";
+import { catchUpSession, type CatchUpResult, type SessionStartReason } from "../../packages/kernel/src/lifecycle/catch-up.js";
+import { switchBranchScope } from "../../packages/kernel/src/lifecycle/branch-scope.js";
+import { registerSessionLifecycle, type LifecycleEvent } from "../../packages/pi-adapter/src/lifecycle.js";
 import { toHostMessages, toPiMessages, type PiAgentMessage } from "../../packages/pi-adapter/src/message-conversion.js";
 
 export interface HarnessHost {
@@ -27,21 +30,42 @@ export interface HarnessHost {
     opts?: { cancel?: boolean; reuseStale?: boolean; allowManual?: boolean },
   ): Promise<void>;
   indexOf(name: string): number;
+  runtimeCursor: { branchScope: string; lineageHash: string; sessionId: string };
+  previousBranchScope: string;
+  continuity: { externalSideEffects: Array<{ id: string; status: string }> };
+  workerOpen: boolean;
+  closedPreviousWorker: boolean;
+  catchUp?: CatchUpResult;
+  navigateTree(leafId: string): Promise<void>;
+  startSession(reason: SessionStartReason, hasRawBlobs?: boolean): Promise<void>;
+  shutdown(): Promise<void>;
 }
 
 export async function createPiHarnessWithRuntime(
-  options: { materializeError?: string; throwUnhandled?: boolean } = {},
+  options: { materializeError?: string; throwUnhandled?: boolean; existingSideEffect?: string } = {},
 ): Promise<HarnessHost> {
   let abortCalls = 0;
   let handler: ((event: { messages: PiAgentMessage[] }, ctx: ContextHookCtx) => Promise<{ messages: PiAgentMessage[] }>) | undefined;
   const events: string[] = [];
   const handlers: Record<string, (event: CompactionEvent, ctx: ContextHookCtx) => Promise<unknown>> = {};
+  const lifeHandlers: Record<string, (event: LifecycleEvent, ctx: { sessionId?: string }) => Promise<unknown>> = {};
+  let branchScope = "branch:leaf-a";
+  let lineageHash = switchBranchScope({ currentScope: "boot", currentLineage: "", newLeafId: "leaf-a" }).lineageHash;
+  let previousBranchScope = branchScope;
+  let workerOpen = true;
+  let closedPreviousWorker = false;
+  let catchUp: CatchUpResult | undefined;
+  const continuity = {
+    externalSideEffects: options.existingSideEffect ? [{ id: options.existingSideEffect, status: "running-unverified" }] : [],
+  };
   let staged: StagedCompaction | null = null;
   let lastCompaction: PiCompactionResult | undefined;
   const pi: ExtensionAPI & CompactionExtensionAPI = {
     on(hook, next) {
       if (hook === "context") handler = next as typeof handler;
-      else handlers[hook] = next as (event: CompactionEvent, ctx: ContextHookCtx) => Promise<unknown>;
+      else if (hook === "session_start" || hook === "session_tree" || hook === "session_shutdown" || hook === "model_select") {
+        lifeHandlers[hook] = next as (event: LifecycleEvent, ctx: { sessionId?: string }) => Promise<unknown>;
+      } else handlers[hook] = next as (event: CompactionEvent, ctx: ContextHookCtx) => Promise<unknown>;
     },
   };
   const materializer = new ContextMaterializer({ directives: "keep" });
@@ -132,6 +156,27 @@ export async function createPiHarnessWithRuntime(
       });
     },
   });
+  registerSessionLifecycle(pi, {
+    async openSession(_ctx, reason, hasRawBlobs = true) {
+      workerOpen = true;
+      catchUp = catchUpSession({ reason, hasRawBlobs });
+    },
+    async switchBranch(_ctx, newLeafId) {
+      const next = switchBranchScope({ currentScope: branchScope, currentLineage: lineageHash, newLeafId });
+      previousBranchScope = next.previousBranchScope;
+      branchScope = next.branchScope;
+      lineageHash = next.lineageHash;
+      closedPreviousWorker = true;
+      workerOpen = true;
+      for (const effect of continuity.externalSideEffects) effect.status = "requires-revalidation";
+    },
+    async closeSession() {
+      workerOpen = false;
+    },
+    async invalidateRouteCandidates() {
+      catchUp = catchUp ? { ...catchUp, degraded: true } : catchUp;
+    },
+  });
   const ctx: ContextHookCtx = {
     abort() {
       abortCalls += 1;
@@ -150,6 +195,31 @@ export async function createPiHarnessWithRuntime(
       return lastCompaction;
     },
     lastPath: "deterministic" as const,
+    get runtimeCursor() {
+      return { branchScope, lineageHash, sessionId: "s1" };
+    },
+    get previousBranchScope() {
+      return previousBranchScope;
+    },
+    continuity,
+    get workerOpen() {
+      return workerOpen;
+    },
+    get closedPreviousWorker() {
+      return closedPreviousWorker;
+    },
+    get catchUp() {
+      return catchUp;
+    },
+    async navigateTree(leafId) {
+      await lifeHandlers.session_tree?.({ newLeafId: leafId }, { sessionId: "s1" });
+    },
+    async startSession(reason, hasRawBlobs = true) {
+      await lifeHandlers.session_start?.({ reason, hasRawBlobs }, { sessionId: "s1" });
+    },
+    async shutdown() {
+      await lifeHandlers.session_shutdown?.({}, { sessionId: "s1" });
+    },
     indexOf(name) {
       return events.indexOf(name);
     },
