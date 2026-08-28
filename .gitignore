@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
 dist
+!apps/pi-context-runtime/dist/
+!apps/pi-context-runtime/dist/extension.js
 coverage
 .benchmark
 .pcr

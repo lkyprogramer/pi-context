@@ -21,6 +21,12 @@ export interface ExtensionFactoryOptions {
   claimOnCreate?: boolean;
 }
 
+export interface HostExtensionAPI extends ExtensionAPI {
+  registerTool: (tool: { name: string }) => void;
+  registerCommand: (name: string, spec: { description: string; handler: unknown }) => void;
+  hasTool?: (name: string) => boolean;
+}
+
 export interface PiContextExtension {
   name: "pi-context-runtime";
   hooks: Record<string, unknown>;
@@ -28,18 +34,29 @@ export interface PiContextExtension {
   release?: () => void;
 }
 
-export function createPiContextExtension(options: ExtensionFactoryOptions = {}): PiContextExtension {
-  if (!options.claimOnCreate) {
+function isHostExtensionAPI(value: unknown): value is HostExtensionAPI {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as HostExtensionAPI).on === "function" &&
+    typeof (value as HostExtensionAPI).registerTool === "function"
+  );
+}
+
+export function createPiContextExtension(pi: HostExtensionAPI): PiContextExtension;
+export function createPiContextExtension(options?: ExtensionFactoryOptions): PiContextExtension;
+export function createPiContextExtension(
+  optionsOrPi: ExtensionFactoryOptions | HostExtensionAPI = {},
+): PiContextExtension {
+  if (isHostExtensionAPI(optionsOrPi)) {
+    return bindClaimedRuntime(optionsOrPi);
+  }
+  if (!optionsOrPi.claimOnCreate) {
     return { name: "pi-context-runtime", hooks: {}, claimed: false };
   }
-  const owner = claimPiContextOwner("pi-context-runtime");
   const hooks: Record<string, unknown> = {};
   const registeredToolNames = new Set<string>();
-  const pi: ExtensionAPI & {
-    registerTool: (tool: { name: string }) => void;
-    registerCommand: (name: string, spec: { description: string; handler: unknown }) => void;
-    hasTool: (name: string) => boolean;
-  } = {
+  const pi: HostExtensionAPI = {
     on(hook, handler) {
       hooks[hook] = handler;
     },
@@ -52,6 +69,16 @@ export function createPiContextExtension(options: ExtensionFactoryOptions = {}):
       return registeredToolNames.has(name);
     },
   };
+  return { ...bindClaimedRuntime(pi), hooks };
+}
+
+/** Pi package factory: `export default function (pi: ExtensionAPI)`. */
+export function register(pi: HostExtensionAPI): PiContextExtension {
+  return createPiContextExtension(pi);
+}
+
+function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
+  const owner = claimPiContextOwner("pi-context-runtime");
   const materializer = new ContextMaterializer({ directives: "keep" });
   registerContextHook(pi, {
     kernel: { materialize: (input) => materializer.materialize(input) },
@@ -190,7 +217,7 @@ export function createPiContextExtension(options: ExtensionFactoryOptions = {}):
     },
   });
   registerRuntimeTools(pi, { workspaceId: "ws_0123456789abcdef", claimed: true });
-  return { name: "pi-context-runtime", hooks, claimed: true, release: owner.release };
+  return { name: "pi-context-runtime", hooks: {}, claimed: true, release: owner.release };
 }
 
 export default createPiContextExtension;
