@@ -1,0 +1,24 @@
+{
+  "taskId": "T19",
+  "status": "done",
+  "allowedFiles": [
+    "packages/kernel/src/retrieval/proactive-query.ts",
+    "packages/kernel/src/retrieval/page-builder.ts",
+    "packages/kernel/test/proactive-recall.test.ts",
+    "packages/kernel/src/retrieval/index.ts",
+    "artifacts/task-evidence/T19/red.txt",
+    "artifacts/task-evidence/T19/green.txt",
+    "artifacts/task-evidence/T19/full-gate.txt",
+    "artifacts/task-evidence/T19.json"
+  ],
+  "redLog": "artifacts/task-evidence/T19/red.txt",
+  "greenLog": "artifacts/task-evidence/T19/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T19/full-gate.txt",
+  "sourceDigest": "e59ee5ce0c5c67c19494bab67d21c5937094ac7b2cd65fe4d1735cc67ff03795",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
