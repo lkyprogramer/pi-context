@@ -1,0 +1,20 @@
+(node:36902) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:36910) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/performance/materializer.bench.ts (2 tests) 11088ms
+   ✓ performance spike harness > records distributions and machine metadata instead of asserting an invented latency  11086ms
+(node:36970) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/performance/pi-clone.bench.ts (1 test) 1631ms
+   ✓ pi clone spike > records clone latency for 1K/10K/100K messages without inventing a pass threshold  1630ms
+
+ Test Files  2 passed (2)
+      Tests  3 passed (3)
+   Start at  21:44:00
+   Duration  13.27s (transform 100ms, setup 0ms, collect 175ms, tests 12.72s, environment 0ms, prepare 96ms)
+
+None of the selected packages has a "./packages/kernel" script

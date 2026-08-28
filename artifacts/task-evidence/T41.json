@@ -1,0 +1,29 @@
+{
+  "taskId": "T41",
+  "status": "done",
+  "allowedFiles": [
+    "tests/performance/pi-clone.bench.ts",
+    "tests/performance/cas-fsync.bench.ts",
+    "tests/performance/sqlite-fts.bench.ts",
+    "tests/performance/materializer.bench.ts",
+    "tests/performance/host-compaction.bench.ts",
+    "scripts/run-performance-spikes.mjs",
+    "reports/performance/.gitkeep",
+    "package.json",
+    "tests/performance/support.ts",
+    "artifacts/task-evidence/T41/red.txt",
+    "artifacts/task-evidence/T41/green.txt",
+    "artifacts/task-evidence/T41/full-gate.txt",
+    "artifacts/task-evidence/T41.json"
+  ],
+  "redLog": "artifacts/task-evidence/T41/red.txt",
+  "greenLog": "artifacts/task-evidence/T41/green.txt",
+  "fullGateLog": "artifacts/task-evidence/T41/full-gate.txt",
+  "sourceDigest": "cba1b352c45cd1eba72dc06e33571db0ea0cdb5bb9244e95890b3ec3df4119cc",
+  "acceptance": {
+    "testsPassed": true,
+    "typecheckPassed": true,
+    "boundariesPassed": true,
+    "scopeRespected": true
+  }
+}
