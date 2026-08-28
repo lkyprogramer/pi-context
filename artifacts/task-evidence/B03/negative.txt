@@ -1,0 +1,14 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark-harness/test/snapshot.test.ts > boundary snapshot > restores identical file hashes and current branch leaf 9ms
+ ✓ packages/benchmark-harness/test/snapshot.test.ts > boundary snapshot > refuses a target directory that is not empty 1ms
+ ✓ packages/benchmark-harness/test/snapshot.test.ts > boundary snapshot > rejects symlink escape and path traversal 5ms
+ ✓ packages/benchmark-harness/test/snapshot.test.ts > boundary snapshot > preserves permission bits and fails closed on a corrupt archive 4ms
+ ✓ packages/benchmark-harness/test/snapshot.test.ts > boundary snapshot > restores two arms into isolated directories 7ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  09:43:05
+   Duration  471ms (transform 61ms, setup 0ms, collect 70ms, tests 27ms, environment 0ms, prepare 51ms)
+
