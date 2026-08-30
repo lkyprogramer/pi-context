@@ -14,4 +14,5 @@ export * from "./compaction/snapshot.js";
 export * from "./compaction-service.js";
 export * from "./compaction/retention.js";
 export * from "./recovery-service.js";
+export * from "./semantic/port.js";
 

@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t34.test.ts (6 tests | 6 failed) 16ms
+   × T34 Semantic proposal contracts and provider port > semantic_proposal_contracts_and_provider_port 12ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T34 Semantic proposal contracts and provider port > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T34 Semantic proposal contracts and provider port > rejects malformed propose input and hidden reasoning 0ms
+     → (0 , createSemanticProvider) is not a function
+   × T34 Semantic proposal contracts and provider port > replays equal proposals for the same generate output 0ms
+     → (0 , createSemanticProvider) is not a function
+   × T34 Semantic proposal contracts and provider port > rejects a cursor from another workspace 0ms
+     → (0 , createSemanticProvider) is not a function
+   × T34 Semantic proposal contracts and provider port > stops at the abort boundary before generating 0ms
+     → (0 , createSemanticProvider) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t34.test.ts > T34 Semantic proposal contracts and provider port > semantic_proposal_contracts_and_provider_port
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t34.test.ts:63:33
+     61| describe("T34 Semantic proposal contracts and provider port", () => {
+     62|   it("semantic_proposal_contracts_and_provider_port", async () => {
+     63|     await expect(runT34Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     64|   });
+     65| 
+
+Caused by: TypeError: (0 , createSemanticProvider) is not a function
+ ❯ runT34Fixture tests/tasks/t34.test.ts:35:20
+ ❯ tests/tasks/t34.test.ts:63:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t34.test.ts > T34 Semantic proposal contracts and provider port > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_SEMANTIC_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createSemanticProvider) is not a function",
+  }
+
+ ❯ tests/tasks/t34.test.ts:67:55
+     65| 
+     66|   it("fails construction when production dependencies are absent", () …
+     67|     expect(() => createSemanticProvider({} as never)).toThrowError(
+       |                                                       ^
+     68|       expect.objectContaining({ code: "PCR_SEMANTIC_DEPENDENCY_MISSING…
+     69|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t34.test.ts > T34 Semantic proposal contracts and provider port > rejects malformed propose input and hidden reasoning
+TypeError: (0 , createSemanticProvider) is not a function
+ ❯ tests/tasks/t34.test.ts:74:22
+     72|   it("rejects malformed propose input and hidden reasoning", async () …
+     73|     const bound = cursor();
+     74|     const provider = createSemanticProvider({
+       |                      ^
+     75|       cursor: bound,
+     76|       async generate() { return rawProposal(); },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t34.test.ts > T34 Semantic proposal contracts and provider port > replays equal proposals for the same generate output
+TypeError: (0 , createSemanticProvider) is not a function
+ ❯ tests/tasks/t34.test.ts:92:22
+     90|   it("replays equal proposals for the same generate output", async () …
+     91|     const bound = cursor();
+     92|     const provider = createSemanticProvider({
+       |                      ^
+     93|       cursor: bound,
+     94|       async generate() { return rawProposal(); },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t34.test.ts > T34 Semantic proposal contracts and provider port > rejects a cursor from another workspace
+TypeError: (0 , createSemanticProvider) is not a function
+ ❯ tests/tasks/t34.test.ts:105:22
+    103|   it("rejects a cursor from another workspace", async () => {
+    104|     const bound = cursor();
+    105|     const provider = createSemanticProvider({
+       |                      ^
+    106|       cursor: bound,
+    107|       async generate() { return rawProposal(); },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t34.test.ts > T34 Semantic proposal contracts and provider port > stops at the abort boundary before generating
+TypeError: (0 , createSemanticProvider) is not a function
+ ❯ tests/tasks/t34.test.ts:126:22
+    124|     const bound = cursor();
+    125|     let generated = 0;
+    126|     const provider = createSemanticProvider({
+       |                      ^
+    127|       cursor: bound,
+    128|       async generate() {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  05:17:23
+   Duration  496ms (transform 160ms, setup 0ms, collect 232ms, tests 16ms, environment 0ms, prepare 51ms)
+

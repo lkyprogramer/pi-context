@@ -1,0 +1,15 @@
+{
+  "taskId": "T34",
+  "production": [
+    "blockers/T34-scope-expansion.md",
+    "packages/contracts/src/index.ts",
+    "packages/contracts/src/semantic.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/semantic/port.ts"
+  ],
+  "tests": [
+    "packages/runtime/test/semantic/port.test.ts",
+    "tests/tasks/t34.test.ts"
+  ]
+}
