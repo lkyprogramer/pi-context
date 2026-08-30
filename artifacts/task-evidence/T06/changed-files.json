@@ -1,0 +1,12 @@
+{
+  "taskId": "T06",
+  "production": [
+    "scripts/pack-smoke.mjs"
+  ],
+  "tests": [
+    "tests/acceptance/packed-install.test.ts",
+    "tests/tasks/t06.test.ts"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T06",
+  "unrelatedTrackedChanges": []
+}

@@ -1,0 +1,12 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/tasks/t06.test.ts (1 test) 3426ms
+   ✓ T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home  3425ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:55:44
+   Duration  3.71s (transform 20ms, setup 0ms, collect 23ms, tests 3.43s, environment 0ms, prepare 75ms)
+

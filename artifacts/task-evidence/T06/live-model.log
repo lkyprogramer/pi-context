@@ -1,0 +1,40 @@
+{
+  "tarball": "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/pcr-t06-pack-1vSeQb/tarballs/pi-context-runtime-0.1.0-alpha.1.tgz",
+  "sha256": "cf1e074299141a98a15d490f94356853de5822425f6a82cb5ac066ca2b3c60a8",
+  "loaded": true,
+  "verticalProbePassed": true,
+  "piVersion": "0.84.4",
+  "model": {
+    "provider": "openclaw",
+    "modelId": "openclaw/Qwen3.8-27B-WORK",
+    "contextWindow": 200192,
+    "maxTokens": 16384
+  },
+  "handlers": [
+    "agent_settled",
+    "context",
+    "model_select",
+    "session_before_compact",
+    "session_compact",
+    "session_compact_failed",
+    "session_shutdown",
+    "session_start",
+    "session_tree"
+  ],
+  "behavior": {
+    "contextPassed": true,
+    "toolPassed": true,
+    "compactionPassed": true
+  },
+  "cleanHomeRemoved": true,
+  "modelProbe": {
+    "provider": "openclaw",
+    "modelId": "openclaw/Qwen3.8-27B-WORK",
+    "markerObserved": true
+  },
+  "packagePolicy": {
+    "private": true,
+    "license": "UNLICENSED"
+  },
+  "publicTypesCompiled": true
+}

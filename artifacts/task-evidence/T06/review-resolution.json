@@ -1,0 +1,33 @@
+{
+  "taskId": "T06",
+  "reviewGate": "sol-high-read-only",
+  "initialDecision": "FAIL",
+  "resolved": {
+    "P0-self-contained-and-vertical-probe": [
+      "The sole production dynamic import target, packages/kernel/src/compaction/candidate.ts, is now an explicit compiler root.",
+      "The installed package probe invokes the real context handler, context_status tool, and session_before_compact handler and asserts their results."
+    ],
+    "P1-clean-home-and-credentials": [
+      "The public-loader subprocess receives the isolated HOME and PI_CODING_AGENT_DIR environment.",
+      "The real models.json is materialized only for the authorized live lane and the isolated home is removed in finally on all outcomes.",
+      "Fresh cleanup evidence reports zero pcr-t06-clean-home residue."
+    ],
+    "P1-package-authority": [
+      "The build no longer rewrites private:true to private:false.",
+      "T06 makes no publication claim; the existing private/UNLICENSED release decision remains explicitly deferred."
+    ],
+    "P2-process-boundaries": [
+      "Subprocess abort and timeout terminate the process group with SIGTERM then SIGKILL after a bounded grace period.",
+      "Tests cover pre-start abort, in-flight abort, timeout with ignored SIGTERM, and non-zero exit, including clean-home removal."
+    ],
+    "P2-public-types": [
+      "The downstream compile no longer uses skipLibCheck and imports/calls default, createPiContextExtension, and register in addition to PackedInstallResult."
+    ]
+  },
+  "freshValidation": {
+    "targetTests": "9 passed",
+    "acceptanceTests": "1 passed",
+    "repositoryTests": "335 passed",
+    "liveModelMarker": true
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "taskId": "T06",
+  "parentCommit": "1bc87edfff8907e98f759c0cd0fcba12cfc4d1c4",
+  "toolchain": {
+    "node": "v22.19.0",
+    "pnpm": "10.15.0",
+    "pi": "0.84.4"
+  },
+  "testModel": {
+    "provider": "openclaw",
+    "id": "openclaw/Qwen3.8-27B-WORK",
+    "configuredContextWindow": 200192,
+    "configuredMaxTokens": 16384
+  },
+  "cleanInstallIsolation": [
+    "HOME",
+    "PI_CODING_AGENT_DIR",
+    "PI_OFFLINE",
+    "PI_TELEMETRY"
+  ],
+  "knownControlInput": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/** is user-provided and untracked"
+}

@@ -1,0 +1,29 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t06.test.ts (1 test | 1 failed) 3382ms
+   × T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home 3382ms
+     → Pi install did not materialize pi-context-runtime
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t06.test.ts > T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home
+Error: Pi install did not materialize pi-context-runtime
+ ❯ installAndRunVerticalProbe scripts/pack-smoke.mjs:268:27
+    266|   const listed = await run(piBin, ["list", "--approve"], { cwd: projec…
+    267|   const packageRoot = findPackageRoot(agentDir, packed.packageName);
+    268|   if (!packageRoot) throw new Error(`Pi install did not materialize ${…
+       |                           ^
+    269|   const extensionPath = join(packageRoot, packed.entry.replace(/^\.\//…
+    270|   if (!existsSync(extensionPath)) throw new Error(`installed extension…
+ ❯ tests/tasks/t06.test.ts:12:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  10:54:38
+   Duration  3.85s (transform 36ms, setup 0ms, collect 64ms, tests 3.38s, environment 0ms, prepare 95ms)
+

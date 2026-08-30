@@ -1,0 +1,40 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t06.test.ts (9 tests | 1 failed) 10122ms
+   ✓ T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home  2400ms
+   ✓ T06 Real npm pack and clean Pi install harness > rejects a modified tarball receipt before installation 1ms
+   ✓ T06 Real npm pack and clean Pi install harness > rejects a repository scope without the runtime source 0ms
+   ✓ T06 Real npm pack and clean Pi install harness > fails closed when packing is cancelled 0ms
+   ✓ T06 Real npm pack and clean Pi install harness > packs deterministically from the same committed source  1257ms
+   ✓ T06 Real npm pack and clean Pi install harness > isolates duplicate probes while preserving their observable contract  3756ms
+   ✓ T06 Real npm pack and clean Pi install harness > aborts in-flight work and removes the isolated home 28ms
+   ✓ T06 Real npm pack and clean Pi install harness > kills a timed-out process tree and removes the isolated home 106ms
+   × T06 Real npm pack and clean Pi install harness > propagates a non-zero Pi exit and removes the isolated home 1016ms
+     → expected [Function] to throw error including 'intentional failure' but got '/var/folders/yt/10k_hqkn30x18d7lbn28_…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t06.test.ts > T06 Real npm pack and clean Pi install harness > propagates a non-zero Pi exit and removes the isolated home
+AssertionError: expected [Function] to throw error including 'intentional failure' but got '/var/folders/yt/10k_hqkn30x18d7lbn28_…'
+
+Expected: "intentional failure"
+Received: "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/pcr-t06-fake-pi-LQAe5f/pi timed out after 1000ms"
+
+ ❯ tests/tasks/t06.test.ts:121:5
+    119|     chmodSync(piBin, 0o700);
+    120| 
+    121|     await expect(
+       |     ^
+    122|       installAndRunVerticalProbe(packed, { repoRoot, tempRoot, piBin, …
+    123|     ).rejects.toThrow("intentional failure");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  11:09:33
+   Duration  10.45s (transform 51ms, setup 0ms, collect 39ms, tests 10.12s, environment 0ms, prepare 85ms)
+

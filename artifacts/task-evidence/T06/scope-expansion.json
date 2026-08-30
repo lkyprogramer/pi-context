@@ -1,0 +1,15 @@
+{
+  "taskId": "T06",
+  "paths": [
+    "tests/tasks/t06.test.ts",
+    "artifacts/task-evidence/T06/**"
+  ],
+  "reason": "The T06 task protocol itself mandates the target-specific test and evidence even though its Allowed Files list omits both paths.",
+  "interfaceImpact": "No runtime interface expansion. The added target test exercises the PackedInstallResult contract implemented by the allowed scripts/pack-smoke.mjs path.",
+  "alternativesRejected": [
+    "Omitting the target test would violate the task's explicit TDD and reviewer-gate contract.",
+    "Editing the immutable audit package to add a blocker would invalidate its signed manifest."
+  ],
+  "authority": "The user's repository-wide goal authorizes necessary local implementation and validation changes; the scope expansion is recorded explicitly and remains local-only.",
+  "controllerNote": "The v2 task controller is rooted inside the immutable audit package, so root product evidence is hash-linked into its control evidence directory."
+}

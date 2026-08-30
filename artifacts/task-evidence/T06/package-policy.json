@@ -1,0 +1,11 @@
+{
+  "taskId": "T06",
+  "sourceManifest": {
+    "private": true,
+    "license": "UNLICENSED"
+  },
+  "packedManifestPreservesSourcePolicy": true,
+  "publicationClaim": false,
+  "scope": "T06 validates deterministic local npm pack output and isolated Pi installation only.",
+  "deferredDecision": "T52/T54 must resolve SPDX license and publication policy before any release claim."
+}

@@ -1,0 +1,15 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/tasks/t06.test.ts (9 tests) 9842ms
+   ✓ T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home  2202ms
+   ✓ T06 Real npm pack and clean Pi install harness > packs deterministically from the same committed source  1268ms
+   ✓ T06 Real npm pack and clean Pi install harness > isolates duplicate probes while preserving their observable contract  3967ms
+   ✓ T06 Real npm pack and clean Pi install harness > propagates a non-zero Pi exit and removes the isolated home  585ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  11:11:37
+   Duration  10.27s (transform 45ms, setup 0ms, collect 42ms, tests 9.84s, environment 0ms, prepare 72ms)
+
