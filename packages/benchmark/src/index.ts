@@ -11,3 +11,16 @@ export {
   type CreateFileCorpusStoreInput,
   type LockCorpusInput,
 } from "./corpus/index.js";
+export {
+  OracleValidationError,
+  validateOracle,
+  type Oracle,
+  type OracleErrorCode,
+  type OracleItem,
+  type OracleValidationCode,
+  type OracleValidationReport,
+  type RawTrace,
+  type RawTraceEntry,
+  type RawTraceRole,
+} from "./oracle/index.js";
+

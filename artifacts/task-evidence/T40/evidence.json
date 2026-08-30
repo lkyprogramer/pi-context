@@ -1,0 +1,34 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T40",
+  "status": "review-candidate",
+  "parentCommit": "a510b71b23495f854af7ed999163a5387eb6c3a2",
+  "redLog": "artifacts/task-evidence/T40/red.log",
+  "greenLog": "artifacts/task-evidence/T40/green.log",
+  "fullGateLog": "artifacts/task-evidence/T40/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "rejectUnsupportedExpected": true,
+    "userWitnessNotCaseIdSuffix": true,
+    "repositoryGateFiles": 141,
+    "repositoryGateTests": 683,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "blockers/T40-scope-expansion.md": "d084fa7f968bebaec010faf4a3ee7245415afe832177f4f575fd8bbc667f2cc0",
+    "packages/benchmark/package.json": "e67e73a8908269e8a51d95def00986c602ccdb6139664d15c1edc1c39be4ab01",
+    "packages/benchmark/src/index.ts": "ba83993e963ffe66267406537e2fa1557d89cd48e6d10596f9d4a6937845f4d1",
+    "packages/benchmark/src/oracle/errors.ts": "3570c303be925aad1c5b5633f8ec9f6062a54442c714ad4c4926b99fe9c94ff0",
+    "packages/benchmark/src/oracle/index.ts": "a8c0db81643673881d2e300c5d933d513813e86db22d33cbe2a7148d2274a7b2",
+    "packages/benchmark/src/oracle/types.ts": "b5191515936531d65b7b2b1b6a0ecf43aa9b75f753d56a02ab9417dfd7dfcb78",
+    "packages/benchmark/src/oracle/validate.ts": "e6f59852633a1f46659662356e8d97452186f203439a9a39c6da5bbddf5726ef",
+    "packages/benchmark/test/oracle.test.ts": "cd62ac518a924df9565716eed91084548620ecbe9a807cc33ddde8d9269bb142",
+    "tests/tasks/t40.test.ts": "44d038f59d401c4dbcf012f9c805fcac74224b1ac2cd265509f7305ad7a298c1",
+    "artifacts/task-evidence/T40/preflight-git.txt": "11b3bbf0439f0676c4d7f8de85d4a0b46f2eacd1791ac130aa927c606366113a",
+    "artifacts/task-evidence/T40/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T40/red.log": "5e9b96d1c406c64fa6c2b839fe58211c38c9dfc29092d9be081b9615debe8a96",
+    "artifacts/task-evidence/T40/green.log": "a45f1a930cf1979688cff6ce586c2a7e01bad1536c5f13feb4e52f6b94a89b71",
+    "artifacts/task-evidence/T40/full-gate.log": "0db46251fd10245bc104614b8800e5cce837cf779726ced2f5ce4084873cf563",
+    "artifacts/task-evidence/T40/changed-files.json": "16625d1cae96004cea58988bdeecab859222154666bcc47ce89bee66436eb920"
+  }
+}

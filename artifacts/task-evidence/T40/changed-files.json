@@ -1,0 +1,16 @@
+{
+  "taskId": "T40",
+  "production": [
+    "blockers/T40-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/oracle/errors.ts",
+    "packages/benchmark/src/oracle/index.ts",
+    "packages/benchmark/src/oracle/types.ts",
+    "packages/benchmark/src/oracle/validate.ts"
+  ],
+  "tests": [
+    "packages/benchmark/test/oracle.test.ts",
+    "tests/tasks/t40.test.ts"
+  ]
+}

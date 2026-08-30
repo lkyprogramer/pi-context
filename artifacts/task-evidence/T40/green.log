@@ -1,0 +1,12 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| packages/benchmark/test/oracle.test.ts (3 tests) 2ms
+ ✓ |0| tests/tasks/t40.test.ts (7 tests) 4ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  07:26:50
+   Duration  296ms (transform 70ms, setup 0ms, collect 165ms, tests 6ms, environment 0ms, prepare 111ms)
+
