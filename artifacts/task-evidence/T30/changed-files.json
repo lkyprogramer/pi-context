@@ -1,0 +1,13 @@
+{
+  "taskId": "T30",
+  "production": [
+    "blockers/T30-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/compaction/checkpoint.ts",
+    "packages/core/src/index.ts"
+  ],
+  "tests": [
+    "packages/core/test/compaction/checkpoint.test.ts",
+    "tests/tasks/t30.test.ts"
+  ]
+}

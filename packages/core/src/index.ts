@@ -107,4 +107,15 @@ export {
   type Materializer,
   type RuntimeSnapshot,
 } from "./materialization/materializer.js";
+export {
+  CheckpointError,
+  createCheckpointRenderer,
+  createCheckpointVerifier,
+  type CheckpointRenderer,
+  type CheckpointVerifier,
+  type CompactionSnapshot,
+  type CreateCheckpointRendererInput,
+  type CreateCheckpointVerifierInput,
+  type VerificationReport,
+} from "./compaction/checkpoint.js";
 

@@ -1,0 +1,116 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t30.test.ts (6 tests | 6 failed) 28ms
+   × T30 Deterministic checkpoint renderer and verifier > deterministic_checkpoint_renderer_and_verifier 22ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T30 Deterministic checkpoint renderer and verifier > fails construction when production dependencies are absent 3ms
+     → expected error to match asymmetric matcher
+   × T30 Deterministic checkpoint renderer and verifier > rejects malformed snapshots and candidates 1ms
+     → (0 , createCheckpointRenderer) is not a function
+   × T30 Deterministic checkpoint renderer and verifier > replays render and verify to equal output hashes 1ms
+     → (0 , createCheckpointRenderer) is not a function
+   × T30 Deterministic checkpoint renderer and verifier > rejects a snapshot from another workspace 1ms
+     → (0 , createCheckpointRenderer) is not a function
+   × T30 Deterministic checkpoint renderer and verifier > stops at the abort boundary before pointer I/O 0ms
+     → (0 , createCheckpointVerifier) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t30.test.ts > T30 Deterministic checkpoint renderer and verifier > deterministic_checkpoint_renderer_and_verifier
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t30.test.ts:163:33
+    161| describe("T30 Deterministic checkpoint renderer and verifier", () => {
+    162|   it("deterministic_checkpoint_renderer_and_verifier", async () => {
+    163|     await expect(runT30Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    164|   });
+    165| 
+
+Caused by: TypeError: (0 , createCheckpointRenderer) is not a function
+ ❯ seed tests/tasks/t30.test.ts:119:20
+ ❯ runT30Fixture tests/tasks/t30.test.ts:133:54
+ ❯ tests/tasks/t30.test.ts:163:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t30.test.ts > T30 Deterministic checkpoint renderer and verifier > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_CHECKPOINT_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_3__.createCheckpointVerifier) is not a function",
+  }
+
+ ❯ tests/tasks/t30.test.ts:167:57
+    165| 
+    166|   it("fails construction when production dependencies are absent", () …
+    167|     expect(() => createCheckpointVerifier({} as never)).toThrowError(
+       |                                                         ^
+    168|       expect.objectContaining({ code: "PCR_CHECKPOINT_DEPENDENCY_MISSI…
+    169|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t30.test.ts > T30 Deterministic checkpoint renderer and verifier > rejects malformed snapshots and candidates
+TypeError: (0 , createCheckpointRenderer) is not a function
+ ❯ seed tests/tasks/t30.test.ts:119:20
+    117|     now: 30,
+    118|   });
+    119|   const renderer = createCheckpointRenderer({ cursor: bound });
+       |                    ^
+    120|   const verified: CompactionPointer[] = [];
+    121|   const verifier = createCheckpointVerifier({
+ ❯ tests/tasks/t30.test.ts:176:46
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t30.test.ts > T30 Deterministic checkpoint renderer and verifier > replays render and verify to equal output hashes
+TypeError: (0 , createCheckpointRenderer) is not a function
+ ❯ seed tests/tasks/t30.test.ts:119:20
+    117|     now: 30,
+    118|   });
+    119|   const renderer = createCheckpointRenderer({ cursor: bound });
+       |                    ^
+    120|   const verified: CompactionPointer[] = [];
+    121|   const verifier = createCheckpointVerifier({
+ ❯ tests/tasks/t30.test.ts:182:46
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t30.test.ts > T30 Deterministic checkpoint renderer and verifier > rejects a snapshot from another workspace
+TypeError: (0 , createCheckpointRenderer) is not a function
+ ❯ seed tests/tasks/t30.test.ts:119:20
+    117|     now: 30,
+    118|   });
+    119|   const renderer = createCheckpointRenderer({ cursor: bound });
+       |                    ^
+    120|   const verified: CompactionPointer[] = [];
+    121|   const verifier = createCheckpointVerifier({
+ ❯ tests/tasks/t30.test.ts:192:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t30.test.ts > T30 Deterministic checkpoint renderer and verifier > stops at the abort boundary before pointer I/O
+TypeError: (0 , createCheckpointVerifier) is not a function
+ ❯ tests/tasks/t30.test.ts:209:22
+    207|     const bound = cursor();
+    208|     let reads = 0;
+    209|     const verifier = createCheckpointVerifier({
+       |                      ^
+    210|       cursor: bound,
+    211|       pointers: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  03:41:01
+   Duration  533ms (transform 202ms, setup 0ms, collect 282ms, tests 28ms, environment 0ms, prepare 61ms)
+

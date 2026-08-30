@@ -1,0 +1,11 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/tasks/t30.test.ts (6 tests) 20ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  03:42:55
+   Duration  435ms (transform 148ms, setup 0ms, collect 215ms, tests 20ms, environment 0ms, prepare 54ms)
+
