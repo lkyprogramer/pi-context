@@ -1,0 +1,19 @@
+{
+  "gate": "w2-compactor",
+  "decision": "keep-pi-native",
+  "hard": {
+    "pass": false,
+    "failures": [
+      "directive-exact-coverage"
+    ]
+  },
+  "quality": {
+    "nonInferior": false
+  },
+  "efficiency": {
+    "considered": false
+  },
+  "reasons": [
+    "hard gate failed; efficiency is not evaluated for adoption"
+  ]
+}

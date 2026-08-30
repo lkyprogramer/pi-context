@@ -1,0 +1,7 @@
+flowchart TD
+  O[Oracle expected fact] --> V{Witness exists?}
+  V -->|exact source span| OK[valid]
+  V -->|derived| D{registered derivation + source refs?}
+  D -->|yes| OK
+  D -->|no| BAD[reject case]
+  V -->|no| BAD

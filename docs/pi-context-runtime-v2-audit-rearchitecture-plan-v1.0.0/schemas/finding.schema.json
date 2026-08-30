@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "severity",
+    "area",
+    "title",
+    "observation",
+    "sources",
+    "remediation",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "pattern": "^F\\d{3}$"
+    },
+    "severity": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ]
+    },
+    "area": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "observation": {
+      "type": "string"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "remediation": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "open",
+        "closed",
+        "waived"
+      ]
+    }
+  }
+}

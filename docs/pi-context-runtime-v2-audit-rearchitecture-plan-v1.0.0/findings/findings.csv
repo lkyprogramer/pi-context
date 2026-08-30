@@ -1,0 +1,39 @@
+id,severity,area,title,sources,remediation
+F001,P0,runtime,Composition Root 仍是 fixture/stub,S02,删除现有 Composition Root，建立真实 `RuntimeSessionRegistry + RuntimeSession` 纵向编排。
+F002,P0,ingress,产品入口未注册 Tool Result Capture,S02;S06,在单一 Pi adapter 中注册真实 `tool_result` Hook，并以实际 event 字段构造 Observation。
+F003,P0,ingress,现有 Tool Result Adapter 即使注册也使用伪字段,S06,按 Pi 0.84.3 公开事件类型实现 codec；禁止默认常量。
+F004,P0,directives,Correction 规则只捕获标记词,S03;S08,采用 Unicode clause segmentation，捕获完整原句；结构化解析失败时保留整句 exact quote。
+F005,P0,directives,Checkpoint 把所有 Directive 强制成 must-not,S02;S03,Directive 类型、极性、scope、status 必须端到端保留，禁止适配层重写。
+F006,P0,compaction,Checkpoint 不是从权威 Runtime Snapshot 构造,S02,从同一事务快照读取 directives/claims/continuity/evidence pointers，生成 snapshot hash。
+F007,P0,retrieval,已注册 Recall/Search 工具没有真实后端,S02,工具必须调用 RuntimeSession 的 storage-backed `readEvidence/searchCatalog`。
+F008,P0,materialization,Hard directives 实际是常量 `keep`,S02;S04,MaterializationInput 显式携带 active directives；Materializer 不持有静态业务数据。
+F009,P0,materialization,Active-turn token 被按消息 ID 估算,S04,按完整 block/tokenizer 计价，active turn 不可修复时 fail closed。
+F010,P0,materialization,stitch 破坏四区布局,S05,使用 round-trip message envelope，一次性返回完整 ordered AgentMessage[]；不做 positional stitching。
+F011,P0,identity,Host message ID 使用数组下标,S05,从 SessionEntry.id/toolCallId/content hash 生成稳定 Host ID。
+F012,P0,identity,所有真实 Session 共用固定身份,S02,从 `ctx.cwd + sessionManager.getSessionId/getLeafId` 派生真实 cursor。
+F013,P0,compaction,Candidate rejection 会取消 Pi Native,S02,软失败返回 `undefined` 让 Pi Native 接管；仅 integrity hard failure abort。
+F014,P0,storage,SQLite 写入硬编码 s1/main/trusted-tool/inform,S07,Storage port 接收完整 EvidenceRecord，禁止 SQL 内业务常量。
+F015,P0,package,发布包不是自包含实现,S02,使用 workspace package dependencies + build bundle；clean install 测试真实 tarball。
+F016,P0,package,包声明 private/UNLICENSED 与安装文档冲突,S02,明确许可证与发布策略；Release Gate 检查 `npm pack` 和 `pi install`。
+F017,P0,ci,当前远端 CI 未运行任何测试,S12,第一波先修 lockfile，并让 build/typecheck/unit/acceptance 全部成为 required checks。
+F018,P0,test-oracle,Temporal Oracle 含源轨迹不存在的值,S10;S11,Oracle validator 必须证明每个 exact expected value 有 source witness 或合法 deterministic derivation。
+F019,P0,test-scoring,闭环用 summary+probe 并集评分,S08;S09,动作遵循只评分 probe/action/environment；summary fidelity 单独评分。
+F020,P0,test-scoring,Exact recovery 被替换成“不泄密”,S08;S09,恢复门必须读取实际 blob，比较 byte length + SHA-256，并做 scope denial。
+F021,P0,test-scoring,Tool pair 与 determinism 是硬编码,S08;S09,从实际 artifacts 计算 pairing；同快照运行两次并比较 outputHash。
+F022,P0,test-design,100 对只是 5 个模板的参数化副本,S10,按 scenario cluster bootstrap；建立锁定 held-out real traces。
+F023,P0,test-design,Live Gate 不代表真实长会话压力,S08;S11,分离 boundary replay、natural threshold、provider overflow 三条 Lane。
+F024,P0,test-design,Continuation 没有环境与工具,S08;S09,恢复同一 workspace snapshot，启用工具，用测试命令、diff、side-effect ledger 判成功。
+F025,P0,test-design,Compactor 比较混入 Ingress 安全差异,S08,增加 `Pi Native + same ingress scrub/reducer` 基线，安全 Gate 独立。
+F026,P0,economics,realizedNet 只是 probe token 差,S09,按 provider prices 和 successful-task denominator 计算 realized net，质量失败不得计收益。
+F027,P1,test-design,cost/success 被启发式闭环污染,S09,只对环境验证成功任务计算 cost/success，并报告失败成本。
+F028,P1,process,W1 Gate 语料在失败后增加 filler 以过门,S13,冻结 benchmark version 与 holdout hash；Gate 失败后只能修算法或发布新 benchmark major。
+F029,P1,evidence,Live 原始 report.json 被 gitignore,S08,每次 Gate 产物写 content-addressed bundle，上传 CI artifact/release，保留 runner commit。
+F030,P1,provenance,运行时 harness 在实验时未提交,S08,Runner 必须 clean tree，记录 git diff hash=empty、container/model/config digests。
+F031,P1,tests,所谓 packed-install test 生成了另一个假 extension,S02,运行 `npm pack` 当前包，在空目录 `pi install`，执行真实 context/tool/compaction。
+F032,P1,tests,E2E 使用 fakeHost 只验证注册数量,S02,建立 Pi SDK/RPC acceptance harness，所有关键 Hook 做 vertical assertions。
+F033,P1,offsets,byteRange 实际是 UTF-16 code-unit range,S03,同时保存 utf8ByteRange、utf16Range、codePointRange，并用原文 hash 校验。
+F034,P1,source-trust,所有 toolResult 默认 trusted-tool,S05,引入 ToolTrustPolicy；默认 custom/external 为 untrusted-tool。
+F035,P1,usage,Adapter 为 assistant 补零 usage,S05,保留 undefined；只在测试 codec 层提供明确 synthetic usage。
+F036,P1,cache,CachePlan 没有上一请求基线,S04,RuntimeSession 保存上一 committed view receipt，按 section hash 比较。
+F037,P1,background,后台 Worker 使用内存假 Store,S02,Semantic 前先完成 durable candidate table 与 lifecycle integration。
+F038,P1,tests,Live Gate 不在默认 `pnpm test`,S08,fast acceptance 进入 PR；live 100×3 进入 nightly/manual protected environment。

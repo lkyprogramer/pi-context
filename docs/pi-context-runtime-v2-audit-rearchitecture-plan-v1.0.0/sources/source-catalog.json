@@ -1,0 +1,80 @@
+[
+  {
+    "id": "S01",
+    "kind": "repository",
+    "url": "https://github.com/lkyprogramer/pi-context/tree/9b5e207db04a197481d732ff206c0b1210aaa2e2",
+    "description": "审计固定提交。"
+  },
+  {
+    "id": "S02",
+    "kind": "implementation",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/apps/pi-context-runtime/src/extension.ts",
+    "description": "真实 Pi 扩展 Composition Root。"
+  },
+  {
+    "id": "S03",
+    "kind": "implementation",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/packages/kernel/src/directives/capture.ts",
+    "description": "Directive 正则抽取。"
+  },
+  {
+    "id": "S04",
+    "kind": "implementation",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/packages/kernel/src/materialization/materializer.ts",
+    "description": "请求物化器。"
+  },
+  {
+    "id": "S05",
+    "kind": "implementation",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/packages/pi-adapter/src/context-hook.ts",
+    "description": "Pi context Hook 与 stitch 逻辑。"
+  },
+  {
+    "id": "S06",
+    "kind": "implementation",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/packages/pi-adapter/src/tool-result-hook.ts",
+    "description": "Tool Result 捕获适配器。"
+  },
+  {
+    "id": "S07",
+    "kind": "implementation",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/packages/storage/src/sqlite-store.ts",
+    "description": "SQLite Store 实现。"
+  },
+  {
+    "id": "S08",
+    "kind": "evaluation",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/docs/evaluations/2026-08-28-w2-live-native-pairing.md",
+    "description": "100 对 Live Native 配对主报告。"
+  },
+  {
+    "id": "S09",
+    "kind": "evaluation-code",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/tests/live-gate/paired-w2-live.ts",
+    "description": "Live Pairing Runner 与评分实现。"
+  },
+  {
+    "id": "S10",
+    "kind": "evaluation-code",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/tests/w2-gate/corpus.ts",
+    "description": "W2 Synthetic Corpus。"
+  },
+  {
+    "id": "S11",
+    "kind": "evaluation-code",
+    "url": "https://github.com/lkyprogramer/pi-context/blob/9b5e207db04a197481d732ff206c0b1210aaa2e2/tests/live-gate/w1-session-jsonl.ts",
+    "description": "冻结 Pi Session 构造器。"
+  },
+  {
+    "id": "S12",
+    "kind": "ci",
+    "url": "https://github.com/lkyprogramer/pi-context/actions/runs/33185710676",
+    "description": "当前 HEAD 唯一 compatibility workflow，安装阶段失败。"
+  },
+  {
+    "id": "S13",
+    "kind": "process",
+    "url": "https://github.com/lkyprogramer/pi-context/commit/b357e0a8639bcb657763f332f3f740bcad2fbd0f",
+    "description": "W1 合成语料增加 filler 后 Gate 从 keep-reducers-only 改为 proceed-to-w2。"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "artifact": "pi-context-runtime-v2-audit-rearchitecture-plan",
+  "version": "1.0.0",
+  "generatedDate": "2026-08-29",
+  "auditedRepository": "lkyprogramer/pi-context",
+  "auditedCommit": "9b5e207db04a197481d732ff206c0b1210aaa2e2",
+  "auditedTree": "c3041e01eee6517dbd0a1c085d4990ba9b1c9417",
+  "piBaseline": "0.84.3",
+  "taskCount": 55,
+  "findingCount": 38,
+  "compatibilityPolicy": "destructive rewrite; no old internal API/schema/checkpoint compatibility"
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "gate",
+    "decision",
+    "hard",
+    "quality",
+    "efficiency",
+    "reasons"
+  ],
+  "properties": {
+    "gate": {
+      "enum": [
+        "w1-ingress",
+        "w2-compactor",
+        "semantic-beta",
+        "release"
+      ]
+    },
+    "decision": {
+      "type": "string"
+    },
+    "hard": {
+      "type": "object"
+    },
+    "quality": {
+      "type": "object"
+    },
+    "efficiency": {
+      "type": "object"
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

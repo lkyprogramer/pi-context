@@ -1,0 +1,1221 @@
+[
+  {
+    "id": "T00",
+    "wave": "W0",
+    "title": "Freeze audit baseline and immutable evidence",
+    "dependsOn": [],
+    "allowedFiles": [
+      "audit/**",
+      "artifacts/audit-baseline/**"
+    ],
+    "produces": [
+      "baseline manifest",
+      "current findings snapshot"
+    ],
+    "findingIds": [
+      "F029",
+      "F030"
+    ],
+    "document": "tasks/T00-freeze-audit-baseline-and-immutable-evidence.md"
+  },
+  {
+    "id": "T01",
+    "wave": "W0",
+    "title": "Repair lockfile and required CI",
+    "dependsOn": [
+      "T00"
+    ],
+    "allowedFiles": [
+      "package.json",
+      "pnpm-lock.yaml",
+      ".github/workflows/**",
+      "scripts/ci/**"
+    ],
+    "produces": [
+      "green install workflow",
+      "required check matrix"
+    ],
+    "findingIds": [
+      "F017"
+    ],
+    "document": "tasks/T01-repair-lockfile-and-required-ci.md"
+  },
+  {
+    "id": "T02",
+    "wave": "W0",
+    "title": "Create destructive v2 repository skeleton",
+    "dependsOn": [
+      "T01"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/**",
+      "packages/**",
+      "pnpm-workspace.yaml",
+      "tsconfig*.json",
+      "vitest*.ts"
+    ],
+    "produces": [
+      "new package graph",
+      "boundary checker"
+    ],
+    "findingIds": [
+      "F001",
+      "F015"
+    ],
+    "document": "tasks/T02-create-destructive-v2-repository-skeleton.md"
+  },
+  {
+    "id": "T03",
+    "wave": "W0",
+    "title": "Canonical contracts and generated schemas",
+    "dependsOn": [
+      "T02"
+    ],
+    "allowedFiles": [
+      "packages/contracts/**",
+      "schemas/**",
+      "scripts/generate-schemas.mjs"
+    ],
+    "produces": [
+      "single contract vocabulary",
+      "schema generation"
+    ],
+    "findingIds": [
+      "F005",
+      "F033",
+      "F034"
+    ],
+    "document": "tasks/T03-canonical-contracts-and-generated-schemas.md"
+  },
+  {
+    "id": "T04",
+    "wave": "W0",
+    "title": "Stable cursor and identity primitives",
+    "dependsOn": [
+      "T03"
+    ],
+    "allowedFiles": [
+      "packages/core/src/identity/**",
+      "packages/contracts/src/identity.ts",
+      "packages/core/test/identity/**"
+    ],
+    "produces": [
+      "RuntimeCursor",
+      "stable host/evidence/directive IDs"
+    ],
+    "findingIds": [
+      "F011",
+      "F012"
+    ],
+    "document": "tasks/T04-stable-cursor-and-identity-primitives.md"
+  },
+  {
+    "id": "T05",
+    "wave": "W0",
+    "title": "Pi 0.84.3 public API contract harness",
+    "dependsOn": [
+      "T03"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/contracts/**",
+      "tests/pi-contract/**",
+      "compat/pi.lock.json"
+    ],
+    "produces": [
+      "typed hook fixtures from real Pi exports",
+      "capability probe"
+    ],
+    "findingIds": [
+      "F003",
+      "F032"
+    ],
+    "document": "tasks/T05-pi-0-84-3-public-api-contract-harness.md"
+  },
+  {
+    "id": "T06",
+    "wave": "W0",
+    "title": "Real npm pack and clean Pi install harness",
+    "dependsOn": [
+      "T01",
+      "T02",
+      "T05"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/package.json",
+      "scripts/pack-smoke.mjs",
+      "tests/acceptance/packed-install.test.ts"
+    ],
+    "produces": [
+      "self-contained tarball test"
+    ],
+    "findingIds": [
+      "F015",
+      "F016",
+      "F031"
+    ],
+    "document": "tasks/T06-real-npm-pack-and-clean-pi-install-harness.md"
+  },
+  {
+    "id": "T07",
+    "wave": "W1",
+    "title": "Runtime ports and RuntimeSession application service",
+    "dependsOn": [
+      "T03",
+      "T04"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/ports.ts",
+      "packages/runtime/src/runtime-session.ts",
+      "packages/runtime/test/runtime-session.test.ts"
+    ],
+    "produces": [
+      "RuntimeSession interface and state machine"
+    ],
+    "findingIds": [
+      "F001"
+    ],
+    "document": "tasks/T07-runtime-ports-and-runtimesession-application-service.md"
+  },
+  {
+    "id": "T08",
+    "wave": "W1",
+    "title": "Production composition root and session registry",
+    "dependsOn": [
+      "T05",
+      "T07"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/extension.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/runtime/src/session-registry.ts",
+      "tests/acceptance/session-registry.test.ts"
+    ],
+    "produces": [
+      "real per-session runtime construction"
+    ],
+    "findingIds": [
+      "F001",
+      "F012"
+    ],
+    "document": "tasks/T08-production-composition-root-and-session-registry.md"
+  },
+  {
+    "id": "T09",
+    "wave": "W1",
+    "title": "Per-workspace SQLite schema and migrations",
+    "dependsOn": [
+      "T03",
+      "T04"
+    ],
+    "allowedFiles": [
+      "packages/storage-node/src/schema/**",
+      "packages/storage-node/src/sqlite-store.ts",
+      "packages/storage-node/test/sqlite-store.test.ts"
+    ],
+    "produces": [
+      "cursor-complete persistence"
+    ],
+    "findingIds": [
+      "F014"
+    ],
+    "document": "tasks/T09-per-workspace-sqlite-schema-and-migrations.md"
+  },
+  {
+    "id": "T10",
+    "wave": "W1",
+    "title": "Encrypted content-addressed blob store",
+    "dependsOn": [
+      "T09"
+    ],
+    "allowedFiles": [
+      "packages/storage-node/src/blob/**",
+      "packages/storage-node/test/blob-store.test.ts"
+    ],
+    "produces": [
+      "durable encrypted CAS"
+    ],
+    "findingIds": [
+      "F002",
+      "F020"
+    ],
+    "document": "tasks/T10-encrypted-content-addressed-blob-store.md"
+  },
+  {
+    "id": "T11",
+    "wave": "W1",
+    "title": "Cross-store Saga and idempotency",
+    "dependsOn": [
+      "T09",
+      "T10"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/saga/**",
+      "packages/storage-node/src/saga-store.ts",
+      "packages/runtime/test/saga.test.ts"
+    ],
+    "produces": [
+      "recoverable operation lifecycle"
+    ],
+    "findingIds": [
+      "F002",
+      "F014"
+    ],
+    "document": "tasks/T11-cross-store-saga-and-idempotency.md"
+  },
+  {
+    "id": "T12",
+    "wave": "W1",
+    "title": "Exact user input ledger and Pi correlation",
+    "dependsOn": [
+      "T05",
+      "T08",
+      "T09",
+      "T11"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/user-input-hook.ts",
+      "packages/runtime/src/user-turn-service.ts",
+      "tests/acceptance/user-input-flow.test.ts"
+    ],
+    "produces": [
+      "UserTurnRecord end-to-end"
+    ],
+    "findingIds": [
+      "F004",
+      "F008",
+      "F033"
+    ],
+    "document": "tasks/T12-exact-user-input-ledger-and-pi-correlation.md"
+  },
+  {
+    "id": "T13",
+    "wave": "W1",
+    "title": "Real Pi tool_result ingress",
+    "dependsOn": [
+      "T05",
+      "T08",
+      "T10",
+      "T11"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/tool-result-hook.ts",
+      "packages/runtime/src/observation-service.ts",
+      "tests/acceptance/tool-result-flow.test.ts"
+    ],
+    "produces": [
+      "actual event capture and visible projection"
+    ],
+    "findingIds": [
+      "F002",
+      "F003"
+    ],
+    "document": "tasks/T13-real-pi-tool-result-ingress.md"
+  },
+  {
+    "id": "T14",
+    "wave": "W1",
+    "title": "Reducer registry and production reducers",
+    "dependsOn": [
+      "T13"
+    ],
+    "allowedFiles": [
+      "packages/core/src/reducers/**",
+      "packages/core/test/reducers/**"
+    ],
+    "produces": [
+      "tool-specific deterministic reducers"
+    ],
+    "findingIds": [
+      "F025"
+    ],
+    "document": "tasks/T14-reducer-registry-and-production-reducers.md"
+  },
+  {
+    "id": "T15",
+    "wave": "W1",
+    "title": "Evidence admission, FTS indexing and exact read",
+    "dependsOn": [
+      "T09",
+      "T10",
+      "T13",
+      "T14"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/evidence-service.ts",
+      "packages/storage-node/src/evidence-repository.ts",
+      "packages/storage-node/src/fts-index.ts",
+      "tests/acceptance/evidence-recovery.test.ts"
+    ],
+    "produces": [
+      "hash-verifiable evidence retrieval"
+    ],
+    "findingIds": [
+      "F007",
+      "F020"
+    ],
+    "document": "tasks/T15-evidence-admission-fts-indexing-and-exact-read.md"
+  },
+  {
+    "id": "T16",
+    "wave": "W2",
+    "title": "Unicode clause segmentation with real offsets",
+    "dependsOn": [
+      "T03",
+      "T12"
+    ],
+    "allowedFiles": [
+      "packages/core/src/directives/segment.ts",
+      "packages/core/test/directives/segment.test.ts"
+    ],
+    "produces": [
+      "clause spans with utf8/utf16/codepoint ranges"
+    ],
+    "findingIds": [
+      "F004",
+      "F033"
+    ],
+    "document": "tasks/T16-unicode-clause-segmentation-with-real-offsets.md"
+  },
+  {
+    "id": "T17",
+    "wave": "W2",
+    "title": "Directive extraction with exact-clause fallback",
+    "dependsOn": [
+      "T16"
+    ],
+    "allowedFiles": [
+      "packages/core/src/directives/extract.ts",
+      "packages/core/test/directives/extract.test.ts"
+    ],
+    "produces": [
+      "complete quotes and preserved polarity"
+    ],
+    "findingIds": [
+      "F004",
+      "F005"
+    ],
+    "document": "tasks/T17-directive-extraction-with-exact-clause-fallback.md"
+  },
+  {
+    "id": "T18",
+    "wave": "W2",
+    "title": "Temporal key/value and supersession resolver",
+    "dependsOn": [
+      "T17",
+      "T09"
+    ],
+    "allowedFiles": [
+      "packages/core/src/directives/temporal.ts",
+      "packages/runtime/src/directive-service.ts",
+      "packages/core/test/directives/temporal.test.ts"
+    ],
+    "produces": [
+      "versioned active directives"
+    ],
+    "findingIds": [
+      "F004",
+      "F005",
+      "F018"
+    ],
+    "document": "tasks/T18-temporal-key-value-and-supersession-resolver.md"
+  },
+  {
+    "id": "T19",
+    "wave": "W2",
+    "title": "Continuity and task-front state machine",
+    "dependsOn": [
+      "T09",
+      "T15"
+    ],
+    "allowedFiles": [
+      "packages/core/src/continuity/**",
+      "packages/runtime/src/continuity-service.ts",
+      "packages/core/test/continuity/**"
+    ],
+    "produces": [
+      "active/parked/completed/superseded fronts"
+    ],
+    "findingIds": [
+      "F006"
+    ],
+    "document": "tasks/T19-continuity-and-task-front-state-machine.md"
+  },
+  {
+    "id": "T20",
+    "wave": "W2",
+    "title": "Storage-backed context_search and context_read",
+    "dependsOn": [
+      "T15"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/tools/search.ts",
+      "packages/pi-adapter/src/tools/read.ts",
+      "tests/acceptance/retrieval-tools.test.ts"
+    ],
+    "produces": [
+      "working exact/FTS tools"
+    ],
+    "findingIds": [
+      "F007"
+    ],
+    "document": "tasks/T20-storage-backed-context-search-and-context-read.md"
+  },
+  {
+    "id": "T21",
+    "wave": "W2",
+    "title": "Proactive recall policy and leases",
+    "dependsOn": [
+      "T18",
+      "T19",
+      "T20"
+    ],
+    "allowedFiles": [
+      "packages/core/src/retrieval/proactive.ts",
+      "packages/runtime/src/lease-service.ts",
+      "packages/core/test/retrieval/proactive.test.ts"
+    ],
+    "produces": [
+      "needed/not-needed bounded recall"
+    ],
+    "findingIds": [
+      "F007"
+    ],
+    "document": "tasks/T21-proactive-recall-policy-and-leases.md"
+  },
+  {
+    "id": "T22",
+    "wave": "W2",
+    "title": "Tool trust and action authority gate",
+    "dependsOn": [
+      "T13",
+      "T15"
+    ],
+    "allowedFiles": [
+      "packages/core/src/security/**",
+      "packages/runtime/src/authorization-service.ts",
+      "tests/security/authority.test.ts"
+    ],
+    "produces": [
+      "non-escalating authority"
+    ],
+    "findingIds": [
+      "F034"
+    ],
+    "document": "tasks/T22-tool-trust-and-action-authority-gate.md"
+  },
+  {
+    "id": "T23",
+    "wave": "W2",
+    "title": "Deterministic W1 vertical acceptance gate",
+    "dependsOn": [
+      "T12",
+      "T13",
+      "T14",
+      "T15",
+      "T20"
+    ],
+    "allowedFiles": [
+      "tests/acceptance/w1-vertical.test.ts",
+      "scripts/gates/w1-vertical.mjs"
+    ],
+    "produces": [
+      "real Pi ingress/recovery evidence"
+    ],
+    "findingIds": [
+      "F002",
+      "F007",
+      "F020"
+    ],
+    "document": "tasks/T23-deterministic-w1-vertical-acceptance-gate.md"
+  },
+  {
+    "id": "T24",
+    "wave": "W3",
+    "title": "Lossless Pi message envelope codec",
+    "dependsOn": [
+      "T04",
+      "T05"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/message-codec.ts",
+      "packages/pi-adapter/test/message-codec.test.ts"
+    ],
+    "produces": [
+      "round-trip all Pi message roles"
+    ],
+    "findingIds": [
+      "F010",
+      "F011",
+      "F035"
+    ],
+    "document": "tasks/T24-lossless-pi-message-envelope-codec.md"
+  },
+  {
+    "id": "T25",
+    "wave": "W3",
+    "title": "Actual model budget and token calibration",
+    "dependsOn": [
+      "T05",
+      "T24"
+    ],
+    "allowedFiles": [
+      "packages/core/src/budget/**",
+      "packages/runtime/src/token-calibration.ts",
+      "tests/performance/token-accounting.test.ts"
+    ],
+    "produces": [
+      "I_eff and route calibration"
+    ],
+    "findingIds": [
+      "F009"
+    ],
+    "document": "tasks/T25-actual-model-budget-and-token-calibration.md"
+  },
+  {
+    "id": "T26",
+    "wave": "W3",
+    "title": "Section model and cache receipt",
+    "dependsOn": [
+      "T18",
+      "T19",
+      "T21",
+      "T25"
+    ],
+    "allowedFiles": [
+      "packages/core/src/materialization/sections.ts",
+      "packages/core/src/materialization/cache.ts",
+      "packages/core/test/materialization/cache.test.ts"
+    ],
+    "produces": [
+      "stable section hashes and cache delta"
+    ],
+    "findingIds": [
+      "F036"
+    ],
+    "document": "tasks/T26-section-model-and-cache-receipt.md"
+  },
+  {
+    "id": "T27",
+    "wave": "W3",
+    "title": "Budget-correct materializer",
+    "dependsOn": [
+      "T24",
+      "T25",
+      "T26"
+    ],
+    "allowedFiles": [
+      "packages/core/src/materialization/materializer.ts",
+      "packages/core/test/materialization/materializer.test.ts"
+    ],
+    "produces": [
+      "ordered full-message materialized view"
+    ],
+    "findingIds": [
+      "F008",
+      "F009",
+      "F010"
+    ],
+    "document": "tasks/T27-budget-correct-materializer.md"
+  },
+  {
+    "id": "T28",
+    "wave": "W3",
+    "title": "Pi context hook vertical integration",
+    "dependsOn": [
+      "T08",
+      "T24",
+      "T27"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/context-hook.ts",
+      "tests/acceptance/context-hook.test.ts"
+    ],
+    "produces": [
+      "actual final request ordering"
+    ],
+    "findingIds": [
+      "F008",
+      "F010",
+      "F035"
+    ],
+    "document": "tasks/T28-pi-context-hook-vertical-integration.md"
+  },
+  {
+    "id": "T29",
+    "wave": "W3",
+    "title": "Authoritative compaction snapshot assembler",
+    "dependsOn": [
+      "T15",
+      "T18",
+      "T19"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/compaction/snapshot.ts",
+      "packages/runtime/test/compaction/snapshot.test.ts"
+    ],
+    "produces": [
+      "same-transaction checkpoint source"
+    ],
+    "findingIds": [
+      "F006"
+    ],
+    "document": "tasks/T29-authoritative-compaction-snapshot-assembler.md"
+  },
+  {
+    "id": "T30",
+    "wave": "W3",
+    "title": "Deterministic checkpoint renderer and verifier",
+    "dependsOn": [
+      "T20",
+      "T29"
+    ],
+    "allowedFiles": [
+      "packages/core/src/compaction/**",
+      "packages/core/test/compaction/**"
+    ],
+    "produces": [
+      "source-backed checkpoint v2"
+    ],
+    "findingIds": [
+      "F005",
+      "F006",
+      "F021"
+    ],
+    "document": "tasks/T30-deterministic-checkpoint-renderer-and-verifier.md"
+  },
+  {
+    "id": "T31",
+    "wave": "W3",
+    "title": "Pi compaction takeover with Native fallback",
+    "dependsOn": [
+      "T05",
+      "T08",
+      "T30"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/compaction-hook.ts",
+      "packages/runtime/src/compaction-service.ts",
+      "tests/acceptance/compaction-fallback.test.ts"
+    ],
+    "produces": [
+      "safe ready/reject/ack behavior"
+    ],
+    "findingIds": [
+      "F013"
+    ],
+    "document": "tasks/T31-pi-compaction-takeover-with-native-fallback.md"
+  },
+  {
+    "id": "T32",
+    "wave": "W3",
+    "title": "Session, branch and restart recovery",
+    "dependsOn": [
+      "T08",
+      "T11",
+      "T31"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/lifecycle.ts",
+      "packages/runtime/src/recovery-service.ts",
+      "tests/acceptance/restart-branch-recovery.test.ts"
+    ],
+    "produces": [
+      "durable multi-session lifecycle"
+    ],
+    "findingIds": [
+      "F012",
+      "F037"
+    ],
+    "document": "tasks/T32-session-branch-and-restart-recovery.md"
+  },
+  {
+    "id": "T33",
+    "wave": "W3",
+    "title": "Recursive compaction and long-session boundedness",
+    "dependsOn": [
+      "T27",
+      "T31",
+      "T32"
+    ],
+    "allowedFiles": [
+      "tests/acceptance/recursive-compaction.test.ts",
+      "packages/runtime/src/compaction/retention.ts"
+    ],
+    "produces": [
+      "three-cycle bounded session evidence"
+    ],
+    "findingIds": [
+      "F023"
+    ],
+    "document": "tasks/T33-recursive-compaction-and-long-session-boundedness.md"
+  },
+  {
+    "id": "T34",
+    "wave": "W4",
+    "title": "Semantic proposal contracts and provider port",
+    "dependsOn": [
+      "T03",
+      "T29"
+    ],
+    "allowedFiles": [
+      "packages/contracts/src/semantic.ts",
+      "packages/runtime/src/semantic/port.ts",
+      "packages/runtime/test/semantic/port.test.ts"
+    ],
+    "produces": [
+      "typed proposal only"
+    ],
+    "findingIds": [
+      "F006"
+    ],
+    "document": "tasks/T34-semantic-proposal-contracts-and-provider-port.md"
+  },
+  {
+    "id": "T35",
+    "wave": "W4",
+    "title": "Evidence-cited semantic proposer",
+    "dependsOn": [
+      "T34"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/semantic/proposer.ts",
+      "packages/runtime/test/semantic/proposer.test.ts"
+    ],
+    "produces": [
+      "candidate proposal with source refs"
+    ],
+    "findingIds": [
+      "F006"
+    ],
+    "document": "tasks/T35-evidence-cited-semantic-proposer.md"
+  },
+  {
+    "id": "T36",
+    "wave": "W4",
+    "title": "Deterministic semantic verifier and patcher",
+    "dependsOn": [
+      "T18",
+      "T22",
+      "T35"
+    ],
+    "allowedFiles": [
+      "packages/core/src/verifier/**",
+      "packages/core/test/verifier/**"
+    ],
+    "produces": [
+      "fail-closed semantic gate"
+    ],
+    "findingIds": [
+      "F005",
+      "F006"
+    ],
+    "document": "tasks/T36-deterministic-semantic-verifier-and-patcher.md"
+  },
+  {
+    "id": "T37",
+    "wave": "W4",
+    "title": "Durable background candidate and generation fencing",
+    "dependsOn": [
+      "T09",
+      "T32",
+      "T36"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/background/**",
+      "packages/storage-node/src/candidate-repository.ts",
+      "packages/runtime/test/background/**"
+    ],
+    "produces": [
+      "prepared/stale/committed lifecycle"
+    ],
+    "findingIds": [
+      "F037"
+    ],
+    "document": "tasks/T37-durable-background-candidate-and-generation-fencing.md"
+  },
+  {
+    "id": "T38",
+    "wave": "W4",
+    "title": "Cache-adjusted economics controller",
+    "dependsOn": [
+      "T25",
+      "T26",
+      "T37"
+    ],
+    "allowedFiles": [
+      "packages/core/src/economics/**",
+      "packages/runtime/src/economics-service.ts",
+      "tests/performance/economics.test.ts"
+    ],
+    "produces": [
+      "realized net with provider prices"
+    ],
+    "findingIds": [
+      "F026",
+      "F027",
+      "F036"
+    ],
+    "document": "tasks/T38-cache-adjusted-economics-controller.md"
+  },
+  {
+    "id": "T39",
+    "wave": "W5",
+    "title": "Benchmark corpus governance and locked splits",
+    "dependsOn": [
+      "T01"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/corpus/**",
+      "benchmarks/manifest/**",
+      "scripts/benchmark-lock.mjs"
+    ],
+    "produces": [
+      "immutable train/dev/test hashes"
+    ],
+    "findingIds": [
+      "F022",
+      "F028"
+    ],
+    "document": "tasks/T39-benchmark-corpus-governance-and-locked-splits.md"
+  },
+  {
+    "id": "T40",
+    "wave": "W5",
+    "title": "Oracle source-witness validator",
+    "dependsOn": [
+      "T39"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/oracle/**",
+      "packages/benchmark/test/oracle.test.ts"
+    ],
+    "produces": [
+      "reject unsupported expected values"
+    ],
+    "findingIds": [
+      "F018"
+    ],
+    "document": "tasks/T40-oracle-source-witness-validator.md"
+  },
+  {
+    "id": "T41",
+    "wave": "W5",
+    "title": "Real trace capture and anonymization",
+    "dependsOn": [
+      "T12",
+      "T13",
+      "T39"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/trace/**",
+      "scripts/capture-trace.mjs",
+      "packages/benchmark/test/trace.test.ts"
+    ],
+    "produces": [
+      "replayable redacted traces"
+    ],
+    "findingIds": [
+      "F023"
+    ],
+    "document": "tasks/T41-real-trace-capture-and-anonymization.md"
+  },
+  {
+    "id": "T42",
+    "wave": "W5",
+    "title": "W1 A0/A1/A2 live arm runner",
+    "dependsOn": [
+      "T23",
+      "T39",
+      "T40",
+      "T41"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/arms/w1.ts",
+      "tests/live/w1-paired.test.ts"
+    ],
+    "produces": [
+      "ingress/recall isolated evaluation"
+    ],
+    "findingIds": [
+      "F025",
+      "F028"
+    ],
+    "document": "tasks/T42-w1-a0-a1-a2-live-arm-runner.md"
+  },
+  {
+    "id": "T43",
+    "wave": "W5",
+    "title": "W2 B0/B1/B2 live arm runner",
+    "dependsOn": [
+      "T31",
+      "T33",
+      "T39",
+      "T40",
+      "T41"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/arms/w2.ts",
+      "tests/live/w2-paired.test.ts"
+    ],
+    "produces": [
+      "fair compactor evaluation"
+    ],
+    "findingIds": [
+      "F023",
+      "F025"
+    ],
+    "document": "tasks/T43-w2-b0-b1-b2-live-arm-runner.md"
+  },
+  {
+    "id": "T44",
+    "wave": "W5",
+    "title": "Full-context reader ceiling",
+    "dependsOn": [
+      "T40",
+      "T41"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/reader/**",
+      "tests/live/reader-ceiling.test.ts"
+    ],
+    "produces": [
+      "compressor loss decomposition"
+    ],
+    "findingIds": [
+      "F018"
+    ],
+    "document": "tasks/T44-full-context-reader-ceiling.md"
+  },
+  {
+    "id": "T45",
+    "wave": "W5",
+    "title": "Workspace closed-loop continuation runner",
+    "dependsOn": [
+      "T41",
+      "T42",
+      "T43"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/continuation/**",
+      "tests/live/closed-loop.test.ts"
+    ],
+    "produces": [
+      "environment-based success"
+    ],
+    "findingIds": [
+      "F019",
+      "F024"
+    ],
+    "document": "tasks/T45-workspace-closed-loop-continuation-runner.md"
+  },
+  {
+    "id": "T46",
+    "wave": "W5",
+    "title": "Observed integrity and recovery scorers",
+    "dependsOn": [
+      "T15",
+      "T30",
+      "T40"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/scoring/integrity.ts",
+      "packages/benchmark/test/scoring/integrity.test.ts"
+    ],
+    "produces": [
+      "real pair/recovery/hash gates"
+    ],
+    "findingIds": [
+      "F020",
+      "F021"
+    ],
+    "document": "tasks/T46-observed-integrity-and-recovery-scorers.md"
+  },
+  {
+    "id": "T47",
+    "wave": "W5",
+    "title": "Cluster-aware paired statistics",
+    "dependsOn": [
+      "T39",
+      "T45",
+      "T46"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/statistics/**",
+      "packages/benchmark/test/statistics.test.ts"
+    ],
+    "produces": [
+      "cluster bootstrap and McNemar"
+    ],
+    "findingIds": [
+      "F022"
+    ],
+    "document": "tasks/T47-cluster-aware-paired-statistics.md"
+  },
+  {
+    "id": "T48",
+    "wave": "W5",
+    "title": "Performance, cache and fault lanes",
+    "dependsOn": [
+      "T27",
+      "T32",
+      "T38",
+      "T43"
+    ],
+    "allowedFiles": [
+      "tests/performance/**",
+      "tests/fault/**",
+      "packages/benchmark/src/performance/**"
+    ],
+    "produces": [
+      "natural threshold/overflow/cache evidence"
+    ],
+    "findingIds": [
+      "F023",
+      "F026"
+    ],
+    "document": "tasks/T48-performance-cache-and-fault-lanes.md"
+  },
+  {
+    "id": "T49",
+    "wave": "W5",
+    "title": "Immutable report and gate engine",
+    "dependsOn": [
+      "T42",
+      "T43",
+      "T44",
+      "T45",
+      "T46",
+      "T47",
+      "T48"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/report/**",
+      "scripts/run-gate.mjs",
+      "packages/benchmark/test/report.test.ts"
+    ],
+    "produces": [
+      "generated decisions and run bundles"
+    ],
+    "findingIds": [
+      "F019",
+      "F029",
+      "F030"
+    ],
+    "document": "tasks/T49-immutable-report-and-gate-engine.md"
+  },
+  {
+    "id": "T50",
+    "wave": "W5",
+    "title": "Scheduled live CI and protected credentials",
+    "dependsOn": [
+      "T49"
+    ],
+    "allowedFiles": [
+      ".github/workflows/live-benchmark.yml",
+      ".github/workflows/nightly.yml",
+      "scripts/ci/live-env.mjs"
+    ],
+    "produces": [
+      "nightly 3-seed evidence"
+    ],
+    "findingIds": [
+      "F030",
+      "F038"
+    ],
+    "document": "tasks/T50-scheduled-live-ci-and-protected-credentials.md"
+  },
+  {
+    "id": "T51",
+    "wave": "W6",
+    "title": "End-to-end deterministic MVP acceptance",
+    "dependsOn": [
+      "T23",
+      "T28",
+      "T31",
+      "T32",
+      "T49"
+    ],
+    "allowedFiles": [
+      "tests/acceptance/deterministic-mvp.test.ts",
+      "scripts/gates/deterministic-mvp.mjs"
+    ],
+    "produces": [
+      "single release candidate verdict"
+    ],
+    "findingIds": [
+      "F001",
+      "F002"
+    ],
+    "document": "tasks/T51-end-to-end-deterministic-mvp-acceptance.md"
+  },
+  {
+    "id": "T52",
+    "wave": "W6",
+    "title": "Production package build and clean install",
+    "dependsOn": [
+      "T06",
+      "T51"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/**",
+      "scripts/release/pack.mjs",
+      "tests/release/clean-install.test.ts"
+    ],
+    "produces": [
+      "publishable self-contained package"
+    ],
+    "findingIds": [
+      "F015",
+      "F016",
+      "F031"
+    ],
+    "document": "tasks/T52-production-package-build-and-clean-install.md"
+  },
+  {
+    "id": "T53",
+    "wave": "W6",
+    "title": "Pi/Node/OS compatibility matrix",
+    "dependsOn": [
+      "T05",
+      "T52"
+    ],
+    "allowedFiles": [
+      "compat/**",
+      ".github/workflows/compatibility.yml",
+      "tests/compat/**"
+    ],
+    "produces": [
+      "supported matrix evidence"
+    ],
+    "findingIds": [
+      "F017",
+      "F038"
+    ],
+    "document": "tasks/T53-pi-node-os-compatibility-matrix.md"
+  },
+  {
+    "id": "T54",
+    "wave": "W6",
+    "title": "Release, rollback and finding closure",
+    "dependsOn": [
+      "T49",
+      "T52",
+      "T53"
+    ],
+    "allowedFiles": [
+      "CHANGELOG.md",
+      "docs/INSTALL.md",
+      "docs/OPERATIONS.md",
+      "release/**",
+      "findings/**"
+    ],
+    "produces": [
+      "signed release manifest and rollback drill"
+    ],
+    "findingIds": [
+      "F017",
+      "F029"
+    ],
+    "document": "tasks/T54-release-rollback-and-finding-closure.md"
+  }
+]

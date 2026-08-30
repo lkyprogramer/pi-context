@@ -1,0 +1,468 @@
+[
+  {
+    "id": "F001",
+    "severity": "P0",
+    "area": "runtime",
+    "title": "Composition Root 仍是 fixture/stub",
+    "observation": "`apps/pi-context-runtime/src/extension.ts` 固定 workspace/session/leaf/model/context window/head，并把 storage、evidence、claims、continuity、retrieval 替换为常量或空实现。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "删除现有 Composition Root，建立真实 `RuntimeSessionRegistry + RuntimeSession` 纵向编排。",
+    "status": "open"
+  },
+  {
+    "id": "F002",
+    "severity": "P0",
+    "area": "ingress",
+    "title": "产品入口未注册 Tool Result Capture",
+    "observation": "真实扩展没有调用 `bindToolResultCapture`；因此 W1 Raw CAS、Reducer、Evidence Admission 不在产品运行路径。",
+    "sources": [
+      "S02",
+      "S06"
+    ],
+    "remediation": "在单一 Pi adapter 中注册真实 `tool_result` Hook，并以实际 event 字段构造 Observation。",
+    "status": "open"
+  },
+  {
+    "id": "F003",
+    "severity": "P0",
+    "area": "ingress",
+    "title": "现有 Tool Result Adapter 即使注册也使用伪字段",
+    "observation": "适配器硬编码 operationId、workspace/session、toolCallId、toolName、args、isError，并使用 passthrough blob/saga。",
+    "sources": [
+      "S06"
+    ],
+    "remediation": "按 Pi 0.84.3 公开事件类型实现 codec；禁止默认常量。",
+    "status": "open"
+  },
+  {
+    "id": "F004",
+    "severity": "P0",
+    "area": "directives",
+    "title": "Correction 规则只捕获标记词",
+    "observation": "`/改为|instead|correction:/` 只返回“改为”或“instead”，不包含被更新的 key/value/scope。",
+    "sources": [
+      "S03",
+      "S08"
+    ],
+    "remediation": "采用 Unicode clause segmentation，捕获完整原句；结构化解析失败时保留整句 exact quote。",
+    "status": "open"
+  },
+  {
+    "id": "F005",
+    "severity": "P0",
+    "area": "directives",
+    "title": "Checkpoint 把所有 Directive 强制成 must-not",
+    "observation": "Composition Root 无视捕获出的 kind/polarity，把每条 directive 改写为 `must-not/active`。",
+    "sources": [
+      "S02",
+      "S03"
+    ],
+    "remediation": "Directive 类型、极性、scope、status 必须端到端保留，禁止适配层重写。",
+    "status": "open"
+  },
+  {
+    "id": "F006",
+    "severity": "P0",
+    "area": "compaction",
+    "title": "Checkpoint 不是从权威 Runtime Snapshot 构造",
+    "observation": "`buildHostCheckpoint` 直接返回 `state.checkpoint`；真实运行时传入 claims/pointers 为空、continuity/heads 为硬编码。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "从同一事务快照读取 directives/claims/continuity/evidence pointers，生成 snapshot hash。",
+    "status": "open"
+  },
+  {
+    "id": "F007",
+    "severity": "P0",
+    "area": "retrieval",
+    "title": "已注册 Recall/Search 工具没有真实后端",
+    "observation": "Composition Root 只传 workspaceId 与静态 commands，未传 evidence/search index；Recall 将持续 scope-denied。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "工具必须调用 RuntimeSession 的 storage-backed `readEvidence/searchCatalog`。",
+    "status": "open"
+  },
+  {
+    "id": "F008",
+    "severity": "P0",
+    "area": "materialization",
+    "title": "Hard directives 实际是常量 `keep`",
+    "observation": "Materializer 在真实扩展中以 `{directives:\"keep\"}` 构造，没有读取 Directive Ledger。",
+    "sources": [
+      "S02",
+      "S04"
+    ],
+    "remediation": "MaterializationInput 显式携带 active directives；Materializer 不持有静态业务数据。",
+    "status": "open"
+  },
+  {
+    "id": "F009",
+    "severity": "P0",
+    "area": "materialization",
+    "title": "Active-turn token 被按消息 ID 估算",
+    "observation": "active-turn section 的 `estimatedTokens` 由 `suffixFingerprint(ids)` 计算，不是消息内容；超大活跃 turn 可绕过预算。",
+    "sources": [
+      "S04"
+    ],
+    "remediation": "按完整 block/tokenizer 计价，active turn 不可修复时 fail closed。",
+    "status": "open"
+  },
+  {
+    "id": "F010",
+    "severity": "P0",
+    "area": "materialization",
+    "title": "stitch 破坏四区布局",
+    "observation": "Kernel 输出按新布局排序，但 Pi adapter 把转换结果按原非 opaque 插槽回填，opaque message 留在旧位置。",
+    "sources": [
+      "S05"
+    ],
+    "remediation": "使用 round-trip message envelope，一次性返回完整 ordered AgentMessage[]；不做 positional stitching。",
+    "status": "open"
+  },
+  {
+    "id": "F011",
+    "severity": "P0",
+    "area": "identity",
+    "title": "Host message ID 使用数组下标",
+    "observation": "`pi_${index}` 在 compaction、branch、过滤后不稳定，不能作为 provenance 或 idempotency key。",
+    "sources": [
+      "S05"
+    ],
+    "remediation": "从 SessionEntry.id/toolCallId/content hash 生成稳定 Host ID。",
+    "status": "open"
+  },
+  {
+    "id": "F012",
+    "severity": "P0",
+    "area": "identity",
+    "title": "所有真实 Session 共用固定身份",
+    "observation": "workspace `ws_012...`、session `s1`、leaf `leaf-a`、lineage hash 固定，无法做到隔离、恢复或多会话。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "从 `ctx.cwd + sessionManager.getSessionId/getLeafId` 派生真实 cursor。",
+    "status": "open"
+  },
+  {
+    "id": "F013",
+    "severity": "P0",
+    "area": "compaction",
+    "title": "Candidate rejection 会取消 Pi Native",
+    "observation": "`session_before_compact` 对 rejected candidate 返回 `{cancel:true}`，没有 native fallback；压力/overflow 时可能永久无法压缩。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "软失败返回 `undefined` 让 Pi Native 接管；仅 integrity hard failure abort。",
+    "status": "open"
+  },
+  {
+    "id": "F014",
+    "severity": "P0",
+    "area": "storage",
+    "title": "SQLite 写入硬编码 s1/main/trusted-tool/inform",
+    "observation": "即使 Store 接通，Evidence 会被写入错误 session/branch/source/authority，payload 为空。",
+    "sources": [
+      "S07"
+    ],
+    "remediation": "Storage port 接收完整 EvidenceRecord，禁止 SQL 内业务常量。",
+    "status": "open"
+  },
+  {
+    "id": "F015",
+    "severity": "P0",
+    "area": "package",
+    "title": "发布包不是自包含实现",
+    "observation": "app dependencies 为空，src 跨目录导入 `../../../packages/*/src`；`dist/extension.js` 只是重导出 TS 源文件。独立 npm tarball 缺少这些 sibling 文件。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "使用 workspace package dependencies + build bundle；clean install 测试真实 tarball。",
+    "status": "open"
+  },
+  {
+    "id": "F016",
+    "severity": "P0",
+    "area": "package",
+    "title": "包声明 private/UNLICENSED 与安装文档冲突",
+    "observation": "package `private:true`、`license:UNLICENSED`，文档却给出 npm install/publish 路径。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "明确许可证与发布策略；Release Gate 检查 `npm pack` 和 `pi install`。",
+    "status": "open"
+  },
+  {
+    "id": "F017",
+    "severity": "P0",
+    "area": "ci",
+    "title": "当前远端 CI 未运行任何测试",
+    "observation": "compatibility workflow 在 `pnpm install --frozen-lockfile` 因 app 新增 peer specifiers 未更新 lockfile 而失败。",
+    "sources": [
+      "S12"
+    ],
+    "remediation": "第一波先修 lockfile，并让 build/typecheck/unit/acceptance 全部成为 required checks。",
+    "status": "open"
+  },
+  {
+    "id": "F018",
+    "severity": "P0",
+    "area": "test-oracle",
+    "title": "Temporal Oracle 含源轨迹不存在的值",
+    "observation": "Corpus 期望 `version=7-<case-id>`，冻结 user message 只有 `version 7`，raw 只有 stale `version=3`。两臂不可能逐字命中 latestValue。",
+    "sources": [
+      "S10",
+      "S11"
+    ],
+    "remediation": "Oracle validator 必须证明每个 exact expected value 有 source witness 或合法 deterministic derivation。",
+    "status": "open"
+  },
+  {
+    "id": "F019",
+    "severity": "P0",
+    "area": "test-scoring",
+    "title": "闭环用 summary+probe 并集评分",
+    "observation": "错误 probe 可被 summary 中正确禁令掩盖；报告已披露 branch 反例仍计成功。",
+    "sources": [
+      "S08",
+      "S09"
+    ],
+    "remediation": "动作遵循只评分 probe/action/environment；summary fidelity 单独评分。",
+    "status": "open"
+  },
+  {
+    "id": "F020",
+    "severity": "P0",
+    "area": "test-scoring",
+    "title": "Exact recovery 被替换成“不泄密”",
+    "observation": "`recovered = !mustOmitLeak`，没有执行 CAS read、range read、hash equality。",
+    "sources": [
+      "S08",
+      "S09"
+    ],
+    "remediation": "恢复门必须读取实际 blob，比较 byte length + SHA-256，并做 scope denial。",
+    "status": "open"
+  },
+  {
+    "id": "F021",
+    "severity": "P0",
+    "area": "test-scoring",
+    "title": "Tool pair 与 determinism 是硬编码",
+    "observation": "report 的 toolPairViolation 固定 0；deterministic hash 未二次运行，只因 renderer 理论确定而视为通过。",
+    "sources": [
+      "S08",
+      "S09"
+    ],
+    "remediation": "从实际 artifacts 计算 pairing；同快照运行两次并比较 outputHash。",
+    "status": "open"
+  },
+  {
+    "id": "F022",
+    "severity": "P0",
+    "area": "test-design",
+    "title": "100 对只是 5 个模板的参数化副本",
+    "observation": "每族 20 条仅替换 ID/语言/少量字符串，按 100 独立样本 bootstrap 构成伪重复。",
+    "sources": [
+      "S10"
+    ],
+    "remediation": "按 scenario cluster bootstrap；建立锁定 held-out real traces。",
+    "status": "open"
+  },
+  {
+    "id": "F023",
+    "severity": "P0",
+    "area": "test-design",
+    "title": "Live Gate 不代表真实长会话压力",
+    "observation": "tokensBefore 约 6.2k、manual compact、keepRecent 2k；未触发 200k 模型的 threshold/overflow、递归压缩或长程 recall。",
+    "sources": [
+      "S08",
+      "S11"
+    ],
+    "remediation": "分离 boundary replay、natural threshold、provider overflow 三条 Lane。",
+    "status": "open"
+  },
+  {
+    "id": "F024",
+    "severity": "P0",
+    "area": "test-design",
+    "title": "Continuation 没有环境与工具",
+    "observation": "`--no-tools`，结果只是模型回答 yes/no/version；没有文件、测试、禁止动作或副作用断言。",
+    "sources": [
+      "S08",
+      "S09"
+    ],
+    "remediation": "恢复同一 workspace snapshot，启用工具，用测试命令、diff、side-effect ledger 判成功。",
+    "status": "open"
+  },
+  {
+    "id": "F025",
+    "severity": "P0",
+    "area": "test-design",
+    "title": "Compactor 比较混入 Ingress 安全差异",
+    "observation": "Native 收到带 secret 的 raw dump，PCR checkpoint 完全不含 raw；泄密优势主要来自丢弃入口，而非 checkpoint 质量。",
+    "sources": [
+      "S08"
+    ],
+    "remediation": "增加 `Pi Native + same ingress scrub/reducer` 基线，安全 Gate 独立。",
+    "status": "open"
+  },
+  {
+    "id": "F026",
+    "severity": "P0",
+    "area": "economics",
+    "title": "realizedNet 只是 probe token 差",
+    "observation": "没有 cache price、compaction LLM cost、latency value、recall cost、quality loss；不是规格中的净价值。",
+    "sources": [
+      "S09"
+    ],
+    "remediation": "按 provider prices 和 successful-task denominator 计算 realized net，质量失败不得计收益。",
+    "status": "open"
+  },
+  {
+    "id": "F027",
+    "severity": "P1",
+    "area": "test-design",
+    "title": "cost/success 被启发式闭环污染",
+    "observation": "失败样本分母用 0.05，且闭环本身会被 summary 掩盖，成本优势可被放大。",
+    "sources": [
+      "S09"
+    ],
+    "remediation": "只对环境验证成功任务计算 cost/success，并报告失败成本。",
+    "status": "open"
+  },
+  {
+    "id": "F028",
+    "severity": "P1",
+    "area": "process",
+    "title": "W1 Gate 语料在失败后增加 filler 以过门",
+    "observation": "提交明确把 read/ls raw 扩大为大量 dead-code/vendor filler，realized net 从 0 变 1399，Gate 改为 proceed。",
+    "sources": [
+      "S13"
+    ],
+    "remediation": "冻结 benchmark version 与 holdout hash；Gate 失败后只能修算法或发布新 benchmark major。",
+    "status": "open"
+  },
+  {
+    "id": "F029",
+    "severity": "P1",
+    "area": "evidence",
+    "title": "Live 原始 report.json 被 gitignore",
+    "observation": "主文档/CSV 可读，但完整 probe/artifact/run manifest 未作为 immutable release artifact 固化。",
+    "sources": [
+      "S08"
+    ],
+    "remediation": "每次 Gate 产物写 content-addressed bundle，上传 CI artifact/release，保留 runner commit。",
+    "status": "open"
+  },
+  {
+    "id": "F030",
+    "severity": "P1",
+    "area": "provenance",
+    "title": "运行时 harness 在实验时未提交",
+    "observation": "报告说明实验时 HEAD 为 d70a123，harness 仍在工作树；当前提交不能严格证明就是运行的源码。",
+    "sources": [
+      "S08"
+    ],
+    "remediation": "Runner 必须 clean tree，记录 git diff hash=empty、container/model/config digests。",
+    "status": "open"
+  },
+  {
+    "id": "F031",
+    "severity": "P1",
+    "area": "tests",
+    "title": "所谓 packed-install test 生成了另一个假 extension",
+    "observation": "测试临时写一个三行 factory 再 import，并没有 npm pack 当前实现。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "运行 `npm pack` 当前包，在空目录 `pi install`，执行真实 context/tool/compaction。",
+    "status": "open"
+  },
+  {
+    "id": "F032",
+    "severity": "P1",
+    "area": "tests",
+    "title": "E2E 使用 fakeHost 只验证注册数量",
+    "observation": "没有 Pi AgentSession、真实 event shape、storage、recovery 或 provider request。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "建立 Pi SDK/RPC acceptance harness，所有关键 Hook 做 vertical assertions。",
+    "status": "open"
+  },
+  {
+    "id": "F033",
+    "severity": "P1",
+    "area": "offsets",
+    "title": "byteRange 实际是 UTF-16 code-unit range",
+    "observation": "JS `match.index`/slice 被命名为 byteRange；CJK/emoji 的真实 byte offset 不成立。",
+    "sources": [
+      "S03"
+    ],
+    "remediation": "同时保存 utf8ByteRange、utf16Range、codePointRange，并用原文 hash 校验。",
+    "status": "open"
+  },
+  {
+    "id": "F034",
+    "severity": "P1",
+    "area": "source-trust",
+    "title": "所有 toolResult 默认 trusted-tool",
+    "observation": "自定义/MCP/外部内容未经 policy 判断就可成为 trusted-tool。",
+    "sources": [
+      "S05"
+    ],
+    "remediation": "引入 ToolTrustPolicy；默认 custom/external 为 untrusted-tool。",
+    "status": "open"
+  },
+  {
+    "id": "F035",
+    "severity": "P1",
+    "area": "usage",
+    "title": "Adapter 为 assistant 补零 usage",
+    "observation": "缺失 usage 被替换成全零，可污染 Pi 的 token/cost/context usage 语义。",
+    "sources": [
+      "S05"
+    ],
+    "remediation": "保留 undefined；只在测试 codec 层提供明确 synthetic usage。",
+    "status": "open"
+  },
+  {
+    "id": "F036",
+    "severity": "P1",
+    "area": "cache",
+    "title": "CachePlan 没有上一请求基线",
+    "observation": "Materializer 以 previous=null 构建 cache plan，无法计算 first-different/reuse。",
+    "sources": [
+      "S04"
+    ],
+    "remediation": "RuntimeSession 保存上一 committed view receipt，按 section hash 比较。",
+    "status": "open"
+  },
+  {
+    "id": "F037",
+    "severity": "P1",
+    "area": "background",
+    "title": "后台 Worker 使用内存假 Store",
+    "observation": "candidate store 的 find 始终 undefined，prepare 返回 dummy；重启/branch/model fence 无产品意义。",
+    "sources": [
+      "S02"
+    ],
+    "remediation": "Semantic 前先完成 durable candidate table 与 lifecycle integration。",
+    "status": "open"
+  },
+  {
+    "id": "F038",
+    "severity": "P1",
+    "area": "tests",
+    "title": "Live Gate 不在默认 `pnpm test`",
+    "observation": "真实配对 runner 需专门环境变量；远端 CI 不执行。",
+    "sources": [
+      "S08"
+    ],
+    "remediation": "fast acceptance 进入 PR；live 100×3 进入 nightly/manual protected environment。",
+    "status": "open"
+  }
+]

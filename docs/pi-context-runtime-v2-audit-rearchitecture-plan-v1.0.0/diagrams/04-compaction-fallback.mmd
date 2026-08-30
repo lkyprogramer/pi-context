@@ -1,0 +1,12 @@
+stateDiagram-v2
+  [*] --> Prepare
+  Prepare --> Ready: verified + shrinking
+  Prepare --> NativeFallback: soft reject
+  Prepare --> HardStop: integrity/security failure
+  Ready --> HostCommit
+  HostCommit --> Committed: session_compact
+  HostCommit --> Stale: session_compact_failed
+  NativeFallback --> [*]
+  HardStop --> [*]
+  Committed --> [*]
+  Stale --> [*]

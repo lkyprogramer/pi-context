@@ -1,0 +1,470 @@
+{
+  "tasks": [
+    {
+      "id": "T00",
+      "wave": "W0",
+      "dependsOn": []
+    },
+    {
+      "id": "T01",
+      "wave": "W0",
+      "dependsOn": [
+        "T00"
+      ]
+    },
+    {
+      "id": "T02",
+      "wave": "W0",
+      "dependsOn": [
+        "T01"
+      ]
+    },
+    {
+      "id": "T03",
+      "wave": "W0",
+      "dependsOn": [
+        "T02"
+      ]
+    },
+    {
+      "id": "T04",
+      "wave": "W0",
+      "dependsOn": [
+        "T03"
+      ]
+    },
+    {
+      "id": "T05",
+      "wave": "W0",
+      "dependsOn": [
+        "T03"
+      ]
+    },
+    {
+      "id": "T06",
+      "wave": "W0",
+      "dependsOn": [
+        "T01",
+        "T02",
+        "T05"
+      ]
+    },
+    {
+      "id": "T07",
+      "wave": "W1",
+      "dependsOn": [
+        "T03",
+        "T04"
+      ]
+    },
+    {
+      "id": "T08",
+      "wave": "W1",
+      "dependsOn": [
+        "T05",
+        "T07"
+      ]
+    },
+    {
+      "id": "T09",
+      "wave": "W1",
+      "dependsOn": [
+        "T03",
+        "T04"
+      ]
+    },
+    {
+      "id": "T10",
+      "wave": "W1",
+      "dependsOn": [
+        "T09"
+      ]
+    },
+    {
+      "id": "T11",
+      "wave": "W1",
+      "dependsOn": [
+        "T09",
+        "T10"
+      ]
+    },
+    {
+      "id": "T12",
+      "wave": "W1",
+      "dependsOn": [
+        "T05",
+        "T08",
+        "T09",
+        "T11"
+      ]
+    },
+    {
+      "id": "T13",
+      "wave": "W1",
+      "dependsOn": [
+        "T05",
+        "T08",
+        "T10",
+        "T11"
+      ]
+    },
+    {
+      "id": "T14",
+      "wave": "W1",
+      "dependsOn": [
+        "T13"
+      ]
+    },
+    {
+      "id": "T15",
+      "wave": "W1",
+      "dependsOn": [
+        "T09",
+        "T10",
+        "T13",
+        "T14"
+      ]
+    },
+    {
+      "id": "T16",
+      "wave": "W2",
+      "dependsOn": [
+        "T03",
+        "T12"
+      ]
+    },
+    {
+      "id": "T17",
+      "wave": "W2",
+      "dependsOn": [
+        "T16"
+      ]
+    },
+    {
+      "id": "T18",
+      "wave": "W2",
+      "dependsOn": [
+        "T17",
+        "T09"
+      ]
+    },
+    {
+      "id": "T19",
+      "wave": "W2",
+      "dependsOn": [
+        "T09",
+        "T15"
+      ]
+    },
+    {
+      "id": "T20",
+      "wave": "W2",
+      "dependsOn": [
+        "T15"
+      ]
+    },
+    {
+      "id": "T21",
+      "wave": "W2",
+      "dependsOn": [
+        "T18",
+        "T19",
+        "T20"
+      ]
+    },
+    {
+      "id": "T22",
+      "wave": "W2",
+      "dependsOn": [
+        "T13",
+        "T15"
+      ]
+    },
+    {
+      "id": "T23",
+      "wave": "W2",
+      "dependsOn": [
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T20"
+      ]
+    },
+    {
+      "id": "T24",
+      "wave": "W3",
+      "dependsOn": [
+        "T04",
+        "T05"
+      ]
+    },
+    {
+      "id": "T25",
+      "wave": "W3",
+      "dependsOn": [
+        "T05",
+        "T24"
+      ]
+    },
+    {
+      "id": "T26",
+      "wave": "W3",
+      "dependsOn": [
+        "T18",
+        "T19",
+        "T21",
+        "T25"
+      ]
+    },
+    {
+      "id": "T27",
+      "wave": "W3",
+      "dependsOn": [
+        "T24",
+        "T25",
+        "T26"
+      ]
+    },
+    {
+      "id": "T28",
+      "wave": "W3",
+      "dependsOn": [
+        "T08",
+        "T24",
+        "T27"
+      ]
+    },
+    {
+      "id": "T29",
+      "wave": "W3",
+      "dependsOn": [
+        "T15",
+        "T18",
+        "T19"
+      ]
+    },
+    {
+      "id": "T30",
+      "wave": "W3",
+      "dependsOn": [
+        "T20",
+        "T29"
+      ]
+    },
+    {
+      "id": "T31",
+      "wave": "W3",
+      "dependsOn": [
+        "T05",
+        "T08",
+        "T30"
+      ]
+    },
+    {
+      "id": "T32",
+      "wave": "W3",
+      "dependsOn": [
+        "T08",
+        "T11",
+        "T31"
+      ]
+    },
+    {
+      "id": "T33",
+      "wave": "W3",
+      "dependsOn": [
+        "T27",
+        "T31",
+        "T32"
+      ]
+    },
+    {
+      "id": "T34",
+      "wave": "W4",
+      "dependsOn": [
+        "T03",
+        "T29"
+      ]
+    },
+    {
+      "id": "T35",
+      "wave": "W4",
+      "dependsOn": [
+        "T34"
+      ]
+    },
+    {
+      "id": "T36",
+      "wave": "W4",
+      "dependsOn": [
+        "T18",
+        "T22",
+        "T35"
+      ]
+    },
+    {
+      "id": "T37",
+      "wave": "W4",
+      "dependsOn": [
+        "T09",
+        "T32",
+        "T36"
+      ]
+    },
+    {
+      "id": "T38",
+      "wave": "W4",
+      "dependsOn": [
+        "T25",
+        "T26",
+        "T37"
+      ]
+    },
+    {
+      "id": "T39",
+      "wave": "W5",
+      "dependsOn": [
+        "T01"
+      ]
+    },
+    {
+      "id": "T40",
+      "wave": "W5",
+      "dependsOn": [
+        "T39"
+      ]
+    },
+    {
+      "id": "T41",
+      "wave": "W5",
+      "dependsOn": [
+        "T12",
+        "T13",
+        "T39"
+      ]
+    },
+    {
+      "id": "T42",
+      "wave": "W5",
+      "dependsOn": [
+        "T23",
+        "T39",
+        "T40",
+        "T41"
+      ]
+    },
+    {
+      "id": "T43",
+      "wave": "W5",
+      "dependsOn": [
+        "T31",
+        "T33",
+        "T39",
+        "T40",
+        "T41"
+      ]
+    },
+    {
+      "id": "T44",
+      "wave": "W5",
+      "dependsOn": [
+        "T40",
+        "T41"
+      ]
+    },
+    {
+      "id": "T45",
+      "wave": "W5",
+      "dependsOn": [
+        "T41",
+        "T42",
+        "T43"
+      ]
+    },
+    {
+      "id": "T46",
+      "wave": "W5",
+      "dependsOn": [
+        "T15",
+        "T30",
+        "T40"
+      ]
+    },
+    {
+      "id": "T47",
+      "wave": "W5",
+      "dependsOn": [
+        "T39",
+        "T45",
+        "T46"
+      ]
+    },
+    {
+      "id": "T48",
+      "wave": "W5",
+      "dependsOn": [
+        "T27",
+        "T32",
+        "T38",
+        "T43"
+      ]
+    },
+    {
+      "id": "T49",
+      "wave": "W5",
+      "dependsOn": [
+        "T42",
+        "T43",
+        "T44",
+        "T45",
+        "T46",
+        "T47",
+        "T48"
+      ]
+    },
+    {
+      "id": "T50",
+      "wave": "W5",
+      "dependsOn": [
+        "T49"
+      ]
+    },
+    {
+      "id": "T51",
+      "wave": "W6",
+      "dependsOn": [
+        "T23",
+        "T28",
+        "T31",
+        "T32",
+        "T49"
+      ]
+    },
+    {
+      "id": "T52",
+      "wave": "W6",
+      "dependsOn": [
+        "T06",
+        "T51"
+      ]
+    },
+    {
+      "id": "T53",
+      "wave": "W6",
+      "dependsOn": [
+        "T05",
+        "T52"
+      ]
+    },
+    {
+      "id": "T54",
+      "wave": "W6",
+      "dependsOn": [
+        "T49",
+        "T52",
+        "T53"
+      ]
+    }
+  ]
+}

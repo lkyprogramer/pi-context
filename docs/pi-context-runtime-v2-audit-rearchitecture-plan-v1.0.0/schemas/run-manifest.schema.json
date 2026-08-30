@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "runId",
+    "runnerCommit",
+    "treeClean",
+    "model",
+    "configHash",
+    "corpusHash",
+    "oracleHash",
+    "arms",
+    "artifacts"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "runnerCommit": {
+      "type": "string"
+    },
+    "treeClean": {
+      "const": true
+    },
+    "model": {
+      "type": "object"
+    },
+    "configHash": {
+      "type": "string"
+    },
+    "corpusHash": {
+      "type": "string"
+    },
+    "oracleHash": {
+      "type": "string"
+    },
+    "arms": {
+      "type": "array"
+    },
+    "artifacts": {
+      "type": "object"
+    }
+  }
+}

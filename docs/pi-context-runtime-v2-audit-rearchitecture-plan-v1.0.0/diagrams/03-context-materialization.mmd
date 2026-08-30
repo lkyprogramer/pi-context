@@ -1,0 +1,7 @@
+flowchart TD
+  A[Pi context messages] --> B[Stable message codec]
+  B --> C[Runtime snapshot]
+  C --> D[Budget actual model]
+  D --> E[Directives + continuity + recent tail + recall]
+  E --> F[Section reducer]
+  F --> G[View receipt + ordered Pi messages]

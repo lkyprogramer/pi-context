@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "caseId",
+    "clusterId",
+    "seed",
+    "baseline",
+    "candidate",
+    "environmentAssertions"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string"
+    },
+    "clusterId": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "baseline": {
+      "type": "object"
+    },
+    "candidate": {
+      "type": "object"
+    },
+    "environmentAssertions": {
+      "type": "array"
+    }
+  }
+}

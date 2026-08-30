@@ -1,0 +1,13 @@
+{
+  "evidenceId": "ev_7d4e8f2c",
+  "cursor": {
+    "workspaceId": "ws_a",
+    "sessionId": "s_a",
+    "leafId": "leaf_a"
+  },
+  "sourceClass": "trusted-tool",
+  "authority": "inform",
+  "contentHash": "sha256:abc",
+  "blobId": "blob_abc",
+  "observedAt": 1788000000000
+}

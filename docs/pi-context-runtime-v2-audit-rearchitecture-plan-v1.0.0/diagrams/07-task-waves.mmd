@@ -1,0 +1,9 @@
+flowchart LR
+  W0[W0 Evidence/Build] --> W1[W1 Runtime/Storage]
+  W1 --> W2[W2 Directives/Retrieval]
+  W2 --> W3[W3 Materialization/Compaction]
+  W3 --> G1{Deterministic Gate}
+  G1 -->|pass| W4[W4 Optional Semantic]
+  G1 -->|fail| STOP[Keep Pi Native / reducers only]
+  W4 --> W5[W5 Evaluation]
+  W5 --> W6[W6 Release]

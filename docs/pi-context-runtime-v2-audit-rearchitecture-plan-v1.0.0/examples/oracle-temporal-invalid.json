@@ -1,0 +1,18 @@
+{
+  "caseId": "temporal-invalid",
+  "clusterId": "temporal-update",
+  "facts": [
+    {
+      "key": "version",
+      "expected": "7-case-id",
+      "witnesses": [
+        {
+          "sourceId": "user-14",
+          "quote": "改为 version 7"
+        }
+      ]
+    }
+  ],
+  "actions": [],
+  "expectedValidationError": "ORACLE_VALUE_UNSUPPORTED_BY_WITNESS"
+}

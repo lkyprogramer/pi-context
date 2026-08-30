@@ -1,0 +1,13 @@
+flowchart TD
+  RAW[Raw trace + workspace snapshot] --> A0[Pi Native]
+  RAW --> A1[Pi Native + ingress]
+  RAW --> A2[A1 + proactive recall]
+  A1 --> W1[W1 Gate]
+  A2 --> W1
+  A1 --> SHAPED[W1-shaped trace]
+  SHAPED --> B0[Pi Native checkpoint]
+  SHAPED --> B1[PCR deterministic]
+  SHAPED --> B2[PCR materializer + recall]
+  B0 --> W2[W2 Gate]
+  B1 --> W2
+  B2 --> W2

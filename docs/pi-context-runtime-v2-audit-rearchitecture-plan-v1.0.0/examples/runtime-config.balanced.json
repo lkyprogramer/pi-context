@@ -1,0 +1,29 @@
+{
+  "dataRoot": "${PI_CONTEXT_HOME}/workspaces",
+  "ingress": {
+    "captureRaw": true,
+    "reducerFailure": "use-original-after-raw-durable",
+    "maxVisibleToolTokens": 2500,
+    "secretPolicy": "strict"
+  },
+  "materialization": {
+    "targetRatio": 0.72,
+    "activeTurn": "exact",
+    "cacheLayoutVersion": "2"
+  },
+  "compaction": {
+    "mode": "deterministic-first",
+    "nativeFallback": true,
+    "minShrinkRatio": 0.15
+  },
+  "retrieval": {
+    "exact": true,
+    "fts": true,
+    "proactive": false,
+    "autoBudgetTokens": 1500
+  },
+  "semantic": {
+    "enabled": false,
+    "background": false
+  }
+}

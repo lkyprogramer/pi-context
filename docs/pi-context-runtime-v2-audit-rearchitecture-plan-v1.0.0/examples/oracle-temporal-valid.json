@@ -1,0 +1,23 @@
+{
+  "caseId": "temporal-001",
+  "clusterId": "temporal-update",
+  "facts": [
+    {
+      "key": "version",
+      "expected": "7",
+      "witnesses": [
+        {
+          "sourceId": "user-14",
+          "quote": "改为 version 7"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "kind": "reply",
+      "assertion": "normalized-output-equals",
+      "expected": "7"
+    }
+  ]
+}

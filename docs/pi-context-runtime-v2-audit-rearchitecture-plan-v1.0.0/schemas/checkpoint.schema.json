@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "version",
+    "snapshotHash",
+    "directives",
+    "continuity",
+    "claims",
+    "pointers",
+    "heads"
+  ],
+  "properties": {
+    "version": {
+      "const": 2
+    },
+    "snapshotHash": {
+      "type": "string"
+    },
+    "directives": {
+      "type": "array"
+    },
+    "continuity": {
+      "type": "object"
+    },
+    "claims": {
+      "type": "array"
+    },
+    "pointers": {
+      "type": "array"
+    },
+    "heads": {
+      "type": "object"
+    }
+  }
+}

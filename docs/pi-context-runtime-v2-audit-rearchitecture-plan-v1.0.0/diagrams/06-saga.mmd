@@ -1,0 +1,11 @@
+stateDiagram-v2
+  [*] --> prepared
+  prepared --> runtime_durable
+  runtime_durable --> host_visible
+  host_visible --> acknowledged
+  acknowledged --> committed
+  prepared --> orphan
+  runtime_durable --> orphan
+  host_visible --> recovery
+  recovery --> committed
+  recovery --> failed

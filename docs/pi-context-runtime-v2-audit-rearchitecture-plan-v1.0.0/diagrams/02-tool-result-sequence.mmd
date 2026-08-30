@@ -1,0 +1,15 @@
+sequenceDiagram
+  participant Pi
+  participant Adapter
+  participant Runtime
+  participant CAS
+  participant DB
+  Pi->>Adapter: tool_result(event)
+  Adapter->>Runtime: ingestToolResult(normalized)
+  Runtime->>CAS: put(raw bytes)
+  CAS-->>Runtime: blobId/hash
+  Runtime->>DB: prepare saga + evidence
+  Runtime-->>Adapter: compact visible result
+  Adapter-->>Pi: ToolResultEventResult
+  Pi->>Adapter: message_end(host entry)
+  Adapter->>Runtime: acknowledge host commit

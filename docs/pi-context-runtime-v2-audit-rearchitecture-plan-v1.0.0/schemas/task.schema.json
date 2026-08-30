@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "wave",
+    "title",
+    "dependsOn",
+    "allowedFiles",
+    "produces",
+    "findingIds"
+  ],
+  "properties": {
+    "id": {
+      "pattern": "^T\\d{2}$"
+    },
+    "wave": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "allowedFiles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "produces": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "findingIds": {
+      "type": "array",
+      "items": {
+        "pattern": "^F\\d{3}$"
+      }
+    }
+  }
+}

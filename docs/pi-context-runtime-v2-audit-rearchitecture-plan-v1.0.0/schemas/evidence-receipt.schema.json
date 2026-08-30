@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "evidenceId",
+    "cursor",
+    "sourceClass",
+    "authority",
+    "contentHash",
+    "blobId",
+    "observedAt"
+  ],
+  "properties": {
+    "evidenceId": {
+      "type": "string"
+    },
+    "cursor": {
+      "type": "object"
+    },
+    "sourceClass": {
+      "type": "string"
+    },
+    "authority": {
+      "type": "string"
+    },
+    "contentHash": {
+      "type": "string"
+    },
+    "blobId": {
+      "type": "string"
+    },
+    "observedAt": {
+      "type": "integer"
+    }
+  }
+}

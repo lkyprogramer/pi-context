@@ -1,0 +1,14 @@
+flowchart LR
+  subgraph Current
+    PI1[Pi hooks] --> APP1[Hardcoded extension]
+    APP1 --> CP1[Directive-only checkpoint]
+    MODS[Many modules] -. mostly not wired .-> APP1
+  end
+  subgraph Target
+    PI2[Pi hooks] --> AD[Typed Pi adapter]
+    AD --> RS[RuntimeSession]
+    RS --> DB[SQLite/CAS]
+    RS --> CORE[Core algorithms]
+    RS --> MAT[Materializer]
+    RS --> CMP[Compaction]
+  end

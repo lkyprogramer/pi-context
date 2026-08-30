@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "dataRoot",
+    "ingress",
+    "materialization",
+    "compaction",
+    "retrieval",
+    "semantic"
+  ],
+  "properties": {
+    "dataRoot": {
+      "type": "string"
+    },
+    "ingress": {
+      "type": "object"
+    },
+    "materialization": {
+      "type": "object"
+    },
+    "compaction": {
+      "type": "object"
+    },
+    "retrieval": {
+      "type": "object"
+    },
+    "semantic": {
+      "type": "object"
+    }
+  }
+}
