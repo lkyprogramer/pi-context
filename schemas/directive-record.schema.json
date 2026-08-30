@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pi-context.dev/schemas/directive-record.schema.json",
+  "title": "DirectiveRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "directiveId",
+    "userTurnId",
+    "exactQuote",
+    "quoteHash",
+    "utf8ByteRange",
+    "utf16Range",
+    "codePointRange",
+    "kind",
+    "polarity",
+    "status"
+  ],
+  "properties": {
+    "directiveId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "userTurnId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "exactQuote": {
+      "type": "string",
+      "minLength": 1
+    },
+    "quoteHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utf8ByteRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "utf16Range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "codePointRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "kind": {
+      "enum": [
+        "goal",
+        "constraint",
+        "prohibition",
+        "correction",
+        "permission",
+        "format"
+      ]
+    },
+    "polarity": {
+      "enum": [
+        "must",
+        "must-not",
+        "may",
+        "is",
+        "is-not",
+        "unknown"
+      ]
+    },
+    "key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "value": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "superseded",
+        "resolved",
+        "retracted",
+        "contested"
+      ]
+    },
+    "supersededBy": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

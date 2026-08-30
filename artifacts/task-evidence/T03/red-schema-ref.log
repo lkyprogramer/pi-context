@@ -1,0 +1,81 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t03.test.ts (8 tests | 1 failed | 7 skipped) 17ms
+   ↓ T03 Canonical contracts and generated schemas > canonical_contracts_and_generated_schemas
+   ↓ T03 Canonical contracts and generated schemas > generates exact source, directive, and offset vocabularies
+   × T03 Canonical contracts and generated schemas > links shared schemas without duplicating nested resource identifiers 15ms
+     → expected { …(7) } to deeply equal { Object ($ref) }
+   ↓ T03 Canonical contracts and generated schemas > is idempotent for identical schema definitions
+   ↓ T03 Canonical contracts and generated schemas > atomically repairs a modified generated schema
+   ↓ T03 Canonical contracts and generated schemas > rejects output outside the repository scope
+   ↓ T03 Canonical contracts and generated schemas > fails without replacing a non-directory output target
+   ↓ T03 Canonical contracts and generated schemas > replays deterministically across independent repositories
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t03.test.ts > T03 Canonical contracts and generated schemas > links shared schemas without duplicating nested resource identifiers
+AssertionError: expected { …(7) } to deeply equal { Object ($ref) }
+
+- Expected
++ Received
+
+  {
+-   "$ref": "runtime-cursor.schema.json",
++   "$id": "https://pi-context.dev/schemas/runtime-cursor.schema.json",
++   "$schema": "https://json-schema.org/draft/2020-12/schema",
++   "additionalProperties": false,
++   "properties": {
++     "branchId": {
++       "minLength": 1,
++       "type": "string",
++     },
++     "lineageHash": {
++       "pattern": "^[0-9a-f]{64}$",
++       "type": "string",
++     },
++     "sequence": {
++       "minimum": 0,
++       "type": "integer",
++     },
++     "sessionId": {
++       "minLength": 1,
++       "type": "string",
++     },
++     "sourceEntryId": {
++       "minLength": 1,
++       "type": "string",
++     },
++     "workspaceId": {
++       "minLength": 1,
++       "type": "string",
++     },
++   },
++   "required": [
++     "workspaceId",
++     "sessionId",
++     "branchId",
++     "sequence",
++     "lineageHash",
++   ],
++   "title": "RuntimeCursor",
++   "type": "object",
+  }
+
+ ❯ tests/tasks/t03.test.ts:80:40
+     78|     const checkpoint = JSON.parse(await readFile(join(repositoryRoot, …
+     79| 
+     80|     expect(userTurn.properties.cursor).toEqual({ $ref: "runtime-cursor…
+       |                                        ^
+     81|     expect(evidence.properties.cursor).toEqual({ $ref: "runtime-cursor…
+     82|     expect(evidence.properties.sourceClass).toEqual({ $ref: "source-cl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  10:34:44
+   Duration  361ms (transform 31ms, setup 0ms, collect 34ms, tests 17ms, environment 0ms, prepare 82ms)
+

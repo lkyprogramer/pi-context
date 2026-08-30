@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pi-context.dev/schemas/runtime-cursor.schema.json",
+  "title": "RuntimeCursor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "workspaceId",
+    "sessionId",
+    "branchId",
+    "sequence",
+    "lineageHash"
+  ],
+  "properties": {
+    "workspaceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branchId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lineageHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sourceEntryId": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

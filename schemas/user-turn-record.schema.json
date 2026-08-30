@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pi-context.dev/schemas/user-turn-record.schema.json",
+  "title": "UserTurnRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "userTurnId",
+    "cursor",
+    "rawTextHash",
+    "rawBlobId",
+    "utf8Bytes",
+    "sourceClass",
+    "capturedAt"
+  ],
+  "properties": {
+    "userTurnId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cursor": {
+      "$ref": "runtime-cursor.schema.json"
+    },
+    "rawTextHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rawBlobId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "utf8Bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hostMessageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceClass": {
+      "enum": [
+        "authenticated-user",
+        "untrusted-user"
+      ]
+    },
+    "capturedAt": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

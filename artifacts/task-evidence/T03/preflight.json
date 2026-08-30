@@ -1,0 +1,11 @@
+{
+  "taskId": "T03",
+  "parentCommit": "435276cd82b56063a6cd6f8d8d265d5c2d2d8693",
+  "toolchain": {
+    "node": "v22.19.0",
+    "pnpm": "10.15.0",
+    "pi": "0.84.4"
+  },
+  "knownControlInput": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/** is user-provided and untracked",
+  "scopeDecision": "The task's explicit tests/tasks/t03.test.ts and artifacts/task-evidence/T03/** paths are treated as specific task allowances."
+}

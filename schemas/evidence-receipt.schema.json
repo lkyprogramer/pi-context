@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pi-context.dev/schemas/evidence-receipt.schema.json",
+  "title": "EvidenceReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidenceId",
+    "cursor",
+    "sourceClass",
+    "authority",
+    "contentHash",
+    "blobId",
+    "observedAt"
+  ],
+  "properties": {
+    "evidenceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cursor": {
+      "$ref": "runtime-cursor.schema.json"
+    },
+    "sourceClass": {
+      "$ref": "source-class.schema.json"
+    },
+    "authority": {
+      "enum": [
+        "none",
+        "inform",
+        "propose",
+        "act"
+      ]
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "blobId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observedAt": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

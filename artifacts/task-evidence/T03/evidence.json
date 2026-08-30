@@ -1,0 +1,43 @@
+{
+  "taskId": "T03",
+  "status": "done",
+  "parentCommit": "435276cd82b56063a6cd6f8d8d265d5c2d2d8693",
+  "redLog": "artifacts/task-evidence/T03/red.log",
+  "greenLog": "artifacts/task-evidence/T03/green.log",
+  "fullGateLog": "artifacts/task-evidence/T03/full-gate.log",
+  "acceptance": {
+    "sourceClassVocabularyIsCanonical": true,
+    "directiveKindPolarityStatusAndThreeOffsetSpacesArePreserved": true,
+    "sharedSchemasUseRelativeReferences": true,
+    "generationIsDeterministicIdempotentAndAtomic": true,
+    "manualSchemaDriftIsRepaired": true,
+    "contractsCompileFromPublicIndex": true,
+    "frozenInstallAndRepositoryGatesPass": true,
+    "everyChangedFileAndLogHasDigest": true
+  },
+  "files": {
+    "artifacts/task-evidence/T03/changed-files.json": "c9cba2ddf60503cf354294209018cf6ff496c773cdd053028be84ff272518f2d",
+    "artifacts/task-evidence/T03/full-gate.log": "d3d9ac39439058e9cf0a8b1235d4f364c801a637eabfaf4d3efabd0a4cdca3a2",
+    "artifacts/task-evidence/T03/generate-first.json": "44d78514636ead42e88adbe31a35f544fa03ac723a52a67255dc1cebbd2faae6",
+    "artifacts/task-evidence/T03/generate-second.json": "44d78514636ead42e88adbe31a35f544fa03ac723a52a67255dc1cebbd2faae6",
+    "artifacts/task-evidence/T03/green.log": "c5d3f98718945b171829859fe995d8c71f067dd7c0df9d4d2818f1a205a18d35",
+    "artifacts/task-evidence/T03/preflight-git.txt": "177e06ff3acd2b24894d5be7a1e1eb7390585aed9a826a6fe1d6d22c09f58405",
+    "artifacts/task-evidence/T03/preflight-toolchain.txt": "ab319519f9605338628f988dab4553b3a3223af62b0404d7cac549c90c3684c0",
+    "artifacts/task-evidence/T03/preflight.json": "9cd1d144bd2e195af3296789cb9848d6567d55a818ef6345b42759614670c155",
+    "artifacts/task-evidence/T03/red-schema-ref.log": "ba9ba8b78eb714a992afd49868eae87796868fdd660587600dd9518d8e0421f5",
+    "artifacts/task-evidence/T03/red.log": "b4f0fd07584e77646a67dab2d261aa7bc0a3653ebab423ebbb78945cfc074c7b",
+    "packages/contracts/package.json": "1bcaed4eaa7123a2031c72328a69a4cee8340f78b4fd61adc6b1e8c16f67b071",
+    "packages/contracts/schema-definitions.mjs": "9bb445acf652cade64f61c75e8c3cc8d8ca69f65b6072893a78cedf3dd096584",
+    "packages/contracts/src/index.ts": "8104893569a29d0b2a0818181af45458eea5830d7dc3a7d5822823365d57a45f",
+    "packages/contracts/src/v2.ts": "15a6f4d2e554ea52bea98afb5a36eab57c92db4a8af996cd9c920a6cba7631cf",
+    "schemas/checkpoint-v2.schema.json": "0984caaea352c2dff1e5bef6bcd41d21cfc6ab8b17536f9081f3c6fa5c8ccda6",
+    "schemas/directive-record.schema.json": "7369319638f5bb435781948bfa9703ec3523db9eb3de664d6ed193de488e909e",
+    "schemas/evidence-receipt.schema.json": "d8ba6b3cfe938493d4a558d32edd498ba6f9c2f61f51416065706d558e3530be",
+    "schemas/runtime-config.schema.json": "93c311b01c383d93bc5b252ef7302ef1eb8f2328eb0cb3f24b656b95b745efeb",
+    "schemas/runtime-cursor.schema.json": "a43c4aa6b8b68039f6a88d62266207313b3c325c7dfe3b28aa2766106382aab3",
+    "schemas/source-class.schema.json": "a2a84dc6ac70f0d0f8a3d0c6fdc9caea76c30057008671a64c5ef90865676a9a",
+    "schemas/user-turn-record.schema.json": "0449272aa17e167a8fd10a6ee2d70a0befcacd9c0fe5d0d681256d9e4fe530f6",
+    "scripts/generate-schemas.mjs": "166c6444380c07e0957f777ad72c542c118ab12ff943b876dd90c5ca468899c3",
+    "tests/tasks/t03.test.ts": "a0b6520665a1606a4698e367628ed65caa1ad266fb9996aeaefd97c9a9bd9fcb"
+  }
+}

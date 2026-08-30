@@ -1,0 +1,22 @@
+{
+  "taskId": "T03",
+  "production": [
+    "packages/contracts/package.json",
+    "packages/contracts/schema-definitions.mjs",
+    "packages/contracts/src/index.ts",
+    "packages/contracts/src/v2.ts",
+    "scripts/generate-schemas.mjs",
+    "schemas/checkpoint-v2.schema.json",
+    "schemas/directive-record.schema.json",
+    "schemas/evidence-receipt.schema.json",
+    "schemas/runtime-config.schema.json",
+    "schemas/runtime-cursor.schema.json",
+    "schemas/source-class.schema.json",
+    "schemas/user-turn-record.schema.json"
+  ],
+  "tests": [
+    "tests/tasks/t03.test.ts"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T03",
+  "unrelatedTrackedChanges": []
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pi-context.dev/schemas/source-class.schema.json",
+  "title": "SourceClass",
+  "type": "string",
+  "enum": [
+    "system",
+    "authenticated-user",
+    "untrusted-user",
+    "trusted-tool",
+    "untrusted-tool",
+    "external-content",
+    "agent-derived"
+  ]
+}

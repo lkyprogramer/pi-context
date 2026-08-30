@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pi-context.dev/schemas/checkpoint-v2.schema.json",
+  "title": "CheckpointV2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "snapshotHash",
+    "directives",
+    "continuity",
+    "claims",
+    "pointers",
+    "heads"
+  ],
+  "properties": {
+    "version": {
+      "const": 2
+    },
+    "snapshotHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "directives": {
+      "type": "array",
+      "items": {
+        "$ref": "directive-record.schema.json"
+      }
+    },
+    "continuity": {
+      "type": "object"
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "pointers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "heads": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}
