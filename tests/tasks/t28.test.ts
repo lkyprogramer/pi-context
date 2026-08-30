@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { SessionManager } from "@earendil-works/pi-coding-agent";
+import { afterEach, describe, expect, it } from "vitest";
+
+import { createPiContextExtension } from "../../apps/pi-context-runtime/src/extension.js";
+import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
 
 import type { HostMessage, MaterializedView } from "@pcr/contracts";
 import {
@@ -148,6 +152,38 @@ async function runT28Fixture() {
   return { ok: true as const, task: "T28" as const, messages };
 }
 
+afterEach(resetOwnerForTest);
+
+function productHost() {
+  let handler: ((event: { messages: unknown[] }, ctx: unknown) => Promise<{ messages: unknown[] }>) | undefined;
+  const tools = new Set<string>();
+  const ext = createPiContextExtension({
+    on(hook, next) {
+      if (hook === "context") handler = next as typeof handler;
+    },
+    registerTool(tool) { tools.add(tool.name); },
+    registerCommand() {},
+    hasTool(name) { return tools.has(name); },
+  });
+  if (!handler) throw new Error("product context hook was not registered");
+  return { ext, handler };
+}
+
+function productCtx(manager: SessionManager, extras: Record<string, unknown> = {}) {
+  return {
+    abort() {},
+    cwd: manager.getCwd(),
+    sessionManager: manager,
+    model: {
+      provider: "openclaw",
+      id: "Qwen3.8-27B-WORK",
+      contextWindow: 200192,
+      maxTokens: 16384,
+    },
+    ...extras,
+  };
+}
+
 describe("T28 Pi context hook vertical integration", () => {
   it("pi_context_hook_vertical_integration", async () => {
     await expect(runT28Fixture()).resolves.toMatchObject({ ok: true, task: "T28" });
@@ -205,5 +241,29 @@ describe("T28 Pi context hook vertical integration", () => {
       { messages: [{ role: "user", content: "now", timestamp: 1 }] },
       hookCtx(cursor(), { signal: controller.signal }),
     )).rejects.toThrow();
+  });
+
+  it("product extension materializes without keep and does not swallow hook errors", async () => {
+    const { ext, handler } = productHost();
+    const manager = SessionManager.inMemory("/tmp/pcr-t28-product");
+    manager.appendMessage({ role: "user", content: "do not deploy production" } as never);
+    const result = await handler({
+      messages: [
+        { role: "user", content: "do not deploy production", timestamp: 1 },
+        { role: "assistant", content: [{ type: "text", text: "ACK" }], timestamp: 2 },
+        { role: "user", content: "now", timestamp: 3 },
+      ],
+    }, productCtx(manager));
+    const messages = result.messages as Array<{ role: string; content: unknown }>;
+    expect(messages.at(-1)).toMatchObject({ role: "user", content: "now" });
+    expect(messages.some((item) => item.role === "user" && item.content === "do not deploy production")).toBe(true);
+    expect(messages.some((item) => item.content === "keep" || (
+      Array.isArray(item.content) && item.content.some((block) => block && typeof block === "object" && "text" in block && block.text === "keep")
+    ))).toBe(false);
+    await expect(handler({ messages: "bad" as never }, productCtx(manager))).rejects.toThrow(/PCR_CONTEXT_HOOK_INPUT_INVALID/);
+    const original = [{ role: "user", content: "passthrough" }];
+    const skipped = await handler({ messages: original }, { abort() {} });
+    expect(skipped.messages).toEqual(original);
+    await ext.release?.();
   });
 });

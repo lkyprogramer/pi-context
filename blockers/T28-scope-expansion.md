@@ -25,6 +25,7 @@ The public `registerContextHook(pi, registry)` signature is the T28 contract. Th
 - `registerContextHook(pi, registry: RuntimeSessionRegistry)` is the shipped path.
 - Context messages are wrapped with T24 `createMessageCodec` and materialized through `session.materialize`.
 - The hook returns one zone-ordered Pi list reconstructed from envelopes (no `stitchContextMessages`, no zero-filled usage).
+- The unique product factory composes T27 `createMaterializer` per session. Snapshot directives come from that session, not a kernel `"keep"` constant.
 - `stitchContextMessages` remains exported for existing unit coverage of the old helper; the hook does not call it.
 
 ## Alternatives rejected

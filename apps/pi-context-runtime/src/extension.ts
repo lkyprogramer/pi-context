@@ -12,8 +12,12 @@ import {
 import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
 import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
 import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
-import { ContextMaterializer } from "../../../packages/kernel/src/materialization/materializer.js";
+import type { RuntimeCursor } from "../../../packages/contracts/src/index.js";
+import { createTokenPricer } from "../../../packages/core/src/budget/pricer.js";
 import { createRuntimeCursor } from "../../../packages/core/src/identity/stable-identity.js";
+import { createCacheReceipt, type CacheReceiptRecord } from "../../../packages/core/src/materialization/cache.js";
+import { createMaterializer } from "../../../packages/core/src/materialization/materializer.js";
+import { createSectionPlanner } from "../../../packages/core/src/materialization/sections.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { registerOperationsCommands } from "./commands/operations.js";
 import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
@@ -115,27 +119,65 @@ function directivesFromPreparation(preparation: {
   return found;
 }
 
+function sessionCursor(ctx: {
+  workspaceId: string;
+  sessionId: string;
+  leafId: string | null;
+  lineageHash: string;
+  modelKey: string;
+}): RuntimeCursor {
+  return {
+    workspaceId: ctx.workspaceId,
+    sessionId: ctx.sessionId,
+    leafId: ctx.leafId,
+    lineageHash: ctx.lineageHash,
+    modelKey: ctx.modelKey,
+  };
+}
+
 function createExtensionContextRegistry(): RuntimeSessionRegistry {
-  const materializer = new ContextMaterializer({ directives: "keep" });
   return {
     async open(ctx) {
+      const cursor = sessionCursor(ctx);
+      const route = {
+        modelKey: cursor.modelKey,
+        contextWindow: 200192,
+        maxOutputTokens: 16384,
+        providerReservedTokens: 0,
+      };
+      const pricer = createTokenPricer({ cursor, routes: { [cursor.modelKey]: route } });
+      const rows: CacheReceiptRecord[] = [];
+      const materializer = createMaterializer({
+        cursor,
+        pricer,
+        planner: createSectionPlanner({ cursor, pricer }),
+        cache: createCacheReceipt({
+          cursor,
+          store: {
+            async put(receipt) { rows.push(receipt); },
+            async head() {
+              return [...rows].reverse().find((row) => (
+                row.cursor.workspaceId === cursor.workspaceId
+                && row.cursor.sessionId === cursor.sessionId
+                && row.cursor.leafId === cursor.leafId
+                && row.cursor.lineageHash === cursor.lineageHash
+                && row.cursor.modelKey === cursor.modelKey
+              )) ?? null;
+            },
+          },
+        }),
+      });
       return {
         async materialize(request) {
           return materializer.materialize({
-            cursor: {
-              workspaceId: ctx.workspaceId,
-              sessionId: ctx.sessionId,
-              leafId: ctx.leafId,
-              lineageHash: ctx.lineageHash,
-              modelKey: ctx.modelKey,
-              thinkingLevel: "off",
-            },
+            cursor: request.cursor,
             canonicalMessages: request.canonicalMessages,
             currentContextWindow: request.currentContextWindow,
             maxOutputTokens: request.maxOutputTokens,
             reason: request.reason,
             now: request.now,
-          });
+            signal: request.signal,
+          }, { cursor, directives: [], continuity: [] });
         },
       };
     },
@@ -151,23 +193,29 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
     on(hook, handler) {
       pi.on(hook, async (event, ctx) => {
         if (hook !== "context") return handler(event, ctx);
+        let derived;
         try {
-          const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
-          return await handler(event, {
-            abort: () => {
-              if (ctx && typeof ctx === "object" && "abort" in ctx && typeof ctx.abort === "function") ctx.abort();
-            },
-            signal: ctx && typeof ctx === "object" && "signal" in ctx ? ctx.signal : undefined,
-            workspaceId: derived.workspaceId,
-            sessionId: derived.sessionId,
-            leafId: derived.leafId,
-            lineageHash: derived.lineageHash,
-            modelKey: derived.modelKey,
-            now: 0,
-          });
+          derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
         } catch {
           return { messages: event.messages };
         }
+        const host = ctx && typeof ctx === "object"
+          ? ctx as PiRuntimeContext & { abort?: () => void; now?: number; model?: { contextWindow?: number; maxTokens?: number } }
+          : undefined;
+        return handler(event, {
+          abort: () => {
+            if (typeof host?.abort === "function") host.abort();
+          },
+          signal: host?.signal,
+          workspaceId: derived.workspaceId,
+          sessionId: derived.sessionId,
+          leafId: derived.leafId,
+          lineageHash: derived.lineageHash,
+          modelKey: derived.modelKey,
+          now: typeof host?.now === "number" && Number.isFinite(host.now) ? host.now : 0,
+          currentContextWindow: host?.model?.contextWindow,
+          maxOutputTokens: host?.model?.maxTokens,
+        });
       });
     },
   }, hookRegistry);

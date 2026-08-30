@@ -9,29 +9,32 @@
   "acceptance": {
     "publicInterfacesCompile": true,
     "registryMaterialize": true,
+    "productPathUsesT27": true,
+    "noKeepDirective": true,
     "noStitchOnLiveHook": true,
     "noZeroFilledUsage": true,
+    "deriveCatchDoesNotSwallowHookErrors": true,
     "envelopeReplay": true,
     "noDefaultFakeDependencies": true,
     "repositoryGateFiles": 118,
-    "repositoryGateTests": 587,
-    "acceptanceGateTests": 28
+    "repositoryGateTests": 589,
+    "acceptanceGateTests": 29
   },
   "files": {
     "artifacts/task-evidence/T28/changed-files.json": "40ddd2340cd7bb9a3a9117446fce7733358a6eac49c12d4bf811b93dc17a21d7",
-    "artifacts/task-evidence/T28/full-gate.log": "b97182bb9a7a50fde860a267317b8b668641686e1d73e774502121df1acd1405",
-    "artifacts/task-evidence/T28/green.log": "0e9f245dd38244dc0f1afdeb1077a5c517178d4ad08c5f627e23c73de8c9ad5f",
+    "artifacts/task-evidence/T28/full-gate.log": "3af5d98812c2156149fd961f25e1f757bc106e9d1d2696d273eb216dd54caa42",
+    "artifacts/task-evidence/T28/green.log": "aa8adf27979029a5f64cd86708ac8f92c107bb4eb9b3334e0a9525e20fcfe72e",
     "artifacts/task-evidence/T28/preflight-git.txt": "d930231e98b91190ee4177117c63ffd5e2a23795d07f77b13e1ba34e052de73b",
     "artifacts/task-evidence/T28/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
     "artifacts/task-evidence/T28/red.log": "9b875b70b3f1cb90db55bc93b9de9ed32761b9bc66bb69d468f7ac70f9147106",
-    "apps/pi-context-runtime/src/extension.ts": "c7fe4c6193a120e6075e36baf67185ddc698b22450f7eac0d1c439821f044ac0",
-    "blockers/T28-scope-expansion.md": "c289c7c21f0a80ee60e153bf3b8d1d6b2da181acd3bfd7cf1e0fbe329f47a841",
+    "apps/pi-context-runtime/src/extension.ts": "dc1471bc5044c8cffef01381a03fe2e2583338e8bf9f2db0c0d51211ed40c6ad",
+    "blockers/T28-scope-expansion.md": "26dfcdf087ca871eb8ed7a9f8dc161a7cecaa7663e00d86c7ae909c1df3bb60e",
     "packages/pi-adapter/package.json": "058feb9e59293eabd387e4ace41430b20facb07ff7e3c585f5f8b9538e08f821",
     "packages/pi-adapter/src/context-hook.ts": "0aeb6b7ed167ed42e32b9cd2eda83abbb1aa71d22a4d84e4c24b4956e3606825",
     "packages/pi-adapter/src/index.ts": "0d911cf2ded23045b4044038a68ecb0d74f948e38e359312a086820fa92f8db5",
-    "tests/acceptance/context-hook.test.ts": "d245abeced2e3de586c7184dd6646ff76d2aa55d4e4ec0b8583ee4cb83703f9d",
+    "tests/acceptance/context-hook.test.ts": "f600e377dc3fe35269dadc7d3d5d9af76555fe9779e2aa2c916c10ea4f5e6e98",
     "tests/contract/pi-context-hook.test.ts": "2256a5557d5277669d454fcc9f53b7b601c0ec7ded065111b3b82f0a46cbfae0",
     "tests/support/pi.ts": "af4d2b04931c9c14571001812be106dd1b5af38dd9a46d6c4a8f8e1d6f8afd7a",
-    "tests/tasks/t28.test.ts": "80532afcd063fbda130def7a8917cc50b9c2132f46478ab9b61445b7931e2803"
+    "tests/tasks/t28.test.ts": "4f8d45acd424cd2ad21d3feffbf3269d75cfaff12ec8481ce19ee25abf48f8b7"
   }
 }

@@ -2,10 +2,12 @@
 
  RUN  v3.2.4 /Users/luo/Documents/github/pi-context
 
- ✓ |0| tests/tasks/t28.test.ts (7 tests) 11ms
+(node:80281) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/tasks/t28.test.ts (8 tests) 14ms
 
  Test Files  1 passed (1)
-      Tests  7 passed (7)
-   Start at  02:59:16
-   Duration  1.54s (transform 246ms, setup 0ms, collect 1.21s, tests 11ms, environment 0ms, prepare 68ms)
+      Tests  8 passed (8)
+   Start at  03:16:11
+   Duration  1.02s (transform 242ms, setup 0ms, collect 803ms, tests 14ms, environment 0ms, prepare 55ms)
 
