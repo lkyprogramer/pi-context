@@ -1,0 +1,126 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t19.test.ts (7 tests | 7 failed) 26ms
+   × T19 Continuity and task-front state machine > continuity_and_task_front_state_machine 17ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T19 Continuity and task-front state machine > fails construction when production dependencies are absent 4ms
+     → expected error to match asymmetric matcher
+   × T19 Continuity and task-front state machine > rejects malformed events and illegal transitions 0ms
+     → (0 , createContinuityService) is not a function
+   × T19 Continuity and task-front state machine > replays the same open-front without duplicating the active set 1ms
+     → (0 , createContinuityService) is not a function
+   × T19 Continuity and task-front state machine > rejects a cursor from another workspace/session/branch 0ms
+     → (0 , createContinuityService) is not a function
+   × T19 Continuity and task-front state machine > does not reactivate a completed front without authenticated evidence 1ms
+     → (0 , createContinuityService) is not a function
+   × T19 Continuity and task-front state machine > stops at the abort boundary before reducing 1ms
+     → (0 , createContinuityService) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t19.test.ts > T19 Continuity and task-front state machine > continuity_and_task_front_state_machine
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t19.test.ts:83:33
+     81| describe("T19 Continuity and task-front state machine", () => {
+     82|   it("continuity_and_task_front_state_machine", async () => {
+     83|     await expect(runT19Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     84|   });
+     85| 
+
+Caused by: TypeError: (0 , createContinuityService) is not a function
+ ❯ runT19Fixture tests/tasks/t19.test.ts:47:19
+ ❯ tests/tasks/t19.test.ts:83:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t19.test.ts > T19 Continuity and task-front state machine > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_CONTINUITY_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createContinuityService) is not a function",
+  }
+
+ ❯ tests/tasks/t19.test.ts:87:56
+     85| 
+     86|   it("fails construction when production dependencies are absent", () …
+     87|     expect(() => createContinuityService({} as never)).toThrowError(
+       |                                                        ^
+     88|       expect.objectContaining({ code: "PCR_CONTINUITY_DEPENDENCY_MISSI…
+     89|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t19.test.ts > T19 Continuity and task-front state machine > rejects malformed events and illegal transitions
+TypeError: (0 , createContinuityService) is not a function
+ ❯ tests/tasks/t19.test.ts:94:21
+     92|   it("rejects malformed events and illegal transitions", async () => {
+     93|     const bound = cursor();
+     94|     const service = createContinuityService({ cursor: bound, store: me…
+       |                     ^
+     95|     await expect(service.apply({} as never)).rejects.toThrow(/PCR_CONT…
+     96|     await expect(service.apply({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t19.test.ts > T19 Continuity and task-front state machine > replays the same open-front without duplicating the active set
+TypeError: (0 , createContinuityService) is not a function
+ ❯ tests/tasks/t19.test.ts:106:21
+    104|   it("replays the same open-front without duplicating the active set",…
+    105|     const bound = cursor();
+    106|     const service = createContinuityService({ cursor: bound, store: me…
+       |                     ^
+    107|     const first = await service.apply({ type: "open-front", cursor: bo…
+    108|     const second = await service.apply({ type: "open-front", cursor: b…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t19.test.ts > T19 Continuity and task-front state machine > rejects a cursor from another workspace/session/branch
+TypeError: (0 , createContinuityService) is not a function
+ ❯ tests/tasks/t19.test.ts:115:21
+    113|   it("rejects a cursor from another workspace/session/branch", async (…
+    114|     const bound = cursor();
+    115|     const service = createContinuityService({ cursor: bound, store: me…
+       |                     ^
+    116|     const other = { ...bound, sessionId: "other-session" };
+    117|     await expect(service.apply({ type: "open-front", cursor: other, ti…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t19.test.ts > T19 Continuity and task-front state machine > does not reactivate a completed front without authenticated evidence
+TypeError: (0 , createContinuityService) is not a function
+ ❯ tests/tasks/t19.test.ts:125:21
+    123|   it("does not reactivate a completed front without authenticated evid…
+    124|     const bound = cursor();
+    125|     const service = createContinuityService({ cursor: bound, store: me…
+       |                     ^
+    126|     const opened = await service.apply({ type: "open-front", cursor: b…
+    127|     const frontId = opened.taskFronts.active[0]!.id;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t19.test.ts > T19 Continuity and task-front state machine > stops at the abort boundary before reducing
+TypeError: (0 , createContinuityService) is not a function
+ ❯ tests/tasks/t19.test.ts:146:21
+    144|   it("stops at the abort boundary before reducing", async () => {
+    145|     const bound = cursor();
+    146|     const service = createContinuityService({ cursor: bound, store: me…
+       |                     ^
+    147|     const controller = new AbortController();
+    148|     controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  00:32:27
+   Duration  986ms (transform 255ms, setup 0ms, collect 377ms, tests 26ms, environment 0ms, prepare 110ms)
+

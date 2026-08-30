@@ -1,0 +1,19 @@
+{
+  "taskId": "T19",
+  "production": [
+    "blockers/T19-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/continuity/index.ts",
+    "packages/core/src/continuity/machine.ts",
+    "packages/core/src/continuity/reduce.ts",
+    "packages/core/src/continuity/types.ts",
+    "packages/core/src/index.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/continuity-service.ts",
+    "packages/runtime/src/index.ts"
+  ],
+  "tests": [
+    "packages/core/test/continuity/reduce.test.ts",
+    "tests/tasks/t19.test.ts"
+  ]
+}

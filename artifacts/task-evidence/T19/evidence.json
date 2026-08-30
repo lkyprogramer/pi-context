@@ -1,0 +1,40 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T19",
+  "status": "review-candidate",
+  "parentCommit": "a58f19555a95defd105b40066546abe26971ef11",
+  "redLog": "artifacts/task-evidence/T19/red.log",
+  "greenLog": "artifacts/task-evidence/T19/green.log",
+  "fullGateLog": "artifacts/task-evidence/T19/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "taskFrontsPartition": true,
+    "failClosedIllegalTransition": true,
+    "idempotentOpenFront": true,
+    "untrustedCannotReactivateCompleted": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 104,
+    "repositoryGateTests": 526,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T19/changed-files.json": "a631547f15fd71048f7e3f46a13f7e2fb4a42db400d5eba22012bbfc745103d0",
+    "artifacts/task-evidence/T19/full-gate.log": "f6af4a6e9a39b2fba0acb5adbe4610f3ba3b08e3f61eee9ac909675afb665891",
+    "artifacts/task-evidence/T19/green.log": "8a77c983421b4854cda62ee895c36d278e11d668e0087288786531154c362d1d",
+    "artifacts/task-evidence/T19/preflight-git.txt": "9c0775dbeef89456dec92e24ea1fe71b6c9efbfbf3cb5301e9cb1e41fb8a7844",
+    "artifacts/task-evidence/T19/preflight-toolchain.txt": "230379c89cb3f942c21fb2fa39aa0d0f1cfbbe7ab707012d518d17b4a41d6541",
+    "artifacts/task-evidence/T19/red.log": "24cd3aa57379f1878dd5a1ee787f62e44cf8cee5d901a6cf12866cd6a3758728",
+    "blockers/T19-scope-expansion.md": "92c8f150ba2a116e290b207e7b67f9c8de2242aeecc39dd02fb5951c168a511a",
+    "packages/core/package.json": "487f9985936e7b51edc695504be6dd7ba40602437c7077185bac27024c3818bb",
+    "packages/core/src/continuity/index.ts": "bc147c1f411ee075bb389810bb9f01d49b07be944b55125ac5dffbfcf0d60996",
+    "packages/core/src/continuity/machine.ts": "0e9ef37aa03889ec17d0660b23fa24534b89439485b9d7443a5040c2d3ab037a",
+    "packages/core/src/continuity/reduce.ts": "455c46c555271f0a0a196c92601dc5eb50f64d6aeb141c9a77a8e786d5bc57ae",
+    "packages/core/src/continuity/types.ts": "d599b1dad07919d2ec749d9ba7dab50c0480f9265d4c69411e0dbf18141931dc",
+    "packages/core/src/index.ts": "5cf90df1fbabfc618b69643288c53958afdf0f38e7e972e54da51529b3de7e5a",
+    "packages/core/test/continuity/reduce.test.ts": "f6b61cd62fe6d3b0f97e7fa42edbc1142119dc4a1099fe8e3308a39541ee0b0d",
+    "packages/runtime/package.json": "8edf66cd0087a835d586ed35c19eabc82b4f0170290e69f409adbed24fddb1f9",
+    "packages/runtime/src/continuity-service.ts": "843e1a0b01cc304bf2cf8f34d85a55f5c33bb8e12bafafc7b7f9cb9aa9f91e0f",
+    "packages/runtime/src/index.ts": "58e99eead3d2daae80a27de29ca47e15380f3ca4bf7fde82f447642bd4927bd8",
+    "tests/tasks/t19.test.ts": "fad7cd2c95fe1894650b2ef9aa5ac13e73f5c5f667db9a3635357323ef25b3fe"
+  }
+}

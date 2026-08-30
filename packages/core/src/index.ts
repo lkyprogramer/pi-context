@@ -27,6 +27,17 @@ export {
   type DirectiveResolver,
   type StoredDirectiveRecord,
 } from "./directives/temporal.js";
-
-
+export {
+  CONTINUITY_FRONT_LIMIT,
+  ContinuityError,
+  createContinuityMachine,
+  emptyContinuityRevision,
+  reduceContinuityRevision,
+  type ContinuityEvent,
+  type ContinuityRevision,
+  type ContinuityService,
+  type ContinuitySnapshot,
+  type ContinuityStore,
+  type CreateContinuityMachineInput,
+} from "./continuity/index.js";
 
