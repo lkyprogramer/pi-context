@@ -1,4 +1,4 @@
-import type { ActionAuthority, SourceClass } from "./types.js";
+import type { ActionAuthority, EvidenceUnit, SourceClass } from "./types.js";
 import type { RuntimeCursor } from "./identity.js";
 
 export interface TextRange {
@@ -51,6 +51,15 @@ export interface EvidenceReceipt {
   contentHash: string;
   blobId: string;
   observedAt: number;
+}
+
+/** Canonical durable evidence descriptor. Raw bytes remain in the encrypted blob store. */
+export interface EvidenceRecord extends EvidenceUnit {
+  cursor: RuntimeCursor;
+  operationId: string;
+  rawBlobId: string;
+  contentHash: string;
+  reducer: { id: string; revision: string };
 }
 
 export interface CheckpointV2 {

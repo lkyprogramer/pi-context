@@ -1,0 +1,17 @@
+{
+  "taskId": "T09",
+  "approval": "blockers/T09-scope-expansion.md",
+  "expandedPaths": [
+    "packages/contracts/src/v2.ts",
+    "packages/storage-node/src/index.ts",
+    "package.json",
+    "pnpm-lock.yaml",
+    "tests/tasks/t09.test.ts",
+    "artifacts/task-evidence/T09/**",
+    "blockers/T09-scope-expansion.md"
+  ],
+  "reason": "The undefined shared EvidenceRecord belongs in contracts, the required repository must be publicly exported, and the root downstream compiler must resolve the public packages.",
+  "publicationAuthorized": false,
+  "pushAuthorized": false,
+  "deploymentAuthorized": false
+}

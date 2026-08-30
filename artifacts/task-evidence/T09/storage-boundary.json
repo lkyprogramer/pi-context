@@ -1,0 +1,37 @@
+{
+  "taskId": "T09",
+  "physicalLayout": "<dataRoot>/<workspaceId>/runtime.sqlite",
+  "schemaVersion": 1,
+  "schemaVersionTruth": "schema_migration exact positive contiguous prefix",
+  "migrationTransaction": [
+    "migration checksum/history validation",
+    "DDL application",
+    "workspace_meta binding"
+  ],
+  "cursorColumns": [
+    "workspace_id",
+    "session_id",
+    "leaf_id",
+    "lineage_hash",
+    "model_key"
+  ],
+  "provenanceColumns": [
+    "operation_id",
+    "observation_id",
+    "raw_blob_id",
+    "reducer_id",
+    "reducer_revision",
+    "source_class",
+    "authority",
+    "source_refs_json",
+    "validity_json",
+    "content_hash",
+    "observed_at"
+  ],
+  "idempotency": "identical full record is no-op; any persisted-field difference is conflict",
+  "cancellation": "admission-only because node:sqlite DatabaseSync cannot interrupt an in-flight statement",
+  "busyTimeoutMaxMs": 5000,
+  "legacySchemaImported": false,
+  "findingF014": "closed",
+  "futureSagaAndFtsMigrations": "blocked pending explicit later-task schema scope"
+}

@@ -1,0 +1,20 @@
+{
+  "taskId": "T09",
+  "production": [
+    "package.json",
+    "packages/contracts/src/v2.ts",
+    "packages/storage-node/src/index.ts",
+    "packages/storage-node/src/schema/migrations.ts",
+    "packages/storage-node/src/sqlite-store.ts",
+    "pnpm-lock.yaml"
+  ],
+  "tests": [
+    "packages/storage-node/test/sqlite-store.test.ts",
+    "tests/tasks/t09.test.ts"
+  ],
+  "control": [
+    "blockers/T09-scope-expansion.md"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T09",
+  "unrelatedTrackedChanges": []
+}

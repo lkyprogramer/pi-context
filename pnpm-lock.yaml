@@ -11,12 +11,18 @@ importers:
       '@earendil-works/pi-coding-agent':
         specifier: 0.84.4
         version: 0.84.4(ws@8.21.3)
+      '@pcr/contracts':
+        specifier: workspace:*
+        version: link:packages/contracts
       '@pcr/core':
         specifier: workspace:*
         version: link:packages/core
       '@pcr/runtime':
         specifier: workspace:*
         version: link:packages/runtime
+      '@pcr/storage-node':
+        specifier: workspace:*
+        version: link:packages/storage-node
       '@types/node':
         specifier: ^22.18.0
         version: 22.20.1

@@ -1,0 +1,11 @@
+{
+  "taskId": "T09",
+  "parentCommit": "7b25d8a3a377309c8a3e2cc1954dbcff912ba441",
+  "owner": "codex-root",
+  "node": "v22.19.0",
+  "pnpm": "10.15.0",
+  "pi": "0.84.4",
+  "model": "openclaw/Qwen3.8-27B-WORK",
+  "contextWindow": 200192,
+  "userProvidedUntrackedInput": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/"
+}
