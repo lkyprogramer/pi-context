@@ -85,6 +85,25 @@ describe("T34 Semantic proposal contracts and provider port", () => {
       cursor: bound,
       sourceRefs: ["ev_t34"],
     })).rejects.toMatchObject({ code: "PCR_SEMANTIC_INPUT_INVALID" });
+    const missingValue = createSemanticProvider({
+      cursor: bound,
+      async generate() {
+        return {
+          claims: [{
+            claimId: "cl_t34_version",
+            key: "version",
+            polarity: "is",
+            status: "active",
+            sourceRefs: ["ev_t34"],
+          }],
+        };
+      },
+    });
+    await expect(missingValue.propose({
+      operationId: "op_t34",
+      cursor: bound,
+      sourceRefs: ["ev_t34"],
+    })).rejects.toMatchObject({ code: "PCR_SEMANTIC_INPUT_INVALID" });
   });
 
   it("replays equal proposals for the same generate output", async () => {

@@ -2,21 +2,22 @@
   "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
   "taskId": "T34",
   "status": "review-candidate",
-  "parentCommit": "9b2b489d5757b1d0fe79c7a2458cb2f56e603e3c",
+  "parentCommit": "5448ced617a3bb9f6790b59abb9e7e5bfd08b259",
   "redLog": "artifacts/task-evidence/T34/red.log",
   "greenLog": "artifacts/task-evidence/T34/green.log",
   "fullGateLog": "artifacts/task-evidence/T34/full-gate.log",
   "acceptance": {
     "publicInterfacesCompile": true,
     "typedProposalOnly": true,
+    "omittedClaimValueRejected": true,
     "repositoryGateFiles": 130,
     "repositoryGateTests": 637,
     "acceptanceGateTests": 32
   },
   "files": {
     "artifacts/task-evidence/T34/changed-files.json": "679dc0b00170315ae5aa3ff53a6d4b721a44f4bee5a982aeb9d3c078f7ec3c64",
-    "artifacts/task-evidence/T34/full-gate.log": "2c7b365ee3b1fae6e06a6ddf837d00be4e25f78bd691f4fdea0acb6c69e91730",
-    "artifacts/task-evidence/T34/green.log": "0c381965a5677026c84230eaaefe0e9d50c06ccc9c1a7f01cb0953db20a53eaf",
+    "artifacts/task-evidence/T34/full-gate.log": "3c2ffa6af0b3364c939e7aeb3c3f5b4225078fcd9f2f0c95bf70a9d71ddc613d",
+    "artifacts/task-evidence/T34/green.log": "ead3ccb3eb5e06afca08c273e1109eb0cb5a50b5bf1755873e5c3b27ccab2d88",
     "artifacts/task-evidence/T34/preflight-git.txt": "09033d4df520f23cc70d8a321de2bbba3d081a86da7a180499a6cdf7b8892cbb",
     "artifacts/task-evidence/T34/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
     "artifacts/task-evidence/T34/red.log": "6c6a09e082698fabd5b9c4f3e10c1704b3a812dc92431ce1e77e6d4a633b8f73",
@@ -25,8 +26,8 @@
     "packages/contracts/src/semantic.ts": "9f99552f911fffd3817277691d217cca7d878c99785479aa60ea5667e85a2677",
     "packages/runtime/package.json": "852de5c064964acd1992144d3191683fa6e849eeabca114fd43d5babbac2c497",
     "packages/runtime/src/index.ts": "b480aed3c5d549b06fcf9ab658e6a9016c3477cdbd2138ebe64bc0629ee3caf4",
-    "packages/runtime/src/semantic/port.ts": "343904f7e41ca87e048e5566fd9a3a542b8770bd66c71997a8ae5d3948cc960f",
+    "packages/runtime/src/semantic/port.ts": "5534edab54677ca34f1f08b7c2e674a18f9ec9160b7fde02576c815414fbfdbf",
     "packages/runtime/test/semantic/port.test.ts": "c9001a246e49cc0b314c8c46865beb04e83c23d151068865521b1377d0036445",
-    "tests/tasks/t34.test.ts": "7057aba910c666709c608c5206c00a905c9ac618429fba8cd099d19a2c6100e1"
+    "tests/tasks/t34.test.ts": "bcb340e45de049ff37a2a97c5815ea417ec65f1aa545dfdc23634ea602c76659"
   }
 }

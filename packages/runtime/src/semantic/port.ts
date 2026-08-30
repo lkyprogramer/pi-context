@@ -1,4 +1,4 @@
-import { domainHash, type RuntimeCursor, type ProposedClaim, type SemanticProposal } from "@pcr/contracts";
+import { domainHash, isPcrError, type RuntimeCursor, type ProposedClaim, type SemanticProposal } from "@pcr/contracts";
 
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
@@ -96,6 +96,7 @@ function parseClaim(value: unknown, index: number, allowed: ReadonlySet<string>)
   requireNonEmpty(row.key, `claims[${index}].key`);
   requireNonEmpty(row.polarity, `claims[${index}].polarity`);
   requireNonEmpty(row.status, `claims[${index}].status`);
+  if (row.value === undefined) failInput(`claims[${index}].value`);
   const sourceRefs = parseSourceRefs(row.sourceRefs, `claims[${index}].sourceRefs`);
   if (sourceRefs.length === 0) failInput(`claims[${index}].sourceRefs`);
   for (const ref of sourceRefs) {
@@ -160,13 +161,20 @@ export function createSemanticProvider(input: CreateSemanticProviderInput): Sema
       });
       request.signal?.throwIfAborted();
       const parsed = parseProposal(raw, sourceRefs);
-      return {
-        proposalId: domainHash("semantic-proposal", {
+      let proposalId: string;
+      try {
+        proposalId = domainHash("semantic-proposal", {
           cursor,
           sourceRefs: parsed.sourceRefs,
           claims: parsed.claims,
           continuityPatch: parsed.continuityPatch,
-        }),
+        });
+      } catch (error) {
+        if (isPcrError(error)) failInput("generate");
+        throw error;
+      }
+      return {
+        proposalId,
         sourceRefs: parsed.sourceRefs,
         claims: parsed.claims,
         continuityPatch: parsed.continuityPatch,
