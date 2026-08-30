@@ -1,0 +1,126 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t39.test.ts (7 tests | 7 failed) 11ms
+   × T39 Benchmark corpus governance and locked splits > benchmark_corpus_governance_and_locked_splits 5ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T39 Benchmark corpus governance and locked splits > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T39 Benchmark corpus governance and locked splits > rejects malformed lock input and empty clusters 0ms
+     → (0 , createCorpusGovernor) is not a function
+   × T39 Benchmark corpus governance and locked splits > replays equal manifests for the same major and cases 0ms
+     → (0 , createCorpusGovernor) is not a function
+   × T39 Benchmark corpus governance and locked splits > rejects cases from another corpus id 0ms
+     → (0 , createCorpusGovernor) is not a function
+   × T39 Benchmark corpus governance and locked splits > stops at the abort boundary before listing cases 0ms
+     → (0 , createCorpusGovernor) is not a function
+   × T39 Benchmark corpus governance and locked splits > locks a file-backed corpus with two-run equality 2ms
+     → (0 , createFileCorpusStore) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t39.test.ts > T39 Benchmark corpus governance and locked splits > benchmark_corpus_governance_and_locked_splits
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t39.test.ts:92:33
+     90| describe("T39 Benchmark corpus governance and locked splits", () => {
+     91|   it("benchmark_corpus_governance_and_locked_splits", async () => {
+     92|     await expect(runT39Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     93|   });
+     94| 
+
+Caused by: TypeError: (0 , createCorpusGovernor) is not a function
+ ❯ runT39Fixture tests/tasks/t39.test.ts:63:20
+ ❯ tests/tasks/t39.test.ts:92:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t39.test.ts > T39 Benchmark corpus governance and locked splits > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_CORPUS_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_4__.createCorpusGovernor) is not a function",
+  }
+
+ ❯ tests/tasks/t39.test.ts:96:53
+     94| 
+     95|   it("fails construction when production dependencies are absent", () …
+     96|     expect(() => createCorpusGovernor({} as never)).toThrowError(
+       |                                                     ^
+     97|       expect.objectContaining({ code: "PCR_CORPUS_DEPENDENCY_MISSING" …
+     98|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t39.test.ts > T39 Benchmark corpus governance and locked splits > rejects malformed lock input and empty clusters
+TypeError: (0 , createCorpusGovernor) is not a function
+ ❯ tests/tasks/t39.test.ts:103:22
+    101|   it("rejects malformed lock input and empty clusters", async () => {
+    102|     const corpusId = "pcr-bench-t39";
+    103|     const governor = createCorpusGovernor({
+       |                      ^
+    104|       corpusId,
+    105|       store: memoryStore(casesFor(corpusId), corpusId),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t39.test.ts > T39 Benchmark corpus governance and locked splits > replays equal manifests for the same major and cases
+TypeError: (0 , createCorpusGovernor) is not a function
+ ❯ tests/tasks/t39.test.ts:117:22
+    115|   it("replays equal manifests for the same major and cases", async () …
+    116|     const corpusId = "pcr-bench-t39";
+    117|     const governor = createCorpusGovernor({
+       |                      ^
+    118|       corpusId,
+    119|       store: memoryStore(casesFor(corpusId), corpusId),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t39.test.ts > T39 Benchmark corpus governance and locked splits > rejects cases from another corpus id
+TypeError: (0 , createCorpusGovernor) is not a function
+ ❯ tests/tasks/t39.test.ts:127:22
+    125| 
+    126|   it("rejects cases from another corpus id", async () => {
+    127|     const governor = createCorpusGovernor({
+       |                      ^
+    128|       corpusId: "pcr-bench-t39",
+    129|       store: memoryStore(casesFor("pcr-bench-other"), "pcr-bench-other…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t39.test.ts > T39 Benchmark corpus governance and locked splits > stops at the abort boundary before listing cases
+TypeError: (0 , createCorpusGovernor) is not a function
+ ❯ tests/tasks/t39.test.ts:138:22
+    136|   it("stops at the abort boundary before listing cases", async () => {
+    137|     let listed = 0;
+    138|     const governor = createCorpusGovernor({
+       |                      ^
+    139|       corpusId: "pcr-bench-t39",
+    140|       store: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t39.test.ts > T39 Benchmark corpus governance and locked splits > locks a file-backed corpus with two-run equality
+TypeError: (0 , createFileCorpusStore) is not a function
+ ❯ tests/tasks/t39.test.ts:160:19
+    158|     const corpusId = "pcr-bench-t39-file";
+    159|     await writeFile(join(root, "cases.json"), `${JSON.stringify(casesF…
+    160|     const store = createFileCorpusStore({ root, corpusId });
+       |                   ^
+    161|     const governor = createCorpusGovernor({ corpusId, store });
+    162|     const first = await governor.lock({ benchmarkMajor: 1 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  06:43:33
+   Duration  255ms (transform 21ms, setup 0ms, collect 23ms, tests 11ms, environment 0ms, prepare 46ms)
+

@@ -16,6 +16,9 @@ importers:
       '@earendil-works/pi-coding-agent':
         specifier: 0.84.4
         version: 0.84.4(patch_hash=aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5)(ws@8.21.3)
+      '@pcr/benchmark':
+        specifier: workspace:*
+        version: link:packages/benchmark
       '@pcr/contracts':
         specifier: workspace:*
         version: link:packages/contracts

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "temporal-00",
+    "cluster": "temporal",
+    "corpusId": "pcr-bench",
+    "body": "Yesterday the deploy window closed at 18:00 UTC; the rollback lease expired before the health check finished."
+  },
+  {
+    "id": "temporal-01",
+    "cluster": "temporal",
+    "corpusId": "pcr-bench",
+    "body": "The incident started after the Friday maintenance; the on-call rotation had already handed over to the weekend engineer."
+  },
+  {
+    "id": "temporal-02",
+    "cluster": "temporal",
+    "corpusId": "pcr-bench",
+    "body": "Keep the previous checkpoint until Monday 09:00, then replace it with the post-release snapshot."
+  },
+  {
+    "id": "temporal-03",
+    "cluster": "temporal",
+    "corpusId": "pcr-bench",
+    "body": "The user later said the deadline moved from Thursday to next Tuesday; do not restore the Thursday oracle."
+  },
+  {
+    "id": "temporal-04",
+    "cluster": "temporal",
+    "corpusId": "pcr-bench",
+    "body": "A follow-up arrived two turns later and superseded the original start time with 07:30 JST."
+  },
+  {
+    "id": "temporal-05",
+    "cluster": "temporal",
+    "corpusId": "pcr-bench",
+    "body": "The hidden continuation asks which schedule is currently authoritative after the timezone correction."
+  },
+  {
+    "id": "negation-00",
+    "cluster": "negation",
+    "corpusId": "pcr-bench",
+    "body": "Never echo the staging password into the summary, even if the tool result contains it."
+  },
+  {
+    "id": "negation-01",
+    "cluster": "negation",
+    "corpusId": "pcr-bench",
+    "body": "Do not call the production deploy tool; a dry-run on the preview cluster is the only allowed action."
+  },
+  {
+    "id": "negation-02",
+    "cluster": "negation",
+    "corpusId": "pcr-bench",
+    "body": "The customer withdrew consent for log export. Ignore the earlier request that asked to ship the bundle."
+  },
+  {
+    "id": "negation-03",
+    "cluster": "negation",
+    "corpusId": "pcr-bench",
+    "body": "Stop retrying the failed payment capture. The later message said the charge was cancelled."
+  },
+  {
+    "id": "negation-04",
+    "cluster": "negation",
+    "corpusId": "pcr-bench",
+    "body": "Must not mix the finance workspace evidence into the support-session answer."
+  },
+  {
+    "id": "negation-05",
+    "cluster": "negation",
+    "corpusId": "pcr-bench",
+    "body": "The holdout continuation checks that the model refuses the retracted destructive command."
+  },
+  {
+    "id": "tool-noise-00",
+    "cluster": "tool-noise",
+    "corpusId": "pcr-bench",
+    "body": "Search returned three near-duplicate snippets; only the blob with matching byte offsets is admissible."
+  },
+  {
+    "id": "tool-noise-01",
+    "cluster": "tool-noise",
+    "corpusId": "pcr-bench",
+    "body": "The first tool call failed with a timeout; the second call wrote the encrypted CAS pointer that must be recovered."
+  },
+  {
+    "id": "tool-noise-02",
+    "cluster": "tool-noise",
+    "corpusId": "pcr-bench",
+    "body": "A noisy grep dump includes paths from another workspace; those hits are out of scope."
+  },
+  {
+    "id": "tool-noise-03",
+    "cluster": "tool-noise",
+    "corpusId": "pcr-bench",
+    "body": "The recall page mixed a stale lease with a live lease; only the live lease may be cited."
+  },
+  {
+    "id": "tool-noise-04",
+    "cluster": "tool-noise",
+    "corpusId": "pcr-bench",
+    "body": "Tool output contains a walkthrough constant that must not be treated as an observed measurement."
+  },
+  {
+    "id": "tool-noise-05",
+    "cluster": "tool-noise",
+    "corpusId": "pcr-bench",
+    "body": "The locked test asks which tool result is the exact recovered blob after the noisy retries."
+  }
+]

@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "0.84.4",
+    "@pcr/benchmark": "workspace:*",
     "@pcr/contracts": "workspace:*",
     "@pcr/core": "workspace:*",
     "@pcr/pi-adapter": "workspace:*",

@@ -1,0 +1,22 @@
+{
+  "taskId": "T39",
+  "production": [
+    "blockers/T39-scope-expansion.md",
+    "package.json",
+    "pnpm-lock.yaml",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/corpus/cli.ts",
+    "packages/benchmark/src/corpus/errors.ts",
+    "packages/benchmark/src/corpus/file-store.ts",
+    "packages/benchmark/src/corpus/governor.ts",
+    "packages/benchmark/src/corpus/index.ts",
+    "packages/benchmark/src/corpus/types.ts",
+    "benchmarks/manifest/cases.json",
+    "benchmarks/manifest/corpus.json",
+    "scripts/benchmark-lock.mjs"
+  ],
+  "tests": [
+    "tests/tasks/t39.test.ts"
+  ]
+}

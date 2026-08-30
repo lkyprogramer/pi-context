@@ -1,0 +1,32 @@
+{
+  "benchmarkMajor": 1,
+  "trainHash": "f3aa12ba640b1c6bd24d75bce57a70334de46e655a28478ec84282eda7df6cb4",
+  "devHash": "fb85b356f707b2aab260040e84e55e4dd5ae593907387c3ce51a07c371664e57",
+  "lockedTestHash": "2ed246b52fc58011602374ae70040c705f7630037921c810dfa736f373c33ac2",
+  "clusters": {
+    "negation": [
+      "negation-00",
+      "negation-01",
+      "negation-02",
+      "negation-03",
+      "negation-04",
+      "negation-05"
+    ],
+    "temporal": [
+      "temporal-00",
+      "temporal-01",
+      "temporal-02",
+      "temporal-03",
+      "temporal-04",
+      "temporal-05"
+    ],
+    "tool-noise": [
+      "tool-noise-00",
+      "tool-noise-01",
+      "tool-noise-02",
+      "tool-noise-03",
+      "tool-noise-04",
+      "tool-noise-05"
+    ]
+  }
+}
