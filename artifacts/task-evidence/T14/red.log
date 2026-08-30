@@ -1,0 +1,122 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+22:13:01 [vite] (ssr) warning: Duplicate key "cursor" in object literal
+34 |      authority: "inform",
+35 |      ...overrides,
+36 |      cursor: overrides.cursor ?? bound,
+   |      ^
+37 |    };
+38 |  }
+
+  Plugin: vite:esbuild
+  File: /Users/luo/Documents/github/pi-context/tests/tasks/t14.test.ts
+ ❯ |0| tests/tasks/t14.test.ts (6 tests | 6 failed) 16ms
+   × T14 Reducer registry and production reducers > reducer_registry_and_production_reducers 12ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T14 Reducer registry and production reducers > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T14 Reducer registry and production reducers > rejects malformed input before reduce 0ms
+     → (0 , createProductionReducers) is not a function
+   × T14 Reducer registry and production reducers > rejects a tool observation from the wrong workspace/session/branch 0ms
+     → (0 , createProductionReducers) is not a function
+   × T14 Reducer registry and production reducers > stops at the abort boundary before invoking a reducer 0ms
+     → (0 , createReducerRegistry) is not a function
+   × T14 Reducer registry and production reducers > is deterministic across two independent registries 0ms
+     → (0 , createProductionReducers) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t14.test.ts > T14 Reducer registry and production reducers > reducer_registry_and_production_reducers
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t14.test.ts:75:33
+     73| describe("T14 Reducer registry and production reducers", () => {
+     74|   it("reducer_registry_and_production_reducers", async () => {
+     75|     await expect(runT14Fixture()).resolves.toEqual({ ok: true, task: "…
+       |                                 ^
+     76|   });
+     77| 
+
+Caused by: TypeError: (0 , createProductionReducers) is not a function
+ ❯ runT14Fixture tests/tasks/t14.test.ts:58:15
+ ❯ tests/tasks/t14.test.ts:75:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t14.test.ts > T14 Reducer registry and production reducers > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_REDUCER_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createReducerRegistry) is not a function",
+  }
+
+ ❯ tests/tasks/t14.test.ts:79:54
+     77| 
+     78|   it("fails construction when production dependencies are absent", () …
+     79|     expect(() => createReducerRegistry({} as never)).toThrowError(
+       |                                                      ^
+     80|       expect.objectContaining({ code: "PCR_REDUCER_DEPENDENCY_MISSING"…
+     81|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t14.test.ts > T14 Reducer registry and production reducers > rejects malformed input before reduce
+TypeError: (0 , createProductionReducers) is not a function
+ ❯ tests/tasks/t14.test.ts:88:17
+     86|     const registry = createReducerRegistry({
+     87|       cursor: bound,
+     88|       reducers: createProductionReducers(),
+       |                 ^
+     89|     });
+     90|     await expect(registry.reduce({} as never)).rejects.toThrow(/PCR_RE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t14.test.ts > T14 Reducer registry and production reducers > rejects a tool observation from the wrong workspace/session/branch
+TypeError: (0 , createProductionReducers) is not a function
+ ❯ tests/tasks/t14.test.ts:97:17
+     95|     const registry = createReducerRegistry({
+     96|       cursor: bound,
+     97|       reducers: createProductionReducers(),
+       |                 ^
+     98|     });
+     99|     const other = observation({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t14.test.ts > T14 Reducer registry and production reducers > stops at the abort boundary before invoking a reducer
+TypeError: (0 , createReducerRegistry) is not a function
+ ❯ tests/tasks/t14.test.ts:108:22
+    106|     const bound = cursor();
+    107|     let calls = 0;
+    108|     const registry = createReducerRegistry({
+       |                      ^
+    109|       cursor: bound,
+    110|       reducers: [{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t14.test.ts > T14 Reducer registry and production reducers > is deterministic across two independent registries
+TypeError: (0 , createProductionReducers) is not a function
+ ❯ tests/tasks/t14.test.ts:127:67
+    125|   it("is deterministic across two independent registries", async () =>…
+    126|     const bound = cursor();
+    127|     const left = createReducerRegistry({ cursor: bound, reducers: crea…
+       |                                                                   ^
+    128|     const right = createReducerRegistry({ cursor: bound, reducers: cre…
+    129|     const payload = input(observation({ cursor: bound }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  22:13:00
+   Duration  434ms (transform 102ms, setup 0ms, collect 104ms, tests 16ms, environment 0ms, prepare 92ms)
+

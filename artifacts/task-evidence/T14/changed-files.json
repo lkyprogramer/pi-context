@@ -1,0 +1,25 @@
+{
+  "taskId": "T14",
+  "production": [
+    "blockers/T14-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "packages/core/src/reducers/bash.ts",
+    "packages/core/src/reducers/build-log.ts",
+    "packages/core/src/reducers/file-mutation.ts",
+    "packages/core/src/reducers/index.ts",
+    "packages/core/src/reducers/pointer.ts",
+    "packages/core/src/reducers/production.ts",
+    "packages/core/src/reducers/read.ts",
+    "packages/core/src/reducers/registry.ts",
+    "packages/core/src/reducers/search.ts",
+    "packages/core/src/reducers/test-log.ts",
+    "packages/core/src/reducers/text.ts",
+    "packages/core/src/reducers/types.ts",
+    "packages/core/test/reducers/production.test.ts"
+  ],
+  "tests": [
+    "tests/tasks/t14.test.ts",
+    "packages/core/test/reducers/production.test.ts"
+  ]
+}
