@@ -1,0 +1,10 @@
+ M HANDOFF.md
+?? artifacts/task-evidence/T16/preflight-git.txt
+?? blockers/T16-scope-expansion.md
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T12/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T13/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T14/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T15/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T20/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T23/
+?? tests/tasks/t16.test.ts

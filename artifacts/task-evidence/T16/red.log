@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t16.test.ts (6 tests | 6 failed) 18ms
+   × T16 Unicode clause segmentation with real offsets > unicode_clause_segmentation_with_real_offsets 14ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T16 Unicode clause segmentation with real offsets > fails construction when production dependencies are absent 3ms
+     → expected error to match asymmetric matcher
+   × T16 Unicode clause segmentation with real offsets > rejects malformed text before emitting spans 0ms
+     → (0 , createClauseSegmenter) is not a function
+   × T16 Unicode clause segmentation with real offsets > replays the same spans for the same text 0ms
+     → (0 , createClauseSegmenter) is not a function
+   × T16 Unicode clause segmentation with real offsets > rejects a turn from the wrong workspace/session/branch 0ms
+     → (0 , createClauseSegmenter) is not a function
+   × T16 Unicode clause segmentation with real offsets > stops at the abort boundary before scanning text 0ms
+     → (0 , createClauseSegmenter) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t16.test.ts > T16 Unicode clause segmentation with real offsets > unicode_clause_segmentation_with_real_offsets
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t16.test.ts:60:33
+     58| describe("T16 Unicode clause segmentation with real offsets", () => {
+     59|   it("unicode_clause_segmentation_with_real_offsets", async () => {
+     60|     await expect(runT16Fixture()).resolves.toEqual({ ok: true, task: "…
+       |                                 ^
+     61|   });
+     62|
+
+Caused by: TypeError: (0 , createClauseSegmenter) is not a function
+ ❯ runT16Fixture tests/tasks/t16.test.ts:33:21
+ ❯ tests/tasks/t16.test.ts:60:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t16.test.ts > T16 Unicode clause segmentation with real offsets > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_CLAUSE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createClauseSegmenter) is not a function",
+  }
+
+ ❯ tests/tasks/t16.test.ts:64:54
+     62|
+     63|   it("fails construction when production dependencies are absent", () …
+     64|     expect(() => createClauseSegmenter({} as never)).toThrowError(
+       |                                                      ^
+     65|       expect.objectContaining({ code: "PCR_CLAUSE_DEPENDENCY_MISSING" …
+     66|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t16.test.ts > T16 Unicode clause segmentation with real offsets > rejects malformed text before emitting spans
+TypeError: (0 , createClauseSegmenter) is not a function
+ ❯ tests/tasks/t16.test.ts:71:23
+     69|   it("rejects malformed text before emitting spans", () => {
+     70|     const bound = cursor();
+     71|     const segmenter = createClauseSegmenter({ cursor: bound });
+       |                       ^
+     72|     expect(() => segmenter.segment({} as never)).toThrowError(/PCR_CLA…
+     73|     expect(() => segmenter.segment({ text: "ok\uD800", cursor: bound }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t16.test.ts > T16 Unicode clause segmentation with real offsets > replays the same spans for the same text
+TypeError: (0 , createClauseSegmenter) is not a function
+ ❯ tests/tasks/t16.test.ts:78:23
+     76|   it("replays the same spans for the same text", () => {
+     77|     const bound = cursor();
+     78|     const segmenter = createClauseSegmenter({ cursor: bound });
+       |                       ^
+     79|     const text = "First clause. Second clause.";
+     80|     expect(segmenter.segment({ text, cursor: bound })).toEqual(segment…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t16.test.ts > T16 Unicode clause segmentation with real offsets > rejects a turn from the wrong workspace/session/branch
+TypeError: (0 , createClauseSegmenter) is not a function
+ ❯ tests/tasks/t16.test.ts:85:23
+     83|   it("rejects a turn from the wrong workspace/session/branch", () => {
+     84|     const bound = cursor();
+     85|     const segmenter = createClauseSegmenter({ cursor: bound });
+       |                       ^
+     86|     expect(() => segmenter.segment({
+     87|       text: "Keep this.",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t16.test.ts > T16 Unicode clause segmentation with real offsets > stops at the abort boundary before scanning text
+TypeError: (0 , createClauseSegmenter) is not a function
+ ❯ tests/tasks/t16.test.ts:94:23
+     92|   it("stops at the abort boundary before scanning text", () => {
+     93|     const bound = cursor();
+     94|     const segmenter = createClauseSegmenter({ cursor: bound });
+       |                       ^
+     95|     const controller = new AbortController();
+     96|     controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  23:43:08
+   Duration  563ms (transform 111ms, setup 0ms, collect 177ms, tests 18ms, environment 0ms, prepare 79ms)
+

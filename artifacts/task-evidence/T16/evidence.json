@@ -1,0 +1,33 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T16",
+  "status": "review-candidate",
+  "parentCommit": "a2ab9dd2d419374d2474fd478ba84470e40fe836",
+  "redLog": "artifacts/task-evidence/T16/red.log",
+  "greenLog": "artifacts/task-evidence/T16/green.log",
+  "fullGateLog": "artifacts/task-evidence/T16/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "utf8Utf16CodePointRangesAligned": true,
+    "emojiByteRangeExceedsUtf16": true,
+    "unpairedSurrogateRejected": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 98,
+    "repositoryGateTests": 500,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T16/changed-files.json": "e61599aa7a530d981fce2d295dcbc610df5cefabd4379ce15784ac7b4d7c7aa9",
+    "artifacts/task-evidence/T16/full-gate.log": "77f72ce970068a0efb6d12b52b975213abc00c73287fff1274b51aa3e71ba696",
+    "artifacts/task-evidence/T16/green.log": "7972cc38ee0d3cbb246189626993e932638602eef59d7708e2f59a3eaeb19cc1",
+    "artifacts/task-evidence/T16/preflight-git.txt": "ec95b9f47dd4af9874aa0d1c8965d23aa29dc4117f7c37f45c783e9f342f777e",
+    "artifacts/task-evidence/T16/preflight-toolchain.txt": "230379c89cb3f942c21fb2fa39aa0d0f1cfbbe7ab707012d518d17b4a41d6541",
+    "artifacts/task-evidence/T16/red.log": "b407ee5f8d5ee22a78f95e2f0aadd0ddf59fc3633cb03fc2df281580651b7b87",
+    "blockers/T16-scope-expansion.md": "4bac649662baf458bc3e9ced62c396e3e326af6a663cf4ae586ce4ba364617f2",
+    "packages/core/package.json": "b2d90cf24abb03f38399afdf28a3878e57c25ba43025ae9bd518fba4cafd2737",
+    "packages/core/src/directives/segment.ts": "c7915e61dc1a4341405d16ffd3fb856be10c63e81ed2ca590bcbe1f8e0d806cd",
+    "packages/core/src/index.ts": "f60d91b0736ee92477c66e4da863677d4b0779bae1958959844bcd56737b2687",
+    "packages/core/test/directives/segment.test.ts": "22793893e5ea5924303fc92624b24357a2548f3bd8ad7bf15385607a71ef1e47",
+    "tests/tasks/t16.test.ts": "2ca1cd08d061012e7e5a5f958ed5496efa83de22a68d5dc7b38d53c289cbf928"
+  }
+}

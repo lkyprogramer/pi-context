@@ -1,0 +1,13 @@
+{
+  "taskId": "T16",
+  "production": [
+    "blockers/T16-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/directives/segment.ts",
+    "packages/core/src/index.ts"
+  ],
+  "tests": [
+    "packages/core/test/directives/segment.test.ts",
+    "tests/tasks/t16.test.ts"
+  ]
+}
