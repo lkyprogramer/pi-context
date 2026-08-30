@@ -1,0 +1,14 @@
+{
+  "taskId": "T26",
+  "production": [
+    "blockers/T26-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "packages/core/src/materialization/cache.ts",
+    "packages/core/src/materialization/sections.ts"
+  ],
+  "tests": [
+    "packages/core/test/materialization/cache.test.ts",
+    "tests/tasks/t26.test.ts"
+  ]
+}

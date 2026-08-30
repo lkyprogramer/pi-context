@@ -77,4 +77,26 @@ export {
   type RouteKey,
   type TokenPricer,
 } from "./budget/index.js";
+export {
+  SECTION_KINDS,
+  SECTION_ZONE,
+  SectionError,
+  createSectionPlanner,
+  type CreateSectionPlannerInput,
+  type PlanSectionInput,
+  type PlanSectionsInput,
+  type SectionKind,
+  type SectionPlan,
+  type SectionPlanner,
+} from "./materialization/sections.js";
+export {
+  CacheError,
+  createCacheReceipt,
+  type CacheReceipt,
+  type CacheReceiptRecord,
+  type CacheReceiptService,
+  type CacheReceiptStore,
+  type CommitCacheInput,
+  type CreateCacheReceiptInput,
+} from "./materialization/cache.js";
 

@@ -1,0 +1,132 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t26.test.ts (7 tests | 7 failed) 17ms
+   × T26 Section model and cache receipt > section_model_and_cache_receipt 12ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T26 Section model and cache receipt > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T26 Section model and cache receipt > rejects malformed section input 0ms
+     → (0 , createSectionPlanner) is not a function
+   × T26 Section model and cache receipt > replays the same sections to an equal plan and receipt 0ms
+     → (0 , createSectionPlanner) is not a function
+   × T26 Section model and cache receipt > rejects a cursor from another workspace/session/branch 0ms
+     → (0 , createSectionPlanner) is not a function
+   × T26 Section model and cache receipt > does not treat same-kind sections as reusable when the body hash changes 0ms
+     → (0 , createSectionPlanner) is not a function
+   × T26 Section model and cache receipt > stops at the abort boundary before hashing 0ms
+     → (0 , createSectionPlanner) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t26.test.ts > T26 Section model and cache receipt > section_model_and_cache_receipt
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t26.test.ts:124:33
+    122| describe("T26 Section model and cache receipt", () => {
+    123|   it("section_model_and_cache_receipt", async () => {
+    124|     await expect(runT26Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    125|   });
+    126| 
+
+Caused by: TypeError: (0 , createSectionPlanner) is not a function
+ ❯ stack tests/tasks/t26.test.ts:68:19
+ ❯ runT26Fixture tests/tasks/t26.test.ts:85:37
+ ❯ tests/tasks/t26.test.ts:124:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t26.test.ts > T26 Section model and cache receipt > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_SECTION_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createSectionPlanner) is not a function",
+  }
+
+ ❯ tests/tasks/t26.test.ts:128:53
+    126| 
+    127|   it("fails construction when production dependencies are absent", () …
+    128|     expect(() => createSectionPlanner({} as never)).toThrowError(
+       |                                                     ^
+    129|       expect.objectContaining({ code: "PCR_SECTION_DEPENDENCY_MISSING"…
+    130|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t26.test.ts > T26 Section model and cache receipt > rejects malformed section input
+TypeError: (0 , createSectionPlanner) is not a function
+ ❯ stack tests/tasks/t26.test.ts:68:19
+     66|   const bound = cursor();
+     67|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     68|   const planner = createSectionPlanner({ cursor: bound, pricer });
+       |                   ^
+     69|   const store = memoryStore();
+     70|   const cache = createCacheReceipt({ cursor: bound, store });
+ ❯ tests/tasks/t26.test.ts:137:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t26.test.ts > T26 Section model and cache receipt > replays the same sections to an equal plan and receipt
+TypeError: (0 , createSectionPlanner) is not a function
+ ❯ stack tests/tasks/t26.test.ts:68:19
+     66|   const bound = cursor();
+     67|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     68|   const planner = createSectionPlanner({ cursor: bound, pricer });
+       |                   ^
+     69|   const store = memoryStore();
+     70|   const cache = createCacheReceipt({ cursor: bound, store });
+ ❯ tests/tasks/t26.test.ts:146:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t26.test.ts > T26 Section model and cache receipt > rejects a cursor from another workspace/session/branch
+TypeError: (0 , createSectionPlanner) is not a function
+ ❯ stack tests/tasks/t26.test.ts:68:19
+     66|   const bound = cursor();
+     67|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     68|   const planner = createSectionPlanner({ cursor: bound, pricer });
+       |                   ^
+     69|   const store = memoryStore();
+     70|   const cache = createCacheReceipt({ cursor: bound, store });
+ ❯ tests/tasks/t26.test.ts:154:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t26.test.ts > T26 Section model and cache receipt > does not treat same-kind sections as reusable when the body hash changes
+TypeError: (0 , createSectionPlanner) is not a function
+ ❯ stack tests/tasks/t26.test.ts:68:19
+     66|   const bound = cursor();
+     67|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     68|   const planner = createSectionPlanner({ cursor: bound, pricer });
+       |                   ^
+     69|   const store = memoryStore();
+     70|   const cache = createCacheReceipt({ cursor: bound, store });
+ ❯ tests/tasks/t26.test.ts:161:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t26.test.ts > T26 Section model and cache receipt > stops at the abort boundary before hashing
+TypeError: (0 , createSectionPlanner) is not a function
+ ❯ stack tests/tasks/t26.test.ts:68:19
+     66|   const bound = cursor();
+     67|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     68|   const planner = createSectionPlanner({ cursor: bound, pricer });
+       |                   ^
+     69|   const store = memoryStore();
+     70|   const cache = createCacheReceipt({ cursor: bound, store });
+ ❯ tests/tasks/t26.test.ts:173:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  02:01:20
+   Duration  365ms (transform 100ms, setup 0ms, collect 145ms, tests 17ms, environment 0ms, prepare 49ms)
+

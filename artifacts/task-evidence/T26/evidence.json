@@ -1,0 +1,35 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T26",
+  "status": "review-candidate",
+  "parentCommit": "ccf1e72c439d05b76035f62c9c1b2d7f8013cdc5",
+  "redLog": "artifacts/task-evidence/T26/red.log",
+  "greenLog": "artifacts/task-evidence/T26/green.log",
+  "fullGateLog": "artifacts/task-evidence/T26/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "stableSectionHashes": true,
+    "cacheDeltaByContentHash": true,
+    "eligiblePrefixTokens": true,
+    "tokenCostFromPricer": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 114,
+    "repositoryGateTests": 570,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T26/changed-files.json": "397c85f4203e422a1b5bc26f097a2c13f1f8e77582d0d5e73949f5f2d1d94b0a",
+    "artifacts/task-evidence/T26/full-gate.log": "12389a62f32ee5e25b96e750df6f42ade9ad84dc248db44be95fcd56aefaf4e1",
+    "artifacts/task-evidence/T26/green.log": "225e97171b8fd31b85b9a7f21d06f2e63d1c8293644aa77088b770a7a5781850",
+    "artifacts/task-evidence/T26/preflight-git.txt": "ce6fe58ddfb95fb66eaecc59eb3c4811ab40ac04065d63b9e91777c58f6ae190",
+    "artifacts/task-evidence/T26/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T26/red.log": "962465fe3b7cc01cc0451dd3bd4af82890b5dc00e244a07246963bed18aea2f2",
+    "blockers/T26-scope-expansion.md": "d50f617ee0d5036a31aaf0237621f244e0a4ac99d06a3170022c7cb587c76482",
+    "packages/core/package.json": "d995403508e53076bb1af3f0d1ff3a02f6cc6532fd0f0a0c8bd59d678e3090ce",
+    "packages/core/src/index.ts": "b5490ef883ebc95bf94f18aa70d30d0dcbe6a562c1c819c1fc0bc4b104839501",
+    "packages/core/src/materialization/cache.ts": "30530c048ee7b15dfeff812c3c719f2d55d80ed9106e4f3e7723a03b1a14aa04",
+    "packages/core/src/materialization/sections.ts": "7679e608681130b9e55ce367dcfc829303524d7a5a95b78aa41734f9ceac7623",
+    "packages/core/test/materialization/cache.test.ts": "c74a5c19c0e7f66e9eadef814bc7aa190326bf4b11135a0c199dd34f23ad17c1",
+    "tests/tasks/t26.test.ts": "544f358060c659151af3de43ba05bab18064c627a6df5ad8059dab240206d031"
+  }
+}
