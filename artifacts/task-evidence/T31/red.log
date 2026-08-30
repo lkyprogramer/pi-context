@@ -1,0 +1,145 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:12538) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |0| tests/tasks/t31.test.ts (8 tests | 8 failed) 29ms
+   × T31 Pi compaction takeover with Native fallback > falls back to Pi Native on a soft candidate rejection 3ms
+     → runtime.buildCheckpoint is not a function
+   × T31 Pi compaction takeover with Native fallback > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T31 Pi compaction takeover with Native fallback > rejects malformed prepare input 4ms
+     → (0 , createCompactionService) is not a function
+   × T31 Pi compaction takeover with Native fallback > replays a successful PCR decision to an equal result 1ms
+     → (0 , createCompactionService) is not a function
+   × T31 Pi compaction takeover with Native fallback > rejects a cursor from another workspace 1ms
+     → (0 , createCompactionService) is not a function
+   × T31 Pi compaction takeover with Native fallback > stops at the abort boundary before assembling 0ms
+     → (0 , createCompactionService) is not a function
+   × T31 Pi compaction takeover with Native fallback > hard-stops and aborts on integrity failure 0ms
+     → runtime.buildCheckpoint is not a function
+   × T31 Pi compaction takeover with Native fallback > product extension does not rewrite directives to must-not or hardcoded heads 17ms
+     → expected 'dh_runtime' not to be 'dh_runtime' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > falls back to Pi Native on a soft candidate rejection
+TypeError: runtime.buildCheckpoint is not a function
+ ❯ packages/pi-adapter/src/compaction-hook.ts:70:37
+     68|       return { cancel: true };
+     69|     }
+     70|     const candidate = await runtime.buildCheckpoint(event.preparation,…
+       |                                     ^
+     71|     if (candidate.kind !== "ready") return { cancel: true };
+     72|     await runtime.stageCompaction(candidate.candidate, ctx);
+ ❯ invokeSessionBeforeCompact tests/tasks/t31.test.ts:154:10
+ ❯ tests/tasks/t31.test.ts:166:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_COMPACTION_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_7__.createCompactionService) is not a function",
+  }
+
+ ❯ tests/tasks/t31.test.ts:171:56
+    169| 
+    170|   it("fails construction when production dependencies are absent", () …
+    171|     expect(() => createCompactionService({} as never)).toThrowError(
+       |                                                        ^
+    172|       expect.objectContaining({ code: "PCR_COMPACTION_DEPENDENCY_MISSI…
+    173|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > rejects malformed prepare input
+TypeError: (0 , createCompactionService) is not a function
+ ❯ seedService tests/tasks/t31.test.ts:125:19
+    123|     evidence: { async pointers() { return [pointer]; } },
+    124|   });
+    125|   const service = createCompactionService({
+       |                   ^
+    126|     cursor: bound,
+    127|     assembler,
+ ❯ tests/tasks/t31.test.ts:177:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > replays a successful PCR decision to an equal result
+TypeError: (0 , createCompactionService) is not a function
+ ❯ seedService tests/tasks/t31.test.ts:125:19
+    123|     evidence: { async pointers() { return [pointer]; } },
+    124|   });
+    125|   const service = createCompactionService({
+       |                   ^
+    126|     cursor: bound,
+    127|     assembler,
+ ❯ tests/tasks/t31.test.ts:184:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > rejects a cursor from another workspace
+TypeError: (0 , createCompactionService) is not a function
+ ❯ seedService tests/tasks/t31.test.ts:125:19
+    123|     evidence: { async pointers() { return [pointer]; } },
+    124|   });
+    125|   const service = createCompactionService({
+       |                   ^
+    126|     cursor: bound,
+    127|     assembler,
+ ❯ tests/tasks/t31.test.ts:207:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > stops at the abort boundary before assembling
+TypeError: (0 , createCompactionService) is not a function
+ ❯ tests/tasks/t31.test.ts:228:21
+    226|     const bound = cursor();
+    227|     let assembled = 0;
+    228|     const service = createCompactionService({
+       |                     ^
+    229|       cursor: bound,
+    230|       assembler: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > hard-stops and aborts on integrity failure
+TypeError: runtime.buildCheckpoint is not a function
+ ❯ packages/pi-adapter/src/compaction-hook.ts:70:37
+     68|       return { cancel: true };
+     69|     }
+     70|     const candidate = await runtime.buildCheckpoint(event.preparation,…
+       |                                     ^
+     71|     if (candidate.kind !== "ready") return { cancel: true };
+     72|     await runtime.stageCompaction(candidate.candidate, ctx);
+ ❯ invokeSessionBeforeCompact tests/tasks/t31.test.ts:154:10
+ ❯ tests/tasks/t31.test.ts:253:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |0| tests/tasks/t31.test.ts > T31 Pi compaction takeover with Native fallback > product extension does not rewrite directives to must-not or hardcoded heads
+AssertionError: expected 'dh_runtime' not to be 'dh_runtime' // Object.is equality
+ ❯ tests/tasks/t31.test.ts:291:59
+    289|     );
+    290|     expect(result?.compaction).toBeDefined();
+    291|     expect(result?.compaction?.details.directiveHead).not.toBe("dh_run…
+       |                                                           ^
+    292|     expect(result?.compaction?.details.claimHead).not.toBe("ch_runtime…
+    293|     expect(result?.compaction?.details.continuityHead).not.toBe("cth_r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  04:00:50
+   Duration  1.31s (transform 279ms, setup 0ms, collect 1.06s, tests 29ms, environment 0ms, prepare 56ms)
+

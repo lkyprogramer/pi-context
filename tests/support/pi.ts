@@ -136,16 +136,16 @@ export async function createPiHarnessWithRuntime(
   });
   registerContextHook(pi, registry);
   registerCompactionHooks(pi, {
-    async buildCheckpoint(preparation, reason) {
+    async prepareCompaction(event) {
       const result = await buildDeterministicCheckpointCandidate(
         {
-          tokensBefore: preparation.tokensBefore,
-          firstKeptEntryId: preparation.firstKeptEntryId,
-          retainedTail: preparation.retainedTail,
-          branchScope: preparation.branchScope ?? "main",
-          head: preparation.head ?? "leaf-a",
-          directives: preparation.directives ?? [{ directiveId: "dir_keep", quote: "do not deploy prod" }],
-          reason,
+          tokensBefore: event.preparation.tokensBefore,
+          firstKeptEntryId: event.preparation.firstKeptEntryId,
+          retainedTail: event.preparation.retainedTail as never,
+          branchScope: event.preparation.branchScope ?? "main",
+          head: event.preparation.head ?? "leaf-a",
+          directives: event.preparation.directives ?? [{ directiveId: "dir_keep", quote: "do not deploy prod" }],
+          reason: event.reason,
         },
         {
           checkpoint: {
@@ -164,21 +164,20 @@ export async function createPiHarnessWithRuntime(
           verifiedPointers: new Set(["blob_ok"]),
           branchScope: "main",
           head: "leaf-a",
-          waitForSemantic: reason === "overflow",
+          waitForSemantic: event.reason === "overflow",
           counter: {
             countText: (text) => Math.ceil(text.length / 4),
             countMessages: (messages) => messages.length * 10,
           },
         },
       );
-      return result;
+      if (result.kind !== "ready") return { kind: "native-fallback" };
+      return { kind: "pcr", result: toPiCompactionResult(result.candidate) };
     },
-    async stageCompaction(candidate) {
-      const mapped = toPiCompactionResult(candidate);
-      staged = { candidate, result: mapped };
+    async stageCompaction(result) {
+      staged = { candidate: result, result };
       events.push("host-compaction-written");
     },
-    toPiCompactionResult,
     async ackHostCompaction(entry) {
       commitStaged(staged, entry, () => {
         events.push("runtime-generation-committed");

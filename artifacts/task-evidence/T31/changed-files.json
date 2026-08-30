@@ -1,0 +1,18 @@
+{
+  "taskId": "T31",
+  "production": [
+    "apps/pi-context-runtime/src/extension.ts",
+    "blockers/T31-scope-expansion.md",
+    "packages/pi-adapter/package.json",
+    "packages/pi-adapter/src/compaction-hook.ts",
+    "packages/pi-adapter/src/index.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/compaction-service.ts",
+    "packages/runtime/src/index.ts"
+  ],
+  "tests": [
+    "tests/acceptance/compaction-fallback.test.ts",
+    "tests/support/pi.ts",
+    "tests/tasks/t31.test.ts"
+  ]
+}

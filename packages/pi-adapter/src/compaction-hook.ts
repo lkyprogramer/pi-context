@@ -30,14 +30,14 @@ export interface CompactionEvent {
   compactionEntry?: PiCompactionResult;
 }
 
+export type CompactionDecision =
+  | { kind: "pcr"; result: PiCompactionResult }
+  | { kind: "native-fallback" }
+  | { kind: "hard-stop"; code: string };
+
 export interface CompactionRuntime {
-  buildCheckpoint(
-    preparation: CompactionEvent["preparation"],
-    reason: CompactionEvent["reason"],
-    ctx: ContextHookCtx,
-  ): Promise<CandidateResult>;
-  stageCompaction(candidate: HostCompactionCandidate, ctx: ContextHookCtx): Promise<void>;
-  toPiCompactionResult(candidate: HostCompactionCandidate): PiCompactionResult;
+  prepareCompaction(event: CompactionEvent, ctx: ContextHookCtx): Promise<CompactionDecision>;
+  stageCompaction(result: PiCompactionResult, ctx: ContextHookCtx): Promise<void>;
   ackHostCompaction(entry: PiCompactionResult | undefined, ctx: ContextHookCtx): Promise<void>;
   failStagedCompaction(event: CompactionEvent, ctx: ContextHookCtx): Promise<void>;
 }
@@ -62,15 +62,21 @@ export function toPiCompactionResult(candidate: HostCompactionCandidate): PiComp
 }
 
 export function registerCompactionHooks(pi: CompactionExtensionAPI, runtime: CompactionRuntime): void {
+  if (!pi || typeof pi.on !== "function") throw new TypeError("PCR_COMPACTION_HOOK_DEPENDENCY_MISSING");
+  if (!runtime || typeof runtime.prepareCompaction !== "function") throw new TypeError("PCR_COMPACTION_HOOK_DEPENDENCY_MISSING");
   pi.on("session_before_compact", async (event, ctx) => {
     if (event.reason === "manual" && event.preparation.allow === false) {
       await runtime.failStagedCompaction(event, ctx);
       return { cancel: true };
     }
-    const candidate = await runtime.buildCheckpoint(event.preparation, event.reason, ctx);
-    if (candidate.kind !== "ready") return { cancel: true };
-    await runtime.stageCompaction(candidate.candidate, ctx);
-    return { compaction: runtime.toPiCompactionResult(candidate.candidate) };
+    const decision = await runtime.prepareCompaction(event, ctx);
+    if (decision.kind === "native-fallback") return undefined;
+    if (decision.kind === "hard-stop") {
+      ctx.abort();
+      return { cancel: true };
+    }
+    await runtime.stageCompaction(decision.result, ctx);
+    return { compaction: decision.result };
   });
   pi.on("session_compact", async (event, ctx) => {
     await runtime.ackHostCompaction(event.compactionEntry, ctx);

@@ -3,6 +3,11 @@ export { bindInputCorrelation } from "./input-correlation.js";
 export { bindToolResultCapture, registerToolResultHook } from "./tool-result-hook.js";
 export { bindToolCallGate } from "../../kernel/src/security/action-gate.js";
 export {
+  registerCompactionHooks,
+  toPiCompactionResult,
+  type CompactionDecision,
+} from "./compaction-hook.js";
+export {
   registerContextHook,
   normalizePcrError,
   ContextHookError,

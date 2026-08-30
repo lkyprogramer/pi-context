@@ -1,8 +1,11 @@
-import { ackHostCompaction, failStagedCompaction, type StagedCompaction } from "../../../packages/pi-adapter/src/compaction-ack.js";
+import { createHash } from "node:crypto";
+import { ackHostCompaction, emptyPiCompactionUsage, failStagedCompaction, type StagedCompaction } from "../../../packages/pi-adapter/src/compaction-ack.js";
 import {
   registerCompactionHooks,
-  toPiCompactionResult,
+  type CompactionDecision,
   type CompactionExtensionAPI,
+  type CompactionPreparation,
+  type PiCompactionResult,
 } from "../../../packages/pi-adapter/src/compaction-hook.js";
 import {
   registerContextHook,
@@ -12,12 +15,21 @@ import {
 import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
 import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
 import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
-import type { RuntimeCursor } from "../../../packages/contracts/src/index.js";
+import { blobId, domainHash, type DirectiveRecord, type RuntimeCursor } from "../../../packages/contracts/src/index.js";
 import { createTokenPricer } from "../../../packages/core/src/budget/pricer.js";
+import { createCheckpointRenderer, createCheckpointVerifier } from "../../../packages/core/src/compaction/checkpoint.js";
+import { emptyContinuityRevision } from "../../../packages/core/src/continuity/reduce.js";
+import { createDirectiveExtractor } from "../../../packages/core/src/directives/extract.js";
+import { createClauseSegmenter } from "../../../packages/core/src/directives/segment.js";
+import { toDirectiveRecord } from "../../../packages/core/src/directives/temporal.js";
 import { createRuntimeCursor } from "../../../packages/core/src/identity/stable-identity.js";
 import { createCacheReceipt, type CacheReceiptRecord } from "../../../packages/core/src/materialization/cache.js";
 import { createMaterializer } from "../../../packages/core/src/materialization/materializer.js";
 import { createSectionPlanner } from "../../../packages/core/src/materialization/sections.js";
+import {
+  createCompactionService,
+  createCompactionSnapshotAssembler,
+} from "../../../packages/runtime/src/index.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { registerOperationsCommands } from "./commands/operations.js";
 import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
@@ -135,6 +147,87 @@ function sessionCursor(ctx: {
   };
 }
 
+function directiveRecordsFromPreparation(cursor: RuntimeCursor, preparation: CompactionPreparation): DirectiveRecord[] {
+  const texts: string[] = [];
+  for (const item of preparation.directives ?? []) {
+    if (typeof item.quote === "string" && item.quote.length > 0) texts.push(item.quote);
+  }
+  for (const message of preparation.messagesToSummarize ?? []) {
+    const role = message && typeof message === "object" && "role" in message ? String(message.role) : "";
+    if (role !== "user") continue;
+    const text = messageText(message);
+    if (text.length > 0) texts.push(text);
+  }
+  const extractor = createDirectiveExtractor({ cursor });
+  const segmenter = createClauseSegmenter({ cursor });
+  const records: DirectiveRecord[] = [];
+  for (const [index, text] of texts.entries()) {
+    const bytes = Buffer.from(text, "utf8");
+    const turn = {
+      userTurnId: `user_turn_${domainHash("prep-turn", { index, text }).slice(0, 12)}`,
+      cursor,
+      rawTextHash: createHash("sha256").update(bytes).digest("hex"),
+      rawBlobId: blobId(`blob_${domainHash("prep-blob", text)}`),
+      utf8Bytes: bytes.byteLength,
+      hostMessageId: `prep_${index}`,
+      sourceClass: "authenticated-user" as const,
+      capturedAt: index + 1,
+    };
+    for (const candidate of extractor.extract(turn, segmenter.segment({ text, cursor }))) {
+      const stored = toDirectiveRecord(candidate);
+      const { cursor: _cursor, ...record } = stored;
+      records.push(record);
+    }
+  }
+  return records;
+}
+
+function toPiDecision(decision: Awaited<ReturnType<ReturnType<typeof createCompactionService>["prepareCompaction"]>>): CompactionDecision {
+  if (decision.kind !== "pcr") return decision;
+  const result: PiCompactionResult = {
+    firstKeptEntryId: decision.result.firstKeptEntryId,
+    summary: decision.result.summary,
+    tokensBefore: decision.result.tokensBefore,
+    estimatedTokensAfter: decision.result.estimatedTokensAfter,
+    fromExtension: true,
+    details: decision.result.details,
+    usage: emptyPiCompactionUsage(),
+  };
+  return { kind: "pcr", result };
+}
+
+function createProductCompactionService(cursor: RuntimeCursor, preparation: CompactionPreparation) {
+  const records = directiveRecordsFromPreparation(cursor, preparation);
+  return createCompactionService({
+    cursor,
+    assembler: createCompactionSnapshotAssembler({
+      cursor,
+      transaction: { async run(work) { return work(); } },
+      directives: { async active() { return records; } },
+      continuity: { async current() { return emptyContinuityRevision(cursor); } },
+      claims: {
+        async list() {
+          return records
+            .filter((item) => item.key && item.value !== undefined)
+            .map((item) => ({
+              claimId: `cl_${item.directiveId}`,
+              key: item.key as string,
+              polarity: item.polarity,
+              status: item.status,
+              value: item.value,
+            }));
+        },
+      },
+      evidence: { async pointers() { return []; } },
+    }),
+    renderer: createCheckpointRenderer({ cursor }),
+    verifier: createCheckpointVerifier({
+      cursor,
+      pointers: { async verify() {} },
+    }),
+  });
+}
+
 function createExtensionContextRegistry(): RuntimeSessionRegistry {
   return {
     async open(ctx) {
@@ -221,59 +314,55 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   }, hookRegistry);
   let staged: StagedCompaction | null = null;
   registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
-    async buildCheckpoint(preparation, reason) {
+    async prepareCompaction(event, ctx) {
       try {
-        const spec = new URL("../../../packages/kernel/src/compaction/candidate.js", import.meta.url).href;
-        const loaded = (await import(spec)) as {
-          buildDeterministicCheckpointCandidate: (
-            preparation: unknown,
-            state: unknown,
-          ) => Promise<{ kind: "ready"; candidate: StagedCompaction["candidate"] } | { kind: "rejected"; code: string }>;
-        };
-        const directives = directivesFromPreparation(preparation);
-        return await loaded.buildDeterministicCheckpointCandidate(
-          {
-            tokensBefore: preparation.tokensBefore,
-            firstKeptEntryId: preparation.firstKeptEntryId,
-            retainedTail: preparation.retainedTail ?? [],
-            branchScope: preparation.branchScope ?? "main",
-            head: preparation.head ?? "leaf-a",
-            directives,
-            reason,
-          },
-          {
-            checkpoint: {
-              directives: directives.map((item) => ({
-                ...item,
-                quote: item.quote.slice(0, 240),
-                polarity: "must-not" as const,
-                status: "active" as const,
-              })),
-              continuity: { revisionId: "cr_runtime" },
-              maxCheckpointTokens: 1024,
-              claims: [],
-              pointers: [],
-              heads: {
-                contextHead: "ctx_runtime",
-                directiveHead: "dh_runtime",
-                claimHead: "ch_runtime",
-                continuityHead: "cth_runtime",
-              },
-            },
-            counter: {
-              countText: (text: string) => Math.ceil(text.length / 4),
-              countMessages: (messages: readonly unknown[]) => (Array.isArray(messages) ? messages.length : 0) * 10,
-            },
-          },
-        );
-      } catch {
-        return { kind: "rejected", code: "PCR_CHECKPOINT_LOAD_FAILED" };
+        let cursor: RuntimeCursor;
+        try {
+          const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+          cursor = sessionCursor(derived);
+        } catch {
+          const cwd = ctx && typeof ctx === "object" && "cwd" in ctx && typeof ctx.cwd === "string" && ctx.cwd.length > 0
+            ? ctx.cwd
+            : process.cwd();
+          const modelKey = ctx && typeof ctx === "object" && "model" in ctx && ctx.model && typeof ctx.model === "object" && "id" in ctx.model
+            ? String(ctx.model.id)
+            : "unbound";
+          cursor = createRuntimeCursor({
+            workspacePath: cwd,
+            sessionId: "unbound",
+            leafId: null,
+            lineageEntryIds: ["unbound"],
+            modelKey,
+          });
+        }
+        const service = createProductCompactionService(cursor, event.preparation);
+        const decision = await service.prepareCompaction({
+          operationId: "op_compact",
+          cursor,
+          reason: event.reason,
+          now: Date.now(),
+          tokensBefore: event.preparation.tokensBefore,
+          firstKeptEntryId: event.preparation.firstKeptEntryId,
+          signal: ctx.signal,
+        });
+        return toPiDecision(decision);
+      } catch (error) {
+        if (error && typeof error === "object" && "name" in error && error.name === "AbortError") throw error;
+        return { kind: "native-fallback" };
       }
     },
-    async stageCompaction(candidate) {
-      staged = { candidate, result: toPiCompactionResult(candidate) };
+    async stageCompaction(result) {
+      staged = {
+        candidate: {
+          firstKeptEntryId: result.firstKeptEntryId,
+          summary: result.summary,
+          tokensBefore: result.tokensBefore,
+          estimatedTokensAfter: result.estimatedTokensAfter,
+          details: result.details,
+        },
+        result,
+      };
     },
-    toPiCompactionResult,
     async ackHostCompaction(entry) {
       ackHostCompaction(staged, entry, () => {
         staged = null;

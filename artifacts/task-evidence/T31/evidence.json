@@ -1,0 +1,38 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T31",
+  "status": "review-candidate",
+  "parentCommit": "e451435cffa8cba3fc95631574f9ce5fa5c77f14",
+  "redLog": "artifacts/task-evidence/T31/red.log",
+  "greenLog": "artifacts/task-evidence/T31/green.log",
+  "fullGateLog": "artifacts/task-evidence/T31/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "nativeFallbackUndefined": true,
+    "hardStopAborts": true,
+    "productPathNotMustNot": true,
+    "productHeadsNotHardcoded": true,
+    "repositoryGateFiles": 124,
+    "repositoryGateTests": 614,
+    "acceptanceGateTests": 30
+  },
+  "files": {
+    "artifacts/task-evidence/T31/changed-files.json": "b5a586f6a683ae2df38b025b2e821d1b94dc97ac0175bea68d657b3203d47fc7",
+    "artifacts/task-evidence/T31/full-gate.log": "1105d54004e3b3a18d79072ca24bd13d3cde82cd5e1a4a9d656a9d1d0a03be22",
+    "artifacts/task-evidence/T31/green.log": "b17fd649d4a143d12e83d283c8afbf6155fde5b601a5cba8aa4dc74f81911286",
+    "artifacts/task-evidence/T31/preflight-git.txt": "950066b388f97d8d2408c66f6c94371f168f17d4259a591c977b0c6e012a189f",
+    "artifacts/task-evidence/T31/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T31/red.log": "b1df5c0e0dde207a9792f4f49c90ed933049cfaea170cd1218c2961a734db39e",
+    "apps/pi-context-runtime/src/extension.ts": "1356ecad25176666b4bb100e903173035b62025052fc62792d125d8e0e3152b2",
+    "blockers/T31-scope-expansion.md": "817be39759ba72e381f45a2c813d6f321c8758028595d3b5a7796fbc6aab7234",
+    "packages/pi-adapter/package.json": "e4ea7498fbbb6f3fb8d29633b59db5f242dd216ca5df4f4b4e866bed34f7acf3",
+    "packages/pi-adapter/src/compaction-hook.ts": "d43932c009be49da70b4d3d935e1aaef682e7d1c5691b6a4a7b86d95ca6d7d46",
+    "packages/pi-adapter/src/index.ts": "257ccaf69e9a585d31dae65cacb943405e5ca02849d13277bbca2604d0ee366d",
+    "packages/runtime/package.json": "9dbb2854acbadfbd1a9c3a3b9cbecdf5b247604af4f89e90ae3812504cd4aa36",
+    "packages/runtime/src/compaction-service.ts": "10fd6c958b1e0b6c69cdc87534586039ff40bb1eae2dd79d1dcd839710b0e3f5",
+    "packages/runtime/src/index.ts": "24dd711af4d94e41284e9ae3135f0aef93df6d594d4b84dea10835f7052155cb",
+    "tests/acceptance/compaction-fallback.test.ts": "e1319bb05e0ffc10e52d994ea8252319e08a51c35acd30da6a567141d06be3e2",
+    "tests/support/pi.ts": "8823300f2030e182ecb9987db6f626577353bd495cd7bd6ca94dd30db4660e7c",
+    "tests/tasks/t31.test.ts": "609a9c1f330f9d917ceb6b2557d58e3d3225f34792bdd54506b17605f76afa15"
+  }
+}

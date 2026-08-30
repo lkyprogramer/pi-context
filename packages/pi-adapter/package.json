@@ -14,6 +14,6 @@
     "@pcr/runtime": "workspace:*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts src/contracts/pi-0844.ts test/message-codec.test.ts ../../tests/acceptance/user-input-flow.test.ts ../../tests/acceptance/tool-result-flow.test.ts ../../tests/acceptance/retrieval-tools.test.ts ../../tests/acceptance/context-hook.test.ts ../../tests/tasks/t13.test.ts ../../tests/tasks/t20.test.ts ../../tests/tasks/t24.test.ts ../../tests/tasks/t28.test.ts"
+    "typecheck": "tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts src/contracts/pi-0844.ts test/message-codec.test.ts ../../tests/acceptance/user-input-flow.test.ts ../../tests/acceptance/tool-result-flow.test.ts ../../tests/acceptance/retrieval-tools.test.ts ../../tests/acceptance/context-hook.test.ts ../../tests/acceptance/compaction-fallback.test.ts ../../tests/tasks/t13.test.ts ../../tests/tasks/t20.test.ts ../../tests/tasks/t24.test.ts ../../tests/tasks/t28.test.ts ../../tests/tasks/t31.test.ts"
   }
 }
