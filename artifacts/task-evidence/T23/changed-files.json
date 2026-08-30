@@ -1,0 +1,11 @@
+{
+  "taskId": "T23",
+  "production": [
+    "blockers/T23-scope-expansion.md",
+    "scripts/gates/w1-vertical.mjs"
+  ],
+  "tests": [
+    "tests/acceptance/w1-vertical.test.ts",
+    "tests/tasks/t23.test.ts"
+  ]
+}

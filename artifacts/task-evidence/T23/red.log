@@ -1,0 +1,30 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:4381) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t23.test.ts [ tests/tasks/t23.test.ts ]
+Error: Cannot find module '../../scripts/gates/w1-vertical.mjs' imported from '/Users/luo/Documents/github/pi-context/tests/tasks/t23.test.ts'
+ ❯ tests/tasks/t23.test.ts:18:1
+     16| } from "@pcr/storage-node";
+     17|
+     18| import { runW1Vertical } from "../../scripts/gates/w1-vertical.mjs";
+       | ^
+     19|
+     20| const roots: string[] = [];
+
+Caused by: Error: Failed to load url ../../scripts/gates/w1-vertical.mjs (resolved id: ../../scripts/gates/w1-vertical.mjs) in /Users/luo/Documents/github/pi-context/tests/tasks/t23.test.ts. Does the file exist?
+ ❯ loadAndTransform node_modules/.pnpm/vite@7.3.6_@types+node@22.20.1_jiti@2.7.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:22739:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  23:30:17
+   Duration  1.15s (transform 292ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 66ms)
+
