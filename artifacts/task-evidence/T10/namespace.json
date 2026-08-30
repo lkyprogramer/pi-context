@@ -1,0 +1,9 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T10",
+  "title": "Encrypted content-addressed blob store",
+  "authoritativeManifest": "artifacts/task-evidence/T10/evidence.json",
+  "legacyManifestPreserved": "artifacts/task-evidence/T10.json",
+  "legacyTaskTitle": "Directive capture",
+  "controllerState": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/.pcr/task-status.json"
+}

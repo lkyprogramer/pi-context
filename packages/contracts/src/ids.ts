@@ -8,6 +8,16 @@ export type EvidenceId = string & { readonly __brand: "EvidenceId" };
 export type BlobId = string & { readonly __brand: "BlobId" };
 export type HostMessageId = string & { readonly __brand: "HostMessageId" };
 
+export const BLOB_ID_PATTERN = /^blob_[a-f0-9]{64}$/u;
+
+export function isBlobId(value: unknown): value is BlobId {
+  return typeof value === "string" && BLOB_ID_PATTERN.test(value);
+}
+
+export function parseBlobId(value: unknown): BlobId | PcrError {
+  return isBlobId(value) ? value : pcrError("INVALID_ID", { domain: "blob" });
+}
+
 function branded<T extends string>(domain: string, value: string): T | PcrError {
   if (typeof value !== "string" || value.length === 0) {
     return pcrError("INVALID_ID", { domain });

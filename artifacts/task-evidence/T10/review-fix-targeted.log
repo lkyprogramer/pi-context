@@ -1,0 +1,28 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:47586) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/contracts/test/types.test.ts (5 tests) 2ms
+(node:47584) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:47587) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/tasks/t07.test.ts (9 tests) 5ms
+ ✓ |0| packages/runtime/test/runtime-session.test.ts (2 tests) 2ms
+ ✓ |0| tests/tasks/t08.test.ts (10 tests) 7ms
+(node:47585) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/e2e/key-rotation-v2-boundary.test.ts (2 tests) 176ms
+ ✓ |0| tests/tasks/t09.test.ts (13 tests) 476ms
+ ✓ |0| tests/e2e/operations.test.ts (6 tests) 470ms
+ ✓ |0| tests/acceptance/session-registry.test.ts (8 tests) 10ms
+ ✓ |0| packages/storage-node/test/blob-store.test.ts (13 tests) 1476ms
+   ✓ encrypted content-addressed blob store > settles concurrent same-content writes on one complete authenticated object  392ms
+
+ Test Files  9 passed (9)
+      Tests  68 passed (68)
+   Start at  13:39:05
+   Duration  1.87s (transform 377ms, setup 0ms, collect 2.15s, tests 2.63s, environment 1ms, prepare 647ms)
+

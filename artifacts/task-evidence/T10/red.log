@@ -1,0 +1,34 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:86789) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |0| tests/tasks/t10.test.ts (1 test | 1 failed) 13ms
+   × T10 Encrypted content-addressed blob store > encrypted_content_addressed_blob_store 13ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t10.test.ts > T10 Encrypted content-addressed blob store > encrypted_content_addressed_blob_store
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t10.test.ts:42:33
+     40| describe("T10 Encrypted content-addressed blob store", () => {
+     41|   it("encrypted_content_addressed_blob_store", async () => {
+     42|     await expect(runT10Fixture()).resolves.toEqual({ ok: true, task: "…
+       |                                 ^
+     43|   });
+     44| });
+
+Caused by: TypeError: (0 , createEncryptedBlobStore) is not a function
+ ❯ runT10Fixture tests/tasks/t10.test.ts:26:17
+ ❯ tests/tasks/t10.test.ts:42:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  12:33:57
+   Duration  318ms (transform 57ms, setup 0ms, collect 78ms, tests 13ms, environment 0ms, prepare 44ms)
+

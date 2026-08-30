@@ -1,6 +1,7 @@
 const draft = "https://json-schema.org/draft/2020-12/schema";
 const identifier = { type: "string", minLength: 1 };
 const hash = { type: "string", pattern: "^[0-9a-f]{64}$" };
+const blobReference = { type: "string", pattern: "^blob_[0-9a-f]{64}$" };
 const range = {
   type: "object",
   additionalProperties: false,
@@ -56,7 +57,7 @@ export const userTurnRecordSchema = {
     userTurnId: identifier,
     cursor: { $ref: "runtime-cursor.schema.json" },
     rawTextHash: hash,
-    rawBlobId: identifier,
+    rawBlobId: blobReference,
     utf8Bytes: { type: "integer", minimum: 0 },
     hostMessageId: identifier,
     sourceClass: { enum: ["authenticated-user", "untrusted-user"] },
@@ -112,7 +113,7 @@ export const evidenceReceiptSchema = {
     sourceClass: { $ref: "source-class.schema.json" },
     authority: { enum: ["none", "inform", "propose", "act"] },
     contentHash: hash,
-    blobId: identifier,
+    blobId: blobReference,
     observedAt: { type: "integer", minimum: 0 },
   },
 };

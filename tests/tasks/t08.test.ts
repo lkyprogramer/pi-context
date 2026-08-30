@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { blobId, domainHash } from "@pcr/contracts";
 import {
   createRuntimeSession,
   createRuntimeSessionRegistry,
@@ -8,6 +9,10 @@ import {
   type RuntimeSession,
   type RuntimeSessionHandle,
 } from "@pcr/runtime";
+
+function fixtureBlobRef(sessionId: string) {
+  return blobId(`blob_${domainHash("t08-blob", sessionId)}`);
+}
 
 function context(overrides: Partial<PiSessionContext> = {}): PiSessionContext {
   return {
@@ -31,7 +36,7 @@ function runtime(scope: PiSessionContext): RuntimeSession {
             userTurnId: `turn-${scope.sessionId}`,
             cursor: input.cursor,
             rawTextHash: "8".repeat(64),
-            rawBlobId: `blob-${scope.sessionId}`,
+            rawBlobId: fixtureBlobRef(scope.sessionId),
             utf8Bytes: Buffer.byteLength(input.rawText, "utf8"),
             sourceClass: input.sourceClass,
             capturedAt: input.capturedAt,
@@ -43,7 +48,7 @@ function runtime(scope: PiSessionContext): RuntimeSession {
           return {
             operationId: input.operationId,
             observationId: `observation-${scope.sessionId}`,
-            rawBlobId: `blob-${scope.sessionId}`,
+            rawBlobId: fixtureBlobRef(scope.sessionId),
             evidenceIds: [],
             visibleContent: input.content,
             isError: input.isError,

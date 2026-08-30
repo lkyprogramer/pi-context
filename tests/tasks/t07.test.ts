@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { blobId, domainHash } from "@pcr/contracts";
 import { createRuntimeSession } from "../../packages/runtime/src/runtime-session.js";
 import type {
   MaterializationPort,
@@ -16,6 +17,10 @@ const cursor = {
   lineageHash: "7".repeat(64),
   modelKey: "openclaw/Qwen3.8-27B-WORK",
 };
+
+function fixtureBlobRef(seed: string) {
+  return blobId(`blob_${domainHash("t07-blob", seed)}`);
+}
 
 function userInput(operationId: string, rawText = "preserve exact user input"): UserInputEvent {
   return {
@@ -44,7 +49,7 @@ function createPorts(
             userTurnId: `turn-${input.operationId}`,
             cursor: input.cursor,
             rawTextHash: `hash-${input.rawText}`,
-            rawBlobId: `blob-${input.operationId}`,
+            rawBlobId: fixtureBlobRef(input.operationId),
             utf8Bytes: Buffer.byteLength(input.rawText, "utf8"),
             sourceClass: input.sourceClass,
             capturedAt: input.capturedAt,
@@ -58,7 +63,7 @@ function createPorts(
           return {
             operationId: input.operationId,
             observationId: `observation-${input.operationId}`,
-            rawBlobId: `blob-${input.operationId}`,
+            rawBlobId: fixtureBlobRef(input.operationId),
             evidenceIds: [`evidence-${input.operationId}`],
             visibleContent: input.content,
             isError: input.isError,
@@ -122,7 +127,7 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
             return {
               operationId: input.operationId,
               observationId: "observation-tool",
-              rawBlobId: "blob-tool",
+              rawBlobId: fixtureBlobRef("tool"),
               evidenceIds: ["evidence-tool"],
               visibleContent: input.content,
               isError: input.isError,
@@ -217,7 +222,7 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
               userTurnId: "turn-idempotent",
               cursor: input.cursor,
               rawTextHash: "hash-idempotent",
-              rawBlobId: "blob-idempotent",
+              rawBlobId: fixtureBlobRef("idempotent"),
               utf8Bytes: Buffer.byteLength(input.rawText, "utf8"),
               sourceClass: input.sourceClass,
               capturedAt: input.capturedAt,
@@ -279,7 +284,7 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
               userTurnId: "turn-retry",
               cursor: input.cursor,
               rawTextHash: "hash-retry",
-              rawBlobId: "blob-retry",
+              rawBlobId: fixtureBlobRef("retry"),
               utf8Bytes: Buffer.byteLength(input.rawText, "utf8"),
               sourceClass: input.sourceClass,
               capturedAt: input.capturedAt,

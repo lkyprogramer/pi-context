@@ -6,7 +6,9 @@ import {
   SOURCE_CLASSES,
   canonicalJson,
   domainHash,
+  isBlobId,
   type ActionAuthority,
+  type BlobRef,
   type EvidenceRecord,
   type RuntimeCursor,
   type SourceClass,
@@ -98,6 +100,10 @@ function requireNonEmpty(value: unknown, field: string): asserts value is string
   if (typeof value !== "string" || value.length === 0) failInput(field);
 }
 
+function requireBlobRef(value: unknown, field: string): asserts value is BlobRef {
+  if (!isBlobId(value)) failInput(field);
+}
+
 function validateCursor(cursor: RuntimeCursor): RuntimeCursor {
   if (!cursor || typeof cursor !== "object") failInput("cursor");
   if (!WORKSPACE_PATTERN.test(cursor.workspaceId)) failInput("cursor.workspaceId");
@@ -114,7 +120,7 @@ function normalizeEvidence(record: EvidenceRecord): NormalizedEvidence {
   requireNonEmpty(record.evidenceId, "record.evidenceId");
   requireNonEmpty(record.operationId, "record.operationId");
   requireNonEmpty(record.observationId, "record.observationId");
-  requireNonEmpty(record.rawBlobId, "record.rawBlobId");
+  requireBlobRef(record.rawBlobId, "record.rawBlobId");
   requireNonEmpty(record.reducer?.id, "record.reducer.id");
   requireNonEmpty(record.reducer?.revision, "record.reducer.revision");
   requireNonEmpty(record.kind, "record.kind");
@@ -299,6 +305,7 @@ function rowMatches(row: EvidenceRow, normalized: NormalizedEvidence): boolean {
 }
 
 function toEvidenceRecord(row: EvidenceRow): EvidenceRecord {
+  requireBlobRef(row.raw_blob_id, "row.raw_blob_id");
   return {
     evidenceId: row.evidence_id,
     cursor: {

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { blobId } from "@pcr/contracts";
 import { createRuntimeCursor } from "@pcr/core";
 import {
   WORKSPACE_SQLITE_SCHEMA_VERSION,
@@ -44,7 +45,7 @@ function record(scope: ReturnType<typeof cursor>, overrides: Record<string, unkn
     cursor: scope,
     operationId: "operation_t09",
     observationId: "observation_t09",
-    rawBlobId: "blob_t09",
+    rawBlobId: blobId(`blob_${"a".repeat(64)}`),
     reducer: { id: "shell", revision: "v1" },
     kind: "tool-output",
     value: { text: "persisted", nested: { exitCode: 0 } },
@@ -115,7 +116,7 @@ describe("T09 Per-workspace SQLite schema and migrations", () => {
         record(scope, { value: { text: "changed" } }),
         record(scope, { authority: "act" }),
         record(scope, { sourceClass: "untrusted-tool" }),
-        record(scope, { rawBlobId: "blob_changed" }),
+        record(scope, { rawBlobId: blobId(`blob_${"b".repeat(64)}`) }),
         record(scope, { contentHash: "8".repeat(64) }),
         record(cursor(root, { leafId: "other-leaf", lineageEntryIds: ["entry-root", "other-leaf"] })),
       ];
@@ -253,6 +254,26 @@ describe("T09 Per-workspace SQLite schema and migrations", () => {
     await store.close();
     await store.close();
     await expect(store.get(scope, "evidence_t09")).rejects.toMatchObject({ code: "PCR_SQLITE_CLOSED" });
+  });
+
+  it("rejects a durable row whose blob reference is not a canonical CAS address", async () => {
+    const root = freshRoot("invalid-blob-ref");
+    const scope = cursor(root);
+    const store = await openWorkspaceSqliteStore(openInput(root, scope.workspaceId));
+    try {
+      await store.put(record(scope));
+      const raw = new DatabaseSync(store.path);
+      try {
+        raw.prepare("UPDATE evidence SET raw_blob_id = 'blob-public'").run();
+      } finally {
+        raw.close();
+      }
+      await expect(store.get(scope, "evidence_t09")).rejects.toMatchObject({
+        code: "PCR_SQLITE_INPUT_INVALID",
+      });
+    } finally {
+      await store.close();
+    }
   });
 
   it("replays deterministically across independent workspace stores", async () => {

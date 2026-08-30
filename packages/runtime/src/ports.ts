@@ -1,5 +1,7 @@
 import type {
   ActionAuthority,
+  BlobRef,
+  ByteRange,
   HostContentBlock,
   HostMessage,
   MaterializedView,
@@ -47,7 +49,7 @@ export interface ToolObservation extends CancellableRuntimeOperation {
 export interface ProjectedToolResult {
   operationId: string;
   observationId: string;
-  rawBlobId: string;
+  rawBlobId: BlobRef;
   evidenceIds: string[];
   visibleContent: HostContentBlock[];
   isError: boolean;
@@ -72,6 +74,11 @@ export interface ToolResultPort {
 
 export interface MaterializationPort {
   materialize(input: MaterializationRequest): Promise<MaterializedView>;
+}
+
+export interface BlobStore {
+  put(cursor: RuntimeCursor, plain: Uint8Array): Promise<BlobRef>;
+  read(cursor: RuntimeCursor, ref: BlobRef, range?: ByteRange): Promise<Uint8Array>;
 }
 
 export interface RuntimeSessionPorts {

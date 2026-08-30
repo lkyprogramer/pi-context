@@ -1,4 +1,5 @@
 import { SessionManager } from "@earendil-works/pi-coding-agent";
+import { blobId, domainHash } from "@pcr/contracts";
 import { createRuntimeCursor } from "@pcr/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -14,6 +15,10 @@ import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
 afterEach(resetOwnerForTest);
 
 const identity = { create: createRuntimeCursor };
+
+function fixtureBlobRef(sessionId: string) {
+  return blobId(`blob_${domainHash("session-registry-blob", sessionId)}`);
+}
 
 function actualPiContext(sessionManager: SessionManager, signal = new AbortController().signal): PiRuntimeContext {
   return {
@@ -42,7 +47,7 @@ function resources(disposals: string[], contexts: string[]): ProductionSessionRe
                 userTurnId: `turn-${ctx.sessionId}`,
                 cursor: input.cursor,
                 rawTextHash: "a".repeat(64),
-                rawBlobId: `blob-${ctx.sessionId}`,
+                rawBlobId: fixtureBlobRef(ctx.sessionId),
                 utf8Bytes: Buffer.byteLength(input.rawText, "utf8"),
                 sourceClass: input.sourceClass,
                 capturedAt: input.capturedAt,
@@ -54,7 +59,7 @@ function resources(disposals: string[], contexts: string[]): ProductionSessionRe
               return {
                 operationId: input.operationId,
                 observationId: `observation-${ctx.sessionId}`,
-                rawBlobId: `blob-${ctx.sessionId}`,
+                rawBlobId: fixtureBlobRef(ctx.sessionId),
                 evidenceIds: [],
                 visibleContent: input.content,
                 isError: input.isError,

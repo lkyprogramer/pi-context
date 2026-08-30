@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { blobId, domainHash } from "@pcr/contracts";
 import {
   RuntimeSessionApplicationService,
   RuntimeSessionError,
@@ -15,6 +16,8 @@ const cursor = {
   modelKey: "openclaw/Qwen3.8-27B-WORK",
 };
 
+const publicBlobRef = blobId(`blob_${domainHash("runtime-test-blob", "public")}`);
+
 function publicPorts(): RuntimeSessionPorts {
   return {
     userInput: {
@@ -24,7 +27,7 @@ function publicPorts(): RuntimeSessionPorts {
           userTurnId: "turn-public",
           cursor: input.cursor,
           rawTextHash: "hash-public",
-          rawBlobId: "blob-public",
+          rawBlobId: publicBlobRef,
           utf8Bytes: Buffer.byteLength(input.rawText, "utf8"),
           sourceClass: input.sourceClass,
           capturedAt: input.capturedAt,
@@ -36,7 +39,7 @@ function publicPorts(): RuntimeSessionPorts {
         return {
           operationId: input.operationId,
           observationId: "observation-public",
-          rawBlobId: "blob-public",
+          rawBlobId: publicBlobRef,
           evidenceIds: ["evidence-public"],
           visibleContent: input.content,
           isError: input.isError,

@@ -1,0 +1,2 @@
+?? artifacts/task-evidence/T10/preflight-git.txt
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/

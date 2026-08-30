@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "node -e \"process.exit(0)\""
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/ingress/project.ts"
   }
 }

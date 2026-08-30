@@ -3,6 +3,7 @@ import {
   actionAuthorityRank,
   derivedAuthorityCeiling,
   isPcrError,
+  parseBlobId,
   parseSourceClass,
   pcrError,
   sourceAuthorityCeiling,
@@ -34,5 +35,10 @@ describe("authority vocabulary", () => {
     expect(isPcrError(error)).toBe(true);
     expect(error.code).toBe("INVALID_ID");
     expect(workspaceId("ws_1")).toBe("ws_1");
+  });
+
+  it("parses only canonical durable blob references", () => {
+    expect(parseBlobId(`blob_${"a".repeat(64)}`)).toBe(`blob_${"a".repeat(64)}`);
+    expect(isPcrError(parseBlobId("blob-public"))).toBe(true);
   });
 });

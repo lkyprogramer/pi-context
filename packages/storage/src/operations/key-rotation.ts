@@ -62,6 +62,32 @@ function readState(workspaceRoot: string): RotationState | null {
   return JSON.parse(readFileSync(path, "utf8")) as RotationState;
 }
 
+const LEGACY_ENVELOPE_KEYS = [
+  "algorithm",
+  "authTag",
+  "ciphertext",
+  "nonce",
+  "plaintextHash",
+  "version",
+  "workspaceId",
+].sort();
+
+function isLegacyEnvelope(raw: Buffer, workspaceId: string): boolean {
+  try {
+    const value = JSON.parse(raw.toString("utf8")) as Record<string, unknown>;
+    return Object.keys(value).sort().join("\0") === LEGACY_ENVELOPE_KEYS.join("\0")
+      && value.version === 1
+      && value.algorithm === "aes-256-gcm"
+      && value.workspaceId === workspaceId
+      && typeof value.plaintextHash === "string"
+      && typeof value.nonce === "string"
+      && typeof value.authTag === "string"
+      && typeof value.ciphertext === "string";
+  } catch {
+    return false;
+  }
+}
+
 function writeState(workspaceRoot: string, state: RotationState): void {
   const path = statePath(workspaceRoot);
   mkdirSync(dirname(path), { recursive: true });
@@ -77,10 +103,16 @@ function decryptWithRing(raw: Buffer, blobId: string, workspaceId: string, oldKe
 }
 
 export async function rotateWorkspaceKeys(input: RotationInput): Promise<RotationReceipt> {
+  const all = listBlobIds(input.workspaceRoot);
+  for (const blobId of all) {
+    const raw = readFileSync(blobPath(input.workspaceRoot, blobId));
+    if (!isLegacyEnvelope(raw, input.workspaceId)) throw opsError("PCR_ROTATION_V2_UNSUPPORTED");
+    const { plain } = decryptWithRing(raw, blobId, input.workspaceId, input.oldKey, input.newKey);
+    plain.fill(0);
+  }
   const oldKeyHash = keyHash(input.oldKey);
   const newKeyHash = keyHash(input.newKey);
   const existing = readState(input.workspaceRoot);
-  const all = listBlobIds(input.workspaceRoot);
   const remaining = existing?.remaining ?? all.filter((id) => !(existing?.done ?? []).includes(id));
   const done = existing?.done ?? [];
   const state: RotationState = {

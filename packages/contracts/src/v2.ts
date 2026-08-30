@@ -1,4 +1,5 @@
 import type { ActionAuthority, EvidenceUnit, SourceClass } from "./types.js";
+import type { BlobId } from "./ids.js";
 import type { RuntimeCursor } from "./identity.js";
 
 export interface TextRange {
@@ -10,7 +11,7 @@ export interface UserTurnRecord {
   userTurnId: string;
   cursor: RuntimeCursor;
   rawTextHash: string;
-  rawBlobId: string;
+  rawBlobId: BlobRef;
   utf8Bytes: number;
   hostMessageId?: string;
   sourceClass: "authenticated-user" | "untrusted-user";
@@ -49,7 +50,7 @@ export interface EvidenceReceipt {
   sourceClass: SourceClass;
   authority: ActionAuthority;
   contentHash: string;
-  blobId: string;
+  blobId: BlobRef;
   observedAt: number;
 }
 
@@ -57,10 +58,18 @@ export interface EvidenceReceipt {
 export interface EvidenceRecord extends EvidenceUnit {
   cursor: RuntimeCursor;
   operationId: string;
-  rawBlobId: string;
+  rawBlobId: BlobRef;
   contentHash: string;
   reducer: { id: string; revision: string };
 }
+
+export interface ByteRange {
+  start: number;
+  endExclusive: number;
+}
+
+/** Durable content address stored by EvidenceRecord.rawBlobId. */
+export type BlobRef = BlobId;
 
 export interface CheckpointV2 {
   version: 2;

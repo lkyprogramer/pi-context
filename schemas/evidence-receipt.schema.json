@@ -38,7 +38,7 @@
     },
     "blobId": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^blob_[0-9a-f]{64}$"
     },
     "observedAt": {
       "type": "integer",

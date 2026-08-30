@@ -1,0 +1,12 @@
+
+> @pcr/kernel@ typecheck /Users/luo/Documents/github/pi-context/packages/kernel
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/ingress/project.ts
+
+
+> @pcr/runtime@ typecheck /Users/luo/Documents/github/pi-context/packages/runtime
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/runtime-session.test.ts ../../tests/tasks/t07.test.ts
+
+
+> @pcr/storage-node@ typecheck /Users/luo/Documents/github/pi-context/packages/storage-node
+> tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/blob-store.test.ts ../../tests/tasks/t09.test.ts
+
