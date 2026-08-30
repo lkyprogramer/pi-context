@@ -5,7 +5,8 @@ export function reduceMutationResult(
   text: string,
   input: { toolName: "edit" | "write" | "ls"; path?: string; ok?: boolean; rawBlobId?: string },
 ): ReducerOutput {
-  const failed = input.ok === false || /error|failed|rejected/i.test(text);
+  const failed = input.ok === false
+    || (input.ok !== true && /error|failed|rejected/i.test(text));
   const path = (input.path ?? "unknown").replace(/\.\.\//g, "");
   if (input.toolName === "ls") {
     const entries = text.split("\n").filter(Boolean).slice(0, 80);

@@ -122,6 +122,42 @@ describe("T14 Reducer registry and production reducers", () => {
     expect(calls).toBe(0);
   });
 
+  it("does not classify a successful write as failed because the path contains error", async () => {
+    const bound = cursor();
+    const registry = createReducerRegistry({ cursor: bound, reducers: createProductionReducers() });
+    const result = await registry.reduce(input(observation({
+      cursor: bound,
+      toolName: "write",
+      args: { path: "src/error.ts" },
+      content: [{ type: "text", text: "Successfully wrote 12 bytes to src/error.ts" }],
+      details: null,
+      isError: false,
+    })));
+    expect(result.reducer.id).toBe("file-mutation");
+    expect(result.visibleText).toContain("[write ok src/error.ts]");
+    expect(result.facts[0]).toMatchObject({ kind: "mutation" });
+  });
+
+  it("preserves Pi read offset and limit through the production registry", async () => {
+    const bound = cursor();
+    const registry = createReducerRegistry({ cursor: bound, reducers: createProductionReducers() });
+    const result = await registry.reduce(input(observation({
+      cursor: bound,
+      toolName: "read",
+      args: { path: "src/a.ts", offset: 50, limit: 10 },
+      content: [{ type: "text", text: "line-fifty\nline-fifty-nine" }],
+      details: { truncation: { truncated: true } },
+      isError: false,
+    })));
+    expect(result.reducer.id).toBe("read");
+    expect(result.visibleText).toContain("[read src/a.ts 50-59]");
+    expect(result.visibleText).toContain("truncated");
+    expect(result.facts[0]).toMatchObject({
+      kind: "read-range",
+      value: { path: "src/a.ts", start: 50, end: 59, truncated: true },
+    });
+  });
+
   it("is deterministic across two independent registries", async () => {
     const bound = cursor();
     const left = createReducerRegistry({ cursor: bound, reducers: createProductionReducers() });

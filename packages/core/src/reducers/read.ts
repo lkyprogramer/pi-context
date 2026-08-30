@@ -32,9 +32,22 @@ export const readReducer: Reducer = {
     const details = detailsRecord(input.observation.details);
     const args = detailsRecord(input.observation.args);
     const path = typeof args.path === "string" ? args.path : typeof details.path === "string" ? details.path : "file";
+    const offset = typeof args.offset === "number" && Number.isSafeInteger(args.offset) && args.offset > 0
+      ? args.offset
+      : 1;
+    const limit = typeof args.limit === "number" && Number.isSafeInteger(args.limit) && args.limit > 0
+      ? args.limit
+      : undefined;
+    const truncation = details.truncation;
+    const truncated = truncation === true
+      || (typeof truncation === "object" && truncation !== null)
+      || (limit === undefined && input.text.length > 4000);
+    const lineCount = Math.max(1, input.text.split("\n").length);
     return reduceReadResult(input.text, {
       path,
-      truncated: input.text.length > 4000,
+      start: offset,
+      end: offset + (limit ?? lineCount) - 1,
+      truncated,
       rawBlobId: input.rawBlobId,
     });
   },

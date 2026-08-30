@@ -18,6 +18,16 @@ describe("production reducers", () => {
     expect(result.visibleText).not.toContain("[edit ok");
   });
 
+  it("keeps an explicit successful mutation even when the path contains error", () => {
+    const result = reduceMutationResult("Successfully wrote 12 bytes to src/error.ts", {
+      toolName: "write",
+      path: "src/error.ts",
+      ok: true,
+    });
+    expect(result.facts[0]).toMatchObject({ kind: "mutation" });
+    expect(result.visibleText).toContain("[write ok src/error.ts]");
+  });
+
   it("does not let path normalization escape workspace identity", () => {
     const result = reduceReadResult("x", { path: "../etc/passwd" });
     expect(result.visibleText).not.toContain("../etc/passwd");
