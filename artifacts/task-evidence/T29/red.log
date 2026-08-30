@@ -1,0 +1,116 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t29.test.ts (6 tests | 6 failed) 24ms
+   × T29 Authoritative compaction snapshot assembler > authoritative_compaction_snapshot_assembler 19ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T29 Authoritative compaction snapshot assembler > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T29 Authoritative compaction snapshot assembler > rejects malformed requests and empty operation ids 1ms
+     → (0 , createCompactionSnapshotAssembler) is not a function
+   × T29 Authoritative compaction snapshot assembler > replays the same request to an equal snapshot 1ms
+     → (0 , createCompactionSnapshotAssembler) is not a function
+   × T29 Authoritative compaction snapshot assembler > rejects a cursor from another workspace 0ms
+     → (0 , createCompactionSnapshotAssembler) is not a function
+   × T29 Authoritative compaction snapshot assembler > stops at the abort boundary before reading stores 0ms
+     → (0 , createCompactionSnapshotAssembler) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t29.test.ts > T29 Authoritative compaction snapshot assembler > authoritative_compaction_snapshot_assembler
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t29.test.ts:175:33
+    173| describe("T29 Authoritative compaction snapshot assembler", () => {
+    174|   it("authoritative_compaction_snapshot_assembler", async () => {
+    175|     await expect(runT29Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    176|   });
+    177| 
+
+Caused by: TypeError: (0 , createCompactionSnapshotAssembler) is not a function
+ ❯ seed tests/tasks/t29.test.ts:133:21
+ ❯ runT29Fixture tests/tasks/t29.test.ts:145:48
+ ❯ tests/tasks/t29.test.ts:175:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t29.test.ts > T29 Authoritative compaction snapshot assembler > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_COMPACTION_SNAPSHOT_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_4__.createCompactionSnapshotAssembler) is not a function",
+  }
+
+ ❯ tests/tasks/t29.test.ts:179:66
+    177| 
+    178|   it("fails construction when production dependencies are absent", () …
+    179|     expect(() => createCompactionSnapshotAssembler({} as never)).toThr…
+       |                                                                  ^
+    180|       expect.objectContaining({ code: "PCR_COMPACTION_SNAPSHOT_DEPENDE…
+    181|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t29.test.ts > T29 Authoritative compaction snapshot assembler > rejects malformed requests and empty operation ids
+TypeError: (0 , createCompactionSnapshotAssembler) is not a function
+ ❯ seed tests/tasks/t29.test.ts:133:21
+    131|     async run<T>(work: () => Promise<T>) { return work(); },
+    132|   };
+    133|   const assembler = createCompactionSnapshotAssembler({
+       |                     ^
+    134|     cursor: bound,
+    135|     transaction,
+ ❯ tests/tasks/t29.test.ts:185:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t29.test.ts > T29 Authoritative compaction snapshot assembler > replays the same request to an equal snapshot
+TypeError: (0 , createCompactionSnapshotAssembler) is not a function
+ ❯ seed tests/tasks/t29.test.ts:133:21
+    131|     async run<T>(work: () => Promise<T>) { return work(); },
+    132|   };
+    133|   const assembler = createCompactionSnapshotAssembler({
+       |                     ^
+    134|     cursor: bound,
+    135|     transaction,
+ ❯ tests/tasks/t29.test.ts:193:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t29.test.ts > T29 Authoritative compaction snapshot assembler > rejects a cursor from another workspace
+TypeError: (0 , createCompactionSnapshotAssembler) is not a function
+ ❯ seed tests/tasks/t29.test.ts:133:21
+    131|     async run<T>(work: () => Promise<T>) { return work(); },
+    132|   };
+    133|   const assembler = createCompactionSnapshotAssembler({
+       |                     ^
+    134|     cursor: bound,
+    135|     transaction,
+ ❯ tests/tasks/t29.test.ts:200:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t29.test.ts > T29 Authoritative compaction snapshot assembler > stops at the abort boundary before reading stores
+TypeError: (0 , createCompactionSnapshotAssembler) is not a function
+ ❯ tests/tasks/t29.test.ts:217:23
+    215|     const bound = cursor();
+    216|     let reads = 0;
+    217|     const assembler = createCompactionSnapshotAssembler({
+       |                       ^
+    218|       cursor: bound,
+    219|       transaction: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  03:29:01
+   Duration  437ms (transform 145ms, setup 0ms, collect 207ms, tests 24ms, environment 0ms, prepare 56ms)
+

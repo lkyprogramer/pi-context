@@ -1,0 +1,33 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T29",
+  "status": "review-candidate",
+  "parentCommit": "5626ed75b6d912b03d8005f512448eeb4ce847eb",
+  "redLog": "artifacts/task-evidence/T29/red.log",
+  "greenLog": "artifacts/task-evidence/T29/green.log",
+  "fullGateLog": "artifacts/task-evidence/T29/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "sameTransactionReads": true,
+    "derivedHeadsNotHardcoded": true,
+    "snapshotHashFromRecords": true,
+    "noDefaultEmptyClaimsOrPointers": true,
+    "repositoryGateFiles": 120,
+    "repositoryGateTests": 597,
+    "acceptanceGateTests": 29
+  },
+  "files": {
+    "artifacts/task-evidence/T29/changed-files.json": "e626ec809239cd17b4f1532ecdaab14c8283b848afe6012f2cd913e0bbe84938",
+    "artifacts/task-evidence/T29/full-gate.log": "dec365c065135dd80809b7b647a352f0a45c1770ea887b5d04abd4cdb8af2ec1",
+    "artifacts/task-evidence/T29/green.log": "ccbf0c33c5a7472d95078e736a712b8837b4701e5a416c984b2e9f2ab0803151",
+    "artifacts/task-evidence/T29/preflight-git.txt": "62d0cf13ca8ea4eff67c8f083d23291542ec037f5dcff08eab4251fb0a4d349d",
+    "artifacts/task-evidence/T29/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T29/red.log": "c7d46c8bcb96bcc0b853f87b0dd52d078068d6d08094a4fea38ddc6664928d55",
+    "blockers/T29-scope-expansion.md": "5f634a65efed8b2d0d40abedf3596b95a51bf29c80e6eb34d2a604dd1c25db86",
+    "packages/runtime/package.json": "9dbb2854acbadfbd1a9c3a3b9cbecdf5b247604af4f89e90ae3812504cd4aa36",
+    "packages/runtime/src/compaction/snapshot.ts": "9f0b946993710c80d0307bb01e6c2f0ed65ed7ffb7b1155e97a63170a65cc651",
+    "packages/runtime/src/index.ts": "4b47d5313c8f0dd22ad08685feb34da068c4614ef73af69ff864d8cb4fc3e1b9",
+    "packages/runtime/test/compaction/snapshot.test.ts": "99e443f2a3ac3b193a965466a8940d6b928e48f3fcdc85715555e7e499c62c66",
+    "tests/tasks/t29.test.ts": "7ec2604ecd91d76ae6d1b77589e7bf57b8793e1c9c557a5d95f277bf7404f171"
+  }
+}

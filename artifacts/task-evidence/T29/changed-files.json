@@ -1,0 +1,13 @@
+{
+  "taskId": "T29",
+  "production": [
+    "blockers/T29-scope-expansion.md",
+    "packages/runtime/package.json",
+    "packages/runtime/src/compaction/snapshot.ts",
+    "packages/runtime/src/index.ts"
+  ],
+  "tests": [
+    "packages/runtime/test/compaction/snapshot.test.ts",
+    "tests/tasks/t29.test.ts"
+  ]
+}
