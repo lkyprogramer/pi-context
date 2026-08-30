@@ -1,0 +1,132 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t22.test.ts (7 tests | 7 failed) 17ms
+   × T22 Tool trust and action authority gate > tool_trust_and_action_authority_gate 12ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T22 Tool trust and action authority gate > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T22 Tool trust and action authority gate > rejects malformed input instead of defaulting trust 0ms
+     → (0 , createAuthorizationService) is not a function
+   × T22 Tool trust and action authority gate > replays the same authorization without changing the decision 0ms
+     → (0 , createAuthorizationService) is not a function
+   × T22 Tool trust and action authority gate > rejects a cursor from another workspace/session/branch 0ms
+     → (0 , createAuthorizationService) is not a function
+   × T22 Tool trust and action authority gate > does not let untrusted evidence raise a requested act decision 0ms
+     → (0 , createAuthorizationService) is not a function
+   × T22 Tool trust and action authority gate > stops at the abort boundary before authorizing 0ms
+     → (0 , createAuthorizationService) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t22.test.ts > T22 Tool trust and action authority gate > tool_trust_and_action_authority_gate
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t22.test.ts:117:33
+    115| describe("T22 Tool trust and action authority gate", () => {
+    116|   it("tool_trust_and_action_authority_gate", async () => {
+    117|     await expect(runT22Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    118|   });
+    119| 
+
+Caused by: TypeError: (0 , createAuthorizationService) is not a function
+ ❯ service tests/tasks/t22.test.ts:25:10
+ ❯ runT22Fixture tests/tasks/t22.test.ts:42:16
+ ❯ tests/tasks/t22.test.ts:117:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t22.test.ts > T22 Tool trust and action authority gate > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_AUTHORIZATION_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createAuthorizationService) is not a function",
+  }
+
+ ❯ tests/tasks/t22.test.ts:121:59
+    119| 
+    120|   it("fails construction when production dependencies are absent", () …
+    121|     expect(() => createAuthorizationService({} as never)).toThrowError(
+       |                                                           ^
+    122|       expect.objectContaining({ code: "PCR_AUTHORIZATION_DEPENDENCY_MI…
+    123|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t22.test.ts > T22 Tool trust and action authority gate > rejects malformed input instead of defaulting trust
+TypeError: (0 , createAuthorizationService) is not a function
+ ❯ service tests/tasks/t22.test.ts:25:10
+     23| 
+     24| function service() {
+     25|   return createAuthorizationService({ cursor: cursor(), policy: policy…
+       |          ^
+     26| }
+     27| 
+ ❯ tests/tasks/t22.test.ts:127:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t22.test.ts > T22 Tool trust and action authority gate > replays the same authorization without changing the decision
+TypeError: (0 , createAuthorizationService) is not a function
+ ❯ service tests/tasks/t22.test.ts:25:10
+     23| 
+     24| function service() {
+     25|   return createAuthorizationService({ cursor: cursor(), policy: policy…
+       |          ^
+     26| }
+     27| 
+ ❯ tests/tasks/t22.test.ts:135:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t22.test.ts > T22 Tool trust and action authority gate > rejects a cursor from another workspace/session/branch
+TypeError: (0 , createAuthorizationService) is not a function
+ ❯ service tests/tasks/t22.test.ts:25:10
+     23| 
+     24| function service() {
+     25|   return createAuthorizationService({ cursor: cursor(), policy: policy…
+       |          ^
+     26| }
+     27| 
+ ❯ tests/tasks/t22.test.ts:143:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t22.test.ts > T22 Tool trust and action authority gate > does not let untrusted evidence raise a requested act decision
+TypeError: (0 , createAuthorizationService) is not a function
+ ❯ service tests/tasks/t22.test.ts:25:10
+     23| 
+     24| function service() {
+     25|   return createAuthorizationService({ cursor: cursor(), policy: policy…
+       |          ^
+     26| }
+     27| 
+ ❯ tests/tasks/t22.test.ts:149:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t22.test.ts > T22 Tool trust and action authority gate > stops at the abort boundary before authorizing
+TypeError: (0 , createAuthorizationService) is not a function
+ ❯ service tests/tasks/t22.test.ts:25:10
+     23| 
+     24| function service() {
+     25|   return createAuthorizationService({ cursor: cursor(), policy: policy…
+       |          ^
+     26| }
+     27| 
+ ❯ tests/tasks/t22.test.ts:162:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  00:58:14
+   Duration  612ms (transform 178ms, setup 0ms, collect 267ms, tests 17ms, environment 0ms, prepare 134ms)
+

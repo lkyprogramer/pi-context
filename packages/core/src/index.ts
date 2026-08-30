@@ -40,4 +40,16 @@ export {
   type ContinuityStore,
   type CreateContinuityMachineInput,
 } from "./continuity/index.js";
+export {
+  AuthorizationError,
+  TOOL_ORIGINS,
+  authorizeAction,
+  createAuthorizationMachine,
+  type ActionAuthorizationDecision,
+  type ActionAuthorizationInput,
+  type AuthorizationService,
+  type CreateAuthorizationMachineInput,
+  type ToolOrigin,
+  type ToolTrustPolicy,
+} from "./security/index.js";
 

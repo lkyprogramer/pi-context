@@ -7,4 +7,5 @@ export * from "./observation-service.js";
 export * from "./evidence-service.js";
 export * from "./directive-service.js";
 export * from "./continuity-service.js";
+export * from "./authorization-service.js";
 

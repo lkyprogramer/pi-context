@@ -1,0 +1,18 @@
+{
+  "taskId": "T22",
+  "production": [
+    "blockers/T22-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "packages/core/src/security/authorize.ts",
+    "packages/core/src/security/index.ts",
+    "packages/core/src/security/types.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/authorization-service.ts",
+    "packages/runtime/src/index.ts"
+  ],
+  "tests": [
+    "tests/security/authority.test.ts",
+    "tests/tasks/t22.test.ts"
+  ]
+}

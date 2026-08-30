@@ -1,0 +1,38 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T22",
+  "status": "review-candidate",
+  "parentCommit": "b0648f92936b5cf1b95ddcffa10f2b0752c486e4",
+  "redLog": "artifacts/task-evidence/T22/red.log",
+  "greenLog": "artifacts/task-evidence/T22/green.log",
+  "fullGateLog": "artifacts/task-evidence/T22/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "customMcpExternalUntrusted": true,
+    "allowlistPlusVerifiedReceipt": true,
+    "nonEscalatingAuthority": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 106,
+    "repositoryGateTests": 536,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T22/changed-files.json": "fdc4050b73fd9a7d144421647208053650128b1a80b1880faf213c6273d6c49a",
+    "artifacts/task-evidence/T22/full-gate.log": "f5e28141f2c0c914ce5eeb19566822048111516dc8332e2f53f137a156a8ae50",
+    "artifacts/task-evidence/T22/green.log": "6276416ef23db7659303a1bd15cbc36a38974dd623265cc768c8c3b981302dec",
+    "artifacts/task-evidence/T22/preflight-git.txt": "bf56ca1587df964bbfca46bff0ddf9bdebce6abee4898dd0896d33a967b57cf9",
+    "artifacts/task-evidence/T22/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T22/red.log": "92e6fa94ecca184a6c67edbaebe585278a053255c99137846252dede7d18d760",
+    "blockers/T22-scope-expansion.md": "3363b272d9202ddc83ab0046b74202f9ca7e1098b1762ab7143e1c2803fc1813",
+    "packages/core/package.json": "d81f4edcf197351cef43c14c1d7bba3b51f7ddc5e5d0930e7774e052b91736b7",
+    "packages/core/src/index.ts": "ab774ec3e010cb6d1438d3fd07c4db8c1e8964d5c3dcf9f57fb69fcc062bf8a2",
+    "packages/core/src/security/authorize.ts": "4f464369ceb490e10dcb5fb560293a87c78d8fbca0b8c9f0d9994ec3ac16aac1",
+    "packages/core/src/security/index.ts": "b184d1d32ec2754a4d0f1cc127bb8c3b21ad8ba89546536158f85a549ee523b8",
+    "packages/core/src/security/types.ts": "bff527065e7c89e966254ca431ed2457a5604b97e211bf44e316fcda4e33e55f",
+    "packages/runtime/package.json": "9f4e8469fbf09aac871ff2c1213648102b03aec1ce6cb708b75af53e07f0b323",
+    "packages/runtime/src/authorization-service.ts": "0ea039b4079d773b9de3d380fb9b10110a59dbc7880bea8890bffa00b463602d",
+    "packages/runtime/src/index.ts": "44c65195ea9658e5557a3e3538107135d4bca7aa1f3da000bd72f5a84f8e19b6",
+    "tests/security/authority.test.ts": "c94f4c54fbd932a5b8301bf130f68f0ae545d20f2430d94e0e975dfc13bb2f42",
+    "tests/tasks/t22.test.ts": "2ef163b12e005bb3ba723af14a8a8145559cb5d46f5a339e7d0a2a7110b5eba1"
+  }
+}
