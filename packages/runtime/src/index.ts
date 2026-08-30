@@ -17,4 +17,5 @@ export * from "./recovery-service.js";
 export * from "./semantic/port.js";
 export * from "./semantic/proposer.js";
 export * from "./background/index.js";
+export * from "./economics-service.js";
 

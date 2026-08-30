@@ -129,4 +129,13 @@ export {
   type SemanticVerifierErrorCode,
   type SemanticVerifierIssue,
 } from "./verifier/index.js";
+export {
+  EconomicsError,
+  computeRealizedNet,
+  snapshotProviderPrices,
+  type EconomicsErrorCode,
+  type ProviderPrices,
+  type RealizedNet,
+  type RealizedNetSample,
+} from "./economics/index.js";
 

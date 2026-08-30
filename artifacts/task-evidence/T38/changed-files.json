@@ -1,0 +1,17 @@
+{
+  "taskId": "T38",
+  "production": [
+    "blockers/T38-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/economics/index.ts",
+    "packages/core/src/economics/realized-net.ts",
+    "packages/core/src/index.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/economics-service.ts",
+    "packages/runtime/src/index.ts"
+  ],
+  "tests": [
+    "tests/performance/economics.test.ts",
+    "tests/tasks/t38.test.ts"
+  ]
+}

@@ -1,0 +1,116 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t38.test.ts (6 tests | 6 failed) 18ms
+   × T38 Cache-adjusted economics controller > cache_adjusted_economics_controller 14ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T38 Cache-adjusted economics controller > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T38 Cache-adjusted economics controller > rejects malformed realize input 1ms
+     → (0 , createEconomicsController) is not a function
+   × T38 Cache-adjusted economics controller > replays equal realized net for the same sample 1ms
+     → (0 , createEconomicsController) is not a function
+   × T38 Cache-adjusted economics controller > rejects a cursor from another workspace 0ms
+     → (0 , createEconomicsController) is not a function
+   × T38 Cache-adjusted economics controller > stops at the abort boundary before reading cache 0ms
+     → (0 , createEconomicsController) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t38.test.ts > T38 Cache-adjusted economics controller > cache_adjusted_economics_controller
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t38.test.ts:134:33
+    132| describe("T38 Cache-adjusted economics controller", () => {
+    133|   it("cache_adjusted_economics_controller", async () => {
+    134|     await expect(runT38Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    135|   });
+    136| 
+
+Caused by: TypeError: (0 , createEconomicsController) is not a function
+ ❯ stack tests/tasks/t38.test.ts:89:22
+ ❯ runT38Fixture tests/tasks/t38.test.ts:99:40
+ ❯ tests/tasks/t38.test.ts:134:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t38.test.ts > T38 Cache-adjusted economics controller > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_ECONOMICS_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createEconomicsController) is not a function",
+  }
+
+ ❯ tests/tasks/t38.test.ts:138:58
+    136| 
+    137|   it("fails construction when production dependencies are absent", () …
+    138|     expect(() => createEconomicsController({} as never)).toThrowError(
+       |                                                          ^
+    139|       expect.objectContaining({ code: "PCR_ECONOMICS_DEPENDENCY_MISSIN…
+    140|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t38.test.ts > T38 Cache-adjusted economics controller > rejects malformed realize input
+TypeError: (0 , createEconomicsController) is not a function
+ ❯ stack tests/tasks/t38.test.ts:89:22
+     87|   });
+     88|   await cache.commit({ cursor: bound, sections: second });
+     89|   const controller = createEconomicsController({
+       |                      ^
+     90|     cursor: bound,
+     91|     cache,
+ ❯ tests/tasks/t38.test.ts:144:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t38.test.ts > T38 Cache-adjusted economics controller > replays equal realized net for the same sample
+TypeError: (0 , createEconomicsController) is not a function
+ ❯ stack tests/tasks/t38.test.ts:89:22
+     87|   });
+     88|   await cache.commit({ cursor: bound, sections: second });
+     89|   const controller = createEconomicsController({
+       |                      ^
+     90|     cursor: bound,
+     91|     cache,
+ ❯ tests/tasks/t38.test.ts:159:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t38.test.ts > T38 Cache-adjusted economics controller > rejects a cursor from another workspace
+TypeError: (0 , createEconomicsController) is not a function
+ ❯ stack tests/tasks/t38.test.ts:89:22
+     87|   });
+     88|   await cache.commit({ cursor: bound, sections: second });
+     89|   const controller = createEconomicsController({
+       |                      ^
+     90|     cursor: bound,
+     91|     cache,
+ ❯ tests/tasks/t38.test.ts:172:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t38.test.ts > T38 Cache-adjusted economics controller > stops at the abort boundary before reading cache
+TypeError: (0 , createEconomicsController) is not a function
+ ❯ tests/tasks/t38.test.ts:193:24
+    191|     const bound = cursor();
+    192|     let read = 0;
+    193|     const controller = createEconomicsController({
+       |                        ^
+    194|       cursor: bound,
+    195|       cache: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  06:22:39
+   Duration  479ms (transform 171ms, setup 0ms, collect 247ms, tests 18ms, environment 0ms, prepare 54ms)
+

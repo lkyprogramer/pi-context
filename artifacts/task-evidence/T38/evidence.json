@@ -1,0 +1,36 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T38",
+  "status": "review-candidate",
+  "parentCommit": "55df81b9fa69ef06637f1f0dc251791ed46c8444",
+  "redLog": "artifacts/task-evidence/T38/red.log",
+  "greenLog": "artifacts/task-evidence/T38/green.log",
+  "fullGateLog": "artifacts/task-evidence/T38/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "pricedNotTokenDelta": true,
+    "failedTaskZerosBenefits": true,
+    "cacheRewriteUsesPrefix": true,
+    "repositoryGateFiles": 138,
+    "repositoryGateTests": 666,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "artifacts/task-evidence/T38/changed-files.json": "68dfbc34f56d39392994cca35c0c3e0f81e570f3c7bbfa132aa370712ed7602e",
+    "artifacts/task-evidence/T38/full-gate.log": "8da4eb8063477d1a87c6bf8c5b76dc3c295d50eaa88be7c89d693751ef34a735",
+    "artifacts/task-evidence/T38/green.log": "3ca7304563ca6868543ecaa7d4fe8693328ca04f0d0e4e991e814bb5e61b6c09",
+    "artifacts/task-evidence/T38/preflight-git.txt": "ac9dfb1c5b4d85f4b0ca2bac368bda64e19e53eda0d0d513c62af0a5c484ab3c",
+    "artifacts/task-evidence/T38/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T38/red.log": "14b18b3f9dbf6f4cbad8ea4d17a4f290877f8300dea32b3c00991db3b137021a",
+    "blockers/T38-scope-expansion.md": "f8d3c07e046598ed554738e2028919fb33447d77042660ba847c745e94dfe90e",
+    "packages/core/package.json": "266f0569d5c4b9b140d62640595a515b38fe9ac024d2197bd7f5a4c4ec3d65b9",
+    "packages/core/src/economics/index.ts": "a44b1422a676568afb1beb7190f2195273b5e37657c101a36c0049922c70d21f",
+    "packages/core/src/economics/realized-net.ts": "be2923cf01a01e24e9340a58e044abd518e093799d0c95f8cb52ebb866920e3d",
+    "packages/core/src/index.ts": "c563e65b1f24b60d28552cab77da4087f258c60a2eb7cf3caf4171d20ad44e12",
+    "packages/runtime/package.json": "1fa13f945d3d8a8d0e2c41c49343ea1ea2a51c499ed93d590b2a917b9d61797c",
+    "packages/runtime/src/economics-service.ts": "f9518c207265155015c4393a196c9979e1224891987300be276cb91cbb3d9fef",
+    "packages/runtime/src/index.ts": "aed8cbcd92a840ff6d13aba3a596dd049047493b5fc28a1eda268a2d5f92d249",
+    "tests/performance/economics.test.ts": "acfba9ae57026f32a8aa1cd657496fe16b3a0f33f857c73a0581848b4160f74e",
+    "tests/tasks/t38.test.ts": "eff610756dcdcaa14849b43cf7e6c08162a371a9dc0879084b8a4d0c04ff32bc"
+  }
+}
