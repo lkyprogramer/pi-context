@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t17.test.ts (6 tests | 6 failed) 23ms
+   × T17 Directive extraction with exact-clause fallback > directive_extraction_with_exact_clause_fallback 18ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T17 Directive extraction with exact-clause fallback > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T17 Directive extraction with exact-clause fallback > rejects malformed turns before emitting candidates 0ms
+     → (0 , createDirectiveExtractor) is not a function
+   × T17 Directive extraction with exact-clause fallback > replays the same candidates for the same turn and clauses 1ms
+     → (0 , extractDirectiveCandidates) is not a function
+   × T17 Directive extraction with exact-clause fallback > rejects clauses from another workspace/session/branch 0ms
+     → (0 , createDirectiveExtractor) is not a function
+   × T17 Directive extraction with exact-clause fallback > stops at the abort boundary before classifying clauses 0ms
+     → (0 , createDirectiveExtractor) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t17.test.ts > T17 Directive extraction with exact-clause fallback > directive_extraction_with_exact_clause_fallback
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t17.test.ts:58:33
+     56| describe("T17 Directive extraction with exact-clause fallback", () => {
+     57|   it("directive_extraction_with_exact_clause_fallback", async () => {
+     58|     await expect(runT17Fixture()).resolves.toEqual({ ok: true, task: "…
+       |                                 ^
+     59|   });
+     60|
+
+Caused by: TypeError: (0 , createDirectiveExtractor) is not a function
+ ❯ runT17Fixture tests/tasks/t17.test.ts:40:21
+ ❯ tests/tasks/t17.test.ts:58:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t17.test.ts > T17 Directive extraction with exact-clause fallback > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_DIRECTIVE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_3__.createDirectiveExtractor) is not a function",
+  }
+
+ ❯ tests/tasks/t17.test.ts:62:57
+     60|
+     61|   it("fails construction when production dependencies are absent", () …
+     62|     expect(() => createDirectiveExtractor({} as never)).toThrowError(
+       |                                                         ^
+     63|       expect.objectContaining({ code: "PCR_DIRECTIVE_DEPENDENCY_MISSIN…
+     64|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t17.test.ts > T17 Directive extraction with exact-clause fallback > rejects malformed turns before emitting candidates
+TypeError: (0 , createDirectiveExtractor) is not a function
+ ❯ tests/tasks/t17.test.ts:69:23
+     67|   it("rejects malformed turns before emitting candidates", () => {
+     68|     const bound = cursor();
+     69|     const extractor = createDirectiveExtractor({ cursor: bound });
+       |                       ^
+     70|     expect(() => extractor.extract({} as never, [])).toThrowError(/PCR…
+     71|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t17.test.ts > T17 Directive extraction with exact-clause fallback > replays the same candidates for the same turn and clauses
+TypeError: (0 , extractDirectiveCandidates) is not a function
+ ❯ tests/tasks/t17.test.ts:78:12
+     76|     const clauses = createClauseSegmenter({ cursor: bound }).segment({…
+     77|     const turn = turnFor(text, bound);
+     78|     expect(extractDirectiveCandidates(turn, clauses)).toEqual(extractD…
+       |            ^
+     79|   });
+     80|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t17.test.ts > T17 Directive extraction with exact-clause fallback > rejects clauses from another workspace/session/branch
+TypeError: (0 , createDirectiveExtractor) is not a function
+ ❯ tests/tasks/t17.test.ts:83:23
+     81|   it("rejects clauses from another workspace/session/branch", () => {
+     82|     const bound = cursor();
+     83|     const extractor = createDirectiveExtractor({ cursor: bound });
+       |                       ^
+     84|     const text = "不要修改 public API。";
+     85|     const other = { ...bound, sessionId: "other-session" };
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t17.test.ts > T17 Directive extraction with exact-clause fallback > stops at the abort boundary before classifying clauses
+TypeError: (0 , createDirectiveExtractor) is not a function
+ ❯ tests/tasks/t17.test.ts:92:23
+     90|   it("stops at the abort boundary before classifying clauses", () => {
+     91|     const bound = cursor();
+     92|     const extractor = createDirectiveExtractor({ cursor: bound });
+       |                       ^
+     93|     const text = "不要修改 public API。";
+     94|     const clauses = createClauseSegmenter({ cursor: bound }).segment({…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  23:55:13
+   Duration  396ms (transform 87ms, setup 0ms, collect 121ms, tests 23ms, environment 0ms, prepare 65ms)
+

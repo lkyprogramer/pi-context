@@ -9,4 +9,13 @@ export {
   type CreateClauseSegmenterInput,
   type SegmentClausesInput,
 } from "./directives/segment.js";
+export {
+  createDirectiveExtractor,
+  extractDirectiveCandidates,
+  DirectiveExtractorError,
+  type CreateDirectiveExtractorInput,
+  type DirectiveCandidate,
+  type DirectiveExtractor,
+} from "./directives/extract.js";
+
 

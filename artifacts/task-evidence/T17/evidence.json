@@ -1,0 +1,33 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T17",
+  "status": "review-candidate",
+  "parentCommit": "32e9ae8f437444c4fa7e9b978b9af0efa74bbe73",
+  "redLog": "artifacts/task-evidence/T17/red.log",
+  "greenLog": "artifacts/task-evidence/T17/green.log",
+  "fullGateLog": "artifacts/task-evidence/T17/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "fullClauseQuotes": true,
+    "polarityPreserved": true,
+    "noMustNotRewrite": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 100,
+    "repositoryGateTests": 507,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T17/changed-files.json": "b0a84b6dc3ee551b2b1703076f91650800fb5d6fd8e2df35fb180f7356b9d0d1",
+    "artifacts/task-evidence/T17/full-gate.log": "9c4972fd745d921f83be4e3ec3387ec94ba6d8246c88376243bbcdfc54bcb129",
+    "artifacts/task-evidence/T17/green.log": "1e0087f2fd4b65e19ca22ce5445bd133dfa85e2c41ecdf768e7f07df741dc606",
+    "artifacts/task-evidence/T17/preflight-git.txt": "9063f880c1344650c636e4d0a27d3a98701d9c951d028f46489e24195ec5b7e1",
+    "artifacts/task-evidence/T17/preflight-toolchain.txt": "230379c89cb3f942c21fb2fa39aa0d0f1cfbbe7ab707012d518d17b4a41d6541",
+    "artifacts/task-evidence/T17/red.log": "7d2713387729e6d2aeb5d6bbf0d585e406ee026f15981d5b46c0f0573fcda34a",
+    "blockers/T17-scope-expansion.md": "5689bf03321f0b8dff8147e3263894c37d059fcf0e0112f077f6902c85c02ed5",
+    "packages/core/package.json": "e45313311ff0a020f544b9deb81fef6314fdf89f9fb20bc33e7c564438378784",
+    "packages/core/src/directives/extract.ts": "5fbb3aabe4953c8a93e67c2fc48db2ad9872928b05163ea99bbb2ed32b38e733",
+    "packages/core/src/index.ts": "a1c235ccf9c44f6cdee46292fc56fd1314f75d3f4c3d1f7341e8ffc34b64ff28",
+    "packages/core/test/directives/extract.test.ts": "0a1aeac6af4516f04e4645cb2528e5786e2f946d1790151ace6a08da595296ca",
+    "tests/tasks/t17.test.ts": "6bedf0ad1f6eb2374e799b528a50ea75732d264f1977b93e8f22f2d213feaca8"
+  }
+}

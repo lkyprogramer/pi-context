@@ -1,0 +1,13 @@
+{
+  "taskId": "T17",
+  "production": [
+    "blockers/T17-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/directives/extract.ts",
+    "packages/core/src/index.ts"
+  ],
+  "tests": [
+    "packages/core/test/directives/extract.test.ts",
+    "tests/tasks/t17.test.ts"
+  ]
+}
