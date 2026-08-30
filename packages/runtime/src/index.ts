@@ -9,4 +9,5 @@ export * from "./directive-service.js";
 export * from "./continuity-service.js";
 export * from "./authorization-service.js";
 export * from "./lease-service.js";
+export * from "./token-calibration.js";
 

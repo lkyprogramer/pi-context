@@ -1,0 +1,17 @@
+{
+  "taskId": "T25",
+  "production": [
+    "blockers/T25-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/budget/index.ts",
+    "packages/core/src/budget/pricer.ts",
+    "packages/core/src/index.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/token-calibration.ts"
+  ],
+  "tests": [
+    "tests/performance/token-accounting.test.ts",
+    "tests/tasks/t25.test.ts"
+  ]
+}

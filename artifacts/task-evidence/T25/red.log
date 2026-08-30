@@ -1,0 +1,132 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t25.test.ts (7 tests | 7 failed) 16ms
+   × T25 Actual model budget and token calibration > actual_model_budget_and_token_calibration 12ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T25 Actual model budget and token calibration > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T25 Actual model budget and token calibration > rejects malformed messages and unknown routes 0ms
+     → (0 , createTokenCalibration) is not a function
+   × T25 Actual model budget and token calibration > replays the same message to an equal price 0ms
+     → (0 , createTokenCalibration) is not a function
+   × T25 Actual model budget and token calibration > rejects a cursor from another workspace/session/branch 0ms
+     → (0 , createTokenCalibration) is not a function
+   × T25 Actual model budget and token calibration > does not price an active turn by message id fingerprint 0ms
+     → (0 , createTokenCalibration) is not a function
+   × T25 Actual model budget and token calibration > stops at the abort boundary before pricing 0ms
+     → (0 , createTokenCalibration) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t25.test.ts > T25 Actual model budget and token calibration > actual_model_budget_and_token_calibration
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t25.test.ts:67:33
+     65| describe("T25 Actual model budget and token calibration", () => {
+     66|   it("actual_model_budget_and_token_calibration", async () => {
+     67|     await expect(runT25Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     68|   });
+     69| 
+
+Caused by: TypeError: (0 , createTokenCalibration) is not a function
+ ❯ pricer tests/tasks/t25.test.ts:25:10
+ ❯ runT25Fixture tests/tasks/t25.test.ts:43:18
+ ❯ tests/tasks/t25.test.ts:67:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t25.test.ts > T25 Actual model budget and token calibration > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_BUDGET_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createTokenCalibration) is not a function",
+  }
+
+ ❯ tests/tasks/t25.test.ts:71:55
+     69| 
+     70|   it("fails construction when production dependencies are absent", () …
+     71|     expect(() => createTokenCalibration({} as never)).toThrowError(
+       |                                                       ^
+     72|       expect.objectContaining({ code: "PCR_BUDGET_DEPENDENCY_MISSING" …
+     73|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t25.test.ts > T25 Actual model budget and token calibration > rejects malformed messages and unknown routes
+TypeError: (0 , createTokenCalibration) is not a function
+ ❯ pricer tests/tasks/t25.test.ts:25:10
+     23| 
+     24| function pricer() {
+     25|   return createTokenCalibration({
+       |          ^
+     26|     cursor: cursor(),
+     27|     routes: { [ROUTE.modelKey]: ROUTE },
+ ❯ tests/tasks/t25.test.ts:77:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t25.test.ts > T25 Actual model budget and token calibration > replays the same message to an equal price
+TypeError: (0 , createTokenCalibration) is not a function
+ ❯ pricer tests/tasks/t25.test.ts:25:10
+     23| 
+     24| function pricer() {
+     25|   return createTokenCalibration({
+       |          ^
+     26|     cursor: cursor(),
+     27|     routes: { [ROUTE.modelKey]: ROUTE },
+ ❯ tests/tasks/t25.test.ts:88:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t25.test.ts > T25 Actual model budget and token calibration > rejects a cursor from another workspace/session/branch
+TypeError: (0 , createTokenCalibration) is not a function
+ ❯ pricer tests/tasks/t25.test.ts:25:10
+     23| 
+     24| function pricer() {
+     25|   return createTokenCalibration({
+       |          ^
+     26|     cursor: cursor(),
+     27|     routes: { [ROUTE.modelKey]: ROUTE },
+ ❯ tests/tasks/t25.test.ts:95:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t25.test.ts > T25 Actual model budget and token calibration > does not price an active turn by message id fingerprint
+TypeError: (0 , createTokenCalibration) is not a function
+ ❯ pricer tests/tasks/t25.test.ts:25:10
+     23| 
+     24| function pricer() {
+     25|   return createTokenCalibration({
+       |          ^
+     26|     cursor: cursor(),
+     27|     routes: { [ROUTE.modelKey]: ROUTE },
+ ❯ tests/tasks/t25.test.ts:103:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t25.test.ts > T25 Actual model budget and token calibration > stops at the abort boundary before pricing
+TypeError: (0 , createTokenCalibration) is not a function
+ ❯ pricer tests/tasks/t25.test.ts:25:10
+     23| 
+     24| function pricer() {
+     25|   return createTokenCalibration({
+       |          ^
+     26|     cursor: cursor(),
+     27|     routes: { [ROUTE.modelKey]: ROUTE },
+ ❯ tests/tasks/t25.test.ts:113:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  01:39:21
+   Duration  407ms (transform 128ms, setup 0ms, collect 185ms, tests 16ms, environment 0ms, prepare 54ms)
+

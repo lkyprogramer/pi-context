@@ -65,4 +65,16 @@ export {
   type RecallLease,
   type RecallLeasePort,
 } from "./retrieval/proactive.js";
+export {
+  BudgetError,
+  computeEffectiveInput,
+  createTokenPricer,
+  estimateMessageTokens,
+  estimateTextTokens,
+  snapshotBudgetCursor,
+  type CreateTokenPricerInput,
+  type RouteInfo,
+  type RouteKey,
+  type TokenPricer,
+} from "./budget/index.js";
 
