@@ -13,7 +13,8 @@ export interface CreateDirectiveServiceInput extends CreateDirectiveResolverInpu
 export type DirectiveServiceErrorCode =
   | "PCR_DIRECTIVE_DEPENDENCY_MISSING"
   | "PCR_DIRECTIVE_INPUT_INVALID"
-  | "PCR_DIRECTIVE_SCOPE_MISMATCH";
+  | "PCR_DIRECTIVE_SCOPE_MISMATCH"
+  | "PCR_DIRECTIVE_UNAUTHENTICATED";
 
 export class DirectiveServiceError extends TypeError {
   readonly code: DirectiveServiceErrorCode;

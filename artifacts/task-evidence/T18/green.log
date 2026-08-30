@@ -2,10 +2,10 @@
 
  RUN  v3.2.4 /Users/luo/Documents/github/pi-context
 
- ✓ |0| tests/tasks/t18.test.ts (7 tests) 18ms
+ ✓ |0| tests/tasks/t18.test.ts (8 tests) 18ms
 
  Test Files  1 passed (1)
-      Tests  7 passed (7)
-   Start at  00:09:34
-   Duration  435ms (transform 116ms, setup 0ms, collect 166ms, tests 18ms, environment 0ms, prepare 64ms)
+      Tests  8 passed (8)
+   Start at  00:21:08
+   Duration  472ms (transform 124ms, setup 0ms, collect 187ms, tests 18ms, environment 0ms, prepare 74ms)
 

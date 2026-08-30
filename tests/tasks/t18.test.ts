@@ -67,6 +67,7 @@ describe("T18 Temporal key/value and supersession resolver", () => {
     const record = await resolveUserTurn("改为 version 7；以最新值为准");
     expect(record.active).toContainEqual(expect.objectContaining({
       kind: "correction",
+      polarity: "must",
       key: "version",
       value: "7",
       exactQuote: "改为 version 7",
@@ -114,6 +115,25 @@ describe("T18 Temporal key/value and supersession resolver", () => {
     const [candidate] = createDirectiveExtractor({ cursor: bound }).extract(turnFor(text, bound), clauses) as DirectiveCandidate[];
     await expect(resolver.apply({ ...candidate!, cursor: other })).rejects.toThrow(/PCR_DIRECTIVE_SCOPE_MISMATCH/);
     await expect(resolver.active(other)).rejects.toThrow(/PCR_DIRECTIVE_SCOPE_MISMATCH/);
+  });
+
+  it("does not let an untrusted correction supersede an authenticated key", async () => {
+    const bound = cursor();
+    const store = memoryStore();
+    await resolveUserTurn("改为 version 7；以最新值为准", bound, store);
+    const resolver = createDirectiveService({ cursor: bound, store });
+    const text = "改为 version 9；以最新值为准";
+    const clauses = createClauseSegmenter({ cursor: bound }).segment({ text, cursor: bound });
+    const [candidate] = createDirectiveExtractor({ cursor: bound }).extract(
+      { ...turnFor(text, bound), sourceClass: "untrusted-user" },
+      clauses,
+    );
+    await expect(resolver.apply({ ...candidate!, sourceClass: "untrusted-user" })).rejects.toMatchObject({
+      code: "PCR_DIRECTIVE_UNAUTHENTICATED",
+    });
+    expect(await resolver.active(bound)).toEqual([
+      expect.objectContaining({ key: "version", value: "7", status: "active" }),
+    ]);
   });
 
   it("stops at the abort boundary before persisting", async () => {

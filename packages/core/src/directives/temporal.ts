@@ -25,7 +25,8 @@ export interface CreateDirectiveResolverInput {
 export type TemporalDirectiveErrorCode =
   | "PCR_DIRECTIVE_DEPENDENCY_MISSING"
   | "PCR_DIRECTIVE_INPUT_INVALID"
-  | "PCR_DIRECTIVE_SCOPE_MISMATCH";
+  | "PCR_DIRECTIVE_SCOPE_MISMATCH"
+  | "PCR_DIRECTIVE_UNAUTHENTICATED";
 
 export class TemporalDirectiveError extends TypeError {
   readonly code: TemporalDirectiveErrorCode;
@@ -134,6 +135,15 @@ class BoundDirectiveResolver implements DirectiveResolver {
   async apply(candidate: DirectiveCandidate, signal?: AbortSignal): Promise<DirectiveRecord> {
     if (signal !== undefined && !(signal instanceof AbortSignal)) failInput("signal");
     signal?.throwIfAborted();
+    if (!candidate || typeof candidate !== "object") failInput("candidate");
+    if (typeof candidate.sourceClass !== "string" || candidate.sourceClass.length === 0) {
+      failInput("candidate.sourceClass");
+    }
+    if (candidate.sourceClass !== "authenticated-user") {
+      throw new TemporalDirectiveError("PCR_DIRECTIVE_UNAUTHENTICATED", {
+        sourceClass: candidate.sourceClass,
+      });
+    }
     const incoming = toDirectiveRecord(candidate);
     if (!sameCursor(incoming.cursor, this.#cursor)) {
       throw new TemporalDirectiveError("PCR_DIRECTIVE_SCOPE_MISMATCH");
