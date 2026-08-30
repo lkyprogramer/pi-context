@@ -1,5 +1,32 @@
-import type { HostMessage, MaterializationInput, MaterializedView } from "../../contracts/src/index.js";
+import type { HostMessage, MaterializedView, RuntimeCursor } from "@pcr/contracts";
+import { createMessageCodec, type PiMessageEnvelope } from "./message-codec.js";
 import { emptyPiUsage, toHostMessages, toPiMessages, type PiAgentMessage } from "./message-conversion.js";
+
+export interface PiSessionContext {
+  workspaceId: string;
+  sessionId: string;
+  leafId: string | null;
+  lineageHash: string;
+  modelKey: string;
+  signal?: AbortSignal;
+}
+
+export interface ContextHookSession {
+  materialize(request: {
+    operationId: string;
+    cursor: RuntimeCursor;
+    canonicalMessages: readonly HostMessage[];
+    currentContextWindow: number;
+    maxOutputTokens: number;
+    reason: "normal" | "overflow-retry" | "manual-preview";
+    now: number;
+    signal?: AbortSignal;
+  }): Promise<MaterializedView>;
+}
+
+export interface RuntimeSessionRegistry {
+  open(ctx: PiSessionContext): Promise<ContextHookSession>;
+}
 
 export interface ExtensionAPI {
   on(
@@ -13,15 +40,14 @@ export interface ContextHookCtx {
   model?: { id?: string };
   thinkingLevel?: string;
   signal?: AbortSignal;
-}
-
-export interface PiRuntime {
-  kernel: { materialize(input: MaterializationInput): Promise<MaterializedView> };
-  buildMaterializationInput(messages: PiAgentMessage[], ctx: ContextHookCtx): Promise<MaterializationInput>;
-  stageViewReceipt(view: MaterializedView, ctx: ContextHookCtx): Promise<void>;
-  converter: { toPi(messages: readonly HostMessage[]): PiAgentMessage[] };
-  safeDiagnostic(messages: PiAgentMessage[], error: NormalizedPcrError): PiAgentMessage[];
-  deterministicFallback(messages: PiAgentMessage[], error: NormalizedPcrError): PiAgentMessage[];
+  workspaceId?: string;
+  sessionId?: string;
+  leafId?: string | null;
+  lineageHash?: string;
+  modelKey?: string;
+  now?: number;
+  currentContextWindow?: number;
+  maxOutputTokens?: number;
 }
 
 export interface NormalizedPcrError {
@@ -34,6 +60,31 @@ const HARD_CODES = new Set([
   "PCR_UNREPAIRABLE_ACTIVE_TURN",
   "PCR_TOOL_PAIR_INVALID",
 ]);
+
+export type ContextHookErrorCode =
+  | "PCR_CONTEXT_HOOK_DEPENDENCY_MISSING"
+  | "PCR_CONTEXT_HOOK_INPUT_INVALID"
+  | "PCR_CONTEXT_HOOK_SCOPE_MISMATCH";
+
+export class ContextHookError extends TypeError {
+  readonly code: ContextHookErrorCode;
+  readonly details: Readonly<Record<string, unknown>>;
+
+  constructor(code: ContextHookErrorCode, details: Record<string, unknown> = {}) {
+    super(code);
+    this.name = "ContextHookError";
+    this.code = code;
+    this.details = Object.freeze({ ...details });
+  }
+}
+
+function failMissing(dependency: string): never {
+  throw new ContextHookError("PCR_CONTEXT_HOOK_DEPENDENCY_MISSING", { dependency });
+}
+
+function failInput(field: string): never {
+  throw new ContextHookError("PCR_CONTEXT_HOOK_INPUT_INVALID", { field });
+}
 
 export function normalizePcrError(error: unknown): NormalizedPcrError {
   const code =
@@ -53,8 +104,8 @@ export function isOpaquePiRole(role: string): boolean {
 
 function hasThinkingOrToolCall(content: unknown): boolean {
   return (
-    Array.isArray(content) &&
-    content.some((block) => {
+    Array.isArray(content)
+    && content.some((block) => {
       const type = block && typeof block === "object" && "type" in block ? String(block.type) : "";
       return type === "thinking" || type === "toolCall";
     })
@@ -103,26 +154,6 @@ export function stitchContextMessages(
   return out;
 }
 
-export function registerContextHook(pi: ExtensionAPI, runtime: PiRuntime): void {
-  pi.on("context", async (event, ctx) => {
-    try {
-      const convertible = event.messages.filter((message) => !isOpaquePiMessage(message));
-      if (convertible.length === 0) return { messages: [...event.messages] };
-      const input = await runtime.buildMaterializationInput(convertible, ctx);
-      const view = await runtime.kernel.materialize(input);
-      await runtime.stageViewReceipt(view, ctx);
-      return { messages: stitchContextMessages(event.messages, runtime.converter.toPi(view.messages)) };
-    } catch (error) {
-      const pcr = normalizePcrError(error);
-      if (pcr.severity === "hard") {
-        ctx.abort();
-        return { messages: runtime.safeDiagnostic(event.messages, pcr) };
-      }
-      return { messages: runtime.deterministicFallback(event.messages, pcr) };
-    }
-  });
-}
-
 export function defaultSafeDiagnostic(messages: PiAgentMessage[], error: NormalizedPcrError): PiAgentMessage[] {
   const users = messages.filter((item) => item.role === "user");
   const lastUser = users.at(-1) ?? { role: "user", content: "continue" };
@@ -130,6 +161,104 @@ export function defaultSafeDiagnostic(messages: PiAgentMessage[], error: Normali
     { role: "custom", content: `PCR_SAFE_DIAGNOSTIC:${error.code}` },
     lastUser,
   ];
+}
+
+function sessionContextFrom(ctx: ContextHookCtx): PiSessionContext {
+  if (!ctx || typeof ctx !== "object") failInput("ctx");
+  if (typeof ctx.workspaceId !== "string" || ctx.workspaceId.length === 0) failInput("ctx.workspaceId");
+  if (typeof ctx.sessionId !== "string" || ctx.sessionId.length === 0) failInput("ctx.sessionId");
+  if (ctx.leafId !== undefined && ctx.leafId !== null && (typeof ctx.leafId !== "string" || ctx.leafId.length === 0)) {
+    failInput("ctx.leafId");
+  }
+  if (typeof ctx.lineageHash !== "string" || ctx.lineageHash.length === 0) failInput("ctx.lineageHash");
+  const modelKey = ctx.modelKey ?? ctx.model?.id;
+  if (typeof modelKey !== "string" || modelKey.length === 0) failInput("ctx.modelKey");
+  return {
+    workspaceId: ctx.workspaceId,
+    sessionId: ctx.sessionId,
+    leafId: ctx.leafId === undefined ? null : ctx.leafId,
+    lineageHash: ctx.lineageHash,
+    modelKey,
+    signal: ctx.signal,
+  };
+}
+
+function cursorFrom(context: PiSessionContext): RuntimeCursor {
+  return {
+    workspaceId: context.workspaceId,
+    sessionId: context.sessionId,
+    leafId: context.leafId,
+    lineageHash: context.lineageHash,
+    modelKey: context.modelKey,
+  };
+}
+
+function hostToPi(message: HostMessage, envelopes: ReadonlyMap<string, PiMessageEnvelope>): PiAgentMessage {
+  const envelope = envelopes.get(message.hostMessageId);
+  if (envelope && envelope.raw && typeof envelope.raw === "object") {
+    return envelope.raw as PiAgentMessage;
+  }
+  const role = message.role === "tool-result" ? "toolResult" : message.role;
+  const texts = message.content.filter((block) => block.type === "text").map((block) => block.text);
+  const content = role === "assistant"
+    ? (texts.length > 0 ? texts : [""]).map((text) => ({ type: "text", text }))
+    : texts.length === 1
+      ? texts[0]
+      : texts.join("");
+  return {
+    role,
+    content,
+    timestamp: message.timestamp,
+    ...(message.toolCallId ? { toolCallId: message.toolCallId } : {}),
+  };
+}
+
+function viewToPi(view: MaterializedView, envelopes: ReadonlyMap<string, PiMessageEnvelope>): PiAgentMessage[] {
+  return view.messages.map((message) => hostToPi(message, envelopes));
+}
+
+export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRegistry): void {
+  if (!pi || typeof pi.on !== "function") failMissing("pi");
+  if (!registry || typeof registry.open !== "function") failMissing("registry");
+  pi.on("context", async (event, ctx) => {
+    try {
+      if (!event || !Array.isArray(event.messages)) failInput("event.messages");
+      if (!ctx || typeof ctx.abort !== "function") failInput("ctx");
+      ctx.signal?.throwIfAborted();
+      const sessionContext = sessionContextFrom(ctx);
+      const cursor = cursorFrom(sessionContext);
+      const session = await registry.open(sessionContext);
+      ctx.signal?.throwIfAborted();
+      const codec = createMessageCodec({ cursor });
+      const envelopes = new Map<string, PiMessageEnvelope>();
+      const canonical: HostMessage[] = [];
+      for (const [index, raw] of event.messages.entries()) {
+        const envelope = codec.wrap({ cursor, raw, entryId: `ctx_${index}` });
+        envelopes.set(envelope.hostMessageId, envelope);
+        canonical.push(envelope.normalized);
+      }
+      const view = await session.materialize({
+        operationId: "op_context",
+        cursor,
+        canonicalMessages: canonical,
+        currentContextWindow: typeof ctx.currentContextWindow === "number" ? ctx.currentContextWindow : 200192,
+        maxOutputTokens: typeof ctx.maxOutputTokens === "number" ? ctx.maxOutputTokens : 16384,
+        reason: "normal",
+        now: typeof ctx.now === "number" && Number.isFinite(ctx.now) ? ctx.now : 0,
+        signal: ctx.signal,
+      });
+      return { messages: viewToPi(view, envelopes) };
+    } catch (error) {
+      if (error instanceof ContextHookError) throw error;
+      if (typeof error === "object" && error && "name" in error && error.name === "AbortError") throw error;
+      const pcr = normalizePcrError(error);
+      if (pcr.severity === "hard") {
+        ctx?.abort();
+        return { messages: defaultSafeDiagnostic(event?.messages ?? [], pcr) };
+      }
+      throw error;
+    }
+  });
 }
 
 export { toHostMessages, toPiMessages };

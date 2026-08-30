@@ -1,0 +1,104 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t28.test.ts (7 tests | 5 failed) 11ms
+   × T28 Pi context hook vertical integration > pi_context_hook_vertical_integration 5ms
+     → promise rejected "TypeError: runtime.deterministicFallback …" instead of resolving
+   × T28 Pi context hook vertical integration > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T28 Pi context hook vertical integration > rejects a context event without a session cursor 1ms
+     → expected [Function] to throw error matching /PCR_CONTEXT_HOOK_INPUT_INVALID/ but got 'runtime.deterministicFallback is not …'
+   × T28 Pi context hook vertical integration > replays the same context event to an equal message list 0ms
+     → runtime.deterministicFallback is not a function
+   ✓ T28 Pi context hook vertical integration > rejects a cursor from another workspace 0ms
+   × T28 Pi context hook vertical integration > aborts on an unrepairable materialization without stitching usage zeros 0ms
+     → runtime.deterministicFallback is not a function
+   ✓ T28 Pi context hook vertical integration > stops at the abort boundary before opening a session 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t28.test.ts > T28 Pi context hook vertical integration > pi_context_hook_vertical_integration
+AssertionError: promise rejected "TypeError: runtime.deterministicFallback …" instead of resolving
+ ❯ tests/tasks/t28.test.ts:153:33
+    151| describe("T28 Pi context hook vertical integration", () => {
+    152|   it("pi_context_hook_vertical_integration", async () => {
+    153|     await expect(runT28Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    154|   });
+    155| 
+
+Caused by: TypeError: runtime.deterministicFallback is not a function
+ ❯ packages/pi-adapter/src/context-hook.ts:121:34
+ ❯ emit tests/tasks/t28.test.ts:121:10
+ ❯ runT28Fixture tests/tasks/t28.test.ts:126:24
+ ❯ tests/tasks/t28.test.ts:153:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |0| tests/tasks/t28.test.ts > T28 Pi context hook vertical integration > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_CONTEXT_HOOK_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "pi.on is not a function",
+  }
+
+ ❯ tests/tasks/t28.test.ts:157:64
+    155| 
+    156|   it("fails construction when production dependencies are absent", () …
+    157|     expect(() => registerContextHook({} as never, registry())).toThrow…
+       |                                                                ^
+    158|       expect.objectContaining({ code: "PCR_CONTEXT_HOOK_DEPENDENCY_MIS…
+    159|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |0| tests/tasks/t28.test.ts > T28 Pi context hook vertical integration > rejects a context event without a session cursor
+AssertionError: expected [Function] to throw error matching /PCR_CONTEXT_HOOK_INPUT_INVALID/ but got 'runtime.deterministicFallback is not …'
+
+- Expected: 
+/PCR_CONTEXT_HOOK_INPUT_INVALID/
+
++ Received: 
+"runtime.deterministicFallback is not a function"
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |0| tests/tasks/t28.test.ts > T28 Pi context hook vertical integration > replays the same context event to an equal message list
+TypeError: runtime.deterministicFallback is not a function
+ ❯ packages/pi-adapter/src/context-hook.ts:121:34
+    119|         return { messages: runtime.safeDiagnostic(event.messages, pcr)…
+    120|       }
+    121|       return { messages: runtime.deterministicFallback(event.messages,…
+       |                                  ^
+    122|     }
+    123|   });
+ ❯ emit tests/tasks/t28.test.ts:121:10
+ ❯ tests/tasks/t28.test.ts:172:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |0| tests/tasks/t28.test.ts > T28 Pi context hook vertical integration > aborts on an unrepairable materialization without stitching usage zeros
+TypeError: runtime.deterministicFallback is not a function
+ ❯ packages/pi-adapter/src/context-hook.ts:121:34
+    119|         return { messages: runtime.safeDiagnostic(event.messages, pcr)…
+    120|       }
+    121|       return { messages: runtime.deterministicFallback(event.messages,…
+       |                                  ^
+    122|     }
+    123|   });
+ ❯ tests/tasks/t28.test.ts:190:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  02:35:39
+   Duration  1.41s (transform 218ms, setup 0ms, collect 1.14s, tests 11ms, environment 0ms, prepare 50ms)
+

@@ -1,4 +1,3 @@
-import { ContextMaterializer } from "../../../packages/kernel/src/materialization/materializer.js";
 import { ackHostCompaction, failStagedCompaction, type StagedCompaction } from "../../../packages/pi-adapter/src/compaction-ack.js";
 import {
   registerCompactionHooks,
@@ -6,20 +5,21 @@ import {
   type CompactionExtensionAPI,
 } from "../../../packages/pi-adapter/src/compaction-hook.js";
 import {
-  defaultSafeDiagnostic,
   registerContextHook,
   type ExtensionAPI,
+  type RuntimeSessionRegistry,
 } from "../../../packages/pi-adapter/src/context-hook.js";
 import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
 import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
 import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
-import { toHostMessages, toPiMessages } from "../../../packages/pi-adapter/src/message-conversion.js";
+import { ContextMaterializer } from "../../../packages/kernel/src/materialization/materializer.js";
+import { createRuntimeCursor } from "../../../packages/core/src/identity/stable-identity.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { registerOperationsCommands } from "./commands/operations.js";
 import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
 import { claimPiContextOwner } from "./owner.js";
 import { captureUserDirectives } from "../../../packages/kernel/src/directives/capture.js";
-import { registerProductionUserTurnRuntime } from "./composition-root.js";
+import { derivePiSessionContext, registerProductionUserTurnRuntime, type PiRuntimeContext } from "./composition-root.js";
 
 export interface ExtensionFactoryOptions {
   claimOnCreate?: boolean;
@@ -115,34 +115,62 @@ function directivesFromPreparation(preparation: {
   return found;
 }
 
+function createExtensionContextRegistry(): RuntimeSessionRegistry {
+  const materializer = new ContextMaterializer({ directives: "keep" });
+  return {
+    async open(ctx) {
+      return {
+        async materialize(request) {
+          return materializer.materialize({
+            cursor: {
+              workspaceId: ctx.workspaceId,
+              sessionId: ctx.sessionId,
+              leafId: ctx.leafId,
+              lineageHash: ctx.lineageHash,
+              modelKey: ctx.modelKey,
+              thinkingLevel: "off",
+            },
+            canonicalMessages: request.canonicalMessages,
+            currentContextWindow: request.currentContextWindow,
+            maxOutputTokens: request.maxOutputTokens,
+            reason: request.reason,
+            now: request.now,
+          });
+        },
+      };
+    },
+  };
+}
+
 function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   const owner = claimPiContextOwner("pi-context-runtime");
   const userTurns = registerProductionUserTurnRuntime(pi as never);
-  const materializer = new ContextMaterializer({ directives: "keep" });
-  registerContextHook(pi, {
-    kernel: { materialize: (input) => materializer.materialize(input) },
-    async buildMaterializationInput(messages, ctx) {
-      return {
-        cursor: {
-          workspaceId: "ws_0123456789abcdef",
-          sessionId: "s1",
-          leafId: null,
-          lineageHash: "1111111111111111111111111111111111111111111111111111111111111111",
-          modelKey: ctx.model?.id ?? "pcr",
-          thinkingLevel: ctx.thinkingLevel ?? "off",
-        },
-        canonicalMessages: toHostMessages(messages),
-        currentContextWindow: 128000,
-        maxOutputTokens: 16000,
-        reason: "normal",
-        now: Date.now(),
-      };
+  const identity = { create: createRuntimeCursor };
+  const hookRegistry = createExtensionContextRegistry();
+  registerContextHook({
+    on(hook, handler) {
+      pi.on(hook, async (event, ctx) => {
+        if (hook !== "context") return handler(event, ctx);
+        try {
+          const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+          return await handler(event, {
+            abort: () => {
+              if (ctx && typeof ctx === "object" && "abort" in ctx && typeof ctx.abort === "function") ctx.abort();
+            },
+            signal: ctx && typeof ctx === "object" && "signal" in ctx ? ctx.signal : undefined,
+            workspaceId: derived.workspaceId,
+            sessionId: derived.sessionId,
+            leafId: derived.leafId,
+            lineageHash: derived.lineageHash,
+            modelKey: derived.modelKey,
+            now: 0,
+          });
+        } catch {
+          return { messages: event.messages };
+        }
+      });
     },
-    async stageViewReceipt() {},
-    converter: { toPi: toPiMessages },
-    safeDiagnostic: defaultSafeDiagnostic,
-    deterministicFallback: (messages) => messages,
-  });
+  }, hookRegistry);
   let staged: StagedCompaction | null = null;
   registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
     async buildCheckpoint(preparation, reason) {

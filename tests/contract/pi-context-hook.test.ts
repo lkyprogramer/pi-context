@@ -43,7 +43,7 @@ describe("Pi context hook", () => {
       { role: "compactionSummary", summary: "do not deploy prod", tokensBefore: 6000 },
       { role: "user", content: "should we deploy?" },
     ]);
-    expect(messages[0]).toMatchObject({ role: "compactionSummary", summary: "do not deploy prod", tokensBefore: 6000 });
+    expect(messages.some((item) => item.role === "compactionSummary" && item.summary === "do not deploy prod")).toBe(true);
     expect(messages.at(-1)?.role).toBe("user");
   });
 

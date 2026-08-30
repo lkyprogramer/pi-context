@@ -1,5 +1,4 @@
 import { buildDeterministicCheckpointCandidate } from "../../packages/kernel/src/compaction/candidate.js";
-import { ContextMaterializer } from "../../packages/kernel/src/materialization/materializer.js";
 import { ackHostCompaction as commitStaged, failStagedCompaction as clearStaged, type PiCompactionResult, type StagedCompaction } from "../../packages/pi-adapter/src/compaction-ack.js";
 import {
   registerCompactionHooks,
@@ -12,12 +11,20 @@ import {
   registerContextHook,
   type ContextHookCtx,
   type ExtensionAPI,
-  type PiRuntime,
 } from "../../packages/pi-adapter/src/context-hook.js";
 import { catchUpSession, type CatchUpResult, type SessionStartReason } from "../../packages/kernel/src/lifecycle/catch-up.js";
 import { switchBranchScope } from "../../packages/kernel/src/lifecycle/branch-scope.js";
 import { registerSessionLifecycle, type LifecycleEvent } from "../../packages/pi-adapter/src/lifecycle.js";
 import { toHostMessages, toPiMessages, type PiAgentMessage } from "../../packages/pi-adapter/src/message-conversion.js";
+import {
+  createCacheReceipt,
+  createMaterializer,
+  createRuntimeCursor,
+  createSectionPlanner,
+  createTokenPricer,
+  type CacheReceiptRecord,
+} from "../../packages/core/src/index.js";
+import { createRuntimeSessionRegistry } from "../../packages/runtime/src/index.js";
 
 export interface HarnessHost {
   abortCalls: number;
@@ -68,39 +75,66 @@ export async function createPiHarnessWithRuntime(
       } else handlers[hook] = next as (event: CompactionEvent, ctx: ContextHookCtx) => Promise<unknown>;
     },
   };
-  const materializer = new ContextMaterializer({ directives: "keep" });
-  const runtime: PiRuntime = {
-    kernel: {
-      async materialize(input) {
-        if (options.materializeError) {
-          throw Object.assign(new Error(options.materializeError), { code: options.materializeError });
-        }
-        return materializer.materialize(input);
+  const bound = createRuntimeCursor({
+    workspacePath: "/tmp/pcr-harness-context",
+    sessionId: "session-harness",
+    leafId: "leaf-harness",
+    lineageEntryIds: ["root", "leaf-harness"],
+    modelKey: "openclaw/Qwen3.8-27B-WORK",
+  });
+  const hookRows: CacheReceiptRecord[] = [];
+  const pricer = createTokenPricer({
+    cursor: bound,
+    routes: {
+      "openclaw/Qwen3.8-27B-WORK": {
+        modelKey: "openclaw/Qwen3.8-27B-WORK",
+        contextWindow: 8000,
+        maxOutputTokens: 1000,
+        providerReservedTokens: 0,
       },
     },
-    async buildMaterializationInput(messages, ctx) {
-      return {
-        cursor: {
-          workspaceId: "ws_0123456789abcdef",
-          sessionId: "s1",
-          leafId: null,
-          lineageHash: "1111111111111111111111111111111111111111111111111111111111111111",
-          modelKey: ctx.model?.id ?? "test",
-          thinkingLevel: ctx.thinkingLevel ?? "off",
-        },
-        canonicalMessages: toHostMessages(messages),
-        currentContextWindow: 8000,
-        maxOutputTokens: 1000,
-        reason: "normal",
-        now: 1,
-      };
+  });
+  const t27 = createMaterializer({
+    cursor: bound,
+    pricer,
+    planner: createSectionPlanner({ cursor: bound, pricer }),
+    cache: createCacheReceipt({
+      cursor: bound,
+      store: {
+        async put(receipt) { hookRows.push(receipt); },
+        async head() { return hookRows.at(-1) ?? null; },
+      },
+    }),
+  });
+  const registry = createRuntimeSessionRegistry({
+    workspaceId: bound.workspaceId,
+    factory: {
+      async create() {
+        return {
+          session: {
+            async ingestUserInput() { throw new Error("unused"); },
+            async ingestToolResult() { throw new Error("unused"); },
+            async materialize(request) {
+              if (options.materializeError) {
+                throw Object.assign(new Error(options.materializeError), { code: options.materializeError });
+              }
+              return t27.materialize({
+                cursor: request.cursor,
+                canonicalMessages: request.canonicalMessages,
+                currentContextWindow: request.currentContextWindow,
+                maxOutputTokens: request.maxOutputTokens,
+                reason: request.reason,
+                now: request.now,
+                signal: request.signal,
+              }, { cursor: bound, directives: [], continuity: [] });
+            },
+          },
+          dispose: async () => undefined,
+        };
+      },
     },
-    async stageViewReceipt() {},
-    converter: { toPi: toPiMessages },
-    safeDiagnostic: defaultSafeDiagnostic,
-    deterministicFallback: (messages) => messages,
-  };
-  registerContextHook(pi, runtime);
+  });
+  registerContextHook(pi, registry);
   registerCompactionHooks(pi, {
     async buildCheckpoint(preparation, reason) {
       const result = await buildDeterministicCheckpointCandidate(
@@ -261,7 +295,15 @@ export async function createPiHarnessWithRuntime(
         abort() {
           abortCalls += 1;
         },
-        model: { id: "test" },
+        model: { id: bound.modelKey },
+        workspaceId: bound.workspaceId,
+        sessionId: bound.sessionId,
+        leafId: bound.leafId,
+        lineageHash: bound.lineageHash,
+        modelKey: bound.modelKey,
+        now: 1,
+        currentContextWindow: 8000,
+        maxOutputTokens: 1000,
       };
       if (!handler) throw new Error("context handler missing");
       try {

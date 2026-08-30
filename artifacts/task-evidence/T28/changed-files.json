@@ -1,0 +1,16 @@
+{
+  "taskId": "T28",
+  "production": [
+    "apps/pi-context-runtime/src/extension.ts",
+    "blockers/T28-scope-expansion.md",
+    "packages/pi-adapter/package.json",
+    "packages/pi-adapter/src/context-hook.ts",
+    "packages/pi-adapter/src/index.ts"
+  ],
+  "tests": [
+    "tests/acceptance/context-hook.test.ts",
+    "tests/contract/pi-context-hook.test.ts",
+    "tests/support/pi.ts",
+    "tests/tasks/t28.test.ts"
+  ]
+}
