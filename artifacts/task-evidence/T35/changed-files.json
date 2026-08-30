@@ -1,0 +1,13 @@
+{
+  "taskId": "T35",
+  "production": [
+    "blockers/T35-scope-expansion.md",
+    "packages/runtime/package.json",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/semantic/proposer.ts"
+  ],
+  "tests": [
+    "packages/runtime/test/semantic/proposer.test.ts",
+    "tests/tasks/t35.test.ts"
+  ]
+}

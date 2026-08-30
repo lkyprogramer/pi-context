@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t35.test.ts (6 tests | 6 failed) 17ms
+   × T35 Evidence-cited semantic proposer > evidence_cited_semantic_proposer 13ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T35 Evidence-cited semantic proposer > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T35 Evidence-cited semantic proposer > rejects malformed input and empty evidence catalogs 0ms
+     → (0 , createSemanticProposer) is not a function
+   × T35 Evidence-cited semantic proposer > replays equal proposals for the same evidence catalog 0ms
+     → (0 , createSemanticProposer) is not a function
+   × T35 Evidence-cited semantic proposer > rejects a cursor from another workspace 0ms
+     → (0 , createSemanticProposer) is not a function
+   × T35 Evidence-cited semantic proposer > stops at the abort boundary before reading evidence 0ms
+     → (0 , createSemanticProposer) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t35.test.ts > T35 Evidence-cited semantic proposer > evidence_cited_semantic_proposer
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t35.test.ts:72:33
+     70| describe("T35 Evidence-cited semantic proposer", () => {
+     71|   it("evidence_cited_semantic_proposer", async () => {
+     72|     await expect(runT35Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     73|   });
+     74| 
+
+Caused by: TypeError: (0 , createSemanticProposer) is not a function
+ ❯ runT35Fixture tests/tasks/t35.test.ts:52:20
+ ❯ tests/tasks/t35.test.ts:72:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t35.test.ts > T35 Evidence-cited semantic proposer > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_PROPOSER_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createSemanticProposer) is not a function",
+  }
+
+ ❯ tests/tasks/t35.test.ts:76:55
+     74| 
+     75|   it("fails construction when production dependencies are absent", () …
+     76|     expect(() => createSemanticProposer({} as never)).toThrowError(
+       |                                                       ^
+     77|       expect.objectContaining({ code: "PCR_PROPOSER_DEPENDENCY_MISSING…
+     78|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t35.test.ts > T35 Evidence-cited semantic proposer > rejects malformed input and empty evidence catalogs
+TypeError: (0 , createSemanticProposer) is not a function
+ ❯ tests/tasks/t35.test.ts:83:22
+     81|   it("rejects malformed input and empty evidence catalogs", async () =…
+     82|     const bound = cursor();
+     83|     const proposer = createSemanticProposer({
+       |                      ^
+     84|       cursor: bound,
+     85|       evidence: catalog(["ev_t35"]),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t35.test.ts > T35 Evidence-cited semantic proposer > replays equal proposals for the same evidence catalog
+TypeError: (0 , createSemanticProposer) is not a function
+ ❯ tests/tasks/t35.test.ts:103:22
+    101|   it("replays equal proposals for the same evidence catalog", async ()…
+    102|     const bound = cursor();
+    103|     const proposer = createSemanticProposer({
+       |                      ^
+    104|       cursor: bound,
+    105|       evidence: catalog(["ev_t35"]),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t35.test.ts > T35 Evidence-cited semantic proposer > rejects a cursor from another workspace
+TypeError: (0 , createSemanticProposer) is not a function
+ ❯ tests/tasks/t35.test.ts:117:22
+    115|   it("rejects a cursor from another workspace", async () => {
+    116|     const bound = cursor();
+    117|     const proposer = createSemanticProposer({
+       |                      ^
+    118|       cursor: bound,
+    119|       evidence: catalog(["ev_t35"]),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t35.test.ts > T35 Evidence-cited semantic proposer > stops at the abort boundary before reading evidence
+TypeError: (0 , createSemanticProposer) is not a function
+ ❯ tests/tasks/t35.test.ts:140:22
+    138|     const bound = cursor();
+    139|     let listed = 0;
+    140|     const proposer = createSemanticProposer({
+       |                      ^
+    141|       cursor: bound,
+    142|       evidence: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  05:40:47
+   Duration  582ms (transform 192ms, setup 0ms, collect 276ms, tests 17ms, environment 0ms, prepare 70ms)
+
