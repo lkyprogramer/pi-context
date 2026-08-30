@@ -19,6 +19,7 @@ import {
   WORKSPACE_SQLITE_SCHEMA_VERSION,
   type WorkspaceSqliteMigration,
 } from "./schema/migrations.js";
+import { registerWorkspaceSqliteAccess } from "./internal/sqlite-access.js";
 
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
@@ -357,6 +358,37 @@ class WorkspaceSqliteEvidenceStoreImpl implements WorkspaceSqliteEvidenceStore {
     this.#db = db;
     this.path = path;
     this.workspaceId = workspaceId;
+    registerWorkspaceSqliteAccess(this, {
+      path,
+      workspaceId,
+      read: <T>(stage: string, work: (database: DatabaseSync) => T): T => {
+        this.#assertOpen();
+        try {
+          const result = work(this.#db);
+          if (result && typeof result === "object" && "then" in result) {
+            throw new StorageNodeError("PCR_SQLITE_INPUT_INVALID", { field: "read.work.async" });
+          }
+          return result;
+        } catch (error) {
+          throw mapSqliteError(error, stage);
+        }
+      },
+      transaction: <T>(stage: string, work: (database: DatabaseSync) => T): T => {
+        this.#assertOpen();
+        try {
+          this.#db.exec("BEGIN IMMEDIATE");
+          const result = work(this.#db);
+          if (result && typeof result === "object" && "then" in result) {
+            throw new StorageNodeError("PCR_SQLITE_INPUT_INVALID", { field: "transaction.work.async" });
+          }
+          this.#db.exec("COMMIT");
+          return result;
+        } catch (error) {
+          rollback(this.#db);
+          throw mapSqliteError(error, stage);
+        }
+      },
+    });
   }
 
   async put(record: EvidenceRecord): Promise<void> {

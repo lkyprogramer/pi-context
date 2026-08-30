@@ -177,7 +177,7 @@ describe("T09 Per-workspace SQLite schema and migrations", () => {
     await first.close();
     const reopened = await openWorkspaceSqliteStore(openInput(root, scope.workspaceId));
     try {
-      expect(reopened.getSchemaVersion()).toBe(1);
+      expect(reopened.getSchemaVersion()).toBe(WORKSPACE_SQLITE_SCHEMA_VERSION);
       expect(await reopened.get(scope, "evidence_t09")).toEqual(record(scope));
     } finally {
       await reopened.close();

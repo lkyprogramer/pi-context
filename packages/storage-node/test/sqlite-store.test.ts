@@ -138,7 +138,7 @@ describe("WorkspaceSqliteEvidenceStore schema", () => {
     inspection.close();
 
     const recovered = await openWorkspaceSqliteStore({ dataRoot, workspaceId, busyTimeoutMs: 1_000 });
-    expect(recovered.getSchemaVersion()).toBe(1);
+    expect(recovered.getSchemaVersion()).toBe(WORKSPACE_SQLITE_MIGRATIONS.length);
     await recovered.close();
   });
 });

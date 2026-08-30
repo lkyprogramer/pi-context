@@ -1,0 +1,28 @@
+{
+  "taskId": "T11",
+  "production": [
+    "packages/runtime/package.json",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/saga/contracts.ts",
+    "packages/runtime/src/saga/index.ts",
+    "packages/runtime/src/saga/reconcile.ts",
+    "packages/storage-node/package.json",
+    "packages/storage-node/src/index.ts",
+    "packages/storage-node/src/internal/sqlite-access.ts",
+    "packages/storage-node/src/saga-store.ts",
+    "packages/storage-node/src/schema/migrations.ts",
+    "packages/storage-node/src/sqlite-store.ts"
+  ],
+  "tests": [
+    "packages/runtime/test/saga.test.ts",
+    "packages/storage-node/test/saga-store.test.ts",
+    "packages/storage-node/test/sqlite-store.test.ts",
+    "tests/tasks/t09.test.ts",
+    "tests/tasks/t11.test.ts"
+  ],
+  "control": [
+    "blockers/T11-scope-expansion.md"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T11",
+  "unrelatedTrackedChanges": []
+}

@@ -56,8 +56,54 @@ CREATE INDEX evidence_scope_lookup ON evidence (
 );
 `;
 
+const V2_SQL = `
+CREATE TABLE saga_journal (
+  operation_id TEXT PRIMARY KEY CHECK (length(operation_id) > 0),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  kind TEXT NOT NULL CHECK (length(kind) > 0),
+  source_content_hash TEXT NOT NULL CHECK (
+    length(source_content_hash) = 64 AND source_content_hash NOT GLOB '*[^0-9a-f]*'
+  ),
+  host_correlation_id TEXT NOT NULL CHECK (length(host_correlation_id) > 0),
+  raw_blob_id TEXT NOT NULL CHECK (
+    length(raw_blob_id) = 69 AND substr(raw_blob_id, 1, 5) = 'blob_'
+    AND substr(raw_blob_id, 6) NOT GLOB '*[^0-9a-f]*'
+  ),
+  config_fingerprint TEXT NOT NULL CHECK (
+    length(config_fingerprint) = 64 AND config_fingerprint NOT GLOB '*[^0-9a-f]*'
+  ),
+  state TEXT NOT NULL CHECK (
+    state IN ('prepared', 'runtime_durable', 'host_visible', 'acknowledged', 'committed', 'stale', 'failed')
+  ),
+  host_id TEXT CHECK (host_id IS NULL OR length(host_id) > 0),
+  revision INTEGER NOT NULL CHECK (revision >= 1)
+) STRICT;
+
+CREATE UNIQUE INDEX saga_scope_correlation ON saga_journal (
+  workspace_id, session_id, ifnull(leaf_id, ''), lineage_hash, model_key, config_fingerprint, host_correlation_id
+);
+
+CREATE UNIQUE INDEX saga_scope_host_id ON saga_journal (
+  workspace_id, session_id, ifnull(leaf_id, ''), lineage_hash, model_key, config_fingerprint, host_id
+) WHERE host_id IS NOT NULL;
+
+CREATE INDEX saga_session_recovery ON saga_journal (
+  workspace_id,
+  session_id,
+  state,
+  operation_id
+);
+`;
+
 export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = Object.freeze([
   Object.freeze({ version: 1, name: "workspace-evidence-v1", sql: V1_SQL }),
+  Object.freeze({ version: 2, name: "workspace-saga-v2", sql: V2_SQL }),
 ]);
 
 export const WORKSPACE_SQLITE_SCHEMA_VERSION = WORKSPACE_SQLITE_MIGRATIONS.at(-1)?.version ?? 0;

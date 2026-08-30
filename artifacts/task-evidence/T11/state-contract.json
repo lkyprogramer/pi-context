@@ -1,0 +1,26 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T11",
+  "states": [
+    "prepared",
+    "runtime_durable",
+    "host_visible",
+    "acknowledged",
+    "committed",
+    "stale",
+    "failed"
+  ],
+  "semantics": {
+    "prepared": "in-transaction intent after CAS verification; never returned as a durable success",
+    "runtime_durable": "prepare transaction committed with full cursor, config fingerprint and canonical BlobRef",
+    "host_visible": "actual host entry id is bound but runtime acknowledgement is not committed",
+    "acknowledged": "recovery transaction has authenticated the host snapshot; immediately precedes committed",
+    "committed": "terminal host and runtime agreement",
+    "stale": "terminal cursor or config fence mismatch",
+    "failed": "terminal host content or host identity conflict"
+  },
+  "orphanPolicy": "Missing host entry is a recoverable disposition, not a terminal state; no record is invented for host-only entries.",
+  "idempotencyScope": "workspace, session, leaf, lineage, model, config fingerprint and host correlation; a stale config generation does not block a replacement generation.",
+  "recoveryTrust": "Blob verification is required before the first durable Saga insert. Exact durable replay and host recovery trust that immutable receipt; later CAS integrity auditing belongs to storage recovery and GC policy.",
+  "ownership": "Saga and Evidence share the one owned WorkspaceSqliteEvidenceStore connection."
+}

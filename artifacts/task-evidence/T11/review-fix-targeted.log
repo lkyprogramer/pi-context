@@ -1,0 +1,18 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:27824) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27825) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/runtime/test/saga.test.ts (4 tests) 3ms
+ ✓ |0| tests/tasks/t11.test.ts (2 tests) 108ms
+ ✓ |0| packages/storage-node/test/saga-store.test.ts (14 tests) 563ms
+   ✓ workspace SQLite Saga journal > recovers a host-visible row after an abrupt process exit and replays without mutation  383ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  14:43:15
+   Duration  904ms (transform 127ms, setup 0ms, collect 361ms, tests 674ms, environment 0ms, prepare 152ms)
+
