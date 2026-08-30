@@ -1,0 +1,57 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t00.test.ts (7 tests | 1 failed | 6 skipped) 99ms
+   ↓ T00 Freeze audit baseline and immutable evidence > freeze_audit_baseline_and_immutable_evidence
+   ↓ T00 Freeze audit baseline and immutable evidence > is idempotent for the same committed inputs
+   ↓ T00 Freeze audit baseline and immutable evidence > rejects a source outside the repository scope
+   × T00 Freeze audit baseline and immutable evidence > rejects an output directory outside the repository scope 99ms
+     → promise resolved "{ ok: true, task: 'T00', …(2) }" instead of rejecting
+   ↓ T00 Freeze audit baseline and immutable evidence > rejects malformed findings before writing artifacts
+   ↓ T00 Freeze audit baseline and immutable evidence > does not leave partial artifacts when an input disappears
+   ↓ T00 Freeze audit baseline and immutable evidence > replays deterministically in independent output directories
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t00.test.ts > T00 Freeze audit baseline and immutable evidence > rejects an output directory outside the repository scope
+AssertionError: promise resolved "{ ok: true, task: 'T00', …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "artifacts": {
++     "findingsSnapshot": "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/pcr-t00-external-W9BlE5/audit-baseline/findings.snapshot.json",
++     "manifest": "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/pcr-t00-external-W9BlE5/audit-baseline/baseline-manifest.json",
++   },
++   "baseline": {
++     "commit": "2f2c430497ffdcb9f7245a2350fb209c6c8e9573",
++     "sourceDigests": {
++       "findings.json": "0172a4a2a21e3da2571fc373168895f7884cfae30b3974c19c528a7e00df92fe",
++       "source.txt": "709f5d7b351672d3601d5662ee2ed7a0e42b29fcf8384abf7d1190221b8125ff",
++     },
++     "tree": "00a3d01035b372644bc47b01997cc422a78ad69e",
++   },
++   "ok": true,
++   "task": "T00",
+  }
+
+ ❯ tests/tasks/t00.test.ts:110:5
+    108|         outputDirectory: join(externalRoot, "audit-baseline"),
+    109|       }),
+    110|     ).rejects.toThrow("output directory is outside repository scope");
+       |     ^
+    111|   });
+    112| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  10:13:36
+   Duration  375ms (transform 21ms, setup 0ms, collect 27ms, tests 99ms, environment 0ms, prepare 63ms)
+

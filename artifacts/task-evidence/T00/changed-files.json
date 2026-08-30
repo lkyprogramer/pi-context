@@ -1,0 +1,17 @@
+{
+  "taskId": "T00",
+  "production": [
+    "audit/baseline.d.mts",
+    "audit/baseline.mjs",
+    "audit/freeze-baseline.mjs"
+  ],
+  "artifacts": [
+    "artifacts/audit-baseline/baseline-manifest.json",
+    "artifacts/audit-baseline/findings.snapshot.json"
+  ],
+  "tests": [
+    "tests/tasks/t00.test.ts"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T00",
+  "unrelatedTrackedChanges": []
+}

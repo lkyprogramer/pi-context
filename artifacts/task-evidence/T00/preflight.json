@@ -1,0 +1,12 @@
+{
+  "taskId": "T00",
+  "baselineCommit": "9b5e207db04a197481d732ff206c0b1210aaa2e2",
+  "baselineTree": "c3041e01eee6517dbd0a1c085d4990ba9b1c9417",
+  "toolchain": {
+    "node": "v22.19.0",
+    "pnpm": "10.15.0",
+    "pi": "0.84.4"
+  },
+  "knownControlInput": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/** is user-provided and untracked",
+  "scopeDecision": "The task's explicit TDD and evidence paths are treated as specific allowances in addition to audit/** and artifacts/audit-baseline/**."
+}

@@ -1,0 +1,37 @@
+{
+  "taskId": "T00",
+  "status": "done",
+  "baselineCommit": "9b5e207db04a197481d732ff206c0b1210aaa2e2",
+  "baselineTree": "c3041e01eee6517dbd0a1c085d4990ba9b1c9417",
+  "redLog": "artifacts/task-evidence/T00/red.log",
+  "greenLog": "artifacts/task-evidence/T00/green.log",
+  "fullGateLog": "artifacts/task-evidence/T00/full-gate.log",
+  "acceptance": {
+    "publicInterfaceCompiles": true,
+    "redProvesMissingContract": true,
+    "narrowGreenPasses": true,
+    "repositoryGatePasses": true,
+    "productionPathUsesRealGitAndFilesystem": true,
+    "scopeBoundaryRecorded": true,
+    "everyChangedFileAndLogHasDigest": true,
+    "atomicCommitCanReproduce": true
+  },
+  "files": {
+    "artifacts/audit-baseline/baseline-manifest.json": "597ac68f5742b07b1b9d0f178ba0cb878d10f14267dc06f1ba557ddddc1717f6",
+    "artifacts/audit-baseline/findings.snapshot.json": "e6a89ced1d67082282be102e80ceb095763b8b9c7cb0fdd2a049f15eebfb82e8",
+    "artifacts/task-evidence/T00/baseline-run.json": "3f3e10b646c371ed1284e03e3901d4bc2058e86d2bce5ea5ac18951a8a9e8600",
+    "artifacts/task-evidence/T00/changed-files.json": "67fec9c3a42ed3df77406f78ba5a10f5838f087834bb1a35c8a7c0b1e25e6d1c",
+    "artifacts/task-evidence/T00/contract-compile.log": "64b425b4bfedb07b1d8cb3b31ec021d14eb6ad378c554e906ab0b013919ae38a",
+    "artifacts/task-evidence/T00/full-gate.log": "2faeb34a14455ceaf2b1a16244968f64b468976ef878bb9c5a04119dd6ef646c",
+    "artifacts/task-evidence/T00/green.log": "d0b04644a30bbf2657b7007effa55f13a487396a7e6b258addcc6f52c0aa6a18",
+    "artifacts/task-evidence/T00/preflight-git.txt": "9647de4666dcdf6533a562adedc27c0ba0426d52c86533f6f6b7283d6d9df38d",
+    "artifacts/task-evidence/T00/preflight-toolchain.txt": "ab319519f9605338628f988dab4553b3a3223af62b0404d7cac549c90c3684c0",
+    "artifacts/task-evidence/T00/preflight.json": "2617dd52325918a0d7e80cb77786d449dbab1301979c38b72d572f2e61491f56",
+    "artifacts/task-evidence/T00/red-output-scope.log": "019be3884e05e8d1bab9a775af0211a37c39bc18a3148361da1fd42a593795fd",
+    "artifacts/task-evidence/T00/red.log": "5a6793c494a41b856c3b148dc9a60d8d6f69ee4a8cc9bfb7a38cf5d3dafcb462",
+    "audit/baseline.d.mts": "c651a011c2cc3233e22fc2deacc01cfdbc92a27d9a095a49ce6bd011e8c7ca31",
+    "audit/baseline.mjs": "0342ab824a135267992390bce9761db8b89e242ddeb1f5f5efde217bea1a5411",
+    "audit/freeze-baseline.mjs": "420ff932a9bb2e5b4b52a2f582fe2e25a75afad3b1c224d631db9b22658db710",
+    "tests/tasks/t00.test.ts": "eca7b51d571167e0f6b9534865956a59d31776b8cbb395d93b413b1ebf265502"
+  }
+}

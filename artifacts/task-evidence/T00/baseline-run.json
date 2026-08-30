@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "task": "T00",
+  "baseline": {
+    "commit": "9b5e207db04a197481d732ff206c0b1210aaa2e2",
+    "tree": "c3041e01eee6517dbd0a1c085d4990ba9b1c9417",
+    "sourceDigests": {
+      ".github/workflows/compatibility.yml": "a978c9f48bd678907d8b4a0ceb923dd5e942623405830166f14c4d1b29081c4a",
+      "apps/pi-context-runtime/src/extension.ts": "d8099f4759bc3c6e498dbf767f4013823b20c1cfd6afd86586495dd751c68c06",
+      "docs/evaluations/2026-08-28-w2-live-native-pairing.md": "80f1eed52526321b225075342f499e0b14fd2189e8b961aff26444397f782369",
+      "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/findings/findings.json": "e6a89ced1d67082282be102e80ceb095763b8b9c7cb0fdd2a049f15eebfb82e8",
+      "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/MANIFEST.sha256": "66e93f6fdf926d1c81f07f25e55bf492c09812868bc3eff76d2ee8b69568d33b",
+      "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/sources/source-catalog.json": "54483ec648f8eff15d6e261eff8b80581497f67c8ce41f1688cfaddc88898eae",
+      "packages/kernel/src/directives/capture.ts": "faada99a380f66e87a0a14dc12c2ab5077212d1a9f8aa8299461a58f7a881649",
+      "packages/kernel/src/materialization/materializer.ts": "2dadd01648568a5d7f422233a3d8dfbfd2eab9697b2864cb28856d0b953e1819",
+      "packages/pi-adapter/src/context-hook.ts": "6e2bf9a1dbe701f37b5ecf84fa2d4bd14614b0cb3dfbeb484e8950c3114a3cc2",
+      "packages/pi-adapter/src/tool-result-hook.ts": "f51a68445ffa7d15f0c9794abd7b57f37da4e02c9e3e6f83093014db0e995610",
+      "packages/storage/src/sqlite-store.ts": "c606855fc8af5b6eb1766697bb8057f7d9192572d4b67ad5b5298842d59348d2",
+      "tests/live-gate/paired-w2-live.ts": "698cdc416515e3a0f650003a907065fdaf62bbfd24586f1ea02d1ddac4f34b27",
+      "tests/live-gate/w1-session-jsonl.ts": "0d439292e52dba430f72e1021abeff824e5c7339cbb06b4133046f8d9f26da29",
+      "tests/w2-gate/corpus.ts": "8eddbe34896425d642feef01d81834498ac76e3093321c781c022a17acc6a4de"
+    }
+  },
+  "artifacts": {
+    "manifest": "/Users/luo/Documents/github/pi-context/artifacts/audit-baseline/baseline-manifest.json",
+    "findingsSnapshot": "/Users/luo/Documents/github/pi-context/artifacts/audit-baseline/findings.snapshot.json"
+  }
+}
