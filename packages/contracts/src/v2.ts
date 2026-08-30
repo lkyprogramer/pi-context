@@ -1,17 +1,9 @@
 import type { ActionAuthority, SourceClass } from "./types.js";
+import type { RuntimeCursor } from "./identity.js";
 
 export interface TextRange {
   start: number;
   end: number;
-}
-
-export interface RuntimeCursor {
-  workspaceId: string;
-  sessionId: string;
-  branchId: string;
-  sequence: number;
-  lineageHash: string;
-  sourceEntryId?: string;
 }
 
 export interface UserTurnRecord {

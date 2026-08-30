@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "task": "T03",
+  "files": [
+    "checkpoint-v2.schema.json",
+    "directive-record.schema.json",
+    "evidence-receipt.schema.json",
+    "runtime-config.schema.json",
+    "runtime-cursor.schema.json",
+    "source-class.schema.json",
+    "user-turn-record.schema.json"
+  ],
+  "digests": {
+    "checkpoint-v2.schema.json": "0984caaea352c2dff1e5bef6bcd41d21cfc6ab8b17536f9081f3c6fa5c8ccda6",
+    "directive-record.schema.json": "7369319638f5bb435781948bfa9703ec3523db9eb3de664d6ed193de488e909e",
+    "evidence-receipt.schema.json": "d8ba6b3cfe938493d4a558d32edd498ba6f9c2f61f51416065706d558e3530be",
+    "runtime-config.schema.json": "93c311b01c383d93bc5b252ef7302ef1eb8f2328eb0cb3f24b656b95b745efeb",
+    "runtime-cursor.schema.json": "027798afe5c78fa90ef2d0c775a0ab40c5f7b1e095c8016cb70d44f569511387",
+    "source-class.schema.json": "a2a84dc6ac70f0d0f8a3d0c6fdc9caea76c30057008671a64c5ef90865676a9a",
+    "user-turn-record.schema.json": "0449272aa17e167a8fd10a6ee2d70a0befcacd9c0fe5d0d681256d9e4fe530f6"
+  }
+}

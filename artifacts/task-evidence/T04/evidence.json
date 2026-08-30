@@ -1,0 +1,41 @@
+{
+  "taskId": "T04",
+  "status": "done",
+  "parentCommit": "21b49fed760510973e59c3f511dcd5e9995be1c5",
+  "redLog": "artifacts/task-evidence/T04/red.log",
+  "greenLog": "artifacts/task-evidence/T04/green.log",
+  "fullGateLog": "artifacts/task-evidence/T04/full-gate.log",
+  "acceptance": {
+    "runtimeCursorUsesRealWorkspaceSessionLeafLineageAndModelInputs": true,
+    "hostEvidenceAndDirectiveIdsAreDomainSeparated": true,
+    "workspaceSessionLeafSourceAndContentScopeChangesAlterIdentity": true,
+    "arrayIndexIdentityIsRejected": true,
+    "identityContractsArePubliclyExported": true,
+    "singleRuntimeCursorVocabularyAndSchemaRemain": true,
+    "frozenInstallAndRepositoryGatesPass": true,
+    "scopeExpansionIsRecorded": true,
+    "everyChangedFileAndLogHasDigest": true
+  },
+  "files": {
+    "artifacts/task-evidence/T04/changed-files.json": "5b2a5d9d99cc178e8422c14a82b742f9ee5041e92d0b808172fdde4698fb87fb",
+    "artifacts/task-evidence/T04/full-gate.log": "7a8dd8c6756c8036a1f1f717009609372a777e5419d9bc7136b6dd6651f7d107",
+    "artifacts/task-evidence/T04/green.log": "e3ddd44d9731d2c8affd836d6ce7d1687a6780054b4c398d726e431d05ab634f",
+    "artifacts/task-evidence/T04/preflight-git.txt": "c0acdb23fd0cabe3a44859c56ecd34be097c3cc6aca369c97c5c7cff6be14e1f",
+    "artifacts/task-evidence/T04/preflight-toolchain.txt": "ab319519f9605338628f988dab4553b3a3223af62b0404d7cac549c90c3684c0",
+    "artifacts/task-evidence/T04/preflight.json": "1748abb1d91bed81a81197a56236a577536970535a3fc4f7cf278ba8ad67ab5a",
+    "artifacts/task-evidence/T04/red.log": "5384cd2bfa544955e2556094e58221dc22daf1c8b8dd08709125ec7be24c90f4",
+    "artifacts/task-evidence/T04/schema-regeneration.json": "d93c91fdacf2a692b61ed34f91d8babd7eeadec7786ba6ffb121a8062645f6f5",
+    "artifacts/task-evidence/T04/scope-expansion.json": "22c9aca92c1643dd22322fb5747cae5767db6ee19a4207cbda4d525e9a4f09de",
+    "packages/contracts/package.json": "3139ba6f9854acad716c263907c2631e39f4c67b9966fae8bdd96900af5b50f4",
+    "packages/contracts/schema-definitions.mjs": "53e2edfaab2b8c6ade7511339c35559de29868edd0e39a208f570aec96909b4f",
+    "packages/contracts/src/identity.ts": "b74127dca5d8b9cbeb942834f1321b443a2cdcfc10402bca103345f037a5af2b",
+    "packages/contracts/src/index.ts": "4735efdd51613c32053497405e64d624dff70ada7848836286425411d52ca1bb",
+    "packages/contracts/src/v2.ts": "a12c0630adc001e4b2b29414c3005fab5ceb31f6fe939ec5144dcda2a2edefdc",
+    "packages/core/package.json": "4223a3cf4235e601d8ef159e4a70138c3484e35deaa661d140104ff184a36dc5",
+    "packages/core/src/identity/index.ts": "85723d272fdd1d9246300f617d079fcc3568a2721bf53526d66073d805718824",
+    "packages/core/src/identity/stable-identity.ts": "5ac975086c28bfff5eb071d986f16674dda97f99a2f286986240ea15f09d087c",
+    "packages/core/src/index.ts": "6e40d99a2a7dd4b233149c353da39e2d36b9c2c8bce8c17b05a73d1ab7f4db97",
+    "schemas/runtime-cursor.schema.json": "027798afe5c78fa90ef2d0c775a0ab40c5f7b1e095c8016cb70d44f569511387",
+    "tests/tasks/t04.test.ts": "51fabda339896dced2419d9e86782bcf6b4be3f1a5d80f13e8f95d40adf1dc53"
+  }
+}

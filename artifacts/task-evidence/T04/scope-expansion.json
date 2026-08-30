@@ -1,0 +1,15 @@
+{
+  "taskId": "T04",
+  "paths": [
+    "packages/contracts/package.json",
+    "packages/contracts/schema-definitions.mjs",
+    "packages/contracts/src/index.ts",
+    "packages/contracts/src/v2.ts",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "schemas/runtime-cursor.schema.json"
+  ],
+  "reason": "The later T04 RuntimeCursor must replace the conflicting T03 shape and both identity APIs must be reachable through package exports.",
+  "interfaceImpact": "RuntimeCursor is now workspaceId/sessionId/leafId/lineageHash/modelKey everywhere; no second cursor vocabulary remains.",
+  "verification": "contracts/core typecheck, schema regeneration, frozen install, and the repository gate pass."
+}

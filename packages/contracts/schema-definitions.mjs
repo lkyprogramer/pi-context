@@ -27,14 +27,13 @@ export const runtimeCursorSchema = {
   title: "RuntimeCursor",
   type: "object",
   additionalProperties: false,
-  required: ["workspaceId", "sessionId", "branchId", "sequence", "lineageHash"],
+  required: ["workspaceId", "sessionId", "leafId", "lineageHash", "modelKey"],
   properties: {
     workspaceId: identifier,
     sessionId: identifier,
-    branchId: identifier,
-    sequence: { type: "integer", minimum: 0 },
+    leafId: { anyOf: [identifier, { type: "null" }] },
     lineageHash: hash,
-    sourceEntryId: identifier,
+    modelKey: identifier,
   },
 };
 

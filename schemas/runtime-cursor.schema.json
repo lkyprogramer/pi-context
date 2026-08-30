@@ -7,9 +7,9 @@
   "required": [
     "workspaceId",
     "sessionId",
-    "branchId",
-    "sequence",
-    "lineageHash"
+    "leafId",
+    "lineageHash",
+    "modelKey"
   ],
   "properties": {
     "workspaceId": {
@@ -20,19 +20,22 @@
       "type": "string",
       "minLength": 1
     },
-    "branchId": {
-      "type": "string",
-      "minLength": 1
-    },
-    "sequence": {
-      "type": "integer",
-      "minimum": 0
+    "leafId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "lineageHash": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
     },
-    "sourceEntryId": {
+    "modelKey": {
       "type": "string",
       "minLength": 1
     }
