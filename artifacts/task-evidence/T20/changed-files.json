@@ -1,0 +1,21 @@
+{
+  "taskId": "T20",
+  "production": [
+    "apps/pi-context-runtime/src/extension.ts",
+    "blockers/T20-scope-expansion.md",
+    "packages/pi-adapter/package.json",
+    "packages/pi-adapter/src/commands/context.ts",
+    "packages/pi-adapter/src/index.ts",
+    "packages/pi-adapter/src/tools/read.ts",
+    "packages/pi-adapter/src/tools/recall.ts",
+    "packages/pi-adapter/src/tools/search.ts",
+    "packages/pi-adapter/src/tools/status.ts"
+  ],
+  "tests": [
+    "packages/pi-adapter/test/runtime-tools.test.ts",
+    "tests/acceptance/retrieval-tools.test.ts",
+    "tests/compat/provider-payload-probe.test.ts",
+    "tests/live-gate/verification.test.ts",
+    "tests/tasks/t20.test.ts"
+  ]
+}

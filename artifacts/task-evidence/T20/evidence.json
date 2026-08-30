@@ -1,0 +1,41 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T20",
+  "status": "review-candidate",
+  "parentCommit": "ae7cdb4839452b107079745ea24448d884cf9ea4",
+  "redLog": "artifacts/task-evidence/T20/red.log",
+  "greenLog": "artifacts/task-evidence/T20/green.log",
+  "fullGateLog": "artifacts/task-evidence/T20/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "storageBackedSearchAndRead": true,
+    "noInMemorySearchIndexFallback": true,
+    "exactReadSha256AndByteLength": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 94,
+    "repositoryGateTests": 487,
+    "acceptanceGateTests": 26
+  },
+  "files": {
+    "artifacts/task-evidence/T20/changed-files.json": "3fb89eafe236f5ff21c41f5cb4d7a414e908ffc9f3fcb166e5a463ec274553ed",
+    "artifacts/task-evidence/T20/full-gate.log": "a33123e50192d8fbc1cdafb82d6d139ccf5c0e179b269f2936ee265fe92f1284",
+    "artifacts/task-evidence/T20/green.log": "8f86dbbec89dd497daec841729377719c2013aebda48c8a8a7e208b3d999dbd3",
+    "artifacts/task-evidence/T20/preflight-git.txt": "abec4d719a8124143a71dce8f31032168de97663601414dd3de2635297dc35d4",
+    "artifacts/task-evidence/T20/preflight-toolchain.txt": "230379c89cb3f942c21fb2fa39aa0d0f1cfbbe7ab707012d518d17b4a41d6541",
+    "artifacts/task-evidence/T20/red.log": "65eb25bc33e5346cce8e13de84e00fd3d37bcd694ebe0e92b67ab906954e68f1",
+    "apps/pi-context-runtime/src/extension.ts": "448a390d154027102a36690dff10b52cdb0a9b99eb26b40dc7f1751b7d2c77f7",
+    "blockers/T20-scope-expansion.md": "39aaef8d2d1026f3ad1e7c7eb7f70d146a62bd8518fecd6be69d20f82e1b6067",
+    "packages/pi-adapter/package.json": "3fe6c3bdf209a18145726398424460e577e2f8344b8d6121371d674ea3045de9",
+    "packages/pi-adapter/src/commands/context.ts": "94c9906916dc9f34d67ed0bd9d62711e99d587663decd43bd1a8bc0d6dd1e942",
+    "packages/pi-adapter/src/index.ts": "a34ebf6f56468a6abea956f24f272abdee414d2dc05b4409fe001a43b5421aa2",
+    "packages/pi-adapter/src/tools/read.ts": "e5f680ce969712986115906f01d21758e16bc0a9409450f50e8c5c33b0c2f740",
+    "packages/pi-adapter/src/tools/recall.ts": "285211e11233edb8f22e666de46597d2c9fb6571a3a2c9e8209b95175db05c81",
+    "packages/pi-adapter/src/tools/search.ts": "36b80411c3c976af9dd59813dcfaa99210b2756d66239ae6984fb0d0866f6f84",
+    "packages/pi-adapter/src/tools/status.ts": "e5151b2b0773d1a9f5615ab00f94ab6558637382a499bee5aa4e023ec138a0f4",
+    "packages/pi-adapter/test/runtime-tools.test.ts": "30fd16e88627ce9bb33a0e59ae5e2175af6bcbee12384c068494bb4f7b6ba2cc",
+    "tests/acceptance/retrieval-tools.test.ts": "83bc55590dcf72978ba709d96c3c95a4c3c1cb52014aa09b43a89230e0d3d2b8",
+    "tests/compat/provider-payload-probe.test.ts": "1b97b9cc5dbaed5f156679041b01a47cdcf4d15dc6cfb95c2e5e00a35ff7be0e",
+    "tests/live-gate/verification.test.ts": "56d0e8cf05f4df991eb01e44164c517ca80e6ce151667aabcb5a0f5e94b7356c",
+    "tests/tasks/t20.test.ts": "ab00eefaff97f402ac4dd33553f4f5a6d1758178b30f3bc85d994e2872a41f44"
+  }
+}

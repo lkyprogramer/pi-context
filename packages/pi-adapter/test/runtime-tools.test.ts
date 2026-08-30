@@ -1,23 +1,55 @@
 import { describe, expect, it } from "vitest";
+
+import { createRuntimeCursor } from "@pcr/core";
+import type { EvidenceService } from "@pcr/runtime";
 import { createRegisteredRuntimeTools, registerRuntimeTools, type ToolsRuntime } from "../src/commands/context.js";
 
-function fixtureRuntime(partial: Partial<ToolsRuntime> = {}): ToolsRuntime {
+function boundCursor() {
+  return createRuntimeCursor({
+    workspacePath: "/tmp/pcr-runtime-tools",
+    sessionId: "s1",
+    leafId: "leaf-tools",
+    lineageEntryIds: ["root", "leaf-tools"],
+    modelKey: "openclaw/Qwen3.8-27B-WORK",
+  });
+}
+
+function stubEvidence(cursor = boundCursor()): EvidenceService {
+  const body = "exact evidence body cache";
   return {
-    workspaceId: "ws_1",
+    async admit() {
+      throw new Error("unused");
+    },
+    async search(query) {
+      if (query.cursor.workspaceId !== cursor.workspaceId || query.cursor.sessionId !== cursor.sessionId) {
+        throw Object.assign(new Error("PCR_EVIDENCE_SCOPE_MISMATCH"), { code: "PCR_EVIDENCE_SCOPE_MISMATCH" });
+      }
+      if (!body.toLowerCase().includes(query.text.toLowerCase())) return [];
+      return [{ evidenceId: "ev_aaaaaaaa", kind: "note", rank: 0, snippet: body.slice(0, 160) }];
+    },
+    async read() {
+      throw new Error("unused");
+    },
+  };
+}
+
+function fixtureRuntime(partial: Partial<ToolsRuntime> = {}): ToolsRuntime {
+  const cursor = boundCursor();
+  return {
+    workspaceId: cursor.workspaceId,
+    cursor,
+    evidence: stubEvidence(cursor),
     encryptionKey: "encryptionKey-must-never-leak",
-    evidence: { ev_aaaaaaaa: "exact evidence body ".repeat(20) },
-    evidenceWorkspace: { ev_aaaaaaaa: "ws_1" },
-    searchIndex: [
-      { id: "ev_aaaaaaaa", body: "exact evidence body cache", workspaceId: "ws_1" },
-      { id: "ev_bbbbbbbb", body: "other workspace", workspaceId: "ws_2" },
-    ],
+    recalledEvidence: { ev_aaaaaaaa: "exact evidence body ".repeat(20) },
+    evidenceWorkspace: { ev_aaaaaaaa: cursor.workspaceId },
     claimed: true,
     ...partial,
   };
 }
 
-function fixtureCtx() {
-  return { workspaceId: "ws_1", sessionId: "s1", channel: "authenticated-user" as const };
+function fixtureCtx(workspaceId?: string) {
+  const cursor = boundCursor();
+  return { workspaceId: workspaceId ?? cursor.workspaceId, sessionId: "s1", channel: "authenticated-user" as const };
 }
 
 describe("runtime tools", () => {
@@ -91,7 +123,7 @@ describe("runtime tools", () => {
       },
     };
     registerRuntimeTools(pi, fixtureRuntime());
-    expect(names).toEqual(["context_recall", "context_search", "context_status", "context_pin"]);
+    expect(names).toEqual(["context_recall", "context_search", "context_read", "context_status", "context_pin"]);
     expect(commands).toEqual(["context", "context-doctor", "context-compact"]);
     const tools = createRegisteredRuntimeTools(fixtureRuntime());
     for (const tool of tools) {

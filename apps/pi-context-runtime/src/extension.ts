@@ -268,6 +268,24 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   });
   registerRuntimeTools(pi, {
     workspaceId: "ws_0123456789abcdef",
+    cursor: {
+      workspaceId: `ws_${"0".repeat(40)}`,
+      sessionId: "unbound",
+      leafId: null,
+      lineageHash: "0".repeat(64),
+      modelKey: "unbound",
+    },
+    evidence: {
+      async admit() {
+        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+      },
+      async search() {
+        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+      },
+      async read() {
+        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+      },
+    },
     claimed: true,
     commands: {
       status: (ctx) =>

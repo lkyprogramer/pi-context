@@ -1,4 +1,5 @@
 import { createPinTool } from "../tools/pin.js";
+import { createReadTool } from "../tools/read.js";
 import { createRecallTool } from "../tools/recall.js";
 import { createSearchTool } from "../tools/search.js";
 import { createStatusTool, objectParameters, type RuntimeTool, type RuntimeToolCtx, type ToolJsonSchema, type ToolsRuntime } from "../tools/status.js";
@@ -12,6 +13,7 @@ export interface ToolingExtensionAPI {
 export type RegisteredRuntimeTools = RuntimeTool[] & {
   context_recall: RuntimeTool;
   context_search: RuntimeTool;
+  context_read: RuntimeTool;
   context_status: RuntimeTool;
   context_pin: RuntimeTool;
 };
@@ -19,11 +21,13 @@ export type RegisteredRuntimeTools = RuntimeTool[] & {
 export function createRegisteredRuntimeTools(runtime: ToolsRuntime): RegisteredRuntimeTools {
   const context_recall = createRecallTool(runtime);
   const context_search = createSearchTool(runtime);
+  const context_read = createReadTool(runtime);
   const context_status = createStatusTool(runtime);
   const context_pin = createPinTool(runtime);
-  return Object.assign([context_recall, context_search, context_status, context_pin], {
+  return Object.assign([context_recall, context_search, context_read, context_status, context_pin], {
     context_recall,
     context_search,
+    context_read,
     context_status,
     context_pin,
   });
@@ -45,5 +49,5 @@ export function registerRuntimeTools(pi: ToolingExtensionAPI, runtime: ToolsRunt
   pi.registerCommand("context-compact", { description: "Request settled host convergence", handler: (_args, ctx) => commands.compact(ctx) });
 }
 
-export { createRecallTool, createSearchTool, createStatusTool, createPinTool, objectParameters };
+export { createRecallTool, createSearchTool, createReadTool, createStatusTool, createPinTool, objectParameters };
 export type { RuntimeTool, RuntimeToolCtx, ToolsRuntime, ToolJsonSchema };

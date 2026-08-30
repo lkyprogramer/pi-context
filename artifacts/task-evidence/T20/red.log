@@ -1,0 +1,114 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:85643) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |0| tests/tasks/t20.test.ts (6 tests | 6 failed) 169ms
+   × T20 Storage-backed context_search and context_read > storage_backed_context_search_and_context_read 58ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T20 Storage-backed context_search and context_read > fails construction when production dependencies are absent 4ms
+     → expected error to match asymmetric matcher
+   × T20 Storage-backed context_search and context_read > rejects malformed and unsafe queries 23ms
+     → (0 , createRetrievalTools) is not a function
+   × T20 Storage-backed context_search and context_read > replays search and exact read deterministically 38ms
+     → (0 , createRetrievalTools) is not a function
+   × T20 Storage-backed context_search and context_read > denies another session scope 21ms
+     → (0 , createRetrievalTools) is not a function
+   × T20 Storage-backed context_search and context_read > stops at the abort boundary before search 24ms
+     → (0 , createRetrievalTools) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t20.test.ts > T20 Storage-backed context_search and context_read > storage_backed_context_search_and_context_read
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t20.test.ts:102:33
+    100| describe("T20 Storage-backed context_search and context_read", () => {
+    101|   it("storage_backed_context_search_and_context_read", async () => {
+    102|     await expect(runT20Fixture()).resolves.toEqual({ ok: true, task: "…
+       |                                 ^
+    103|   });
+    104|
+
+Caused by: TypeError: (0 , createRetrievalTools) is not a function
+ ❯ runT20Fixture tests/tasks/t20.test.ts:86:19
+ ❯ tests/tasks/t20.test.ts:102:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t20.test.ts > T20 Storage-backed context_search and context_read > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_RETRIEVAL_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_6__.createRetrievalTools) is not a function",
+  }
+
+ ❯ tests/tasks/t20.test.ts:106:53
+    104|
+    105|   it("fails construction when production dependencies are absent", () …
+    106|     expect(() => createRetrievalTools({} as never)).toThrowError(
+       |                                                     ^
+    107|       expect.objectContaining({ code: "PCR_RETRIEVAL_DEPENDENCY_MISSIN…
+    108|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t20.test.ts > T20 Storage-backed context_search and context_read > rejects malformed and unsafe queries
+TypeError: (0 , createRetrievalTools) is not a function
+ ❯ tests/tasks/t20.test.ts:115:21
+    113|     const stack = await openStack(root);
+    114|     try {
+    115|       const tools = createRetrievalTools({ cursor: stack.bound, eviden…
+       |                     ^
+    116|       await expect(tools.search({} as never)).rejects.toThrow(/PCR_RET…
+    117|       await expect(tools.search({ query: "SELECT * FROM t" })).rejects…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t20.test.ts > T20 Storage-backed context_search and context_read > replays search and exact read deterministically
+TypeError: (0 , createRetrievalTools) is not a function
+ ❯ tests/tasks/t20.test.ts:140:21
+    138|         visibleText: "deterministic-t20",
+    139|       });
+    140|       const tools = createRetrievalTools({ cursor: stack.bound, eviden…
+       |                     ^
+    141|       const first = await tools.search({ query: "deterministic-t20" });
+    142|       const second = await tools.search({ query: "deterministic-t20" }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t20.test.ts > T20 Storage-backed context_search and context_read > denies another session scope
+TypeError: (0 , createRetrievalTools) is not a function
+ ❯ tests/tasks/t20.test.ts:156:21
+    154|     const stack = await openStack(root);
+    155|     try {
+    156|       const tools = createRetrievalTools({ cursor: stack.bound, eviden…
+       |                     ^
+    157|       const other = createRuntimeCursor({
+    158|         workspacePath: root,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t20.test.ts > T20 Storage-backed context_search and context_read > stops at the abort boundary before search
+TypeError: (0 , createRetrievalTools) is not a function
+ ❯ tests/tasks/t20.test.ts:176:21
+    174|     const stack = await openStack(root);
+    175|     try {
+    176|       const tools = createRetrievalTools({ cursor: stack.bound, eviden…
+       |                     ^
+    177|       const controller = new AbortController();
+    178|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  23:16:09
+   Duration  1.77s (transform 209ms, setup 0ms, collect 1.10s, tests 169ms, environment 0ms, prepare 103ms)
+

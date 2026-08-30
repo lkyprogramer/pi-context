@@ -1,3 +1,6 @@
+import type { RuntimeCursor } from "@pcr/contracts";
+import type { EvidenceService } from "@pcr/runtime";
+
 export interface RuntimeToolCtx {
   workspaceId?: string;
   sessionId?: string;
@@ -12,6 +15,7 @@ export interface ToolExecuteArgs {
   timeoutMs?: number;
   start?: number;
   end?: number;
+  endExclusive?: number;
   directive?: string;
   approved?: boolean;
 }
@@ -46,10 +50,11 @@ export function objectParameters(
 
 export interface ToolsRuntime {
   workspaceId: string;
-  evidence?: Record<string, string>;
+  cursor: RuntimeCursor;
+  evidence: EvidenceService;
+  recalledEvidence?: Record<string, string>;
   evidenceWorkspace?: Record<string, string>;
   encryptionKey?: string;
-  searchIndex?: Array<{ id: string; body: string; workspaceId: string }>;
   claimed?: boolean;
   commands?: {
     status(ctx: RuntimeToolCtx): Promise<string> | string;

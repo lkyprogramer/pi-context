@@ -20,7 +20,7 @@ export function createRecallTool(runtime: ToolsRuntime): RuntimeTool {
       const evidenceId = String(args.evidenceId ?? "");
       if (!EVIDENCE_ID.test(evidenceId)) throw Object.assign(new Error("invalid evidenceId"), { code: "PCR_INVALID_ID" });
       const workspaceId = ctx?.workspaceId ?? runtime.workspaceId;
-      const record = runtime.evidence?.[evidenceId];
+      const record = runtime.recalledEvidence?.[evidenceId];
       if (!record || runtime.evidenceWorkspace?.[evidenceId] !== workspaceId) {
         throw Object.assign(new Error("scope denied"), { code: "PCR_RETRIEVAL_SCOPE_DENIED" });
       }

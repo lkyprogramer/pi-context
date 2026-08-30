@@ -5,3 +5,15 @@ export { bindToolCallGate } from "../../kernel/src/security/action-gate.js";
 export { registerContextHook, normalizePcrError } from "./context-hook.js";
 export { toHostMessages, toPiMessages } from "./message-conversion.js";
 export * from "./user-input-hook.js";
+export {
+  createRetrievalTools,
+  createSearchTool,
+  RetrievalToolsError,
+  type CreateRetrievalToolsInput,
+  type RetrievalToolsPort,
+  type SearchToolInput,
+  type SearchToolOutput,
+  type ReadToolInput,
+  type ReadToolOutput,
+} from "./tools/search.js";
+export { createReadTool } from "./tools/read.js";

@@ -5,8 +5,23 @@ import { runLiveVerification } from "./run.js";
 
 describe("live install and comparison verification", () => {
   it("registers TypeBox-compatible parameters on every runtime tool", () => {
-    const tools = createRegisteredRuntimeTools({ workspaceId: "ws_1", claimed: true });
-    expect(tools).toHaveLength(4);
+    const tools = createRegisteredRuntimeTools({
+      workspaceId: "ws_1",
+      claimed: true,
+      cursor: {
+        workspaceId: `ws_${"0".repeat(40)}`,
+        sessionId: "unbound",
+        leafId: null,
+        lineageHash: "0".repeat(64),
+        modelKey: "unbound",
+      },
+      evidence: {
+        async admit() { throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" }); },
+        async search() { throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" }); },
+        async read() { throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" }); },
+      },
+    });
+    expect(tools).toHaveLength(5);
     for (const tool of tools) {
       expect(tool.parameters).toMatchObject({ type: "object" });
       expect(tool.parameters.properties).toEqual(expect.any(Object));
