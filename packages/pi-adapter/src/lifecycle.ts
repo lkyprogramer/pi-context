@@ -4,7 +4,7 @@ import { switchBranchScope } from "../../kernel/src/lifecycle/branch-scope.js";
 import type { RecoveryService } from "../../runtime/src/recovery-service.js";
 
 export interface LifecycleEvent {
-  reason?: SessionStartReason;
+  reason?: SessionStartReason | "startup";
   newLeafId?: string;
   hasRawBlobs?: boolean;
 }
@@ -23,7 +23,7 @@ export interface LifecycleCtx {
 }
 
 export interface LifecycleRuntime {
-  openSession(ctx: LifecycleCtx, reason: SessionStartReason, hasRawBlobs?: boolean): Promise<void>;
+  openSession(ctx: LifecycleCtx, reason: SessionStartReason, hasRawBlobs?: boolean): Promise<void | RuntimeCursor>;
   switchBranch(ctx: LifecycleCtx, newLeafId: string): Promise<void>;
   closeSession(ctx: LifecycleCtx): Promise<void>;
   invalidateRouteCandidates(ctx: LifecycleCtx): Promise<void>;
@@ -33,11 +33,18 @@ export interface LifecycleExtensionAPI {
   on(hook: string, handler: (event: LifecycleEvent, ctx: LifecycleCtx) => Promise<unknown>): void;
 }
 
+export function toPcrSessionStartReason(
+  reason: SessionStartReason | "startup" | undefined,
+): SessionStartReason {
+  if (reason === undefined || reason === "startup") return "new";
+  return reason;
+}
+
 export function registerSessionLifecycle(pi: LifecycleExtensionAPI, runtime: LifecycleRuntime): void {
   if (!pi || typeof pi.on !== "function") throw new TypeError("PCR_LIFECYCLE_DEPENDENCY_MISSING");
   if (!runtime || typeof runtime.openSession !== "function") throw new TypeError("PCR_LIFECYCLE_DEPENDENCY_MISSING");
   pi.on("session_start", async (event, ctx) => {
-    await runtime.openSession(ctx, event.reason ?? "new", event.hasRawBlobs);
+    return runtime.openSession(ctx, toPcrSessionStartReason(event.reason), event.hasRawBlobs);
   });
   pi.on("session_tree", async (event, ctx) => {
     await runtime.switchBranch(ctx, event.newLeafId ?? "leaf");
@@ -66,7 +73,13 @@ export function createLifecycleRuntimeFromRecovery(input: {
     async openSession(ctx, reason, hasRawBlobs = true) {
       const cursor = cursorFrom(ctx);
       current = cursor;
-      await recovery.onSessionStart({ cursor, reason, hasRawBlobs, signal: ctx.signal });
+      await recovery.onSessionStart({
+        cursor,
+        reason: toPcrSessionStartReason(reason),
+        hasRawBlobs,
+        signal: ctx.signal,
+      });
+      return cursor;
     },
     async switchBranch(ctx, newLeafId) {
       const cursor = cursorFrom(ctx);

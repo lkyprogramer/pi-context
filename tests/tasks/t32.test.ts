@@ -163,6 +163,11 @@ describe("T32 Session, branch and restart recovery", () => {
       candidates: memoryFence(),
     });
     await expect(service.onSessionStart({} as never)).rejects.toMatchObject({ code: "PCR_RECOVERY_INPUT_INVALID" });
+    await expect(service.onSessionStart({
+      cursor: bound,
+      reason: "startup" as never,
+      hasRawBlobs: true,
+    })).rejects.toMatchObject({ code: "PCR_RECOVERY_INPUT_INVALID" });
   });
 
   it("replays catch-up for the same resume", async () => {
@@ -221,7 +226,7 @@ describe("T32 Session, branch and restart recovery", () => {
     expect(opened).toBe(0);
   });
 
-  it("product lifecycle derives a real Pi cursor instead of ws_012/s1/leaf-a", async () => {
+  it("product lifecycle maps Pi startup to a derived cursor instead of ws_012/s1/leaf-a", async () => {
     const hooks: Record<string, (event: unknown, ctx: unknown) => Promise<unknown>> = {};
     const ext = createPiContextExtension({
       on(hook, next) { hooks[hook] = next as typeof hooks[string]; },
@@ -230,18 +235,29 @@ describe("T32 Session, branch and restart recovery", () => {
       hasTool() { return false; },
     });
     const manager = SessionManager.inMemory(`${WORK}-product`);
-    manager.appendMessage({ role: "user", content: "resume branch" } as never);
+    manager.appendMessage({ role: "user", content: "startup branch" } as never);
     const ctx = {
       cwd: manager.getCwd(),
       sessionManager: manager,
       model: { provider: "openclaw", id: "Qwen3.8-27B-WORK" },
       sessionId: manager.getSessionId(),
     };
-    await hooks.session_start?.({ reason: "resume", hasRawBlobs: true }, ctx);
-    await hooks.session_tree?.({ newLeafId: manager.getLeafId() }, ctx);
-    await hooks.session_shutdown?.({}, ctx);
-    expect(manager.getSessionId()).not.toBe("s1");
-    expect(manager.getLeafId()).not.toBe("leaf-a");
+    const recovered = await hooks.session_start?.({ type: "session_start", reason: "startup" }, ctx) as {
+      workspaceId: string;
+      sessionId: string;
+      leafId: string | null;
+      lineageHash: string;
+      modelKey: string;
+    };
+    expect(recovered.workspaceId).toMatch(/^ws_[a-f0-9]{40}$/u);
+    expect(recovered.sessionId).toBe(manager.getSessionId());
+    expect(recovered.leafId).toBe(manager.getLeafId());
+    expect(recovered.sessionId).not.toBe("s1");
+    expect(recovered.sessionId).not.toBe("unbound");
+    expect(recovered.leafId).not.toBe("leaf-a");
+    expect(recovered.modelKey).toBe("openclaw/Qwen3.8-27B-WORK");
+    await hooks.session_tree?.({ type: "session_tree", newLeafId: manager.getLeafId() }, ctx);
+    await hooks.session_shutdown?.({ type: "session_shutdown" }, ctx);
     await ext.release?.();
   });
 });
