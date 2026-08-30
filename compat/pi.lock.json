@@ -15,7 +15,7 @@
   "supportedRange": "0.84.4",
   "requiredPatch": {
     "path": "patches/@earendil-works__pi-coding-agent@0.84.4.patch",
-    "sha256": "549c2a5cbde0127f51796e87a7c66e99af74133aca17af248a0e51f66c2a40b4"
+    "sha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5"
   },
   "requiredRuntimeExports": [
     "PCR_INGRESS_METADATA_CONTRACT=pcr-ingress-metadata-v1"

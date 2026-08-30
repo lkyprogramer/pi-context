@@ -1,0 +1,24 @@
+{
+  "taskId": "T13",
+  "production": [
+    "apps/pi-context-runtime/package.json",
+    "apps/pi-context-runtime/src/composition-root.ts",
+    "packages/pi-adapter/package.json",
+    "packages/pi-adapter/src/index.ts",
+    "packages/pi-adapter/src/tool-result-hook.ts",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/observation-service.ts",
+    "patches/@earendil-works__pi-coding-agent@0.84.4.patch",
+    "pnpm-lock.yaml",
+    "compat/pi.lock.json"
+  ],
+  "tests": [
+    "tests/tasks/t13.test.ts",
+    "tests/acceptance/tool-result-flow.test.ts",
+    "tests/contract/pi-tool-result-order.test.ts",
+    "tests/compat/pi-version-contract.test.ts"
+  ],
+  "docs": [
+    "blockers/T13-scope-expansion.md"
+  ]
+}

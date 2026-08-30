@@ -2,12 +2,19 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { join } from "node:path";
 import type { RuntimeCursor } from "../../../packages/contracts/src/index.js";
 import { createRuntimeCursor } from "../../../packages/core/src/index.js";
-import { registerUserInputHook, type RegisteredUserInputHook } from "../../../packages/pi-adapter/src/index.js";
 import {
+  registerToolResultHook,
+  registerUserInputHook,
+  type RegisteredUserInputHook,
+} from "../../../packages/pi-adapter/src/index.js";
+import {
+  createObservationService,
   createUserTurnService,
   createRuntimeSession,
   createRuntimeSessionRegistry,
   RuntimeSessionRegistryError,
+  type DurableSagaJournal,
+  type ObservationService,
   type PiSessionContext,
   type RuntimeSession,
   type RuntimeSessionPorts,
@@ -17,6 +24,7 @@ import {
 import {
   createEncryptedBlobStore,
   openLocalWorkspaceBlobKeyProvider,
+  openWorkspaceSagaJournal,
   openWorkspaceSqliteStore,
   openWorkspaceUserTurnLedger,
   type LocalWorkspaceBlobKeyProvider,
@@ -289,7 +297,9 @@ interface WorkspaceUserTurnOwner {
   readonly database: WorkspaceSqliteEvidenceStore;
   readonly keys: LocalWorkspaceBlobKeyProvider;
   readonly services: Map<string, UserTurnService>;
+  readonly observations: Map<string, ObservationService>;
   service(cursor: RuntimeCursor): UserTurnService;
+  observation(cursor: RuntimeCursor): ObservationService;
   close(): Promise<void>;
 }
 
@@ -358,12 +368,18 @@ export function registerProductionUserTurnRuntime(
           keys,
         });
         const ledger = await openWorkspaceUserTurnLedger({ database });
+        const saga: DurableSagaJournal = await openWorkspaceSagaJournal({
+          database,
+          async verifyBlob(scope, ref) { await blobs.read(scope, ref, { start: 0, endExclusive: 0 }); },
+        });
         const services = new Map<string, UserTurnService>();
+        const observations = new Map<string, ObservationService>();
         return {
           dataRoot,
           database,
           keys,
           services,
+          observations,
           service(candidate) {
             const key = cursorKey(candidate);
             let service = services.get(key);
@@ -373,9 +389,20 @@ export function registerProductionUserTurnRuntime(
             }
             return service;
           },
+          observation(candidate) {
+            const key = cursorKey(candidate);
+            let service = observations.get(key);
+            if (!service) {
+              service = createObservationService({ cursor: candidate, blobs, saga });
+              observations.set(key, service);
+            }
+            return service;
+          },
           async close() {
             services.clear();
+            observations.clear();
             try {
+              await saga.close();
               await ledger.close();
               await database.close();
             } finally {
@@ -402,6 +429,16 @@ export function registerProductionUserTurnRuntime(
     cursor: cursorFromContext,
     async service(cursor, ctx) {
       return (await ownerFor(cursor, ctx)).service(cursor);
+    },
+    clock,
+    async onHardFailure(error, phase, ctx) {
+      await options.onHardFailure?.(error, phase, ctx);
+    },
+  });
+  registerToolResultHook(pi, {
+    cursor: cursorFromContext,
+    async service(cursor, ctx) {
+      return (await ownerFor(cursor, ctx)).observation(cursor);
     },
     clock,
     async onHardFailure(error, phase, ctx) {

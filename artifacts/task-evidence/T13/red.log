@@ -1,0 +1,111 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:50446) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |0| tests/tasks/t13.test.ts (8 tests | 6 failed) 176ms
+   × T13 Real Pi tool_result ingress > writes raw bytes before returning the compact tool result 58ms
+     → PCR_BLOB_INPUT_INVALID
+   × T13 Real Pi tool_result ingress > fails construction when production dependencies are absent 3ms
+     → expected error to match asymmetric matcher
+   × T13 Real Pi tool_result ingress > rejects malformed input before I/O 24ms
+     → (0 , createObservationService) is not a function
+   × T13 Real Pi tool_result ingress > is idempotent for duplicate tool_result ingest 29ms
+     → (0 , createObservationService) is not a function
+   × T13 Real Pi tool_result ingress > rejects a tool_result from the wrong workspace/session/branch 32ms
+     → (0 , createObservationService) is not a function
+   × T13 Real Pi tool_result ingress > propagates blob I/O failure as a hard-stop through the real Pi runner
+   · T13 Real Pi tool_result ingress > stops at the abort boundary before writing a blob
+   · T13 Real Pi tool_result ingress > replays equal results across two independent runs of the same event
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t13.test.ts > T13 Real Pi tool_result ingress
+Error: Theme not initialized. Call initTheme() first.
+ ❯ Object.get node_modules/.pnpm/@earendil-works+pi-coding-agent@0.84.4_patch_hash=549c2a5cbde0127f51796e87a7c66e99af741_465ecd609bee393355e0b1f15aec6468/node_modules/@earendil-works/pi-coding-agent/src/modes/interactive/theme/theme.ts:850:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t13.test.ts > T13 Real Pi tool_result ingress > writes raw bytes before returning the compact tool result
+BlobStoreError: PCR_BLOB_INPUT_INVALID
+ ❯ validateRef packages/storage-node/src/blob/store.ts:89:11
+     87| function validateRef(ref: BlobRef): BlobRef {
+     88|   if (typeof ref !== "string" || !BLOB_REF_PATTERN.test(ref)) {
+     89|     throw new BlobStoreError("PCR_BLOB_INPUT_INVALID", { field: "ref" …
+       |           ^
+     90|   }
+     91|   return ref;
+ ❯ NodeEncryptedBlobStore.read packages/storage-node/src/blob/store.ts:388:17
+ ❯ Object.read tests/tasks/t13.test.ts:182:38
+ ❯ tests/tasks/t13.test.ts:246:38
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t13.test.ts > T13 Real Pi tool_result ingress > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_OBSERVATION_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_7__.createObservationService) is not a function",
+  }
+
+ ❯ tests/tasks/t13.test.ts:254:57
+    252| 
+    253|   it("fails construction when production dependencies are absent", () …
+    254|     expect(() => createObservationService({} as never)).toThrowError(
+       |                                                         ^
+    255|       expect.objectContaining({ code: "PCR_OBSERVATION_DEPENDENCY_MISS…
+    256|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t13.test.ts > T13 Real Pi tool_result ingress > rejects malformed input before I/O
+TypeError: (0 , createObservationService) is not a function
+ ❯ tests/tasks/t13.test.ts:269:21
+    267|       read: harness.blobs.read.bind(harness.blobs),
+    268|     };
+    269|     const service = createObservationService({
+       |                     ^
+    270|       cursor: harness.cursor,
+    271|       blobs: wrapped,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t13.test.ts > T13 Real Pi tool_result ingress > is idempotent for duplicate tool_result ingest
+TypeError: (0 , createObservationService) is not a function
+ ❯ tests/tasks/t13.test.ts:296:21
+    294|   it("is idempotent for duplicate tool_result ingest", async () => {
+    295|     const harness = await openHarness();
+    296|     const service = createObservationService({
+       |                     ^
+    297|       cursor: harness.cursor,
+    298|       blobs: harness.blobs,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t13.test.ts > T13 Real Pi tool_result ingress > rejects a tool_result from the wrong workspace/session/branch
+TypeError: (0 , createObservationService) is not a function
+ ❯ tests/tasks/t13.test.ts:326:21
+    324|   it("rejects a tool_result from the wrong workspace/session/branch", …
+    325|     const harness = await openHarness();
+    326|     const service = createObservationService({
+       |                     ^
+    327|       cursor: harness.cursor,
+    328|       blobs: harness.blobs,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (8)
+   Start at  18:39:55
+   Duration  1.27s (transform 131ms, setup 0ms, collect 861ms, tests 176ms, environment 0ms, prepare 57ms)
+

@@ -1,0 +1,43 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T13",
+  "status": "review-candidate",
+  "parentCommit": "1d7cc3cc01122570c52f012707d742abaaffb233",
+  "redLog": "artifacts/task-evidence/T13/red.log",
+  "greenLog": "artifacts/task-evidence/T13/green.log",
+  "fullGateLog": "artifacts/task-evidence/T13/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "realPiToolResultIngress": true,
+    "rawBytesReadableFromCasBeforeCompactProjection": true,
+    "noDefaultFakeDependencies": true,
+    "integrityFailureHardStop": true,
+    "uniquePackagedProductEntryWired": true,
+    "repositoryGateFiles": 88,
+    "repositoryGateTests": 459,
+    "acceptanceGateTests": 24
+  },
+  "files": {
+    "apps/pi-context-runtime/package.json": "a2a4f637b3a239b2129ebabbd128100110621d709d0a555ae453d6b66b350f3c",
+    "apps/pi-context-runtime/src/composition-root.ts": "c14944d0da6cf07e2279dc5cbdf1507a7233716b28185e52ffb806ac3e36d89c",
+    "artifacts/task-evidence/T13/changed-files.json": "f1b8ef9a78ae23a6b8393e3931de1efb9811b5a65436b51a7e8967f0f212b973",
+    "artifacts/task-evidence/T13/full-gate.log": "1624ac866d4fc9366befc88862d0d21bce02c46d74d1e281d9802986b19fe88c",
+    "artifacts/task-evidence/T13/green.log": "e3ec0126ea218a13c7eaa36556ed56b131d2ef4f216f9a44c01c086d31db3f5e",
+    "artifacts/task-evidence/T13/preflight-git.txt": "1fa28b6ae7a8e903b73c2ebcb026bd1b712b983e5965cffa278adf68aaa2b186",
+    "artifacts/task-evidence/T13/preflight-toolchain.txt": "9cc95faa39c4bd3c196d0fb507aa06df5c3ce2f4c85b7d40ea55dbe2273dd481",
+    "artifacts/task-evidence/T13/red.log": "fac930a9d34620058bf308c3965539c936c4c09932b875dd95207641658b6b62",
+    "blockers/T13-scope-expansion.md": "51fea9876c64ec067987ba37ea057d8decce97e6f0e01dc94e2e6e5a07c55ef2",
+    "compat/pi.lock.json": "e488778d9c4fb31799928812151bb4f673af7f6937cf19b2c9025cf4d004cffc",
+    "packages/pi-adapter/package.json": "dc311f80b1da2cb097843633dd2bf7ae86976ab9c2e851c15ca3ef50671c1ffd",
+    "packages/pi-adapter/src/index.ts": "f49442ef6c3ee17d692dc524f4169f8a447508d90daf905ccdd568d7f6958713",
+    "packages/pi-adapter/src/tool-result-hook.ts": "cbd3d3ab7e758bac657469edf5f430fe89e5dca32aff252479d53626190a89eb",
+    "packages/runtime/src/index.ts": "b126f6b82d4ef8185c7b00d413b6a941fb477ebc73b877553ff65e25e19eb2b8",
+    "packages/runtime/src/observation-service.ts": "825df0fa44fcf772db86ae42add45f370faf11becfc7946f2916e0fac1f8e994",
+    "patches/@earendil-works__pi-coding-agent@0.84.4.patch": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
+    "pnpm-lock.yaml": "59e1bcac84bb1503e4bc7b9d544cdcc299d1e26054c7e8fb207f95e814030cef",
+    "tests/acceptance/tool-result-flow.test.ts": "c29325ce08e8fc9087efff6bd5954b1961db6989f0413e397cdaaacc8cb1e7e8",
+    "tests/compat/pi-version-contract.test.ts": "095f3da99458cb4d6e0e9c9ddb72a4e5d2f3c7b5c9bcc4c8054a1b907647807f",
+    "tests/contract/pi-tool-result-order.test.ts": "41fb71c24681dcdc5052defe91d6e21089441fa1e7334876149d2b8eb77b6b00",
+    "tests/tasks/t13.test.ts": "ebe1f165fff52dd75b2635a153009f59352f2139f2451b3f17f9c395ac1ed194"
+  }
+}
