@@ -1,0 +1,126 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t33.test.ts (7 tests | 7 failed) 27ms
+   × T33 Recursive compaction and long-session boundedness > recursive_compaction_and_long_session_boundednes 20ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T33 Recursive compaction and long-session boundedness > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T33 Recursive compaction and long-session boundedness > rejects malformed run input 1ms
+     → (0 , createRetentionController) is not a function
+   × T33 Recursive compaction and long-session boundedness > replays three-cycle boundedness for the same seed 1ms
+     → (0 , createRetentionController) is not a function
+   × T33 Recursive compaction and long-session boundedness > rejects a cursor from another workspace 1ms
+     → (0 , createRetentionController) is not a function
+   × T33 Recursive compaction and long-session boundedness > stops at the abort boundary before compacting 0ms
+     → (0 , createRetentionController) is not a function
+   × T33 Recursive compaction and long-session boundedness > fails boundedness when the PCR summary already exceeds the injected budget 1ms
+     → (0 , createRetentionController) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t33.test.ts > T33 Recursive compaction and long-session boundedness > recursive_compaction_and_long_session_boundednes
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t33.test.ts:163:33
+    161| describe("T33 Recursive compaction and long-session boundedness", () =…
+    162|   it("recursive_compaction_and_long_session_boundednes", async () => {
+    163|     await expect(runT33Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    164|   });
+    165| 
+
+Caused by: TypeError: (0 , createRetentionController) is not a function
+ ❯ runT33Fixture tests/tasks/t33.test.ts:144:22
+ ❯ tests/tasks/t33.test.ts:163:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t33.test.ts > T33 Recursive compaction and long-session boundedness > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_RETENTION_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_4__.createRetentionController) is not a function",
+  }
+
+ ❯ tests/tasks/t33.test.ts:167:58
+    165| 
+    166|   it("fails construction when production dependencies are absent", () …
+    167|     expect(() => createRetentionController({} as never)).toThrowError(
+       |                                                          ^
+    168|       expect.objectContaining({ code: "PCR_RETENTION_DEPENDENCY_MISSIN…
+    169|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t33.test.ts > T33 Recursive compaction and long-session boundedness > rejects malformed run input
+TypeError: (0 , createRetentionController) is not a function
+ ❯ tests/tasks/t33.test.ts:174:24
+    172|   it("rejects malformed run input", async () => {
+    173|     const { bound, compaction } = await seedCompaction();
+    174|     const controller = createRetentionController({
+       |                        ^
+    175|       cursor: bound,
+    176|       compaction,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t33.test.ts > T33 Recursive compaction and long-session boundedness > replays three-cycle boundedness for the same seed
+TypeError: (0 , createRetentionController) is not a function
+ ❯ tests/tasks/t33.test.ts:188:24
+    186|   it("replays three-cycle boundedness for the same seed", async () => {
+    187|     const { bound, compaction } = await seedCompaction();
+    188|     const controller = createRetentionController({
+       |                        ^
+    189|       cursor: bound,
+    190|       compaction,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t33.test.ts > T33 Recursive compaction and long-session boundedness > rejects a cursor from another workspace
+TypeError: (0 , createRetentionController) is not a function
+ ❯ tests/tasks/t33.test.ts:204:24
+    202|   it("rejects a cursor from another workspace", async () => {
+    203|     const { bound, compaction } = await seedCompaction();
+    204|     const controller = createRetentionController({
+       |                        ^
+    205|       cursor: bound,
+    206|       compaction,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t33.test.ts > T33 Recursive compaction and long-session boundedness > stops at the abort boundary before compacting
+TypeError: (0 , createRetentionController) is not a function
+ ❯ tests/tasks/t33.test.ts:225:24
+    223|     const bound = cursor();
+    224|     let prepared = 0;
+    225|     const controller = createRetentionController({
+       |                        ^
+    226|       cursor: bound,
+    227|       compaction: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t33.test.ts > T33 Recursive compaction and long-session boundedness > fails boundedness when the PCR summary already exceeds the injected budget
+TypeError: (0 , createRetentionController) is not a function
+ ❯ tests/tasks/t33.test.ts:245:19
+    243|   it("fails boundedness when the PCR summary already exceeds the injec…
+    244|     const { bound, compaction } = await seedCompaction();
+    245|     const probe = createRetentionController({
+       |                   ^
+    246|       cursor: bound,
+    247|       compaction,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  05:04:34
+   Duration  487ms (transform 168ms, setup 0ms, collect 240ms, tests 27ms, environment 0ms, prepare 64ms)
+

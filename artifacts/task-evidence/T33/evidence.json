@@ -1,0 +1,30 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T33",
+  "status": "review-candidate",
+  "parentCommit": "35e88ee5c6fea5ad0947ca9f06189cddc4e3a6aa",
+  "redLog": "artifacts/task-evidence/T33/red.log",
+  "greenLog": "artifacts/task-evidence/T33/green.log",
+  "fullGateLog": "artifacts/task-evidence/T33/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "threeCycleBoundedness": true,
+    "repositoryGateFiles": 128,
+    "repositoryGateTests": 630,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "artifacts/task-evidence/T33/changed-files.json": "27e2862c020e584984fdc055fc7c450db478775c83ac4bd152c93523581a8ee6",
+    "artifacts/task-evidence/T33/full-gate.log": "d769f92b52c0e6e257631e21b41c302c2edc34221b79ba903353626c77ca479b",
+    "artifacts/task-evidence/T33/green.log": "1f330f33642f94fa773fe2e41389ee0dd543b8bfd3b305c37888eae1aa9b4a7d",
+    "artifacts/task-evidence/T33/preflight-git.txt": "8315c7913cff5edc92ab7c1b77333cc26deecf5011253aef0e3a9c51d7621a22",
+    "artifacts/task-evidence/T33/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T33/red.log": "408ca94ae83b673ac810a6e61c0f9171b1d024ac7151597afc36bc84240055e0",
+    "blockers/T33-scope-expansion.md": "d7f91d5049bf21559492219b7ed518d25e6215eb033a357ab39f89a8c69195f9",
+    "packages/runtime/package.json": "0fc965ab53491ffb52136093ade503e01791138e24753b01657943f83e748822",
+    "packages/runtime/src/compaction/retention.ts": "0b2a6c01cf6a17a4d070440cce35960cafe8ab3c7d7c8935e8219f6e01713f9c",
+    "packages/runtime/src/index.ts": "0bab53dd9566bba7de92b3687607c3de916b258d1b29f731193b625cff3595a0",
+    "tests/acceptance/recursive-compaction.test.ts": "d23eb70a0f8c72b8ca697ce2046dc668b955473645e08f883ea33e923c00bd63",
+    "tests/tasks/t33.test.ts": "5b0803e835e86773961c4be4e16070f5d87bd715000fbeb5d472db032bb7fe4d"
+  }
+}

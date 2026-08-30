@@ -1,0 +1,13 @@
+{
+  "taskId": "T33",
+  "production": [
+    "blockers/T33-scope-expansion.md",
+    "packages/runtime/package.json",
+    "packages/runtime/src/compaction/retention.ts",
+    "packages/runtime/src/index.ts"
+  ],
+  "tests": [
+    "tests/acceptance/recursive-compaction.test.ts",
+    "tests/tasks/t33.test.ts"
+  ]
+}
