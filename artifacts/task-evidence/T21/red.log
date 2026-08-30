@@ -1,0 +1,132 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t21.test.ts (7 tests | 7 failed) 17ms
+   × T21 Proactive recall policy and leases > proactive_recall_policy_and_leases 13ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T21 Proactive recall policy and leases > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T21 Proactive recall policy and leases > rejects malformed input and completed-front recall 0ms
+     → (0 , createLeaseService) is not a function
+   × T21 Proactive recall policy and leases > replays the same page lease without duplicating grants 0ms
+     → (0 , createLeaseService) is not a function
+   × T21 Proactive recall policy and leases > rejects a cursor from another workspace/session/branch 0ms
+     → (0 , createLeaseService) is not a function
+   × T21 Proactive recall policy and leases > does not promote a retrieval lease to act 0ms
+     → (0 , createLeaseService) is not a function
+   × T21 Proactive recall policy and leases > stops at the abort boundary before searching 0ms
+     → (0 , createLeaseService) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t21.test.ts > T21 Proactive recall policy and leases > proactive_recall_policy_and_leases
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t21.test.ts:141:33
+    139| describe("T21 Proactive recall policy and leases", () => {
+    140|   it("proactive_recall_policy_and_leases", async () => {
+    141|     await expect(runT21Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    142|   });
+    143| 
+
+Caused by: TypeError: (0 , createLeaseService) is not a function
+ ❯ stack tests/tasks/t21.test.ts:84:18
+ ❯ runT21Fixture tests/tasks/t21.test.ts:99:29
+ ❯ tests/tasks/t21.test.ts:141:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t21.test.ts > T21 Proactive recall policy and leases > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_LEASE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createLeaseService) is not a function",
+  }
+
+ ❯ tests/tasks/t21.test.ts:145:51
+    143| 
+    144|   it("fails construction when production dependencies are absent", () …
+    145|     expect(() => createLeaseService({} as never)).toThrowError(
+       |                                                   ^
+    146|       expect.objectContaining({ code: "PCR_LEASE_DEPENDENCY_MISSING" }…
+    147|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t21.test.ts > T21 Proactive recall policy and leases > rejects malformed input and completed-front recall
+TypeError: (0 , createLeaseService) is not a function
+ ❯ stack tests/tasks/t21.test.ts:84:18
+     82|   const bound = cursor();
+     83|   const store = memoryLeases();
+     84|   const leases = createLeaseService({
+       |                  ^
+     85|     cursor: bound,
+     86|     store,
+ ❯ tests/tasks/t21.test.ts:154:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t21.test.ts > T21 Proactive recall policy and leases > replays the same page lease without duplicating grants
+TypeError: (0 , createLeaseService) is not a function
+ ❯ stack tests/tasks/t21.test.ts:84:18
+     82|   const bound = cursor();
+     83|   const store = memoryLeases();
+     84|   const leases = createLeaseService({
+       |                  ^
+     85|     cursor: bound,
+     86|     store,
+ ❯ tests/tasks/t21.test.ts:168:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t21.test.ts > T21 Proactive recall policy and leases > rejects a cursor from another workspace/session/branch
+TypeError: (0 , createLeaseService) is not a function
+ ❯ stack tests/tasks/t21.test.ts:84:18
+     82|   const bound = cursor();
+     83|   const store = memoryLeases();
+     84|   const leases = createLeaseService({
+       |                  ^
+     85|     cursor: bound,
+     86|     store,
+ ❯ tests/tasks/t21.test.ts:191:24
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t21.test.ts > T21 Proactive recall policy and leases > does not promote a retrieval lease to act
+TypeError: (0 , createLeaseService) is not a function
+ ❯ stack tests/tasks/t21.test.ts:84:18
+     82|   const bound = cursor();
+     83|   const store = memoryLeases();
+     84|   const leases = createLeaseService({
+       |                  ^
+     85|     cursor: bound,
+     86|     store,
+ ❯ tests/tasks/t21.test.ts:201:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t21.test.ts > T21 Proactive recall policy and leases > stops at the abort boundary before searching
+TypeError: (0 , createLeaseService) is not a function
+ ❯ stack tests/tasks/t21.test.ts:84:18
+     82|   const bound = cursor();
+     83|   const store = memoryLeases();
+     84|   const leases = createLeaseService({
+       |                  ^
+     85|     cursor: bound,
+     86|     store,
+ ❯ tests/tasks/t21.test.ts:212:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  01:12:07
+   Duration  426ms (transform 127ms, setup 0ms, collect 186ms, tests 17ms, environment 0ms, prepare 55ms)
+

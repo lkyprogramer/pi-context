@@ -1,0 +1,16 @@
+{
+  "taskId": "T21",
+  "production": [
+    "blockers/T21-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "packages/core/src/retrieval/proactive.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/lease-service.ts"
+  ],
+  "tests": [
+    "packages/core/test/retrieval/proactive.test.ts",
+    "tests/tasks/t21.test.ts"
+  ]
+}

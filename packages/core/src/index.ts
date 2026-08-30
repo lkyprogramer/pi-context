@@ -52,4 +52,17 @@ export {
   type ToolOrigin,
   type ToolTrustPolicy,
 } from "./security/index.js";
+export {
+  RecallError,
+  createProactiveRecallPolicy,
+  snapshotRecallCursor,
+  type CreateProactiveRecallPolicyInput,
+  type ProactiveRecallPolicy,
+  type RecallCatalog,
+  type RecallDecision,
+  type RecallDecisionInput,
+  type RecallHit,
+  type RecallLease,
+  type RecallLeasePort,
+} from "./retrieval/proactive.js";
 

@@ -1,0 +1,36 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T21",
+  "status": "review-candidate",
+  "parentCommit": "69627e87fa88efc4d0488f29dcf1e3ebee05a7ef",
+  "redLog": "artifacts/task-evidence/T21/red.log",
+  "greenLog": "artifacts/task-evidence/T21/green.log",
+  "fullGateLog": "artifacts/task-evidence/T21/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "neededNotNeededBoundedRecall": true,
+    "informOnlyLease": true,
+    "idempotentPageLease": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 108,
+    "repositoryGateTests": 544,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T21/changed-files.json": "92cee871caf217203a7c7ff31f6847103e33478ec4fe86714a713fcbc6e918cb",
+    "artifacts/task-evidence/T21/full-gate.log": "3e21cc608f2aa00cad1096132012ba51d8ee41a069418dfa5a0b9bec5cc7daae",
+    "artifacts/task-evidence/T21/green.log": "4d869b3618ff5352711a7e2e9e22fad23b74244e1075f5fb2be15ff5c3e876af",
+    "artifacts/task-evidence/T21/preflight-git.txt": "b1e5bb096c25c9cf2fc1ef3f8a3b0351278b6c96f091a06e7fd4be77bc05aa7e",
+    "artifacts/task-evidence/T21/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T21/red.log": "f818579dbd6ceb361d84aa72f3f98c358c80c44e716698d78ea7e8a6c2ad35e8",
+    "blockers/T21-scope-expansion.md": "3af10698304449571e39fdfc32cf6a3be3ad8220c26d61a2431e8963183b6068",
+    "packages/core/package.json": "6e640aee170ee58a32966e6f3440532d537106629523f0fd102da0dbc4a7b220",
+    "packages/core/src/index.ts": "a49aa2293b380199249736f5b120887fdbd58c0eee2cd82bab85a9747a03cafb",
+    "packages/core/src/retrieval/proactive.ts": "c18351e0fdea353e176eb3e9a22d832568d2b4cdd885ad33c2ddb788eeb78ce2",
+    "packages/core/test/retrieval/proactive.test.ts": "c481ead8f5222b6e0d42a382d7df6fe4b779330592d648ed4d17749b4f8d5b4a",
+    "packages/runtime/package.json": "530dbfc39af8a8723fc1555983b7f1d2295af5c37f6539ce3b960df71004e021",
+    "packages/runtime/src/index.ts": "258c6ee57b8af0192484da1618b2f13b6d135249998aca3bf00060c92dbf3cdd",
+    "packages/runtime/src/lease-service.ts": "0381e88b550bb428eb17bd99491bc4b268055bc4875f285cbe4e4872aac3ef9a",
+    "tests/tasks/t21.test.ts": "64e2bae5c1185b34a524c8a1c4401dc2efb74cd6bb027fee46cd7f607dd81230"
+  }
+}
