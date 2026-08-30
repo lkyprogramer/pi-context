@@ -1,0 +1,15 @@
+{
+  "taskId": "T32",
+  "production": [
+    "apps/pi-context-runtime/src/extension.ts",
+    "blockers/T32-scope-expansion.md",
+    "packages/pi-adapter/package.json",
+    "packages/pi-adapter/src/lifecycle.ts",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/recovery-service.ts"
+  ],
+  "tests": [
+    "tests/acceptance/restart-branch-recovery.test.ts",
+    "tests/tasks/t32.test.ts"
+  ]
+}

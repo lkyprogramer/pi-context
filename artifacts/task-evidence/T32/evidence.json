@@ -1,0 +1,33 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T32",
+  "status": "review-candidate",
+  "parentCommit": "2d46419e1f5758e25b0c981c0302db83e7c25187",
+  "redLog": "artifacts/task-evidence/T32/red.log",
+  "greenLog": "artifacts/task-evidence/T32/green.log",
+  "fullGateLog": "artifacts/task-evidence/T32/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "productCursorNotWs012": true,
+    "catchUpReplayEqual": true,
+    "repositoryGateFiles": 126,
+    "repositoryGateTests": 622,
+    "acceptanceGateTests": 31
+  },
+  "files": {
+    "artifacts/task-evidence/T32/changed-files.json": "0f0409ab584637c60e73cbebe5b530fd47bbafc2ddd994a91e127c9f070ba60f",
+    "artifacts/task-evidence/T32/full-gate.log": "28f33c3d2cf93c6e0506d1a77444a79824ca9367a2b5b4ee16f2f7b36394d0ec",
+    "artifacts/task-evidence/T32/green.log": "81bab0a60e9297a25343aa80f2d4c488016c0425ac2a94a95b50dfa802df55d0",
+    "artifacts/task-evidence/T32/preflight-git.txt": "a7aca6ab3c59389be7751ae4bce085dbdb4d8c8191ce82a023bb98adff63d8a9",
+    "artifacts/task-evidence/T32/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T32/red.log": "a983b0d17734f340ab83d292f96ad33a9adde135dd6f0a7ec19a938771a456b0",
+    "apps/pi-context-runtime/src/extension.ts": "f2992507949a87de7a14f58fa5941b82cc28cca3214159451d98dacc5c65f2c9",
+    "blockers/T32-scope-expansion.md": "c0dfeb83b4e7d5d2435be694b367af158790705b4c0e9174073feb45f8890d0d",
+    "packages/pi-adapter/package.json": "1109545f8ea3507a06f0afde1b5c195db169f0b698540d1636f6680e3f410793",
+    "packages/pi-adapter/src/lifecycle.ts": "2c0d689f782166e180d5bbd947a7b408ea16af5c7345c776ac0b0ece3fe41ecc",
+    "packages/runtime/src/index.ts": "d44f07dafe7d38ada081ee03e941a5905ba25e2c1060c90fbb637f1b6a99be26",
+    "packages/runtime/src/recovery-service.ts": "5463531082ee027ab611098705a235b11babcf70e8cc6717c5846b49e482bc41",
+    "tests/acceptance/restart-branch-recovery.test.ts": "d46d5912c92cf63c1286c4d48dcf59bf6ebaaf0e45684a2342b638ffb02fe431",
+    "tests/tasks/t32.test.ts": "417814477af68bd5867e6773749add9fb0aa20cd4d3573d0a3c59efba09161db"
+  }
+}

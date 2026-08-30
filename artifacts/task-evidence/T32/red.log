@@ -1,0 +1,115 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:29210) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |0| tests/tasks/t32.test.ts (7 tests | 6 failed) 13ms
+   × T32 Session, branch and restart recovery > session_branch_and_restart_recovery 5ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T32 Session, branch and restart recovery > fails construction when production dependencies are absent 3ms
+     → expected error to match asymmetric matcher
+   × T32 Session, branch and restart recovery > rejects malformed session start input 0ms
+     → (0 , createRecoveryService) is not a function
+   × T32 Session, branch and restart recovery > replays catch-up for the same resume 0ms
+     → (0 , createRecoveryService) is not a function
+   × T32 Session, branch and restart recovery > rejects a cursor from another workspace 0ms
+     → (0 , createRecoveryService) is not a function
+   × T32 Session, branch and restart recovery > stops at the abort boundary before opening a session 0ms
+     → (0 , createRecoveryService) is not a function
+   ✓ T32 Session, branch and restart recovery > product lifecycle derives a real Pi cursor instead of ws_012/s1/leaf-a 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t32.test.ts > T32 Session, branch and restart recovery > session_branch_and_restart_recovery
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t32.test.ts:148:33
+    146| describe("T32 Session, branch and restart recovery", () => {
+    147|   it("session_branch_and_restart_recovery", async () => {
+    148|     await expect(runT32Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    149|   });
+    150| 
+
+Caused by: TypeError: (0 , createRecoveryService) is not a function
+ ❯ runT32Fixture tests/tasks/t32.test.ts:110:19
+ ❯ tests/tasks/t32.test.ts:148:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t32.test.ts > T32 Session, branch and restart recovery > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_RECOVERY_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_6__.createRecoveryService) is not a function",
+  }
+
+ ❯ tests/tasks/t32.test.ts:152:54
+    150| 
+    151|   it("fails construction when production dependencies are absent", () …
+    152|     expect(() => createRecoveryService({} as never)).toThrowError(
+       |                                                      ^
+    153|       expect.objectContaining({ code: "PCR_RECOVERY_DEPENDENCY_MISSING…
+    154|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t32.test.ts > T32 Session, branch and restart recovery > rejects malformed session start input
+TypeError: (0 , createRecoveryService) is not a function
+ ❯ tests/tasks/t32.test.ts:159:21
+    157|   it("rejects malformed session start input", async () => {
+    158|     const bound = cursor();
+    159|     const service = createRecoveryService({
+       |                     ^
+    160|       cursor: bound,
+    161|       sessions: memorySessions(bound).registry,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t32.test.ts > T32 Session, branch and restart recovery > replays catch-up for the same resume
+TypeError: (0 , createRecoveryService) is not a function
+ ❯ tests/tasks/t32.test.ts:170:21
+    168|   it("replays catch-up for the same resume", async () => {
+    169|     const bound = cursor();
+    170|     const service = createRecoveryService({
+       |                     ^
+    171|       cursor: bound,
+    172|       sessions: memorySessions(bound).registry,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t32.test.ts > T32 Session, branch and restart recovery > rejects a cursor from another workspace
+TypeError: (0 , createRecoveryService) is not a function
+ ❯ tests/tasks/t32.test.ts:185:21
+    183|   it("rejects a cursor from another workspace", async () => {
+    184|     const bound = cursor();
+    185|     const service = createRecoveryService({
+       |                     ^
+    186|       cursor: bound,
+    187|       sessions: memorySessions(bound).registry,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t32.test.ts > T32 Session, branch and restart recovery > stops at the abort boundary before opening a session
+TypeError: (0 , createRecoveryService) is not a function
+ ❯ tests/tasks/t32.test.ts:206:21
+    204|     const bound = cursor();
+    205|     let opened = 0;
+    206|     const service = createRecoveryService({
+       |                     ^
+    207|       cursor: bound,
+    208|       sessions: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  04:26:09
+   Duration  1.54s (transform 364ms, setup 0ms, collect 1.27s, tests 13ms, environment 0ms, prepare 58ms)
+

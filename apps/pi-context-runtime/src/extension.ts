@@ -14,7 +14,7 @@ import {
 } from "../../../packages/pi-adapter/src/context-hook.js";
 import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
 import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
-import { registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
+import { createLifecycleRuntimeFromRecovery, registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { blobId, domainHash, type DirectiveRecord, type RuntimeCursor } from "../../../packages/contracts/src/index.js";
 import { createTokenPricer } from "../../../packages/core/src/budget/pricer.js";
 import { createCheckpointRenderer, createCheckpointVerifier } from "../../../packages/core/src/compaction/checkpoint.js";
@@ -29,6 +29,7 @@ import { createSectionPlanner } from "../../../packages/core/src/materialization
 import {
   createCompactionService,
   createCompactionSnapshotAssembler,
+  createRecoveryService,
 } from "../../../packages/runtime/src/index.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { registerOperationsCommands } from "./commands/operations.js";
@@ -374,29 +375,85 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       });
     },
   });
-  registerSessionLifecycle(pi as never, {
-    async openSession() {},
-    async switchBranch() {},
-    async closeSession() {},
-    async invalidateRouteCandidates() {},
-  });
+  let lastRecoveredCursor: RuntimeCursor | undefined;
+  let recovery: ReturnType<typeof createRecoveryService> | undefined;
+  const fenceKeys = new Set<string>();
+  function recoveryFor(cursor: RuntimeCursor) {
+    recovery ??= createRecoveryService({
+      cursor,
+      sessions: {
+        async open(ctx) {
+          lastRecoveredCursor = sessionCursor(ctx);
+        },
+        async close() {},
+      },
+      journal: { async reconcile() { return { actions: [] }; } },
+      candidates: {
+        async invalidate(scope, reason) {
+          const key = `${scope.sessionId}:${scope.lineageHash}:${reason}`;
+          if (fenceKeys.has(key)) return 0;
+          fenceKeys.add(key);
+          return 1;
+        },
+      },
+    });
+    return recovery;
+  }
+  registerSessionLifecycle(pi as never, createLifecycleRuntimeFromRecovery({
+    recovery: {
+      onSessionStart: (input) => recoveryFor(input.cursor).onSessionStart(input),
+      onBranchChange: (input) => recoveryFor(input.cursor).onBranchChange(input),
+      onSessionClose: (input) => recoveryFor(input.cursor).onSessionClose(input),
+    },
+    cursorFrom(ctx) {
+      try {
+        return sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      } catch {
+        const cwd = typeof ctx.cwd === "string" && ctx.cwd.length > 0 ? ctx.cwd : process.cwd();
+        const sessionId = ctx.sessionManager?.getSessionId() || ctx.sessionId || "unbound";
+        const leafId = ctx.sessionManager?.getLeafId() ?? null;
+        const branchIds = ctx.sessionManager?.getBranch().map((entry) => entry.id) ?? [];
+        const headerId = ctx.sessionManager?.getHeader()?.id;
+        const lineageEntryIds = branchIds.length > 0 ? branchIds : headerId ? [headerId] : leafId ? [leafId] : ["unbound"];
+        const modelKey = ctx.model?.provider && ctx.model.id
+          ? `${ctx.model.provider}/${ctx.model.id}`
+          : ctx.model?.id ?? "unbound";
+        return createRuntimeCursor({
+          workspacePath: cwd,
+          sessionId,
+          leafId,
+          lineageEntryIds,
+          modelKey,
+        });
+      }
+    },
+  }));
   let worker: CandidateWorker | undefined;
-  const backgroundSnapshot = (): CandidateSnapshot => ({
-    workspaceId: "ws_0123456789abcdef",
-    sessionId: "s1",
-    leafId: "leaf-a",
-    lineageHash: "1111111111111111111111111111111111111111111111111111111111111111",
-    sourceHead: "src_runtime",
-    modelKey: "pcr",
-    thinkingLevel: "off",
-    contextWindow: 128000,
-    systemPromptHash: "sys_runtime",
-    activeToolSetHash: "tools_runtime",
-    reducerRevisionSet: "red_runtime",
-    extractorRevision: "ext_runtime",
-    schemaVersion: "1",
-    configFingerprint: "cfg_runtime",
-  });
+  const backgroundSnapshot = (): CandidateSnapshot => {
+    const cursor = lastRecoveredCursor ?? createRuntimeCursor({
+      workspacePath: process.cwd(),
+      sessionId: "unbound",
+      leafId: null,
+      lineageEntryIds: ["unbound"],
+      modelKey: "unbound",
+    });
+    return {
+      workspaceId: cursor.workspaceId,
+      sessionId: cursor.sessionId,
+      leafId: cursor.leafId ?? "header",
+      lineageHash: cursor.lineageHash,
+      sourceHead: "src_runtime",
+      modelKey: cursor.modelKey,
+      thinkingLevel: "off",
+      contextWindow: 128000,
+      systemPromptHash: "sys_runtime",
+      activeToolSetHash: "tools_runtime",
+      reducerRevisionSet: "red_runtime",
+      extractorRevision: "ext_runtime",
+      schemaVersion: "1",
+      configFingerprint: "cfg_runtime",
+    };
+  };
   registerBackgroundHook(pi as never, {
     isHardPath: isHardBackgroundPath,
     snapshot: backgroundSnapshot,
