@@ -1,0 +1,18 @@
+{
+  "taskId": "T05",
+  "paths": [
+    "packages/pi-adapter/package.json",
+    "pnpm-lock.yaml",
+    "tests/tasks/t05.test.ts",
+    "artifacts/task-evidence/T05/**"
+  ],
+  "reason": "The downstream public-contract compile requires a package export and an explicit compatible Pi peer dependency; pnpm must record that dependency for frozen installs. The task protocol itself mandates the target test and evidence outside its Allowed Files list.",
+  "interfaceImpact": "Adds only @pcr/pi-adapter/contracts/pi-0844 and declares Pi >=0.84.3 <0.85.0 as the supported public API range.",
+  "alternativesRejected": [
+    "A source-relative-only test would not prove that a downstream package can consume the public contract.",
+    "Leaving the peer undeclared would make clean installations non-reproducible.",
+    "Editing the immutable audit package to add a blocker would invalidate its signed manifest."
+  ],
+  "authority": "The user's repository-wide goal authorizes necessary local implementation and validation changes; the scope expansion is recorded explicitly and remains local-only.",
+  "verification": "Frozen install, adapter typecheck, downstream contract compile, target tests, repository gates, acceptance test command, import scan, and boundary check all pass."
+}

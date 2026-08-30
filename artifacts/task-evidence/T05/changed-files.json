@@ -1,0 +1,16 @@
+{
+  "taskId": "T05",
+  "production": [
+    "compat/pi.lock.json",
+    "packages/pi-adapter/package.json",
+    "packages/pi-adapter/src/contracts/pi-0844.ts",
+    "pnpm-lock.yaml"
+  ],
+  "tests": [
+    "tests/pi-contract/fixtures/pi-0844-extension.ts",
+    "tests/pi-contract/pi-0844-public-contract.ts",
+    "tests/tasks/t05.test.ts"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T05",
+  "unrelatedTrackedChanges": []
+}

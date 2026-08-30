@@ -1,0 +1,5 @@
+
+> @pcr/pi-adapter@ typecheck /Users/luo/Documents/github/pi-context/packages/pi-adapter
+> tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts src/contracts/pi-0844.ts
+
+Pi 0.84.4 public types compile: PASS

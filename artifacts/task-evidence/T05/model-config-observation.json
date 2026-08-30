@@ -1,0 +1,12 @@
+{
+  "taskId": "T05",
+  "source": "/Users/luo/.pi/agent/models.json",
+  "secretsReadOrRecorded": false,
+  "provider": "openclaw",
+  "modelId": "openclaw/Qwen3.8-27B-WORK",
+  "displayName": "Qwen3.8 27B WORK (200k)",
+  "contextWindow": 200192,
+  "maxTokens": 16384,
+  "piVersion": "0.84.4",
+  "nodeVersion": "22.19.0"
+}

@@ -3,9 +3,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/capabilities.ts"
+    ".": "./src/capabilities.ts",
+    "./contracts/pi-0844": "./src/contracts/pi-0844.ts"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.84.3 <0.85.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts"
+    "typecheck": "tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts src/contracts/pi-0844.ts"
   }
 }
