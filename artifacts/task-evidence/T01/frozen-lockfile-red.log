@@ -1,0 +1,9 @@
+Scope: all 8 workspace projects
+ ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/apps/pi-context-runtime/package.json
+
+Note that in CI environments this setting is true by default. If you still need to run install in such cases, use "pnpm install --no-frozen-lockfile"
+
+  Failure reason:
+  specifiers in the lockfile don't match specifiers in package.json:
+* 3 dependencies were added: @earendil-works/pi-coding-agent@*, @earendil-works/pi-ai@*, typebox@*
+

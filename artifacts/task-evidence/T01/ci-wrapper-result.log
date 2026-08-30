@@ -1,0 +1,12 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/tasks/t01.test.ts (8 tests) 255ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  10:23:08
+   Duration  655ms (transform 23ms, setup 0ms, collect 28ms, tests 255ms, environment 0ms, prepare 81ms)
+
+{"name":"t01-smoke","status":"passed","logPath":"/Users/luo/Documents/github/pi-context/artifacts/task-evidence/T01/ci-wrapper-smoke.log","exitCode":0,"aborted":false}

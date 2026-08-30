@@ -1,0 +1,91 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+node:internal/modules/cjs/loader:1386
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/luo/Documents/github/pi-context/scripts/ci/run-gate.mjs'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.19.0
+ ❯ |0| tests/tasks/t01.test.ts (8 tests | 1 failed | 7 skipped) 36ms
+   ↓ T01 Repair lockfile and required CI > repair_lockfile_and_required_ci
+   ↓ T01 Repair lockfile and required CI > rejects malformed gate names before starting a process
+   ↓ T01 Repair lockfile and required CI > is idempotent for a deterministic gate
+   ↓ T01 Repair lockfile and required CI > rejects log paths outside the workspace
+   ↓ T01 Repair lockfile and required CI > records command failures without claiming a pass
+   ↓ T01 Repair lockfile and required CI > records spawn failures instead of throwing away the CI evidence
+   ↓ T01 Repair lockfile and required CI > kills an aborted gate and records cancellation
+   × T01 Repair lockfile and required CI > exposes the same gate contract through the CI command 36ms
+     → Command failed: /Users/luo/.nvm/versions/node/v22.19.0/bin/node /Users/luo/Documents/github/pi-context/scripts/ci/run-gate.mjs --name cli --log artifacts/ci/cli.log -- /Users/luo/.nvm/versions/node/v22.19.0/bin/node -e process.stdout.write('cli passed\n')
+node:internal/modules/cjs/loader:1386
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/luo/Documents/github/pi-context/scripts/ci/run-gate.mjs'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.19.0
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t01.test.ts > T01 Repair lockfile and required CI > exposes the same gate contract through the CI command
+Error: Command failed: /Users/luo/.nvm/versions/node/v22.19.0/bin/node /Users/luo/Documents/github/pi-context/scripts/ci/run-gate.mjs --name cli --log artifacts/ci/cli.log -- /Users/luo/.nvm/versions/node/v22.19.0/bin/node -e process.stdout.write('cli passed\n')
+node:internal/modules/cjs/loader:1386
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/luo/Documents/github/pi-context/scripts/ci/run-gate.mjs'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.19.0
+
+ ❯ tests/tasks/t01.test.ts:138:20
+    136|     const workspaceRoot = await createWorkspace();
+    137|     const commandPath = new URL("../../scripts/ci/run-gate.mjs", impor…
+    138|     const stdout = execFileSync(
+       |                    ^
+    139|       process.execPath,
+    140|       [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  10:20:35
+   Duration  340ms (transform 21ms, setup 0ms, collect 25ms, tests 36ms, environment 0ms, prepare 74ms)
+

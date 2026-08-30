@@ -1,0 +1,41 @@
+{
+  "taskId": "T01",
+  "status": "done",
+  "parentCommit": "c7c3a3807086c3e8922e6a96160c5a9e608f413d",
+  "redLog": "artifacts/task-evidence/T01/red.log",
+  "greenLog": "artifacts/task-evidence/T01/green.log",
+  "fullGateLog": "artifacts/task-evidence/T01/full-gate.log",
+  "acceptance": {
+    "frozenLockfileFailureReproduced": true,
+    "frozenLockfileInstallPasses": true,
+    "requiredBuildTypecheckUnitAcceptanceAndCompatibilityStepsPresent": true,
+    "piCurrentLaneIs0844": true,
+    "ciGateContractCompiles": true,
+    "ciGateFailureAndCancellationEvidencePersist": true,
+    "narrowAndRepositoryGatesPass": true,
+    "scopeBoundaryRecorded": true,
+    "everyChangedFileAndLogHasDigest": true
+  },
+  "files": {
+    ".github/workflows/compatibility.yml": "c39eb405f2f5afab18a6d164847c841974d163969983e8da1be0ecbefa34de52",
+    "artifacts/task-evidence/T01/changed-files.json": "1ade4d972e16c03efbe1423833d94cbe10e2c6fdc7054d0243c61e47f592b661",
+    "artifacts/task-evidence/T01/ci-wrapper-result.log": "448cbd354f91227fddf0cf3737e12a8ad5a413f916e27eb8a311be7d95796eec",
+    "artifacts/task-evidence/T01/ci-wrapper-smoke.log": "f745d4555743f9dc93fc9ccc9542d856c9ba5a5402eeb4a01de2f7160a6cc86b",
+    "artifacts/task-evidence/T01/exa-contract-check.json": "48f531569707a0884391c0566e4cddda762194b24ba83bbac05c9360156357fc",
+    "artifacts/task-evidence/T01/frozen-lockfile-green.log": "a41f737c4a76358b5cdb1d71c6c9af2d7f210d31ea115d0d7f68ca0f0a658716",
+    "artifacts/task-evidence/T01/frozen-lockfile-red.log": "814abb60c83f7e32d40651ea9568ddbb172f75c0d76de58ef4228a646ed59b4a",
+    "artifacts/task-evidence/T01/full-gate.log": "31531c2d61ce56f4523d49620913a497c885792bad25f18dd4bf4dee341ebcab",
+    "artifacts/task-evidence/T01/green.log": "95f04b4a639c11e808f9e6871d4ecf6b9752dbb6c0c79c2cac0aa84c4ab89b10",
+    "artifacts/task-evidence/T01/preflight-git.txt": "be14aac7b37b06063ba3fdbe21a0989c709e2e32f4c638da6af7368dbb36eca6",
+    "artifacts/task-evidence/T01/preflight-toolchain.txt": "ab319519f9605338628f988dab4553b3a3223af62b0404d7cac549c90c3684c0",
+    "artifacts/task-evidence/T01/preflight.json": "5a23af392a3ab6274b9b9955ac4a3a80717ad68ec42b0c3e656527adc9a7cb59",
+    "artifacts/task-evidence/T01/red-cli.log": "dc037f28edde9c057cc503bde20fb387451aa3ce397b476cecb7e88a9626fab1",
+    "artifacts/task-evidence/T01/red.log": "bcb9d88496985c1d3d4ac8af1838e3a658f9d5dc68b1ef911cbd973cc8dc22e4",
+    "artifacts/task-evidence/T01/workflow-parse.log": "651c3e532ac695694e0ea073ced8fb3c10018bccb05a3f0f41e49ba9abc35e82",
+    "pnpm-lock.yaml": "0c91c1171de00a2a3551edeb945bab73b6956e373c8a83c7f6a4ff111289e072",
+    "scripts/ci/gates.d.mts": "b969b485dff68be66400b2f012443867e515b5c05aee2bd060bd537b2f8261cc",
+    "scripts/ci/gates.mjs": "be4327e6782a168e583b6d3a81429daeea8efe4c55fb54f28a118ed9777ee030",
+    "scripts/ci/run-gate.mjs": "6c66a52bf87631dd0dc3ab13347404c61a7fa738f3fd5f74a0796bdc3df994bb",
+    "tests/tasks/t01.test.ts": "97ae6e062c5d20c9f8952e097945c30734ffc544b99b0542a6112c6345032a22"
+  }
+}

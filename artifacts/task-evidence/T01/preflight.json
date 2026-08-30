@@ -1,0 +1,12 @@
+{
+  "taskId": "T01",
+  "parentCommit": "c7c3a3807086c3e8922e6a96160c5a9e608f413d",
+  "toolchain": {
+    "node": "v22.19.0",
+    "pnpm": "10.15.0",
+    "pi": "0.84.4"
+  },
+  "observedFailure": "ERR_PNPM_OUTDATED_LOCKFILE: apps/pi-context-runtime added three peer dependency specifiers absent from pnpm-lock.yaml",
+  "knownControlInput": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/** is user-provided and untracked",
+  "scopeDecision": "The task's explicit tests/tasks/t01.test.ts and artifacts/task-evidence/T01/** paths are treated as specific task allowances."
+}

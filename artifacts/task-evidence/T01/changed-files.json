@@ -1,0 +1,15 @@
+{
+  "taskId": "T01",
+  "production": [
+    ".github/workflows/compatibility.yml",
+    "pnpm-lock.yaml",
+    "scripts/ci/gates.d.mts",
+    "scripts/ci/gates.mjs",
+    "scripts/ci/run-gate.mjs"
+  ],
+  "tests": [
+    "tests/tasks/t01.test.ts"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T01",
+  "unrelatedTrackedChanges": []
+}

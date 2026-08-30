@@ -1,0 +1,18 @@
+{
+  "taskId": "T01",
+  "provider": "Exa",
+  "sourcesReviewed": 14,
+  "workstreams": 2,
+  "conclusions": [
+    "GitHub Actions supports matrix context in job and step expressions.",
+    "GitHub Actions expressions support logical && and || operators.",
+    "GitHub Actions matrix include entries can add an advisory combination with continue-on-error.",
+    "pnpm 10 --frozen-lockfile fails when the lockfile is out of sync and does not update it."
+  ],
+  "primarySources": [
+    "https://docs.github.com/en/actions/reference/workflows-and-actions/contexts",
+    "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations",
+    "https://docs.github.com/actions/reference/evaluate-expressions-in-workflows-and-actions",
+    "https://pnpm.io/10.x/cli/install"
+  ]
+}

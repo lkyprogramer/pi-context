@@ -5,6 +5,7 @@ on:
     branches: [main]
 jobs:
   pi-matrix:
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -25,6 +26,26 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
-      - run: node scripts/install-pi-version.mjs 0.84.3
-      - run: pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts
-      - run: node scripts/check-public-pi-imports.mjs
+      - name: Select Pi compatibility target
+        run: node scripts/install-pi-version.mjs "${{ matrix.lane == 'min' && '0.84.3' || matrix.lane == 'current' && '0.84.4' || 'latest' }}"
+      - name: Package boundaries
+        run: node scripts/ci/run-gate.mjs --name package-boundaries --log artifacts/ci/package-boundaries.log -- pnpm check:boundaries
+      - name: Production package build
+        run: node scripts/ci/run-gate.mjs --name package-build --log artifacts/ci/package-build.log -- pnpm vitest run tests/release/package-artifact.test.ts
+      - name: Typecheck
+        run: node scripts/ci/run-gate.mjs --name typecheck --log artifacts/ci/typecheck.log -- pnpm typecheck
+      - name: Unit tests
+        run: node scripts/ci/run-gate.mjs --name unit --log artifacts/ci/unit.log -- pnpm test
+      - name: Acceptance tests
+        run: node scripts/ci/run-gate.mjs --name acceptance --log artifacts/ci/acceptance.log -- pnpm vitest run tests/acceptance --passWithNoTests
+      - name: Pi compatibility contract
+        run: node scripts/ci/run-gate.mjs --name pi-contract --log artifacts/ci/pi-contract.log -- pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts
+      - name: Public Pi import scan
+        run: node scripts/ci/run-gate.mjs --name public-pi-imports --log artifacts/ci/public-pi-imports.log -- node scripts/check-public-pi-imports.mjs
+      - name: Upload CI gate logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-gates-${{ matrix.os }}-node-${{ matrix.node }}-${{ matrix.lane }}
+          path: artifacts/ci/*.log
+          if-no-files-found: error
