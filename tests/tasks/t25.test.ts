@@ -109,6 +109,34 @@ describe("T25 Actual model budget and token calibration", () => {
     expect(long).toBeGreaterThan(short);
   });
 
+  it("rejects non-finite calibration samples without poisoning later prices", async () => {
+    const tokens = pricer();
+    const before = await tokens.priceMessage(message("abcd"), { modelKey: ROUTE.modelKey, cursor: cursor() });
+    expect(() => tokens.observe({
+      modelKey: ROUTE.modelKey,
+      heuristicTokens: 100,
+      providerInputTokens: Number.NaN,
+    })).toThrowError(/PCR_BUDGET_INPUT_INVALID/);
+    expect(() => tokens.observe({
+      modelKey: ROUTE.modelKey,
+      heuristicTokens: Number.POSITIVE_INFINITY,
+      providerInputTokens: 80,
+    })).toThrowError(/PCR_BUDGET_INPUT_INVALID/);
+    expect(await tokens.priceMessage(message("abcd"), { modelKey: ROUTE.modelKey, cursor: cursor() })).toBe(before);
+  });
+
+  it("fails closed on unknown or malformed content blocks", async () => {
+    const tokens = pricer();
+    await expect(tokens.priceMessage({
+      ...message("abcd"),
+      content: [{ type: "not-a-block", text: "x".repeat(1000) }] as never,
+    }, { modelKey: ROUTE.modelKey, cursor: cursor() })).rejects.toThrow(/PCR_BUDGET_INPUT_INVALID/);
+    await expect(tokens.priceMessage({
+      ...message("abcd"),
+      content: [{ type: "pointer", ref: 123 as never }],
+    }, { modelKey: ROUTE.modelKey, cursor: cursor() })).rejects.toThrow(/PCR_BUDGET_INPUT_INVALID/);
+  });
+
   it("stops at the abort boundary before pricing", async () => {
     const tokens = pricer();
     const controller = new AbortController();

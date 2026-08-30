@@ -14,24 +14,24 @@ boundaries: ok
 Scope: 11 of 12 workspace projects
 apps/pi-context-runtime typecheck$ tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/extension.ts src/composition-root.ts src/owner.ts src/runtime.ts src/doctor.ts src/conflicts.ts
 packages/contracts typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
-packages/kernel typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/ingress/project.ts
 packages/storage typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/sqlite-store.ts src/worker.ts src/protocol.ts
+packages/kernel typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/ingress/project.ts
 packages/kernel typecheck: Done
-packages/testkit typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts
-packages/contracts typecheck: Done
-packages/worker typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/candidate-worker.ts src/candidate-key.ts
 packages/storage typecheck: Done
+packages/testkit typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts
+packages/worker typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/candidate-worker.ts src/candidate-key.ts
+packages/contracts typecheck: Done
 apps/pi-context-runtime typecheck: Done
-packages/testkit typecheck: Done
 packages/worker typecheck: Done
+packages/testkit typecheck: Done
 packages/core typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/directives/segment.test.ts test/directives/extract.test.ts test/directives/temporal.test.ts test/continuity/reduce.test.ts test/retrieval/proactive.test.ts ../../tests/security/authority.test.ts ../../tests/performance/token-accounting.test.ts ../../tests/tasks/t14.test.ts ../../tests/tasks/t16.test.ts ../../tests/tasks/t17.test.ts ../../tests/tasks/t18.test.ts ../../tests/tasks/t19.test.ts ../../tests/tasks/t21.test.ts ../../tests/tasks/t22.test.ts ../../tests/tasks/t25.test.ts
 packages/core typecheck: Done
 packages/runtime typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/runtime-session.test.ts test/saga.test.ts ../../tests/tasks/t07.test.ts ../../tests/tasks/t12.test.ts ../../tests/tasks/t18.test.ts ../../tests/tasks/t19.test.ts ../../tests/tasks/t21.test.ts ../../tests/tasks/t22.test.ts ../../tests/tasks/t25.test.ts
 packages/runtime typecheck: Done
-packages/storage-node typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/blob-store.test.ts test/saga-store.test.ts test/user-turn-store.test.ts ../../tests/tasks/t09.test.ts ../../tests/tasks/t11.test.ts ../../tests/tasks/t12.test.ts
 packages/pi-adapter typecheck$ tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts src/contracts/pi-0844.ts test/message-codec.test.ts ../../tests/acceptance/user-input-flow.test.ts ../../tests/acceptance/tool-result-flow.test.ts ../../tests/acceptance/retrieval-tools.test.ts ../../tests/tasks/t13.test.ts ../../tests/tasks/t20.test.ts ../../tests/tasks/t24.test.ts
-packages/storage-node typecheck: Done
+packages/storage-node typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/blob-store.test.ts test/saga-store.test.ts test/user-turn-store.test.ts ../../tests/tasks/t09.test.ts ../../tests/tasks/t11.test.ts ../../tests/tasks/t12.test.ts
 packages/pi-adapter typecheck: Done
+packages/storage-node typecheck: Done
 packages/benchmark typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
 packages/benchmark typecheck: Done
 
@@ -42,236 +42,238 @@ packages/benchmark typecheck: Done
 
  RUN  v3.2.4 /Users/luo/Documents/github/pi-context
 
-(node:22332) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:31031) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:22330) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:31030) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:22328) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:31027) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:22333) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:31026) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:22327) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:31032) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| packages/storage-node/test/user-turn-store.test.ts (8 tests) 1666ms
-   ✓ workspace user turn ledger > replays capture and link idempotently and rejects payload or host conflicts  473ms
-   ✓ workspace user turn ledger > serializes concurrent duplicate captures to one receipt  457ms
- ✓ |0| tests/tasks/t13.test.ts (8 tests) 1295ms
- ✓ |0| tests/tasks/t00.test.ts (7 tests) 2550ms
-   ✓ T00 Freeze audit baseline and immutable evidence > rejects an output directory outside the repository scope  537ms
-   ✓ T00 Freeze audit baseline and immutable evidence > rejects malformed findings before writing artifacts  522ms
-   ✓ T00 Freeze audit baseline and immutable evidence > does not leave partial artifacts when an input disappears  545ms
-   ✓ T00 Freeze audit baseline and immutable evidence > replays deterministically in independent output directories  310ms
-(node:23439) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| packages/storage-node/test/user-turn-store.test.ts (8 tests) 1626ms
+   ✓ workspace user turn ledger > replays capture and link idempotently and rejects payload or host conflicts  419ms
+   ✓ workspace user turn ledger > serializes concurrent duplicate captures to one receipt  440ms
+ ✓ |0| tests/tasks/t13.test.ts (8 tests) 1144ms
+ ✓ |0| tests/tasks/t00.test.ts (7 tests) 2444ms
+   ✓ T00 Freeze audit baseline and immutable evidence > rejects an output directory outside the repository scope  522ms
+   ✓ T00 Freeze audit baseline and immutable evidence > rejects malformed findings before writing artifacts  491ms
+   ✓ T00 Freeze audit baseline and immutable evidence > does not leave partial artifacts when an input disappears  530ms
+   ✓ T00 Freeze audit baseline and immutable evidence > replays deterministically in independent output directories  334ms
+(node:31985) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:23659) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| packages/storage-node/test/saga-store.test.ts (14 tests) 2305ms
+   ✓ workspace SQLite Saga journal > recovers a host-visible row after an abrupt process exit and replays without mutation  1127ms
+ ✓ |0| packages/storage/test/saga-recovery.test.ts (7 tests) 144ms
+(node:32371) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| packages/storage-node/test/saga-store.test.ts (14 tests) 2457ms
-   ✓ workspace SQLite Saga journal > recovers a host-visible row after an abrupt process exit and replays without mutation  1152ms
- ✓ |0| tests/e2e/operations.test.ts (6 tests) 345ms
- ✓ |0| tests/w2-gate/head-to-head.test.ts (3 tests) 2852ms
-   ✓ W2 Compactor Head-to-head Gate > evaluates live PCR B1/B2 against synthetic B0 and writes a machine-readable report  2848ms
-(node:23685) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:32373) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/tasks/t15.test.ts (8 tests) 746ms
- ✓ |0| tests/w1-gate/early-net-value.test.ts (3 tests) 1058ms
-   ✓ W1 Early Net Value Gate > evaluates live PCR arms and writes a machine-readable report  1054ms
- ✓ |0| tests/tasks/t09.test.ts (13 tests) 505ms
- ✓ |0| packages/storage-node/test/blob-store.test.ts (15 tests) 3312ms
-   ✓ encrypted content-addressed blob store > settles concurrent same-content writes on one complete authenticated object  689ms
-   ✓ encrypted content-addressed blob store > makes the existing-object fast path durable across independent processes  1016ms
-(node:24065) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/w2-gate/head-to-head.test.ts (3 tests) 3020ms
+   ✓ W2 Compactor Head-to-head Gate > evaluates live PCR B1/B2 against synthetic B0 and writes a machine-readable report  3015ms
+(node:31822) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:23686) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/w1-gate/early-net-value.test.ts (3 tests) 950ms
+   ✓ W1 Early Net Value Gate > evaluates live PCR arms and writes a machine-readable report  947ms
+ ✓ |0| packages/storage-node/test/sqlite-store.test.ts (6 tests) 569ms
+(node:32722) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:23684) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:32375) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:24069) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| packages/storage-node/test/blob-store.test.ts (15 tests) 3616ms
+   ✓ encrypted content-addressed blob store > settles concurrent same-content writes on one complete authenticated object  677ms
+   ✓ encrypted content-addressed blob store > makes the existing-object fast path durable across independent processes  1046ms
+ ✓ |0| tests/tasks/t15.test.ts (8 tests) 1102ms
+(node:32780) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:24071) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/tasks/t20.test.ts (6 tests) 545ms
+(node:32764) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/tasks/t01.test.ts (8 tests) 393ms
- ✓ |0| tests/tasks/t10.test.ts (4 tests) 337ms
- ✓ |0| tests/tasks/t20.test.ts (6 tests) 553ms
-(node:24297) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/tasks/t09.test.ts (13 tests) 715ms
+ ✓ |0| tests/tasks/t01.test.ts (8 tests) 411ms
+(node:33281) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:24422) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:33284) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| packages/storage/test/saga-recovery.test.ts (7 tests) 755ms
- ✓ |0| tests/tasks/t23.test.ts (4 tests) 315ms
- ✓ |0| packages/storage/test/sqlite-store.test.ts (5 tests) 202ms
- ✓ |0| tests/e2e/key-rotation-v2-boundary.test.ts (2 tests) 182ms
-(node:24589) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/acceptance/tool-result-flow.test.ts (3 tests) 421ms
+ ✓ |0| tests/e2e/operations.test.ts (6 tests) 625ms
+ ✓ |0| tests/tasks/t03.test.ts (8 tests) 444ms
+(node:33286) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:24591) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/tasks/t10.test.ts (4 tests) 335ms
+(node:33287) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:24093) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/release/package-artifact.test.ts (4 tests) 4186ms
+   ✓ release package > contains one extension entry, runtime dependencies and no source-private imports  1550ms
+   ✓ release package > verifies clean-home extract, uninstall/reinstall, and temporary pi -e entry  950ms
+   ✓ release package > keeps the Node/OS matrix and does not hide unsupported Pi versions  801ms
+   ✓ release package > ships license/security docs and the gate-derived semantic default  885ms
+ ✓ |0| packages/kernel/test/raw-capture.test.ts (5 tests) 438ms
+(node:33567) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:24595) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/tasks/t11.test.ts (2 tests) 156ms
+ ✓ |0| packages/storage/test/sqlite-store.test.ts (5 tests) 120ms
+ ✓ |0| tests/acceptance/user-input-flow.test.ts (11 tests) 2262ms
+   ✓ exact user input flow on the patched Pi 0.84.4 AgentSession > is reachable through the only packaged product extension entry  364ms
+   ✓ exact user input flow on the patched Pi 0.84.4 AgentSession > shrinks the live queue when only a later queue-cleared terminal fails  309ms
+ ✓ |0| tests/e2e/jiti-candidate-load.test.ts (1 test) 258ms
+(node:33646) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33645) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33647) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33651) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33653) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
  ✓ |0| tests/tasks/t12.test.ts (2 tests) 189ms
- ✓ |0| tests/contract/pi-tool-result-order.test.ts (1 test) 202ms
- ✓ |0| tests/tasks/t03.test.ts (8 tests) 337ms
-(node:24599) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| packages/storage/test/blob-store.test.ts (5 tests) 197ms
+ ✓ |0| tests/contract/pi-tool-result-order.test.ts (1 test) 225ms
+ ✓ |0| tests/e2e/key-rotation-v2-boundary.test.ts (2 tests) 283ms
+(node:33657) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:24651) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/release/package-artifact.test.ts (4 tests) 4458ms
-   ✓ release package > contains one extension entry, runtime dependencies and no source-private imports  1370ms
-   ✓ release package > verifies clean-home extract, uninstall/reinstall, and temporary pi -e entry  1021ms
-   ✓ release package > keeps the Node/OS matrix and does not hide unsupported Pi versions  1005ms
-   ✓ release package > ships license/security docs and the gate-derived semantic default  1061ms
- ✓ |0| tests/acceptance/tool-result-flow.test.ts (3 tests) 574ms
- ✓ |0| tests/tasks/t11.test.ts (2 tests) 245ms
- ✓ |0| packages/storage-node/test/sqlite-store.test.ts (6 tests) 559ms
-(node:24957) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/e2e/jiti-candidate-load.test.ts (1 test) 228ms
- ✓ |0| packages/kernel/test/raw-capture.test.ts (5 tests) 320ms
-(node:24959) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/acceptance/user-input-flow.test.ts (11 tests) 2015ms
- ✓ |0| packages/storage/test/blob-store.test.ts (5 tests) 162ms
- ✓ |0| tests/security/authority-mutation.test.ts (2 tests) 48ms
- ✓ |0| packages/worker/test/candidate-worker.test.ts (7 tests) 70ms
+ ✓ |0| tests/tasks/t23.test.ts (4 tests) 308ms
+ ✓ |0| tests/acceptance/evidence-recovery.test.ts (1 test) 105ms
  ✓ |0| packages/kernel/test/reducer-registry.test.ts (5 tests) 66ms
-(node:24971) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| packages/worker/test/candidate-worker.test.ts (7 tests) 67ms
+(node:33652) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/security/cursor-fuzz.test.ts (1 test) 48ms
- ✓ |0| tests/acceptance/evidence-recovery.test.ts (1 test) 101ms
- ✓ |0| tests/tasks/t16.test.ts (6 tests) 37ms
- ✓ |0| tests/tasks/t18.test.ts (8 tests) 18ms
- ✓ |0| packages/kernel/test/action-gate.test.ts (6 tests) 12ms
- ✓ |0| tests/security/memory-poisoning.test.ts (2 tests) 25ms
-(node:24961) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/live-gate/paired-w2-live.test.ts (3 tests) 45ms
- ✓ |0| tests/acceptance/w1-vertical.test.ts (1 test) 109ms
- ✓ |0| tests/acceptance/retrieval-tools.test.ts (1 test) 107ms
- ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 15ms
- ✓ |0| packages/worker/test/semantic-proposal.test.ts (6 tests) 23ms
- ✓ |0| tests/contract/pi-context-hook.test.ts (11 tests) 35ms
- ✓ |0| tests/tasks/t05.test.ts (6 tests) 52ms
- ✓ |0| tests/tasks/t02.test.ts (6 tests) 16ms
- ✓ |0| tests/contract/pi-session-lifecycle.test.ts (4 tests) 20ms
- ✓ |0| packages/kernel/test/evidence-admission.test.ts (5 tests) 12ms
- ✓ |0| tests/contract/pi-input-correlation.test.ts (1 test) 12ms
- ✓ |0| packages/worker/test/telemetry-economics.test.ts (5 tests) 11ms
-(node:25043) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/security/secret-leak.test.ts (1 test) 11ms
- ✓ |0| tests/tasks/t19.test.ts (7 tests) 18ms
- ✓ |0| packages/kernel/test/fts-catalog.test.ts (5 tests) 13ms
- ✓ |0| tests/tasks/t21.test.ts (7 tests) 28ms
- ✓ |0| packages/core/test/directives/extract.test.ts (1 test) 27ms
- ✓ |0| tests/tasks/t14.test.ts (8 tests) 23ms
- ✓ |0| packages/worker/test/generation-fencing.test.ts (6 tests) 16ms
- ✓ |0| packages/kernel/test/materializer.test.ts (4 tests) 20ms
- ✓ |0| tests/tasks/t17.test.ts (6 tests) 21ms
- ✓ |0| packages/core/test/directives/segment.test.ts (2 tests) 13ms
- ✓ |0| packages/kernel/test/continuity-ledger.test.ts (5 tests) 27ms
- ✓ |0| packages/kernel/test/token-budget.test.ts (6 tests) 3ms
- ✓ |0| packages/pi-adapter/test/runtime-tools.test.ts (6 tests) 16ms
- ✓ |0| tests/contract/pi-compaction-takeover.test.ts (4 tests) 14ms
- ✓ |0| packages/kernel/test/claim-ledger.test.ts (9 tests) 13ms
- ✓ |0| tests/compat/pi-version-contract.test.ts (4 tests) 12ms
- ✓ |0| tests/tasks/t22.test.ts (7 tests) 15ms
- ✓ |0| tests/tasks/t25.test.ts (7 tests) 14ms
+ ✓ |0| tests/acceptance/retrieval-tools.test.ts (1 test) 65ms
+ ✓ |0| tests/security/cursor-fuzz.test.ts (1 test) 36ms
+ ✓ |0| tests/security/authority-mutation.test.ts (2 tests) 61ms
+ ✓ |0| tests/acceptance/w1-vertical.test.ts (1 test) 92ms
+ ✓ |0| tests/tasks/t16.test.ts (6 tests) 16ms
+ ✓ |0| tests/live-gate/paired-w2-live.test.ts (3 tests) 22ms
+ ✓ |0| tests/contract/pi-context-hook.test.ts (11 tests) 28ms
+ ✓ |0| packages/core/test/directives/extract.test.ts (1 test) 20ms
+ ✓ |0| tests/tasks/t21.test.ts (7 tests) 20ms
+ ✓ |0| packages/kernel/test/continuity-ledger.test.ts (5 tests) 12ms
+ ✓ |0| packages/kernel/test/directive-capture.test.ts (6 tests) 23ms
+ ✓ |0| tests/tasks/t05.test.ts (6 tests) 56ms
+ ✓ |0| tests/security/memory-poisoning.test.ts (2 tests) 50ms
+ ✓ |0| tests/tasks/t14.test.ts (8 tests) 17ms
+ ✓ |0| packages/worker/test/semantic-proposal.test.ts (6 tests) 32ms
+ ✓ |0| packages/kernel/test/materializer.test.ts (4 tests) 17ms
+ ✓ |0| tests/contract/pi-session-lifecycle.test.ts (4 tests) 13ms
+ ✓ |0| tests/tasks/t17.test.ts (6 tests) 18ms
+ ✓ |0| tests/tasks/t18.test.ts (8 tests) 35ms
+ ✓ |0| packages/pi-adapter/test/message-codec.test.ts (1 test) 11ms
+ ✓ |0| tests/tasks/t02.test.ts (6 tests) 13ms
+ ✓ |0| tests/tasks/t19.test.ts (7 tests) 22ms
+ ✓ |0| packages/worker/test/generation-fencing.test.ts (6 tests) 14ms
+ ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 12ms
+ ✓ |0| packages/pi-adapter/test/runtime-tools.test.ts (6 tests) 14ms
  ✓ |0| tests/tasks/t04.test.ts (7 tests) 14ms
- ✓ |0| packages/kernel/test/directive-capture.test.ts (6 tests) 25ms
- ✓ |0| tests/security/authority.test.ts (3 tests) 13ms
- ✓ |0| packages/kernel/test/host-checkpoint-render.test.ts (5 tests) 12ms
- ✓ |0| packages/kernel/test/raw-input.test.ts (5 tests) 13ms
- ✓ |0| packages/core/test/continuity/reduce.test.ts (2 tests) 13ms
- ✓ |0| packages/contracts/test/canonical.test.ts (4 tests) 14ms
+ ✓ |0| packages/contracts/test/canonical.test.ts (4 tests) 19ms
+ ✓ |0| tests/tasks/t22.test.ts (7 tests) 35ms
+ ✓ |0| tests/contract/pi-compaction-takeover.test.ts (4 tests) 15ms
+(node:33757) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/security/authority.test.ts (3 tests) 11ms
+ ✓ |0| packages/kernel/test/raw-input.test.ts (5 tests) 23ms
+ ✓ |0| packages/kernel/test/claim-ledger.test.ts (9 tests) 16ms
+ ✓ |0| packages/kernel/test/fts-catalog.test.ts (5 tests) 13ms
+ ✓ |0| tests/tasks/t25.test.ts (9 tests) 15ms
+ ✓ |0| packages/core/test/directives/segment.test.ts (2 tests) 13ms
+ ✓ |0| tests/contract/pi-input-correlation.test.ts (1 test) 9ms
+ ✓ |0| packages/core/test/continuity/reduce.test.ts (2 tests) 19ms
+ ✓ |0| packages/kernel/test/host-checkpoint-render.test.ts (5 tests) 13ms
+ ✓ |0| packages/kernel/test/evidence-admission.test.ts (5 tests) 12ms
+ ✓ |0| packages/kernel/test/action-gate.test.ts (6 tests) 11ms
+ ✓ |0| packages/pi-adapter/test/compaction-result.test.ts (1 test) 2ms
  ✓ |0| packages/core/test/retrieval/proactive.test.ts (1 test) 10ms
-(node:25056) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/security/secret-leak.test.ts (1 test) 11ms
+ ✓ |0| packages/worker/test/telemetry-economics.test.ts (5 tests) 11ms
+ ✓ |0| packages/worker/test/verifier.test.ts (8 tests) 5ms
+ ✓ |0| tests/release/semantic-beta-gate.test.ts (8 tests) 3ms
+ ✓ |0| tests/performance/token-accounting.test.ts (1 test) 10ms
+(node:33760) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/e2e/packed-install.test.ts (1 test) 13ms
- ✓ |0| packages/pi-adapter/test/message-codec.test.ts (1 test) 18ms
+ ✓ |0| tests/e2e/packed-install.test.ts (1 test) 12ms
+ ✓ |0| tests/release/deterministic-mvp-gate.test.ts (9 tests) 6ms
  ✓ |0| packages/kernel/test/active-suffix.test.ts (5 tests) 6ms
- ✓ |0| packages/worker/test/verifier.test.ts (8 tests) 10ms
- ✓ |0| tests/release/deterministic-mvp-gate.test.ts (9 tests) 7ms
- ✓ |0| tests/performance/token-accounting.test.ts (1 test) 12ms
+ ✓ |0| tests/tasks/t08.test.ts (10 tests) 9ms
+ ✓ |0| tests/compat/pi-version-contract.test.ts (4 tests) 17ms
+ ✓ |0| packages/kernel/test/checkpoint-candidate.test.ts (6 tests) 4ms
+ ✓ |0| tests/tasks/t07.test.ts (9 tests) 9ms
+(node:33783) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/kernel/test/literal-index.test.ts (5 tests) 3ms
+ ✓ |0| tests/acceptance/session-registry.test.ts (8 tests) 10ms
+ ✓ |0| packages/kernel/test/claim-transitions.test.ts (7 tests) 5ms
  ✓ |0| packages/kernel/test/lease-lifecycle.test.ts (5 tests) 4ms
- ✓ |0| tests/tasks/t08.test.ts (10 tests) 8ms
- ✓ |0| packages/pi-adapter/test/message-conversion.test.ts (5 tests) 4ms
- ✓ |0| tests/tasks/t07.test.ts (9 tests) 6ms
- ✓ |0| packages/kernel/test/exact-read.test.ts (5 tests) 3ms
- ✓ |0| tests/contract/pi-capability-probe.test.ts (4 tests) 2ms
- ✓ |0| packages/kernel/test/builtin-reducers.test.ts (5 tests) 3ms
- ✓ |0| packages/core/test/directives/temporal.test.ts (2 tests) 2ms
- ✓ |0| packages/core/test/reducers/production.test.ts (4 tests) 3ms
-(node:25087) ExperimentalWarning: SQLite is an experimental feature and might change at any time
-(Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| packages/kernel/test/literal-index.test.ts (5 tests) 4ms
- ✓ |0| tests/acceptance/session-registry.test.ts (8 tests) 11ms
+ ✓ |0| tests/compat/provider-payload-probe.test.ts (3 tests) 3ms
+ ✓ |0| apps/pi-context-runtime/test/package-runtime.test.ts (4 tests) 6ms
+ ✓ |0| tests/tasks/t24.test.ts (7 tests) 7ms
+ ✓ |0| packages/pi-adapter/test/message-conversion.test.ts (5 tests) 3ms
+ ✓ |0| packages/kernel/test/builtin-reducers.test.ts (5 tests) 4ms
  ✓ |0| packages/kernel/test/shell-reducers.test.ts (6 tests) 3ms
- ✓ |0| packages/kernel/test/convergence.test.ts (5 tests) 3ms
- ✓ |0| apps/pi-context-runtime/test/package-runtime.test.ts (4 tests) 4ms
- ✓ |0| packages/runtime/test/saga.test.ts (4 tests) 3ms
- ✓ |0| packages/kernel/test/claim-transitions.test.ts (7 tests) 4ms
- ✓ |0| packages/kernel/test/checkpoint-candidate.test.ts (6 tests) 6ms
- ✓ |0| tests/tasks/t24.test.ts (7 tests) 9ms
- ✓ |0| tests/compat/provider-payload-probe.test.ts (3 tests) 4ms
- ✓ |0| tests/live-gate/payload-sizing.test.ts (3 tests) 2ms
- ✓ |0| tests/release/semantic-beta-gate.test.ts (8 tests) 9ms
- ✓ |0| packages/contracts/test/types.test.ts (5 tests) 2ms
+ ✓ |0| packages/kernel/test/exact-read.test.ts (5 tests) 4ms
+ ✓ |0| packages/core/test/reducers/production.test.ts (4 tests) 4ms
+ ✓ |0| packages/runtime/test/saga.test.ts (4 tests) 6ms
+ ✓ |0| packages/kernel/test/convergence.test.ts (5 tests) 4ms
  ✓ |0| packages/kernel/test/proactive-recall.test.ts (5 tests) 3ms
- ✓ |0| packages/pi-adapter/test/compaction-result.test.ts (1 test) 11ms
- ✓ |0| tests/security/recovery-fuzz.test.ts (1 test) 1ms
+ ✓ |0| packages/kernel/test/token-budget.test.ts (6 tests) 4ms
+ ✓ |0| tests/contract/pi-capability-probe.test.ts (4 tests) 3ms
+ ✓ |0| packages/core/test/directives/temporal.test.ts (2 tests) 2ms
+ ✓ |0| packages/contracts/test/types.test.ts (5 tests) 4ms
+ ✓ |0| tests/live-gate/payload-sizing.test.ts (3 tests) 4ms
  ✓ |0| packages/runtime/test/runtime-session.test.ts (2 tests) 2ms
-(node:25125) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/security/recovery-fuzz.test.ts (1 test) 2ms
+(node:33821) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:25134) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:33824) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/e2e/pi-factory-entry.test.ts (2 tests) 3ms
  ✓ |0| apps/pi-context-runtime/test/owner.test.ts (4 tests) 4ms
+ ✓ |0| tests/e2e/pi-factory-entry.test.ts (2 tests) 4ms
  ✓ |0| tests/contract/pi-tool-call-gate.test.ts (1 test) 2ms
- ✓ |0| tests/acceptance/packed-install.test.ts (2 tests) 14970ms
-   ✓ packed runtime acceptance > npm packs the runtime and the required patched Pi host loads exact input  11492ms
-   ✓ packed runtime acceptance > fails during loading on stock Pi 0.84.4 instead of swallowing input  3477ms
- ✓ |0| tests/tasks/t06.test.ts (9 tests) 20945ms
-   ✓ T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home  6695ms
-   ✓ T06 Real npm pack and clean Pi install harness > packs deterministically from the same committed source  2557ms
-   ✓ T06 Real npm pack and clean Pi install harness > isolates duplicate probes while preserving their observable contract  6788ms
-   ✓ T06 Real npm pack and clean Pi install harness > propagates a non-zero Pi exit and removes the isolated home  1511ms
+ ✓ |0| tests/acceptance/packed-install.test.ts (2 tests) 14757ms
+   ✓ packed runtime acceptance > npm packs the runtime and the required patched Pi host loads exact input  11334ms
+   ✓ packed runtime acceptance > fails during loading on stock Pi 0.84.4 instead of swallowing input  3422ms
+ ✓ |0| tests/tasks/t06.test.ts (9 tests) 20450ms
+   ✓ T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home  6686ms
+   ✓ T06 Real npm pack and clean Pi install harness > packs deterministically from the same committed source  2626ms
+   ✓ T06 Real npm pack and clean Pi install harness > isolates duplicate probes while preserving their observable contract  6684ms
+   ✓ T06 Real npm pack and clean Pi install harness > propagates a non-zero Pi exit and removes the isolated home  1094ms
 
  Test Files  112 passed (112)
-      Tests  560 passed (560)
-   Start at  01:41:16
-   Duration  21.27s (transform 2.08s, setup 0ms, collect 22.51s, tests 66.22s, environment 12ms, prepare 6.34s)
+      Tests  562 passed (562)
+   Start at  01:52:27
+   Duration  20.77s (transform 2.11s, setup 0ms, collect 22.35s, tests 65.65s, environment 12ms, prepare 6.53s)
 
 CHECK_ALL_EXIT:0
  DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
 
  RUN  v3.2.4 /Users/luo/Documents/github/pi-context
 
-(node:25546) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:34211) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:25548) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:34212) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/acceptance/evidence-recovery.test.ts (1 test) 77ms
-(node:25544) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+ ✓ |0| tests/acceptance/evidence-recovery.test.ts (1 test) 82ms
+(node:34209) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:25545) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:34210) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
-(node:25549) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:34214) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
  ✓ |0| tests/acceptance/session-registry.test.ts (8 tests) 11ms
-(node:25547) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:34213) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ |0| tests/acceptance/retrieval-tools.test.ts (1 test) 164ms
- ✓ |0| tests/acceptance/w1-vertical.test.ts (1 test) 142ms
- ✓ |0| tests/acceptance/tool-result-flow.test.ts (3 tests) 405ms
- ✓ |0| tests/acceptance/user-input-flow.test.ts (11 tests) 1080ms
- ✓ |0| tests/acceptance/packed-install.test.ts (2 tests) 10653ms
-   ✓ packed runtime acceptance > npm packs the runtime and the required patched Pi host loads exact input  7099ms
-   ✓ packed runtime acceptance > fails during loading on stock Pi 0.84.4 instead of swallowing input  3553ms
+ ✓ |0| tests/acceptance/retrieval-tools.test.ts (1 test) 152ms
+ ✓ |0| tests/acceptance/w1-vertical.test.ts (1 test) 161ms
+ ✓ |0| tests/acceptance/tool-result-flow.test.ts (3 tests) 402ms
+ ✓ |0| tests/acceptance/user-input-flow.test.ts (11 tests) 1172ms
+ ✓ |0| tests/acceptance/packed-install.test.ts (2 tests) 10924ms
+   ✓ packed runtime acceptance > npm packs the runtime and the required patched Pi host loads exact input  7362ms
+   ✓ packed runtime acceptance > fails during loading on stock Pi 0.84.4 instead of swallowing input  3562ms
 
  Test Files  7 passed (7)
       Tests  27 passed (27)
-   Start at  01:41:38
-   Duration  10.94s (transform 592ms, setup 0ms, collect 4.96s, tests 12.53s, environment 1ms, prepare 491ms)
+   Start at  01:52:49
+   Duration  11.24s (transform 654ms, setup 0ms, collect 5.54s, tests 12.90s, environment 1ms, prepare 518ms)
 
 ACCEPTANCE_EXIT:0
 compdef:153: _comps: assignment to invalid subscript range

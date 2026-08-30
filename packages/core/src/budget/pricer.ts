@@ -103,19 +103,21 @@ export function estimateMessageTokens(message: HostMessage): number {
   if (typeof message.role !== "string" || !HOST_ROLES.has(message.role)) failInput("message.role");
   if (!Array.isArray(message.content)) failInput("message.content");
   let tokens = 0;
-  let priced = false;
   for (const block of message.content) {
     if (!block || typeof block !== "object" || typeof block.type !== "string") failInput("message.content[]");
     if (block.type === "text") {
       if (typeof block.text !== "string") failInput("message.content[].text");
       tokens += estimateTextTokens(block.text);
-      priced = true;
-    } else if ("ref" in block && typeof block.ref === "string") {
+    } else if (block.type === "pointer" || block.type === "image-ref" || block.type === "tool-call-ref") {
+      if (!("ref" in block) || typeof block.ref !== "string" || block.ref.length === 0) {
+        failInput("message.content[].ref");
+      }
       tokens += estimateTextTokens(block.ref);
-      priced = true;
+    } else {
+      failInput("message.content[].type");
     }
   }
-  return priced ? tokens : 0;
+  return tokens;
 }
 
 export function computeEffectiveInput(route: RouteInfo): number {

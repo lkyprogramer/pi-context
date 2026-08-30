@@ -93,8 +93,14 @@ export function createTokenCalibration(input: CreateTokenCalibrationInput): Toke
     observe(sample: CalibrationSample): number {
       if (!sample || typeof sample !== "object") failInput("sample");
       if (typeof sample.modelKey !== "string" || sample.modelKey.length === 0) failInput("sample.modelKey");
-      if (typeof sample.heuristicTokens !== "number" || !(sample.heuristicTokens > 0)) failInput("sample.heuristicTokens");
-      if (typeof sample.providerInputTokens !== "number" || sample.providerInputTokens < 0) {
+      if (typeof sample.heuristicTokens !== "number" || !Number.isFinite(sample.heuristicTokens) || sample.heuristicTokens <= 0) {
+        failInput("sample.heuristicTokens");
+      }
+      if (
+        typeof sample.providerInputTokens !== "number"
+        || !Number.isFinite(sample.providerInputTokens)
+        || sample.providerInputTokens < 0
+      ) {
         failInput("sample.providerInputTokens");
       }
       const current = states.get(sample.modelKey);
