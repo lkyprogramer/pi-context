@@ -5,3 +5,5 @@ export * from "./saga/index.js";
 export * from "./user-turn-service.js";
 export * from "./observation-service.js";
 export * from "./evidence-service.js";
+export * from "./directive-service.js";
+

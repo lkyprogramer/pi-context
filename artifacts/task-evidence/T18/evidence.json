@@ -1,0 +1,36 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T18",
+  "status": "review-candidate",
+  "parentCommit": "d211227d32805266eaf43db963dcd2e7dfde407d",
+  "redLog": "artifacts/task-evidence/T18/red.log",
+  "greenLog": "artifacts/task-evidence/T18/green.log",
+  "fullGateLog": "artifacts/task-evidence/T18/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "completeCorrectionValue": true,
+    "valueIsSevenNotCaseSuffixed": true,
+    "sameKeySupersedes": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 102,
+    "repositoryGateTests": 516,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T18/changed-files.json": "01d84b74bfafa17b34c3da22f43f91c827ed1828031ad830144e9d6f6e9c73bc",
+    "artifacts/task-evidence/T18/full-gate.log": "8cec2157a11063aee678ee95eb3bbd52b249048cfb04902c784d862d9fa2b45e",
+    "artifacts/task-evidence/T18/green.log": "440440c18f7b0dc2da0a2665106001f1a2431aa812ce4030bdaab5e8ded5e9cf",
+    "artifacts/task-evidence/T18/preflight-git.txt": "781da01fcf6e663a555870e6d2616756c75d3a05f06e6cfac5724e589b7f16e5",
+    "artifacts/task-evidence/T18/preflight-toolchain.txt": "230379c89cb3f942c21fb2fa39aa0d0f1cfbbe7ab707012d518d17b4a41d6541",
+    "artifacts/task-evidence/T18/red.log": "62172e789463cba81101eadd78398be45ba970ee263406fbb9a0be5a302a2426",
+    "blockers/T18-scope-expansion.md": "6a6919819ff52205da276438d9482f4935f6abb965fa473358730d7815f2ae54",
+    "packages/core/package.json": "2d647995fbc5eeb8ad21d2cae6fc6f1c3670941ba9d50af860194ece068dd59f",
+    "packages/core/src/directives/temporal.ts": "d4ed235dbae3259dce547272fa58bb9ac6bd015a14f745b80e4bae37a214245a",
+    "packages/core/src/index.ts": "479934ff3ea0f15d64735aa6877f0d50c0377f22298399ece831878da46f2968",
+    "packages/core/test/directives/temporal.test.ts": "af0b26b504f9e59b2dd6e95b18c5381631a10400ffb77a43e522becc11cc4b74",
+    "packages/runtime/package.json": "d6f13447f056398c92abaaf3f1028808a782342cced4cff1fec852d3dd85ec0b",
+    "packages/runtime/src/directive-service.ts": "77c59e87178125dc1accd9a2b0936845aa9ae3546e7ce19204f6109cdffed93b",
+    "packages/runtime/src/index.ts": "acfc850df34dc65c45755b8eb151353e0f58d85a494dd4e0eaa7978c7fd2436c",
+    "tests/tasks/t18.test.ts": "9cbb92c10147b23bc07a1e5c809c7c3bd5645e51b9427d940015bdd07a5e7bcf"
+  }
+}

@@ -11,6 +11,6 @@
     "@pcr/contracts": "workspace:*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/directives/segment.test.ts test/directives/extract.test.ts ../../tests/tasks/t14.test.ts ../../tests/tasks/t16.test.ts ../../tests/tasks/t17.test.ts"
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/directives/segment.test.ts test/directives/extract.test.ts test/directives/temporal.test.ts ../../tests/tasks/t14.test.ts ../../tests/tasks/t16.test.ts ../../tests/tasks/t17.test.ts ../../tests/tasks/t18.test.ts"
   }
 }

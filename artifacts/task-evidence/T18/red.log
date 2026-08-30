@@ -1,0 +1,125 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t18.test.ts (7 tests | 7 failed) 22ms
+   × T18 Temporal key/value and supersession resolver > preserves the complete correction value 17ms
+     → (0 , createDirectiveService) is not a function
+   × T18 Temporal key/value and supersession resolver > fails construction when production dependencies are absent 3ms
+     → expected error to match asymmetric matcher
+   × T18 Temporal key/value and supersession resolver > rejects malformed candidates before writing 0ms
+     → (0 , createDirectiveService) is not a function
+   × T18 Temporal key/value and supersession resolver > replays the same correction without duplicating the active record 1ms
+     → (0 , createDirectiveService) is not a function
+   × T18 Temporal key/value and supersession resolver > supersedes the previous key with the latest complete value 0ms
+     → (0 , createDirectiveService) is not a function
+   × T18 Temporal key/value and supersession resolver > rejects a turn from the wrong workspace/session/branch 0ms
+     → (0 , createDirectiveService) is not a function
+   × T18 Temporal key/value and supersession resolver > stops at the abort boundary before persisting 0ms
+     → (0 , createDirectiveService) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t18.test.ts > T18 Temporal key/value and supersession resolver > preserves the complete correction value
+TypeError: (0 , createDirectiveService) is not a function
+ ❯ resolveUserTurn tests/tasks/t18.test.ts:60:20
+     58|   const clauses = createClauseSegmenter({ cursor: bound }).segment({ t…
+     59|   const candidates = createDirectiveExtractor({ cursor: bound }).extra…
+     60|   const resolver = createDirectiveService({ cursor: bound, store });
+       |                    ^
+     61|   for (const candidate of candidates) await resolver.apply(candidate);
+     62|   return { active: await resolver.active(bound), resolver, store, cand…
+ ❯ tests/tasks/t18.test.ts:67:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t18.test.ts > T18 Temporal key/value and supersession resolver > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_DIRECTIVE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_4__.createDirectiveService) is not a function",
+  }
+
+ ❯ tests/tasks/t18.test.ts:77:55
+     75|
+     76|   it("fails construction when production dependencies are absent", () …
+     77|     expect(() => createDirectiveService({} as never)).toThrowError(
+       |                                                       ^
+     78|       expect.objectContaining({ code: "PCR_DIRECTIVE_DEPENDENCY_MISSIN…
+     79|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t18.test.ts > T18 Temporal key/value and supersession resolver > rejects malformed candidates before writing
+TypeError: (0 , createDirectiveService) is not a function
+ ❯ tests/tasks/t18.test.ts:84:22
+     82|   it("rejects malformed candidates before writing", async () => {
+     83|     const bound = cursor();
+     84|     const resolver = createDirectiveService({ cursor: bound, store: me…
+       |                      ^
+     85|     await expect(resolver.apply({} as never)).rejects.toThrow(/PCR_DIR…
+     86|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t18.test.ts > T18 Temporal key/value and supersession resolver > replays the same correction without duplicating the active record
+TypeError: (0 , createDirectiveService) is not a function
+ ❯ resolveUserTurn tests/tasks/t18.test.ts:60:20
+     58|   const clauses = createClauseSegmenter({ cursor: bound }).segment({ t…
+     59|   const candidates = createDirectiveExtractor({ cursor: bound }).extra…
+     60|   const resolver = createDirectiveService({ cursor: bound, store });
+       |                    ^
+     61|   for (const candidate of candidates) await resolver.apply(candidate);
+     62|   return { active: await resolver.active(bound), resolver, store, cand…
+ ❯ tests/tasks/t18.test.ts:91:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t18.test.ts > T18 Temporal key/value and supersession resolver > supersedes the previous key with the latest complete value
+TypeError: (0 , createDirectiveService) is not a function
+ ❯ resolveUserTurn tests/tasks/t18.test.ts:60:20
+     58|   const clauses = createClauseSegmenter({ cursor: bound }).segment({ t…
+     59|   const candidates = createDirectiveExtractor({ cursor: bound }).extra…
+     60|   const resolver = createDirectiveService({ cursor: bound, store });
+       |                    ^
+     61|   for (const candidate of candidates) await resolver.apply(candidate);
+     62|   return { active: await resolver.active(bound), resolver, store, cand…
+ ❯ tests/tasks/t18.test.ts:100:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t18.test.ts > T18 Temporal key/value and supersession resolver > rejects a turn from the wrong workspace/session/branch
+TypeError: (0 , createDirectiveService) is not a function
+ ❯ tests/tasks/t18.test.ts:110:22
+    108|   it("rejects a turn from the wrong workspace/session/branch", async (…
+    109|     const bound = cursor();
+    110|     const resolver = createDirectiveService({ cursor: bound, store: me…
+       |                      ^
+    111|     const other = { ...bound, sessionId: "other-session" };
+    112|     const text = "改为 version 7；以最新值为准";
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t18.test.ts > T18 Temporal key/value and supersession resolver > stops at the abort boundary before persisting
+TypeError: (0 , createDirectiveService) is not a function
+ ❯ tests/tasks/t18.test.ts:121:22
+    119|   it("stops at the abort boundary before persisting", async () => {
+    120|     const bound = cursor();
+    121|     const resolver = createDirectiveService({ cursor: bound, store: me…
+       |                      ^
+    122|     const text = "改为 version 7；以最新值为准";
+    123|     const clauses = createClauseSegmenter({ cursor: bound }).segment({…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  00:08:00
+   Duration  544ms (transform 125ms, setup 0ms, collect 183ms, tests 22ms, environment 0ms, prepare 110ms)
+

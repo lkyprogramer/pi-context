@@ -1,0 +1,16 @@
+{
+  "taskId": "T18",
+  "production": [
+    "blockers/T18-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/directives/temporal.ts",
+    "packages/core/src/index.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/directive-service.ts",
+    "packages/runtime/src/index.ts"
+  ],
+  "tests": [
+    "packages/core/test/directives/temporal.test.ts",
+    "tests/tasks/t18.test.ts"
+  ]
+}
