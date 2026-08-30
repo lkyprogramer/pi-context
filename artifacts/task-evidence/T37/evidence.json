@@ -1,0 +1,36 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T37",
+  "status": "review-candidate",
+  "parentCommit": "f7b0b9c0094f35bdfd4f491e06e1ee42b385795e",
+  "redLog": "artifacts/task-evidence/T37/red.log",
+  "greenLog": "artifacts/task-evidence/T37/green.log",
+  "fullGateLog": "artifacts/task-evidence/T37/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "durableReopenPublish": true,
+    "headCasStale": true,
+    "repositoryGateFiles": 136,
+    "repositoryGateTests": 659,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "artifacts/task-evidence/T37/changed-files.json": "cf76a67b16e070a7bda0c4b463c7966d102fefc4ae03bd02ff60e5e6a18e2d93",
+    "artifacts/task-evidence/T37/full-gate.log": "bd474a5210b8151e268d601503b98e234b65925a10beea51bf2d0efa2f442d5c",
+    "artifacts/task-evidence/T37/green.log": "7437f820b394745112a7efe290dc6616d458341220fa0273b4bd08edb632848e",
+    "artifacts/task-evidence/T37/preflight-git.txt": "6b9cbda05e851eb9dfd3d4efeaccac023918dd388487a1066d31ea7892f7b4d9",
+    "artifacts/task-evidence/T37/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T37/red.log": "74a25d05fe8fb19e06acb08a2c39af8c5c7b8114b7f54a61854678798067418f",
+    "blockers/T37-scope-expansion.md": "c0ea50600e7d60866bf1c3e3c02e7972a8a1e51925c81fbdd2c1844c60934505",
+    "packages/runtime/package.json": "25aa70c0c74f94ea237ee83d634a11266ffa7fdad6cd58d6ad0d9b5ca5028fce",
+    "packages/runtime/src/background/candidates.ts": "99ca3ee6f3189ba5d2dc37b07ba0dbd75b3ccd147b2bac430749fe69e9b93720",
+    "packages/runtime/src/background/index.ts": "0a07f0a46dafd00e513a1f3cd0a7ef075da36f9e689c18501ec85fe786addd8f",
+    "packages/runtime/src/index.ts": "1faa2401a20a364f6833747c0cebb0e3de91ee03d37ddc7aa4f3eca1c0b7672c",
+    "packages/runtime/test/background/candidates.test.ts": "3a0ab2a2d5e46cf7b95253e555ddecc364167eef849863b22e4d563ff68c9c10",
+    "packages/storage-node/package.json": "470de5c08c4d5423b8817eac5e1e805b0ef05f93e23b83982e197ff62e3ad806",
+    "packages/storage-node/src/candidate-repository.ts": "eb8bdc23f07a4d8e7f59c77ef33e76eba7e14419423800dee3474097a496b87d",
+    "packages/storage-node/src/index.ts": "7b776c249353ca36a86ac86ba77541bf5ab6491c3d89d94c5c3ca2546f937983",
+    "packages/storage-node/src/schema/migrations.ts": "74d53ba1b7d220f559da5f93e4e9461dd87fe0e55e161a0977f56660778d7b0f",
+    "tests/tasks/t37.test.ts": "03ecb7ef74726311d64c349bd6e382ad0b27645993f1242508e9e5e7389b92f2"
+  }
+}

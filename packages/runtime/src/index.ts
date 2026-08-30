@@ -16,4 +16,5 @@ export * from "./compaction/retention.js";
 export * from "./recovery-service.js";
 export * from "./semantic/port.js";
 export * from "./semantic/proposer.js";
+export * from "./background/index.js";
 

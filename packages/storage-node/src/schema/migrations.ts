@@ -159,12 +159,51 @@ CREATE VIRTUAL TABLE evidence_fts USING fts5(
 );
 `;
 
+const V6_SQL = `
+CREATE TABLE background_candidate (
+  candidate_id TEXT PRIMARY KEY CHECK (
+    length(candidate_id) = 64 AND candidate_id NOT GLOB '*[^0-9a-f]*'
+  ),
+  candidate_key TEXT NOT NULL CHECK (
+    length(candidate_key) = 64 AND candidate_key NOT GLOB '*[^0-9a-f]*'
+  ),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  source_head TEXT NOT NULL CHECK (length(source_head) = 64 AND source_head NOT GLOB '*[^0-9a-f]*'),
+  config_fingerprint TEXT NOT NULL CHECK (
+    length(config_fingerprint) = 64 AND config_fingerprint NOT GLOB '*[^0-9a-f]*'
+  ),
+  phase TEXT NOT NULL CHECK (phase IN ('prepared', 'stale', 'committed')),
+  reason TEXT CHECK (reason IS NULL OR length(reason) > 0),
+  revision INTEGER NOT NULL CHECK (revision >= 1)
+) STRICT;
+
+CREATE UNIQUE INDEX background_candidate_active_key ON background_candidate (candidate_key)
+  WHERE phase IN ('prepared', 'committed');
+
+CREATE INDEX background_candidate_scope ON background_candidate (
+  workspace_id,
+  session_id,
+  leaf_id,
+  lineage_hash,
+  model_key,
+  phase,
+  candidate_id
+);
+`;
+
 export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = Object.freeze([
   Object.freeze({ version: 1, name: "workspace-evidence-v1", sql: V1_SQL }),
   Object.freeze({ version: 2, name: "workspace-saga-v2", sql: V2_SQL }),
   Object.freeze({ version: 3, name: "workspace-user-turn-v3", sql: V3_SQL }),
   Object.freeze({ version: 4, name: "workspace-user-turn-disposition-v4", sql: V4_SQL }),
   Object.freeze({ version: 5, name: "workspace-evidence-fts-v5", sql: V5_SQL }),
+  Object.freeze({ version: 6, name: "workspace-background-candidate-v6", sql: V6_SQL }),
 ]);
 
 export const WORKSPACE_SQLITE_SCHEMA_VERSION = WORKSPACE_SQLITE_MIGRATIONS.at(-1)?.version ?? 0;

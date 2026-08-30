@@ -1,0 +1,103 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:1042) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |0| tests/tasks/t37.test.ts (6 tests | 6 failed) 35ms
+   × T37 Durable background candidate and generation fencing > durable_background_candidate_and_generation_fenc 21ms
+     → promise rejected "TypeError: (0 , ope…" instead of resolving
+   × T37 Durable background candidate and generation fencing > fails construction when production dependencies are absent 0ms
+     → (0 , openWorkspaceCandidateRepository) is not a function
+   × T37 Durable background candidate and generation fencing > rejects malformed prepare input and invalid stale transitions 3ms
+     → (0 , openWorkspaceCandidateRepository) is not a function
+   × T37 Durable background candidate and generation fencing > replays prepare for the same key to an equal candidate 3ms
+     → (0 , openWorkspaceCandidateRepository) is not a function
+   × T37 Durable background candidate and generation fencing > rejects a candidate key from another workspace 3ms
+     → (0 , openWorkspaceCandidateRepository) is not a function
+   × T37 Durable background candidate and generation fencing > stops at the abort boundary before writing a candidate 3ms
+     → (0 , openWorkspaceCandidateRepository) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t37.test.ts > T37 Durable background candidate and generation fencing > durable_background_candidate_and_generation_fenc
+AssertionError: promise rejected "TypeError: (0 , ope…" instead of resolving
+ ❯ tests/tasks/t37.test.ts:83:33
+     81| describe("T37 Durable background candidate and generation fencing", ()…
+     82|   it("durable_background_candidate_and_generation_fenc", async () => {
+     83|     await expect(runT37Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     84|   });
+     85| 
+
+Caused by: TypeError: (0 , openWorkspaceCandidateRepository) is not a function
+ ❯ runT37Fixture tests/tasks/t37.test.ts:54:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t37.test.ts > T37 Durable background candidate and generation fencing > fails construction when production dependencies are absent
+TypeError: (0 , openWorkspaceCandidateRepository) is not a function
+ ❯ tests/tasks/t37.test.ts:87:18
+     85| 
+     86|   it("fails construction when production dependencies are absent", asy…
+     87|     await expect(openWorkspaceCandidateRepository({} as never)).reject…
+       |                  ^
+     88|       code: "PCR_CANDIDATE_DEPENDENCY_MISSING",
+     89|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t37.test.ts > T37 Durable background candidate and generation fencing > rejects malformed prepare input and invalid stale transitions
+TypeError: (0 , openWorkspaceCandidateRepository) is not a function
+ ❯ tests/tasks/t37.test.ts:100:30
+     98|       busyTimeoutMs: 1_000,
+     99|     });
+    100|     const repository = await openWorkspaceCandidateRepository({ databa…
+       |                              ^
+    101|     await expect(repository.prepare({} as never)).rejects.toMatchObjec…
+    102|       code: "PCR_CANDIDATE_INPUT_INVALID",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t37.test.ts > T37 Durable background candidate and generation fencing > replays prepare for the same key to an equal candidate
+TypeError: (0 , openWorkspaceCandidateRepository) is not a function
+ ❯ tests/tasks/t37.test.ts:120:30
+    118|       busyTimeoutMs: 1_000,
+    119|     });
+    120|     const repository = await openWorkspaceCandidateRepository({ databa…
+       |                              ^
+    121|     const key = keyFor(root);
+    122|     const first = await repository.prepare(key);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t37.test.ts > T37 Durable background candidate and generation fencing > rejects a candidate key from another workspace
+TypeError: (0 , openWorkspaceCandidateRepository) is not a function
+ ❯ tests/tasks/t37.test.ts:137:30
+    135|       busyTimeoutMs: 1_000,
+    136|     });
+    137|     const repository = await openWorkspaceCandidateRepository({ databa…
+       |                              ^
+    138|     const other = createCandidateKey({
+    139|       cursor: createRuntimeCursor({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t37.test.ts > T37 Durable background candidate and generation fencing > stops at the abort boundary before writing a candidate
+TypeError: (0 , openWorkspaceCandidateRepository) is not a function
+ ❯ tests/tasks/t37.test.ts:163:30
+    161|       busyTimeoutMs: 1_000,
+    162|     });
+    163|     const repository = await openWorkspaceCandidateRepository({ databa…
+       |                              ^
+    164|     await expect(repository.prepare({
+    165|       ...keyFor(root),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  06:05:35
+   Duration  573ms (transform 209ms, setup 0ms, collect 312ms, tests 35ms, environment 0ms, prepare 48ms)
+
