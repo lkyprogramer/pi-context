@@ -1,0 +1,17 @@
+{
+  "taskId": "T07",
+  "production": [
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/ports.ts",
+    "packages/runtime/src/runtime-session.ts"
+  ],
+  "tests": [
+    "packages/runtime/test/runtime-session.test.ts",
+    "tests/tasks/t07.test.ts"
+  ],
+  "control": [
+    "blockers/T07-scope-expansion.md"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T07",
+  "unrelatedTrackedChanges": []
+}

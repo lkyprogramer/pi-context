@@ -1,0 +1,34 @@
+{
+  "taskId": "T07",
+  "boundScope": [
+    "workspaceId",
+    "sessionId",
+    "leafId",
+    "lineageHash"
+  ],
+  "transparentOperations": [
+    "ingestUserInput -> userInput.capture",
+    "ingestToolResult -> toolResult.ingest",
+    "materialize -> materialization.materialize"
+  ],
+  "preservedInputs": [
+    "operationId",
+    "cursor",
+    "sourceClass",
+    "authority",
+    "payload",
+    "AbortSignal"
+  ],
+  "deferredOwners": {
+    "persistentIdempotencyAndQuarantine": "T11-T13 storage and ingress ports",
+    "sessionRegistryLifecycle": "T08",
+    "compaction": "T29-T33",
+    "materializationPolicy": "T26-T28"
+  },
+  "forbiddenDefaults": [
+    "in-memory storage port",
+    "generated identity",
+    "hard-coded workspace/session",
+    "adapter or storage direct dependency"
+  ]
+}

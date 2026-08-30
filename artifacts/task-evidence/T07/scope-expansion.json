@@ -1,0 +1,16 @@
+{
+  "taskId": "T07",
+  "paths": [
+    "packages/runtime/src/index.ts",
+    "tests/tasks/t07.test.ts",
+    "artifacts/task-evidence/T07/**",
+    "blockers/T07-scope-expansion.md"
+  ],
+  "reason": "The task requires a downstream public package interface while @pcr/runtime exports only src/index.ts; the task protocol separately mandates its target test and evidence paths.",
+  "interfaceImpact": "@pcr/runtime now publicly exports the T07 ports, RuntimeSession types, error, application service, and factory.",
+  "alternativesRejected": [
+    "Source-relative imports would not satisfy the downstream public-interface acceptance criterion.",
+    "Editing the immutable audit package to add a blocker would invalidate its signed manifest."
+  ],
+  "authority": "The user's repository-wide goal authorizes necessary local implementation and validation changes; formal approval is recorded in blockers/T07-scope-expansion.md and remains local-only."
+}

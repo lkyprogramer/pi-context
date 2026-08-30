@@ -1,0 +1,11 @@
+{
+  "taskId": "T07",
+  "parentCommit": "1b44ce44a2448a3f013bc86a1ede687a7a09e359",
+  "toolchain": {
+    "node": "v22.19.0",
+    "pnpm": "10.15.0",
+    "pi": "0.84.4"
+  },
+  "knownControlInput": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/** is user-provided and untracked",
+  "legacyEvidenceCollision": "artifacts/task-evidence/T07.json belongs to the prior task graph; v2 evidence uses artifacts/task-evidence/T07/."
+}
