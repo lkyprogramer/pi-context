@@ -1,0 +1,34 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T27",
+  "status": "review-candidate",
+  "parentCommit": "8c70d1883604e7746d9384d470f6ddb12fc83736",
+  "redLog": "artifacts/task-evidence/T27/red.log",
+  "greenLog": "artifacts/task-evidence/T27/green.log",
+  "fullGateLog": "artifacts/task-evidence/T27/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "pricesExactActiveTurnContent": true,
+    "unrepairableHugeTurn": true,
+    "directivesFromSnapshot": true,
+    "zoneOrderedMessages": true,
+    "noDefaultFakeDependencies": true,
+    "repositoryGateFiles": 116,
+    "repositoryGateTests": 579,
+    "acceptanceGateTests": 27
+  },
+  "files": {
+    "artifacts/task-evidence/T27/changed-files.json": "a6a4a6051c0a2a81d270b5bf0a10e691225e891bd48530fe3411e103c487074a",
+    "artifacts/task-evidence/T27/full-gate.log": "3c5803e272ef213e45388a4bf2bb822328a2a559b6a93d54656627d8e62d4dec",
+    "artifacts/task-evidence/T27/green.log": "f37beb8916b9ee7b9845d506f8d07ae4b2bfbcdbe96d3c09d9abda33bba091b2",
+    "artifacts/task-evidence/T27/preflight-git.txt": "a9f7879ee4eb4f8d33e744d6005554073ddd27bb0eeab405186dc0c5f9d9f8cb",
+    "artifacts/task-evidence/T27/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T27/red.log": "9b0e8ad88ad271880f61aa77d86e7a5c67dad44c58b703d9e0d9ad77ca647a93",
+    "blockers/T27-scope-expansion.md": "6991418dea61a377cab148b2896f125a77f572d119e5e53aac5061f89534df63",
+    "packages/core/package.json": "2b6aba1960b5290cc37f75b36c5001cced120c5d1efe7c24de59cfec5b4220b2",
+    "packages/core/src/index.ts": "487ed33e3217b867dac0be1e47cdaa90051524fc3e48f79149bb5d2a457dc091",
+    "packages/core/src/materialization/materializer.ts": "fc83b8673cba8f9fa65cbd316ad79a15ed4d7df5def2587d442a6fb92593aa9f",
+    "packages/core/test/materialization/materializer.test.ts": "698682a69ae05011add2590c7c27fabb8ef25d6bf6b192458e02ef4d1f2b4010",
+    "tests/tasks/t27.test.ts": "3811cdf307371e1109f884c4c2e75d8e9770e7149a2636acedd4b7e01f09913b"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "taskId": "T27",
+  "production": [
+    "blockers/T27-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "packages/core/src/materialization/materializer.ts"
+  ],
+  "tests": [
+    "packages/core/test/materialization/materializer.test.ts",
+    "tests/tasks/t27.test.ts"
+  ]
+}

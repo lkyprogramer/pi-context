@@ -1,0 +1,147 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t27.test.ts (8 tests | 8 failed) 16ms
+   × T27 Budget-correct materializer > prices the exact active turn content, not message ids 11ms
+     → (0 , createMaterializer) is not a function
+   × T27 Budget-correct materializer > budget_correct_materializer 2ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T27 Budget-correct materializer > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T27 Budget-correct materializer > rejects malformed requests and empty snapshots 0ms
+     → (0 , createMaterializer) is not a function
+   × T27 Budget-correct materializer > replays the same request to an equal view hash 0ms
+     → (0 , createMaterializer) is not a function
+   × T27 Budget-correct materializer > rejects a cursor from another workspace/session/branch 0ms
+     → (0 , createMaterializer) is not a function
+   × T27 Budget-correct materializer > does not treat a shared message id as a cheap active turn 0ms
+     → (0 , createMaterializer) is not a function
+   × T27 Budget-correct materializer > stops at the abort boundary before planning 0ms
+     → (0 , createMaterializer) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > prices the exact active turn content, not message ids
+TypeError: (0 , createMaterializer) is not a function
+ ❯ materializer tests/tasks/t27.test.ts:86:10
+     84|   const bound = cursor();
+     85|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     86|   return createMaterializer({
+       |          ^
+     87|     cursor: bound,
+     88|     pricer,
+ ❯ tests/tasks/t27.test.ts:113:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > budget_correct_materializer
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t27.test.ts:119:33
+    117| 
+    118|   it("budget_correct_materializer", async () => {
+    119|     await expect(runT27Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    120|   });
+    121| 
+
+Caused by: TypeError: (0 , createMaterializer) is not a function
+ ❯ materializer tests/tasks/t27.test.ts:86:10
+ ❯ runT27Fixture tests/tasks/t27.test.ts:95:16
+ ❯ tests/tasks/t27.test.ts:119:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_MATERIALIZER_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createMaterializer) is not a function",
+  }
+
+ ❯ tests/tasks/t27.test.ts:123:51
+    121| 
+    122|   it("fails construction when production dependencies are absent", () …
+    123|     expect(() => createMaterializer({} as never)).toThrowError(
+       |                                                   ^
+    124|       expect.objectContaining({ code: "PCR_MATERIALIZER_DEPENDENCY_MIS…
+    125|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > rejects malformed requests and empty snapshots
+TypeError: (0 , createMaterializer) is not a function
+ ❯ materializer tests/tasks/t27.test.ts:86:10
+     84|   const bound = cursor();
+     85|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     86|   return createMaterializer({
+       |          ^
+     87|     cursor: bound,
+     88|     pricer,
+ ❯ tests/tasks/t27.test.ts:129:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > replays the same request to an equal view hash
+TypeError: (0 , createMaterializer) is not a function
+ ❯ materializer tests/tasks/t27.test.ts:86:10
+     84|   const bound = cursor();
+     85|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     86|   return createMaterializer({
+       |          ^
+     87|     cursor: bound,
+     88|     pricer,
+ ❯ tests/tasks/t27.test.ts:135:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > rejects a cursor from another workspace/session/branch
+TypeError: (0 , createMaterializer) is not a function
+ ❯ materializer tests/tasks/t27.test.ts:86:10
+     84|   const bound = cursor();
+     85|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     86|   return createMaterializer({
+       |          ^
+     87|     cursor: bound,
+     88|     pricer,
+ ❯ tests/tasks/t27.test.ts:143:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > does not treat a shared message id as a cheap active turn
+TypeError: (0 , createMaterializer) is not a function
+ ❯ materializer tests/tasks/t27.test.ts:86:10
+     84|   const bound = cursor();
+     85|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     86|   return createMaterializer({
+       |          ^
+     87|     cursor: bound,
+     88|     pricer,
+ ❯ tests/tasks/t27.test.ts:154:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |0| tests/tasks/t27.test.ts > T27 Budget-correct materializer > stops at the abort boundary before planning
+TypeError: (0 , createMaterializer) is not a function
+ ❯ materializer tests/tasks/t27.test.ts:86:10
+     84|   const bound = cursor();
+     85|   const pricer = createTokenPricer({ cursor: bound, routes: { [ROUTE.m…
+     86|   return createMaterializer({
+       |          ^
+     87|     cursor: bound,
+     88|     pricer,
+ ❯ tests/tasks/t27.test.ts:165:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  02:18:31
+   Duration  372ms (transform 111ms, setup 0ms, collect 151ms, tests 16ms, environment 0ms, prepare 54ms)
+

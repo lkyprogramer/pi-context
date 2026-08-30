@@ -99,4 +99,12 @@ export {
   type CommitCacheInput,
   type CreateCacheReceiptInput,
 } from "./materialization/cache.js";
+export {
+  MaterializerError,
+  createMaterializer,
+  type CreateMaterializerInput,
+  type MaterializationRequest,
+  type Materializer,
+  type RuntimeSnapshot,
+} from "./materialization/materializer.js";
 
