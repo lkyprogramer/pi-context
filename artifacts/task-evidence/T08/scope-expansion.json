@@ -1,0 +1,17 @@
+{
+  "taskId": "T08",
+  "approval": "blockers/T08-scope-expansion.md",
+  "expandedPaths": [
+    "apps/pi-context-runtime/package.json",
+    "package.json",
+    "packages/runtime/src/index.ts",
+    "pnpm-lock.yaml",
+    "tests/tasks/t08.test.ts",
+    "artifacts/task-evidence/T08/**",
+    "blockers/T08-scope-expansion.md"
+  ],
+  "reason": "Public package/subpath consumption, locked Pi 0.84.4 acceptance dependencies, task-mandated target/evidence paths, and clean-pack compatibility require these local paths.",
+  "publicationAuthorized": false,
+  "pushAuthorized": false,
+  "deploymentAuthorized": false
+}

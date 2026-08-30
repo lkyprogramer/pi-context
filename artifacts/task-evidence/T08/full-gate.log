@@ -1,0 +1,166 @@
+
+> @ check:all /Users/luo/Documents/github/pi-context
+> pnpm check:boundaries && pnpm typecheck && pnpm test
+
+
+> @ check:boundaries /Users/luo/Documents/github/pi-context
+> node scripts/check-package-boundaries.mjs
+
+boundaries: ok
+
+> @ typecheck /Users/luo/Documents/github/pi-context
+> pnpm -r typecheck
+
+Scope: 11 of 12 workspace projects
+apps/pi-context-runtime typecheck$ tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/extension.ts src/composition-root.ts src/owner.ts src/runtime.ts src/doctor.ts src/conflicts.ts
+packages/kernel typecheck$ node -e "process.exit(0)"
+packages/pi-adapter typecheck$ tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts src/contracts/pi-0844.ts
+packages/contracts typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+packages/kernel typecheck: Done
+packages/storage typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/sqlite-store.ts src/worker.ts src/protocol.ts
+packages/contracts typecheck: Done
+packages/testkit typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts
+packages/storage typecheck: Done
+packages/worker typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/candidate-worker.ts src/candidate-key.ts
+packages/pi-adapter typecheck: Done
+apps/pi-context-runtime typecheck: Done
+packages/testkit typecheck: Done
+packages/worker typecheck: Done
+packages/core typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+packages/core typecheck: Done
+packages/runtime typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+packages/runtime typecheck: Done
+packages/storage-node typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+packages/benchmark typecheck$ tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts
+packages/benchmark typecheck: Done
+packages/storage-node typecheck: Done
+
+> @ test /Users/luo/Documents/github/pi-context
+> vitest run --workspace vitest.workspace.ts
+
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/tasks/t03.test.ts (8 tests) 67ms
+(node:41164) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/tasks/t01.test.ts (8 tests) 506ms
+(node:41261) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/e2e/operations.test.ts (6 tests) 316ms
+(node:41453) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/storage/test/saga-recovery.test.ts (7 tests) 399ms
+ ✓ |0| packages/kernel/test/raw-capture.test.ts (5 tests) 243ms
+ ✓ |0| tests/e2e/jiti-candidate-load.test.ts (1 test) 323ms
+   ✓ jiti candidate load > loads buildDeterministicCheckpointCandidate through Pi's jiti  321ms
+(node:41627) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/storage/test/sqlite-store.test.ts (5 tests) 166ms
+(node:41783) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/storage/test/blob-store.test.ts (5 tests) 157ms
+ ✓ |0| packages/kernel/test/materializer.test.ts (4 tests) 40ms
+ ✓ |0| tests/tasks/t00.test.ts (7 tests) 2173ms
+   ✓ T00 Freeze audit baseline and immutable evidence > freeze_audit_baseline_and_immutable_evidence  317ms
+   ✓ T00 Freeze audit baseline and immutable evidence > is idempotent for the same committed inputs  432ms
+   ✓ T00 Freeze audit baseline and immutable evidence > replays deterministically in independent output directories  439ms
+ ✓ |0| packages/worker/test/candidate-worker.test.ts (7 tests) 83ms
+ ✓ |0| tests/w1-gate/early-net-value.test.ts (3 tests) 1967ms
+   ✓ W1 Early Net Value Gate > evaluates live PCR arms and writes a machine-readable report  1963ms
+ ✓ |0| packages/kernel/test/claim-ledger.test.ts (9 tests) 28ms
+ ✓ |0| tests/contract/pi-context-hook.test.ts (11 tests) 34ms
+ ✓ |0| tests/security/authority-mutation.test.ts (2 tests) 45ms
+ ✓ |0| packages/kernel/test/reducer-registry.test.ts (5 tests) 63ms
+ ✓ |0| tests/contract/pi-compaction-takeover.test.ts (4 tests) 37ms
+ ✓ |0| tests/tasks/t05.test.ts (6 tests) 26ms
+ ✓ |0| tests/security/cursor-fuzz.test.ts (1 test) 44ms
+ ✓ |0| tests/security/memory-poisoning.test.ts (2 tests) 42ms
+ ✓ |0| tests/live-gate/paired-w2-live.test.ts (3 tests) 35ms
+ ✓ |0| tests/tasks/t02.test.ts (6 tests) 30ms
+ ✓ |0| packages/worker/test/semantic-proposal.test.ts (6 tests) 32ms
+ ✓ |0| packages/worker/test/generation-fencing.test.ts (6 tests) 60ms
+ ✓ |0| tests/meta/workspace-layout.test.ts (4 tests) 25ms
+ ✓ |0| tests/contract/pi-session-lifecycle.test.ts (4 tests) 196ms
+ ✓ |0| tests/w2-gate/head-to-head.test.ts (3 tests) 3489ms
+   ✓ W2 Compactor Head-to-head Gate > evaluates live PCR B1/B2 against synthetic B0 and writes a machine-readable report  3484ms
+ ✓ |0| packages/kernel/test/directive-capture.test.ts (6 tests) 18ms
+ ✓ |0| packages/kernel/test/raw-input.test.ts (5 tests) 18ms
+ ✓ |0| tests/tasks/t04.test.ts (7 tests) 24ms
+(node:42486) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| packages/kernel/test/host-checkpoint-render.test.ts (5 tests) 13ms
+ ✓ |0| packages/kernel/test/continuity-ledger.test.ts (5 tests) 67ms
+ ✓ |0| packages/kernel/test/fts-catalog.test.ts (5 tests) 12ms
+ ✓ |0| packages/kernel/test/action-gate.test.ts (6 tests) 18ms
+ ✓ |0| packages/kernel/test/evidence-admission.test.ts (5 tests) 12ms
+ ✓ |0| tests/e2e/packed-install.test.ts (1 test) 17ms
+ ✓ |0| tests/contract/pi-tool-result-order.test.ts (1 test) 13ms
+ ✓ |0| tests/security/secret-leak.test.ts (1 test) 15ms
+ ✓ |0| tests/compat/pi-version-contract.test.ts (3 tests) 9ms
+ ✓ |0| packages/worker/test/telemetry-economics.test.ts (5 tests) 31ms
+ ✓ |0| tests/contract/pi-input-correlation.test.ts (1 test) 12ms
+ ✓ |0| packages/kernel/test/claim-transitions.test.ts (7 tests) 21ms
+ ✓ |0| tests/release/deterministic-mvp-gate.test.ts (9 tests) 23ms
+ ✓ |0| packages/contracts/test/canonical.test.ts (4 tests) 44ms
+ ✓ |0| apps/pi-context-runtime/test/package-runtime.test.ts (4 tests) 7ms
+ ✓ |0| tests/tasks/t08.test.ts (10 tests) 9ms
+ ✓ |0| packages/kernel/test/builtin-reducers.test.ts (5 tests) 4ms
+ ✓ |0| tests/tasks/t07.test.ts (9 tests) 5ms
+ ✓ |0| packages/pi-adapter/test/runtime-tools.test.ts (6 tests) 7ms
+ ✓ |0| packages/worker/test/verifier.test.ts (8 tests) 8ms
+ ✓ |0| packages/kernel/test/literal-index.test.ts (5 tests) 7ms
+ ✓ |0| packages/kernel/test/active-suffix.test.ts (5 tests) 8ms
+ ✓ |0| tests/contract/pi-capability-probe.test.ts (4 tests) 3ms
+ ✓ |0| tests/compat/provider-payload-probe.test.ts (3 tests) 4ms
+ ✓ |0| packages/kernel/test/checkpoint-candidate.test.ts (6 tests) 4ms
+ ✓ |0| packages/kernel/test/convergence.test.ts (5 tests) 4ms
+ ✓ |0| packages/kernel/test/lease-lifecycle.test.ts (5 tests) 3ms
+ ✓ |0| packages/runtime/test/runtime-session.test.ts (2 tests) 2ms
+ ✓ |0| tests/release/semantic-beta-gate.test.ts (8 tests) 5ms
+ ✓ |0| packages/kernel/test/proactive-recall.test.ts (5 tests) 4ms
+ ✓ |0| tests/security/recovery-fuzz.test.ts (1 test) 2ms
+ ✓ |0| apps/pi-context-runtime/test/owner.test.ts (4 tests) 4ms
+ ✓ |0| packages/kernel/test/exact-read.test.ts (5 tests) 9ms
+ ✓ |0| packages/kernel/test/token-budget.test.ts (6 tests) 4ms
+ ✓ |0| tests/acceptance/session-registry.test.ts (8 tests) 12ms
+ ✓ |0| packages/pi-adapter/test/message-conversion.test.ts (5 tests) 3ms
+ ✓ |0| packages/kernel/test/shell-reducers.test.ts (6 tests) 5ms
+ ✓ |0| packages/pi-adapter/test/compaction-result.test.ts (1 test) 2ms
+ ✓ |0| tests/e2e/pi-factory-entry.test.ts (2 tests) 3ms
+ ✓ |0| tests/live-gate/payload-sizing.test.ts (3 tests) 3ms
+ ✓ |0| tests/contract/pi-tool-call-gate.test.ts (1 test) 2ms
+ ✓ |0| packages/contracts/test/types.test.ts (4 tests) 2ms
+ ✓ |0| tests/acceptance/packed-install.test.ts (1 test) 8679ms
+   ✓ packed runtime acceptance > npm packs a self-contained runtime and Pi loads its installed extension  8679ms
+ ✓ |0| tests/release/package-artifact.test.ts (4 tests) 8096ms
+   ✓ release package > contains one extension entry, runtime dependencies and no source-private imports  3331ms
+   ✓ release package > verifies clean-home extract, uninstall/reinstall, and temporary pi -e entry  2464ms
+   ✓ release package > keeps the Node/OS matrix and does not hide unsupported Pi versions  1337ms
+   ✓ release package > ships license/security docs and the gate-derived semantic default  963ms
+ ✓ |0| tests/tasks/t06.test.ts (9 tests) 13498ms
+   ✓ T06 Real npm pack and clean Pi install harness > loads the actual packed tarball in an empty Pi home  4451ms
+   ✓ T06 Real npm pack and clean Pi install harness > packs deterministically from the same committed source  1556ms
+   ✓ T06 Real npm pack and clean Pi install harness > isolates duplicate probes while preserving their observable contract  3637ms
+   ✓ T06 Real npm pack and clean Pi install harness > propagates a non-zero Pi exit and removes the isolated home  1146ms
+
+ Test Files  75 passed (75)
+      Tests  364 passed (364)
+   Start at  11:59:20
+   Duration  13.85s (transform 2.29s, setup 0ms, collect 11.23s, tests 41.40s, environment 11ms, prepare 5.99s)
+
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/acceptance/session-registry.test.ts (8 tests) 17ms
+ ✓ |0| tests/acceptance/packed-install.test.ts (1 test) 4560ms
+   ✓ packed runtime acceptance > npm packs a self-contained runtime and Pi loads its installed extension  4559ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  11:59:35
+   Duration  4.88s (transform 115ms, setup 0ms, collect 735ms, tests 4.58s, environment 0ms, prepare 127ms)
+
+boundaries: ok

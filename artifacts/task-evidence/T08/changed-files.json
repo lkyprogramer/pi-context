@@ -1,0 +1,20 @@
+{
+  "taskId": "T08",
+  "production": [
+    "apps/pi-context-runtime/package.json",
+    "apps/pi-context-runtime/src/composition-root.ts",
+    "package.json",
+    "packages/runtime/src/index.ts",
+    "packages/runtime/src/session-registry.ts",
+    "pnpm-lock.yaml"
+  ],
+  "tests": [
+    "tests/acceptance/session-registry.test.ts",
+    "tests/tasks/t08.test.ts"
+  ],
+  "control": [
+    "blockers/T08-scope-expansion.md"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T08",
+  "unrelatedTrackedChanges": []
+}

@@ -1,0 +1,28 @@
+{
+  "taskId": "T08",
+  "registryScope": "one registry instance per workspace",
+  "sessionScope": [
+    "workspaceId",
+    "sessionId",
+    "leafId",
+    "lineageHash"
+  ],
+  "piIdentitySources": [
+    "ExtensionContext.cwd",
+    "SessionManager.getSessionId()",
+    "SessionManager.getLeafId()",
+    "SessionManager.getBranch()[].id",
+    "SessionManager.getHeader().id for an empty branch",
+    "ExtensionContext.model.provider/id"
+  ],
+  "productionDependencies": [
+    "ProductionSessionIdentityFactory",
+    "ProductionSessionResourcesFactory"
+  ],
+  "defaultFakeDependencies": false,
+  "publicRuntimeImport": "@pcr/runtime",
+  "publicCompositionImport": "pi-context-runtime/composition-root",
+  "stablePackedDefaultEntryChanged": false,
+  "findingF001": "advanced-not-closed",
+  "futureWiringBlockerRecorded": true
+}
