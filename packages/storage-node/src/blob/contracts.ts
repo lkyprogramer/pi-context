@@ -2,14 +2,18 @@ import type { BlobStore } from "@pcr/runtime";
 
 export type { BlobStore } from "@pcr/runtime";
 
-export interface WorkspaceBlobKeyMaterial {
-  keyId: string;
-  key: Uint8Array;
+export interface WorkspaceBlobKeyLease {
+  readonly key: Uint8Array;
+  destroy(): void;
+}
+
+export interface WorkspaceBlobKeyMaterial extends WorkspaceBlobKeyLease {
+  readonly keyId: string;
 }
 
 export interface WorkspaceBlobKeyProvider {
   current(workspaceId: string): Promise<WorkspaceBlobKeyMaterial>;
-  get(workspaceId: string, keyId: string): Promise<Uint8Array | null>;
+  get(workspaceId: string, keyId: string): Promise<WorkspaceBlobKeyLease | null>;
 }
 
 export interface EncryptedBlobStoreDependencies {
@@ -43,4 +47,28 @@ export class BlobStoreError extends Error {
     this.code = code;
     this.details = Object.freeze({ ...details });
   }
+}
+
+export function createWorkspaceBlobKeyLease(source: Uint8Array): WorkspaceBlobKeyLease {
+  if (!(source instanceof Uint8Array) || source.byteLength !== 32) {
+    throw new BlobStoreError("PCR_BLOB_KEY_UNAVAILABLE");
+  }
+  const key = Buffer.from(source);
+  let destroyed = false;
+  return Object.freeze({
+    key,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      key.fill(0);
+    },
+  });
+}
+
+export function createWorkspaceBlobKeyMaterial(
+  keyId: string,
+  source: Uint8Array,
+): WorkspaceBlobKeyMaterial {
+  const lease = createWorkspaceBlobKeyLease(source);
+  return Object.freeze({ keyId, key: lease.key, destroy: () => lease.destroy() });
 }

@@ -47,7 +47,10 @@ describe("Pi factory entry", () => {
         session_compact: expect.any(Function),
         session_compact_failed: expect.any(Function),
         session_start: expect.any(Function),
+        session_tree: expect.any(Function),
         agent_settled: expect.any(Function),
+        input: expect.any(Function),
+        input_result: expect.any(Function),
       }),
     );
     expect([...host.tools]).toEqual(

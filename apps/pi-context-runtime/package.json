@@ -18,6 +18,12 @@
       "./dist/extension.js"
     ]
   },
+  "piHostContract": {
+    "version": "0.84.4",
+    "runtimeExport": "PCR_INGRESS_METADATA_CONTRACT=pcr-ingress-metadata-v1",
+    "patchSha256": "2d89fec86b8f4e74c6d5199bc026f5747f4d057baeacd11b88edd097e7d0a636",
+    "distributionTask": "T52"
+  },
   "files": [
     "dist",
     "src"
@@ -27,7 +33,7 @@
     "./composition-root": "./src/composition-root.ts"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-coding-agent": "0.84.4",
     "@earendil-works/pi-ai": "*",
     "typebox": "*"
   },

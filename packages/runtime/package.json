@@ -10,6 +10,6 @@
     "@pcr/core": "workspace:*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/runtime-session.test.ts test/saga.test.ts ../../tests/tasks/t07.test.ts"
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts test/runtime-session.test.ts test/saga.test.ts ../../tests/tasks/t07.test.ts ../../tests/tasks/t12.test.ts"
   }
 }

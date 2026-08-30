@@ -25,13 +25,14 @@ export interface CancellableRuntimeOperation {
 
 export interface UserInputEvent extends CancellableRuntimeOperation {
   rawText: string;
-  sourceClass: "authenticated-user" | "untrusted-user";
+  sourceClass: "authenticated-user" | "untrusted-user" | "agent-derived";
   capturedAt: number;
-  hostMessageId?: string;
 }
 
-export interface UserInputReceipt extends UserTurnRecord {
+export interface UserInputReceipt extends Omit<UserTurnRecord, "userTurnId" | "hostMessageId"> {
+  receiptId: string;
   operationId: string;
+  status: "pending" | "handled";
 }
 
 export interface ToolObservation extends CancellableRuntimeOperation {

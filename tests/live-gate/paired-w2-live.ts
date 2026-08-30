@@ -556,7 +556,7 @@ export async function runLivePairedW2(opts: {
       nativeSummaryMaxTokens: nativeSummaryBudget(),
       sharedAcrossArms: true,
     },
-    piVersion: "0.84.3",
+    piVersion: "0.84.4",
     sample: {
       profile,
       expectedPairs,

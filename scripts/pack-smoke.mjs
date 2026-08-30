@@ -2,24 +2,34 @@
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import {
+  cpSync,
   copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   readdirSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const DEFAULT_PROVIDER = "openclaw";
 const DEFAULT_MODEL = "openclaw/Qwen3.8-27B-WORK";
 const DEFAULT_CONTEXT_WINDOW = 200192;
-const REQUIRED_HOOKS = ["agent_settled", "context", "session_before_compact"];
+const REQUIRED_HOOKS = [
+  "agent_settled",
+  "context",
+  "input",
+  "input_result",
+  "session_before_compact",
+  "session_tree",
+];
 const PACK_ENTRY = "./dist/extension.js";
 
 function sha256(path) {
@@ -121,6 +131,37 @@ function createPackManifest(sourceManifest) {
   };
 }
 
+function rewriteWorkspaceImports(dist) {
+  const entries = {
+    "@pcr/contracts": join(dist, "packages/contracts/src/index.js"),
+    "@pcr/core": join(dist, "packages/core/src/index.js"),
+    "@pcr/pi-adapter": join(dist, "packages/pi-adapter/src/index.js"),
+    "@pcr/runtime": join(dist, "packages/runtime/src/index.js"),
+    "@pcr/storage-node": join(dist, "packages/storage-node/src/index.js"),
+  };
+  const pending = [dist];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const path = join(current, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(path);
+        continue;
+      }
+      if (!entry.name.endsWith(".js") && !entry.name.endsWith(".d.ts")) continue;
+      let source = readFileSync(path, "utf8");
+      for (const [specifier, jsTarget] of Object.entries(entries)) {
+        const target = entry.name.endsWith(".d.ts") ? jsTarget.replace(/\.js$/u, ".d.ts") : jsTarget;
+        if (!existsSync(target)) throw new Error(`compiled workspace entry is missing: ${target}`);
+        let replacement = relative(dirname(path), target).replaceAll("\\", "/");
+        if (!replacement.startsWith(".")) replacement = `./${replacement}`;
+        source = source.replaceAll(`"${specifier}"`, `"${replacement}"`).replaceAll(`'${specifier}'`, `'${replacement}'`);
+      }
+      writeFileSync(path, source);
+    }
+  }
+}
+
 export async function packCurrentSource({ repoRoot, outDir, signal } = {}) {
   abortIfRequested(signal);
   const source = requireRepoRoot(repoRoot);
@@ -147,6 +188,8 @@ export async function packCurrentSource({ repoRoot, outDir, signal } = {}) {
       "--target",
       "ES2022",
       "--skipLibCheck",
+      "--types",
+      "node",
       "--noEmitOnError",
       "--declaration",
       "--declarationMap",
@@ -157,6 +200,7 @@ export async function packCurrentSource({ repoRoot, outDir, signal } = {}) {
     { cwd: repoRoot, signal },
   );
   abortIfRequested(signal);
+  rewriteWorkspaceImports(dist);
 
   const compiledEntry = join(dist, "apps/pi-context-runtime/src/extension.js");
   if (!existsSync(compiledEntry)) throw new Error("compiled Pi extension entry is missing");
@@ -197,6 +241,7 @@ export async function packCurrentSource({ repoRoot, outDir, signal } = {}) {
     packageName: packedManifest.name,
     packageVersion: packedManifest.version,
     entry: PACK_ENTRY,
+    hostContract: packedManifest.piHostContract,
     packagePolicy: { private: packedManifest.private === true, license: packedManifest.license },
   };
 }
@@ -254,6 +299,73 @@ export async function verifyPackedPublicTypes(packed, { repoRoot, signal } = {})
     { cwd: downstream, signal },
   );
   return true;
+}
+
+export async function verifyStockHostRejection(packed, { repoRoot, signal } = {}) {
+  abortIfRequested(signal);
+  requireRepoRoot(repoRoot);
+  if (!packed || typeof packed.tarball !== "string" || sha256(packed.tarball) !== packed.sha256) {
+    throw new Error("packed tarball digest mismatch");
+  }
+  const workRoot = mkdtempSync(join(tmpdir(), "pcr-stock-pi-probe-"));
+  try {
+    const patchedEntry = resolvePiPublicEntry(join(repoRoot, "node_modules/.bin/pi"));
+    // pnpm exposes the package root through a workspace symlink. Resolve it before
+    // copying so the stock probe cannot reverse the patch through that symlink.
+    const patchedRoot = realpathSync(dirname(dirname(patchedEntry)));
+    const patchedContractPath = join(patchedRoot, "dist/index.js");
+    const patchedContractDigest = sha256(patchedContractPath);
+    const stockRoot = join(workRoot, "stock-pi");
+    cpSync(patchedRoot, stockRoot, {
+      recursive: true,
+      filter(source) {
+        const name = relative(patchedRoot, source).replaceAll("\\", "/");
+        return name !== "node_modules" && !name.startsWith("node_modules/");
+      },
+    });
+    const dependencyRoot = dirname(dirname(patchedRoot));
+    rmSync(join(stockRoot, "node_modules"), { recursive: true, force: true });
+    if (existsSync(dependencyRoot)) symlinkSync(dependencyRoot, join(stockRoot, "node_modules"), "dir");
+    await run(
+      "patch",
+      ["-p1", "--reverse", "--input", join(repoRoot, "patches/@earendil-works__pi-coding-agent@0.84.4.patch")],
+      { cwd: stockRoot, signal },
+    );
+    if (sha256(patchedContractPath) !== patchedContractDigest) {
+      throw new Error("stock probe mutated the repository Pi host");
+    }
+    const packageRoot = join(workRoot, "package");
+    mkdirSync(packageRoot, { recursive: true });
+    await run("tar", ["-xzf", packed.tarball, "--strip-components=1", "-C", packageRoot], {
+      cwd: workRoot,
+      signal,
+    });
+    const extensionPath = join(packageRoot, packed.entry.replace(/^\.\//u, ""));
+    const workspace = join(workRoot, "workspace");
+    mkdirSync(workspace, { recursive: true });
+    const source = [
+      'import { pathToFileURL } from "node:url";',
+      "const api = await import(pathToFileURL(process.env.PCR_STOCK_PI_ENTRY).href);",
+      "if (api.PCR_INGRESS_METADATA_CONTRACT !== undefined) throw new Error('stock Pi unexpectedly exposes the patched contract');",
+      "const loaded = await api.discoverAndLoadExtensions([process.env.PCR_EXTENSION_ENTRY], process.env.PCR_EXTENSION_CWD);",
+      "const errors = loaded.errors.map((item) => item.error);",
+      "if (!errors.some((error) => error.includes('PCR_PI_INGRESS_METADATA_CONTRACT_MISSING'))) throw new Error(`stock host did not reject the extension: ${errors.join('; ')}`);",
+      "process.stdout.write(JSON.stringify({ rejected: true, errors }));",
+    ].join("\n");
+    const probed = await run(process.execPath, ["--input-type=module", "--eval", source], {
+      cwd: workspace,
+      signal,
+      env: {
+        ...process.env,
+        PCR_STOCK_PI_ENTRY: join(stockRoot, "dist/index.js"),
+        PCR_EXTENSION_ENTRY: extensionPath,
+        PCR_EXTENSION_CWD: workspace,
+      },
+    });
+    return { ...JSON.parse(probed.stdout), sourceHostIntact: true };
+  } finally {
+    rmSync(workRoot, { recursive: true, force: true });
+  }
 }
 
 function findPackageRoot(root, packageName) {
@@ -314,21 +426,36 @@ function parseAssistantText(stdout) {
 }
 
 function resolvePiPublicEntry(piBin) {
-  const packageRoot = resolve(dirname(piBin), "../lib/node_modules/@earendil-works/pi-coding-agent");
-  const entry = join(packageRoot, "dist/index.js");
-  if (!existsSync(entry)) throw new Error("Pi public package entry is missing next to the selected binary");
-  return entry;
+  const workspaceEntry = resolve(
+    dirname(piBin),
+    "../@earendil-works/pi-coding-agent/dist/index.js",
+  );
+  if (existsSync(workspaceEntry)) return workspaceEntry;
+  let current = dirname(realpathSync(piBin));
+  for (let depth = 0; depth < 6; depth += 1) {
+    const manifest = join(current, "package.json");
+    if (existsSync(manifest)) {
+      const parsed = JSON.parse(readFileSync(manifest, "utf8"));
+      const entry = join(current, "dist/index.js");
+      if (parsed.name === "@earendil-works/pi-coding-agent" && existsSync(entry)) return entry;
+    }
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  throw new Error("Pi public package entry is missing next to the selected binary");
 }
 
 async function probeInstalledExtension(piBin, extensionPath, cwd, env, signal, timeoutMs) {
   const piEntry = resolvePiPublicEntry(piBin);
-  const nodeBin = join(dirname(piBin), "node");
-  if (!existsSync(nodeBin)) throw new Error("Node binary is missing next to the selected Pi binary");
+  const adjacentNode = join(dirname(piBin), "node");
+  const nodeBin = existsSync(adjacentNode) ? adjacentNode : process.execPath;
   const source = [
     'import { pathToFileURL } from "node:url";',
     "const api = await import(pathToFileURL(process.env.PCR_PI_ENTRY).href);",
     "if (typeof api.VERSION !== 'string' || typeof api.discoverAndLoadExtensions !== 'function') throw new Error('Pi public loader unavailable');",
     "const loaded = await api.discoverAndLoadExtensions([process.env.PCR_EXTENSION_ENTRY], process.env.PCR_EXTENSION_CWD);",
+    "if (loaded.errors.length > 0) throw new Error(`extension load failed: ${loaded.errors.map((item) => item.error).join('; ')}`);",
     "const extension = loaded.extensions[0];",
     "let aborted = false;",
     "const ctx = { abort() { aborted = true; }, model: { id: 'openclaw/Qwen3.8-27B-WORK' }, thinkingLevel: 'off', signal: undefined };",
@@ -351,6 +478,7 @@ async function probeInstalledExtension(piBin, extensionPath, cwd, env, signal, t
     "}) : undefined;",
     "const result = {",
     "  version: api.VERSION,",
+    "  hostContract: api.PCR_INGRESS_METADATA_CONTRACT,",
     "  handlers: loaded.extensions.length === 1 ? [...loaded.extensions[0].handlers.keys()].sort() : [],",
     "  errors: loaded.errors.map((item) => item.error),",
     "  extensionCount: loaded.extensions.length,",
@@ -371,6 +499,78 @@ async function probeInstalledExtension(piBin, extensionPath, cwd, env, signal, t
       PCR_PI_ENTRY: piEntry,
       PCR_EXTENSION_ENTRY: extensionPath,
       PCR_EXTENSION_CWD: cwd,
+    },
+  });
+  return JSON.parse(probed.stdout);
+}
+
+async function probeInstalledExactInput(
+  piBin,
+  extensionPath,
+  packageRoot,
+  cwd,
+  env,
+  signal,
+  timeoutMs,
+) {
+  const piEntry = resolvePiPublicEntry(piBin);
+  const adjacentNode = join(dirname(piBin), "node");
+  const nodeBin = existsSync(adjacentNode) ? adjacentNode : process.execPath;
+  const storageEntry = join(packageRoot, "dist/packages/storage-node/src/index.js");
+  if (!existsSync(storageEntry)) throw new Error("packed storage entry is missing");
+  const source = [
+    'import { join } from "node:path";',
+    'import { pathToFileURL } from "node:url";',
+    "const api = await import(pathToFileURL(process.env.PCR_PI_ENTRY).href);",
+    "if (api.PCR_INGRESS_METADATA_CONTRACT !== 'pcr-ingress-metadata-v1') throw new Error('PCR_PI_INGRESS_METADATA_CONTRACT_MISSING');",
+    "const loaded = await api.discoverAndLoadExtensions([process.env.PCR_EXTENSION_ENTRY], process.env.PCR_EXTENSION_CWD);",
+    "if (loaded.errors.length > 0 || loaded.extensions.length !== 1) throw new Error(`extension load failed: ${loaded.errors.map((item) => item.error).join('; ')}`);",
+    "const settings = api.SettingsManager.inMemory({ defaultProvider: 'openclaw', defaultModel: 'Qwen3.8-27B-WORK', defaultTools: [] }, { projectTrusted: true });",
+    "const modelRuntime = await api.ModelRuntime.create({ modelsPath: null, allowModelNetwork: false, refreshOnCreate: false });",
+    "modelRuntime.registerProvider('openclaw', {",
+    "  api: 'openai-completions', baseUrl: 'http://127.0.0.1:1', apiKey: 'offline-packed-key',",
+    "  models: [{ id: 'Qwen3.8-27B-WORK', name: 'Qwen3.8-27B-WORK', reasoning: true, input: ['text'], cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, contextWindow: 200192, maxTokens: 16384 }],",
+    "});",
+    "const sessionDir = join(process.env.PCR_EXTENSION_CWD, 'sessions');",
+    "const manager = api.SessionManager.create(process.env.PCR_EXTENSION_CWD, sessionDir);",
+    "const resourceLoader = new api.DefaultResourceLoader({",
+    "  cwd: process.env.PCR_EXTENSION_CWD, agentDir: process.env.PI_CODING_AGENT_DIR, settingsManager: settings,",
+    "  noExtensions: true, noSkills: true, noPromptTemplates: true, noThemes: true, noContextFiles: true,",
+    "  extensionsOverride: () => loaded,",
+    "});",
+    "await resourceLoader.reload();",
+    "const created = await api.createAgentSession({ cwd: process.env.PCR_EXTENSION_CWD, modelRuntime, model: modelRuntime.getModel('openclaw', 'Qwen3.8-27B-WORK'), settingsManager: settings, resourceLoader, sessionManager: manager, noTools: 'all' });",
+    "const providerContexts = [];",
+    "const assistant = { role: 'assistant', content: [{ type: 'text', text: 'packed-ok' }], api: 'openai-completions', provider: 'openclaw', model: 'Qwen3.8-27B-WORK', usage: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } }, stopReason: 'stop', timestamp: Date.now() };",
+    "created.session.agent.streamFunction = async (_model, context) => { providerContexts.push(JSON.stringify(context)); return { async *[Symbol.asyncIterator]() { yield { type: 'start', partial: assistant }; yield { type: 'done', message: assistant }; }, async result() { return assistant; } }; };",
+    "const raw = 'packed product exact input';",
+    "await created.session.prompt(raw);",
+    "const user = manager.getEntries().find((entry) => entry.type === 'message' && entry.message.role === 'user');",
+    "const metadata = user?.ingressMetadata?.['pcr.user-input-receipt.v1'];",
+    "if (!user || !metadata) throw new Error('packed input sidecar missing');",
+    "await created.session.extensionRunner.emit({ type: 'session_shutdown', reason: 'quit' });",
+    "const storage = await import(pathToFileURL(process.env.PCR_STORAGE_ENTRY).href);",
+    "const dataRoot = join(sessionDir, '.context-runtime');",
+    "const database = await storage.openWorkspaceSqliteStore({ dataRoot, workspaceId: metadata.cursor.workspaceId, busyTimeoutMs: 1000 });",
+    "const ledger = await storage.openWorkspaceUserTurnLedger({ database });",
+    "const keys = storage.openLocalWorkspaceBlobKeyProvider({ dataRoot, workspaceId: metadata.cursor.workspaceId });",
+    "const blobs = storage.createEncryptedBlobStore({ dataRoot, workspaceId: metadata.cursor.workspaceId, maxBlobBytes: 8 * 1024 * 1024, keys });",
+    "let linked; let recovered;",
+    "try { linked = await ledger.get(metadata.cursor, metadata.receiptId); recovered = Buffer.from(await blobs.read(metadata.cursor, linked.rawBlobId)).toString('utf8'); } finally { keys.close(); await ledger.close(); await database.close(); }",
+    "const providerPayload = providerContexts.join('\\n');",
+    "const result = { exactInputPassed: linked?.hostMessageId === user.id && recovered === raw, providerIsolationPassed: !providerPayload.includes('ingressMetadata') && !providerPayload.includes('pcr.user-input-receipt') && !providerPayload.includes('receipt_'), hostMessageId: user.id, receiptId: metadata.receiptId };",
+    "process.stdout.write(JSON.stringify(result));",
+  ].join("\n");
+  const probed = await run(nodeBin, ["--input-type=module", "--eval", source], {
+    cwd,
+    signal,
+    timeoutMs,
+    env: {
+      ...env,
+      PCR_PI_ENTRY: piEntry,
+      PCR_EXTENSION_ENTRY: extensionPath,
+      PCR_EXTENSION_CWD: cwd,
+      PCR_STORAGE_ENTRY: storageEntry,
     },
   });
   return JSON.parse(probed.stdout);
@@ -397,7 +597,7 @@ export async function installAndRunVerticalProbe(
   packed,
   {
     repoRoot,
-    piBin = join(homedir(), ".nvm/versions/node/v22.19.0/bin/pi"),
+    piBin,
     modelsPath = join(homedir(), ".pi/agent/models.json"),
     provider = DEFAULT_PROVIDER,
     modelId = DEFAULT_MODEL,
@@ -410,13 +610,14 @@ export async function installAndRunVerticalProbe(
 ) {
   abortIfRequested(signal);
   requireRepoRoot(repoRoot);
+  const selectedPiBin = piBin ?? join(repoRoot, "node_modules/.bin/pi");
   if (!packed || typeof packed.tarball !== "string" || typeof packed.sha256 !== "string") {
     throw new TypeError("packed tarball receipt is required");
   }
   if (!existsSync(packed.tarball) || sha256(packed.tarball) !== packed.sha256) {
     throw new Error("packed tarball digest mismatch");
   }
-  if (!existsSync(piBin)) throw new Error("Pi binary missing; run nvm use v22.19.0 first");
+  if (!existsSync(selectedPiBin)) throw new Error("Patched Pi binary missing; run nvm use v22.19.0 and pnpm install --frozen-lockfile first");
   if (typeof tempRoot !== "string" || !isAbsolute(tempRoot) || !existsSync(tempRoot)) {
     throw new TypeError("tempRoot must be an existing absolute path");
   }
@@ -428,19 +629,19 @@ export async function installAndRunVerticalProbe(
   try {
     mkdirSync(project, { recursive: true });
     const model = prepareModelConfig(agentDir, modelsPath, provider, modelId, expectedContextWindow, liveModel);
-    const env = isolatedEnvironment(cleanHome, agentDir, piBin);
+    const env = isolatedEnvironment(cleanHome, agentDir, selectedPiBin);
     const installSource = `npm:${packed.tarball}`;
 
-    const version = await run(piBin, ["--version"], { cwd: project, env, signal, timeoutMs: commandTimeoutMs });
+    const version = await run(selectedPiBin, ["--version"], { cwd: project, env, signal, timeoutMs: commandTimeoutMs });
     const piVersion = version.stdout.trim();
     if (!/^0\.84\./.test(piVersion)) throw new Error(`expected Pi 0.84.x, got ${piVersion}`);
-    const installed = await run(piBin, ["install", installSource, "--approve"], {
+    const installed = await run(selectedPiBin, ["install", installSource, "--approve"], {
       cwd: project,
       env,
       signal,
       timeoutMs: commandTimeoutMs,
     });
-    const listed = await run(piBin, ["list", "--approve"], {
+    const listed = await run(selectedPiBin, ["list", "--approve"], {
       cwd: project,
       env,
       signal,
@@ -451,10 +652,19 @@ export async function installAndRunVerticalProbe(
     const extensionPath = join(packageRoot, packed.entry.replace(/^\.\//, ""));
     if (!existsSync(extensionPath)) throw new Error(`installed extension entry is missing: ${packed.entry}`);
 
-    const loaded = await probeInstalledExtension(piBin, extensionPath, project, env, signal, commandTimeoutMs);
+    const loaded = await probeInstalledExtension(selectedPiBin, extensionPath, project, env, signal, commandTimeoutMs);
     if (loaded.errors.length > 0 || loaded.extensionCount !== 1) {
       throw new Error(`installed extension failed Pi public loading: ${loaded.errors.join("; ")}`);
     }
+    const exactInput = await probeInstalledExactInput(
+      selectedPiBin,
+      extensionPath,
+      packageRoot,
+      project,
+      env,
+      signal,
+      commandTimeoutMs,
+    );
     const handlers = loaded.handlers;
     const missingHooks = REQUIRED_HOOKS.filter((hook) => !handlers.includes(hook));
     const cliLoaded = installed.stdout.includes("Installed") && listed.stdout.includes(installSource);
@@ -462,7 +672,7 @@ export async function installAndRunVerticalProbe(
     if (liveModel) {
       const marker = "PCR_PACKED_INSTALL_OK";
       const response = await run(
-        piBin,
+        selectedPiBin,
         [
           "--provider",
           provider,
@@ -482,7 +692,10 @@ export async function installAndRunVerticalProbe(
       const assistantText = parseAssistantText(response.stdout).trim();
       modelProbe = { provider, modelId, markerObserved: assistantText === marker };
     }
-    const behaviorPassed = Object.values(loaded.behavior).every(Boolean);
+    const behavior = { ...loaded.behavior, ...exactInput };
+    const behaviorPassed = Object.entries(behavior)
+      .filter(([name]) => name.endsWith("Passed"))
+      .every(([, value]) => value === true);
     const verticalProbePassed =
       cliLoaded && missingHooks.length === 0 && behaviorPassed && (!liveModel || modelProbe?.markerObserved === true);
     return {
@@ -494,9 +707,11 @@ export async function installAndRunVerticalProbe(
       isolationId,
       cleanHomeRemoved: true,
       model,
+      hostContract: loaded.hostContract,
+      requiredHostContract: packed.hostContract,
       handlers,
       missingHooks,
-      behavior: loaded.behavior,
+      behavior,
       modelProbe,
     };
   } finally {

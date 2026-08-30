@@ -18,6 +18,9 @@ import {
   BlobStoreError,
   MAX_ENCRYPTED_JSON_BLOB_BYTES,
   createEncryptedBlobStore,
+  createWorkspaceBlobKeyLease,
+  createWorkspaceBlobKeyMaterial,
+  openLocalWorkspaceBlobKeyProvider,
   openWorkspaceSqliteStore,
   type WorkspaceBlobKeyProvider,
 } from "@pcr/storage-node";
@@ -46,8 +49,10 @@ function cursor(root: string, suffix = "a"): RuntimeCursor {
 
 function provider(keys: Record<string, Uint8Array>, currentKeyId = Object.keys(keys)[0]!): WorkspaceBlobKeyProvider {
   return {
-    async current() { return { keyId: currentKeyId, key: keys[currentKeyId]! }; },
-    async get(_workspaceId, keyId) { return keys[keyId] ?? null; },
+    async current() { return createWorkspaceBlobKeyMaterial(currentKeyId, keys[currentKeyId]!); },
+    async get(_workspaceId, keyId) {
+      return keys[keyId] ? createWorkspaceBlobKeyLease(keys[keyId]!) : null;
+    },
   };
 }
 
@@ -110,13 +115,42 @@ describe("encrypted content-addressed blob store", () => {
     expect(statSync(join(root, scope.workspaceId, "blobs")).mode & 0o777).toBe(0o700);
   });
 
+  it("destroys every provider key lease after successful put and read", async () => {
+    const root = dataRoot();
+    const scope = cursor(root, "lease-destroy");
+    const source = Buffer.alloc(32, 17);
+    const issued: Buffer[] = [];
+    let destroyCalls = 0;
+    const lease = () => {
+      const key = Buffer.from(source);
+      issued.push(key);
+      return {
+        key,
+        destroy() {
+          destroyCalls += 1;
+          key.fill(0);
+        },
+      };
+    };
+    const store = createStore(root, scope, {
+      async current() { return { keyId: "lease-destroy", ...lease() }; },
+      async get() { return lease(); },
+    });
+
+    const ref = await store.put(scope, Buffer.from("destroy leased keys"));
+    expect(await store.read(scope, ref)).toEqual(Buffer.from("destroy leased keys"));
+    expect(destroyCalls).toBe(2);
+    expect(issued.every((key) => key.equals(Buffer.alloc(32)))).toBe(true);
+    expect(source).toEqual(Buffer.alloc(32, 17));
+  });
+
   it("binds references and reads to the complete cursor before requesting a key", async () => {
     const root = dataRoot();
     const scope = cursor(root, "source");
     let getCalls = 0;
     const keys: WorkspaceBlobKeyProvider = {
-      async current() { return { keyId: "key1", key: Buffer.alloc(32, 1) }; },
-      async get() { getCalls += 1; return Buffer.alloc(32, 1); },
+      async current() { return createWorkspaceBlobKeyMaterial("key1", Buffer.alloc(32, 1)); },
+      async get() { getCalls += 1; return createWorkspaceBlobKeyLease(Buffer.alloc(32, 1)); },
     };
     const store = createStore(root, scope, keys);
     const ref = await store.put(scope, Buffer.from("scoped"));
@@ -160,13 +194,13 @@ describe("encrypted content-addressed blob store", () => {
     const started = new Promise<void>((resolve) => { markStarted = resolve; });
     const gate = new Promise<void>((resolve) => { release = resolve; });
     const store = createStore(root, scope, {
-      async current() { return { keyId: "key-range", key }; },
+      async current() { return createWorkspaceBlobKeyMaterial("key-range", key); },
       async get(_workspaceId, keyId) {
         if (blockReads) {
           markStarted();
           await gate;
         }
-        return keyId === "key-range" ? key : null;
+        return keyId === "key-range" ? createWorkspaceBlobKeyLease(key) : null;
       },
     });
     const ref = await store.put(scope, Buffer.from("0123456789"));
@@ -251,8 +285,13 @@ describe("encrypted content-addressed blob store", () => {
     const allKeys = { key1: Buffer.alloc(32, 1), key2: Buffer.alloc(32, 2) };
     let currentKeyId = "key1";
     const keys: WorkspaceBlobKeyProvider = {
-      async current() { return { keyId: currentKeyId, key: allKeys[currentKeyId as keyof typeof allKeys] }; },
-      async get(_workspaceId, keyId) { return allKeys[keyId as keyof typeof allKeys] ?? null; },
+      async current() {
+        return createWorkspaceBlobKeyMaterial(currentKeyId, allKeys[currentKeyId as keyof typeof allKeys]);
+      },
+      async get(_workspaceId, keyId) {
+        const key = allKeys[keyId as keyof typeof allKeys];
+        return key ? createWorkspaceBlobKeyLease(key) : null;
+      },
     };
     const store = createStore(root, scope, keys);
     const ref = await store.put(scope, Buffer.from("same bytes"));
@@ -295,7 +334,7 @@ describe("encrypted content-addressed blob store", () => {
     writeFileSync(payload, JSON.stringify({ root, scope }));
     writeFileSync(script, `
       import { existsSync, readFileSync, writeFileSync } from "node:fs";
-      import { createEncryptedBlobStore } from ${JSON.stringify(storageEntry)};
+      import { createEncryptedBlobStore, createWorkspaceBlobKeyLease, createWorkspaceBlobKeyMaterial } from ${JSON.stringify(storageEntry)};
       const [payloadPath, readyPath, gatePath] = process.argv.slice(2);
       const { root, scope } = JSON.parse(readFileSync(payloadPath, "utf8"));
       const key = Buffer.alloc(32, 9);
@@ -304,8 +343,8 @@ describe("encrypted content-addressed blob store", () => {
         workspaceId: scope.workspaceId,
         maxBlobBytes: 1024 * 1024,
         keys: {
-          async current() { return { keyId: "multiprocess", key }; },
-          async get(_workspaceId, keyId) { return keyId === "multiprocess" ? key : null; },
+          async current() { return createWorkspaceBlobKeyMaterial("multiprocess", key); },
+          async get(_workspaceId, keyId) { return keyId === "multiprocess" ? createWorkspaceBlobKeyLease(key) : null; },
         },
       });
       writeFileSync(readyPath, "ready");
@@ -359,9 +398,11 @@ describe("encrypted content-addressed blob store", () => {
       async current() {
         markStarted();
         await gate;
-        return { keyId: "key-mutable", key };
+        return createWorkspaceBlobKeyMaterial("key-mutable", key);
       },
-      async get(_workspaceId, keyId) { return keyId === "key-mutable" ? key : null; },
+      async get(_workspaceId, keyId) {
+        return keyId === "key-mutable" ? createWorkspaceBlobKeyLease(key) : null;
+      },
     });
 
     const writing = store.put(mutable, Buffer.from("stable identity"));
@@ -385,6 +426,58 @@ describe("encrypted content-addressed blob store", () => {
 
     const reopened = createStore(root, scope);
     expect(await reopened.read(scope, ref)).toEqual(Buffer.from("durable"));
+  });
+
+  it("uses a private durable local master key and supports the explicit environment source", async () => {
+    const root = dataRoot();
+    const scope = cursor(root, "production-key");
+    const database = await openWorkspaceSqliteStore({
+      dataRoot: root,
+      workspaceId: scope.workspaceId,
+      busyTimeoutMs: 1_000,
+    });
+    await database.close();
+
+    const local = openLocalWorkspaceBlobKeyProvider({ dataRoot: root, workspaceId: scope.workspaceId });
+    const localKeyId = local.keyId;
+    const store = createStore(root, scope, local);
+    const ref = await store.put(scope, Buffer.from("production local key"));
+    local.close();
+    await expect(local.get(scope.workspaceId, localKeyId)).rejects.toMatchObject({
+      code: "PCR_BLOB_KEY_UNAVAILABLE",
+    });
+
+    const reopened = openLocalWorkspaceBlobKeyProvider({ dataRoot: root, workspaceId: scope.workspaceId });
+    try {
+      expect(reopened.source).toBe("local-file");
+      expect(reopened.keyId).toBe(localKeyId);
+      expect(statSync(join(root, scope.workspaceId, "keys", "master.key")).mode & 0o777).toBe(0o600);
+      expect(await createStore(root, scope, reopened).read(scope, ref)).toEqual(Buffer.from("production local key"));
+    } finally {
+      reopened.close();
+    }
+
+    const environmentKey = Buffer.alloc(32, 29);
+    const environment = openLocalWorkspaceBlobKeyProvider({
+      dataRoot: root,
+      workspaceId: scope.workspaceId,
+      environment: { PI_CONTEXT_RUNTIME_MASTER_KEY: environmentKey.toString("base64") },
+    });
+    try {
+      expect(environment.source).toBe("environment");
+      const leased = await environment.current(scope.workspaceId);
+      expect(leased.key).toEqual(environmentKey);
+      leased.destroy();
+      expect(leased.key).toEqual(Buffer.alloc(32));
+    } finally {
+      environment.close();
+      environmentKey.fill(0);
+    }
+    expect(() => openLocalWorkspaceBlobKeyProvider({
+      dataRoot: root,
+      workspaceId: scope.workspaceId,
+      environment: { PI_CONTEXT_RUNTIME_MASTER_KEY: "not-a-32-byte-key" },
+    })).toThrowError(expect.objectContaining({ code: "PCR_BLOB_KEY_UNAVAILABLE" }));
   });
 
   it("validates production dependencies, size limits and provider cancellation", async () => {
@@ -425,7 +518,7 @@ describe("encrypted content-addressed blob store", () => {
     const cancelled = new DOMException("cancelled", "AbortError");
     const cancelling = createStore(root, scope, {
       async current() { throw cancelled; },
-      async get() { return Buffer.alloc(32); },
+      async get() { return createWorkspaceBlobKeyLease(Buffer.alloc(32)); },
     });
     await expect(cancelling.put(scope, Buffer.from("x"))).rejects.toBe(cancelled);
   });

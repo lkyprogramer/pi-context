@@ -1,8 +1,11 @@
 import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
 export function resolvePiBin(): string {
+  const projectLocal = join(process.cwd(), "node_modules/.bin/pi");
+  if (existsSync(projectLocal)) return projectLocal;
   const pinned = join(homedir(), ".nvm/versions/node/v22.19.0/bin/pi");
   if (existsSync(pinned)) return pinned;
   const fromPath = process.env.PATH?.split(":").map((dir) => join(dir, "pi")).find((file) => existsSync(file));
@@ -15,6 +18,7 @@ export function resolvePiBin(): string {
 export function resolvePiPackageRoot(): string {
   const bin = resolvePiBin();
   const candidates = [
+    join(dirname(bin), "../@earendil-works/pi-coding-agent"),
     join(dirname(bin), "../lib/node_modules/@earendil-works/pi-coding-agent"),
     join(homedir(), ".nvm/versions/node", process.version, "lib/node_modules/@earendil-works/pi-coding-agent"),
   ];
@@ -25,6 +29,11 @@ export function resolvePiPackageRoot(): string {
 
 export function resolvePiPackageEntry(): string {
   return join(resolvePiPackageRoot(), "dist/index.js");
+}
+
+export function resolvePiJitiEntry(): string {
+  const packageJson = createRequire(resolvePiPackageEntry()).resolve("jiti/package.json");
+  return join(dirname(packageJson), "lib/jiti-static.mjs");
 }
 
 export function resolvePiCli(): string {

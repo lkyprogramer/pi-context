@@ -33,7 +33,8 @@ function runtime(scope: PiSessionContext): RuntimeSession {
         async capture(input) {
           return {
             operationId: input.operationId,
-            userTurnId: `turn-${scope.sessionId}`,
+            receiptId: `receipt-${scope.sessionId}`,
+            status: "pending" as const,
             cursor: input.cursor,
             rawTextHash: "8".repeat(64),
             rawBlobId: fixtureBlobRef(scope.sessionId),

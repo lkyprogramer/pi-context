@@ -249,7 +249,7 @@ class WorkspaceSagaJournal implements DurableSagaJournal {
       const outcome = this.#database.transaction("prepare-saga", (db) => {
         const existing = db.prepare(`SELECT ${SAGA_COLUMNS} FROM saga_journal WHERE operation_id = ?`).get(
           operation.operationId,
-        ) as SagaRow | undefined;
+        ) as unknown as SagaRow | undefined;
         if (existing) return { kind: "existing" as const, record: toRecord(existing) };
         const correlation = db.prepare(`
           SELECT ${SAGA_COLUMNS} FROM saga_journal
@@ -268,7 +268,7 @@ class WorkspaceSagaJournal implements DurableSagaJournal {
           operation.cursor.modelKey,
           operation.configFingerprint,
           operation.hostCorrelationId,
-        ) as SagaRow | undefined;
+        ) as unknown as SagaRow | undefined;
         if (correlation) return { kind: "correlation-existing" as const, record: toRecord(correlation) };
         db.prepare(`
           INSERT INTO saga_journal (${SAGA_COLUMNS})
@@ -314,7 +314,7 @@ class WorkspaceSagaJournal implements DurableSagaJournal {
       const outcome = this.#database.transaction("mark-saga-host-visible", (db) => {
         const row = db.prepare(`SELECT ${SAGA_COLUMNS} FROM saga_journal WHERE operation_id = ?`).get(
           operationId,
-        ) as SagaRow | undefined;
+        ) as unknown as SagaRow | undefined;
         if (!row) return "missing" as const;
         const record = toRecord(row);
         if (record.hostId !== undefined && record.hostId !== hostId) return "host-conflict" as const;
@@ -437,7 +437,7 @@ class WorkspaceSagaJournal implements DurableSagaJournal {
         const row = db.prepare(`
           SELECT ${SAGA_COLUMNS} FROM saga_journal
           WHERE operation_id = ? AND workspace_id = ?
-        `).get(operationId, this.#workspaceId) as SagaRow | undefined;
+        `).get(operationId, this.#workspaceId) as unknown as SagaRow | undefined;
         return row ? toRecord(row) : null;
       });
     } catch (error) {
@@ -465,7 +465,7 @@ class WorkspaceSagaJournal implements DurableSagaJournal {
           operation.cursor.modelKey,
           operation.configFingerprint,
           operation.hostCorrelationId,
-        ) as SagaRow | undefined;
+        ) as unknown as SagaRow | undefined;
         return row ? toRecord(row) : null;
       });
     } catch (error) {

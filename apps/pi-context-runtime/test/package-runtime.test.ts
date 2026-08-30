@@ -38,9 +38,15 @@ describe("runtime doctor", () => {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
       peerDependencies?: Record<string, string>;
+      piHostContract?: Record<string, string>;
     };
     expect(manifest.pi.extensions).toEqual(["./dist/extension.js"]);
-    expect(manifest.peerDependencies?.["@earendil-works/pi-coding-agent"]).toBe("*");
+    expect(manifest.peerDependencies?.["@earendil-works/pi-coding-agent"]).toBe("0.84.4");
+    expect(manifest.piHostContract).toMatchObject({
+      version: "0.84.4",
+      runtimeExport: "PCR_INGRESS_METADATA_CONTRACT=pcr-ingress-metadata-v1",
+      distributionTask: "T52",
+    });
     for (const name of Object.keys(manifest.dependencies ?? {})) {
       expect(manifest.devDependencies?.[name]).toBeUndefined();
     }

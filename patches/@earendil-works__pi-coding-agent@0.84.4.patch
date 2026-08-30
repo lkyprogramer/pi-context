@@ -1,0 +1,942 @@
+diff --git a/dist/core/agent-session.d.ts b/dist/core/agent-session.d.ts
+index 8c7cfec6fc0ec004f17c08c52a58c354b28b3978..674216fbd465a0f8225928fb20a71b6992e7e80a 100644
+--- a/dist/core/agent-session.d.ts
++++ b/dist/core/agent-session.d.ts
+@@ -377,7 +377,7 @@ export declare class AgentSession {
+      * @param images Optional image attachments to include with the message
+      * @throws Error if text is an extension command
+      */
+-    steer(text: string, images?: ImageContent[]): Promise<void>;
++    steer(text: string, images?: ImageContent[], source?: InputSource): Promise<void>;
+     /**
+      * Queue a follow-up message to be processed after the agent finishes.
+      * Delivered only when agent has no more tool calls or steering messages.
+@@ -385,7 +385,7 @@ export declare class AgentSession {
+      * @param images Optional image attachments to include with the message
+      * @throws Error if text is an extension command
+      */
+-    followUp(text: string, images?: ImageContent[]): Promise<void>;
++    followUp(text: string, images?: ImageContent[], source?: InputSource): Promise<void>;
+     private _queueSteer;
+     private _queueFollowUp;
+     /**
+@@ -432,10 +432,10 @@ export declare class AgentSession {
+      * Useful for restoring to editor when user aborts.
+      * @returns Object with steering and followUp arrays
+      */
+-    clearQueue(): {
++    clearQueue(): Promise<{
+         steering: string[];
+         followUp: string[];
+-    };
++    }>;
+     /** Number of pending messages (includes both steering and follow-up) */
+     get pendingMessageCount(): number;
+     /** Get pending steering messages (read-only) */
+diff --git a/dist/core/agent-session.js b/dist/core/agent-session.js
+index fd82b71cf332715f185d07459429f04ed7491ce9..f440dd1aaf17b45aa9f65f34d63afc62c581ca28 100644
+--- a/dist/core/agent-session.js
++++ b/dist/core/agent-session.js
+@@ -12,6 +12,7 @@
+  *
+  * Modes use this class and add their own I/O layer on top.
+  */
++import { randomUUID } from "node:crypto";
+ import { readFileSync } from "node:fs";
+ import { basename, dirname } from "node:path";
+ import { contentText } from "@earendil-works/pi-ai";
+@@ -89,6 +90,10 @@ export class AgentSession {
+     _steeringMessages = [];
+     /** Tracks pending follow-up messages for UI display. Removed when delivered. */
+     _followUpMessages = [];
++    /** Host-only ingress sidecars keyed by message identity; never part of provider messages. */
++    _ingressMetadataByMessage = new Map();
++    /** Queued user messages that need a durable terminal event if dropped before delivery. */
++    _queuedInputByMessage = new Map();
+     /** Messages queued to be included with the next user prompt as context ("asides"). */
+     _pendingNextTurnMessages = [];
+     /** Context-only custom messages queued during a run, flushed once the current turn's tool results are in. */
+@@ -362,6 +367,7 @@ export class AgentSession {
+         // This ensures the UI sees the updated queue state
+         if (event.type === "message_start" && event.message.role === "user") {
+             this._overflowRecoveryAttempted = false;
++            this._queuedInputByMessage.delete(event.message);
+             const messageText = contentText(event.message.content, "");
+             if (messageText) {
+                 // Check steering queue first
+@@ -395,7 +401,9 @@ export class AgentSession {
+                 event.message.role === "assistant" ||
+                 event.message.role === "toolResult") {
+                 // Regular LLM message - persist as SessionMessageEntry
+-                this.sessionManager.appendMessage(event.message);
++                const ingressMetadata = this._ingressMetadataByMessage.get(event.message);
++                this.sessionManager.appendMessage(event.message, ingressMetadata);
++                this._ingressMetadataByMessage.delete(event.message);
+             }
+             // Other message types (bashExecution, compactionSummary, branchSummary) are persisted elsewhere
+             // Track assistant message for auto-compaction (checked on agent_end)
+@@ -809,6 +817,68 @@ export class AgentSession {
+         // here were queued by agent_end extension handlers and need a continuation.
+         return this.agent.hasQueuedMessages();
+     }
++    async _dispatchInput(text, images, source, streamingBehavior) {
++        const inputId = `pi_input_${randomUUID()}`;
++        const inputResult = this._extensionRunner.hasHandlers("input")
++            ? await this._extensionRunner.emitInput(text, images, source, streamingBehavior, inputId)
++            : { action: "continue" };
++        const ingressMetadata = inputResult.ingressMetadata;
++        const resultAction = inputResult.action === "reject"
++            ? "rejected"
++            : inputResult.action === "handled" ? "handled" : "accepted";
++        if (this._extensionRunner.hasHandlers("input_result")) {
++            const event = {
++                type: "input_result",
++                inputId,
++                action: resultAction,
++                source,
++                streamingBehavior,
++                ...(ingressMetadata ? { ingressMetadata } : {}),
++                ...(resultAction === "handled" ? { terminalReason: "handler" } : {}),
++                ...(inputResult.action === "reject" ? { error: inputResult.error } : {}),
++            };
++            if (resultAction === "accepted")
++                await this._extensionRunner.emit(event);
++            else
++                await this._extensionRunner.emitInputResult(event);
++        }
++        if (inputResult.action === "reject")
++            throw inputResult.error instanceof Error ? inputResult.error : new Error(String(inputResult.error));
++        if (inputResult.action === "handled")
++            return { action: "handled", inputId, ingressMetadata };
++        if (inputResult.action === "transform") {
++            return {
++                action: "accepted",
++                inputId,
++                text: inputResult.text,
++                images: inputResult.images ?? images,
++                ingressMetadata,
++            };
++        }
++        return { action: "accepted", inputId, text, images, ingressMetadata };
++    }
++    async _failDispatchedInput(inputResult, error, source, streamingBehavior, message) {
++        if (message)
++            this._ingressMetadataByMessage.delete(message);
++        if (inputResult.ingressMetadata && this._extensionRunner.hasHandlers("input_result")) {
++            try {
++                await this._extensionRunner.emitInputResult({
++                    type: "input_result",
++                    inputId: inputResult.inputId,
++                    action: "rejected",
++                    source,
++                    streamingBehavior,
++                    ingressMetadata: inputResult.ingressMetadata,
++                    terminalReason: "preflight-failure",
++                    error,
++                });
++            }
++            catch (terminalError) {
++                throw new AggregateError([error, terminalError], "Input failed before persistence and receipt terminalization also failed");
++            }
++        }
++        throw error;
++    }
+     /**
+      * Send a prompt to the agent.
+      * - Handles extension commands (registered via pi.registerCommand) immediately, even during streaming
+@@ -822,6 +892,9 @@ export class AgentSession {
+         const expandPromptTemplates = options?.expandPromptTemplates ?? true;
+         const preflightResult = options?.preflightResult;
+         let messages;
++        let inputResult;
++        let inputSource;
++        let userMessage;
+         try {
+             // Handle extension commands first (execute immediately, even during streaming)
+             // Extension commands manage their own LLM interaction via pi.sendMessage()
+@@ -836,20 +909,42 @@ export class AgentSession {
+             if (this._compactionAbortController !== undefined) {
+                 throw new Error("Cannot submit a prompt while compaction is in progress. Wait for compaction to finish and retry.");
+             }
+-            // Emit input event for extension interception (before skill/template expansion)
+-            let currentText = text;
+-            let currentImages = options?.images;
+-            if (this._extensionRunner.hasHandlers("input")) {
+-                const inputResult = await this._extensionRunner.emitInput(currentText, currentImages, options?.source ?? "interactive", this.isStreaming ? options?.streamingBehavior : undefined);
+-                if (inputResult.action === "handled") {
+-                    preflightResult?.(true);
+-                    return;
++            inputSource = options?.source ?? "interactive";
++            if (this.isStreaming && !options?.streamingBehavior) {
++                throw new Error("Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.");
++            }
++            if (!this.isStreaming) {
++                // Complete every predictable preflight before durable input capture.
++                this._flushPendingBashMessages();
++                this._flushPendingCustomMessages();
++                if (!this.model) {
++                    throw new Error(formatNoModelSelectedMessage());
+                 }
+-                if (inputResult.action === "transform") {
+-                    currentText = inputResult.text;
+-                    currentImages = inputResult.images ?? currentImages;
++                const hasConfiguredAuth = this._modelRuntime.hasConfiguredAuth(this.model.provider) ||
++                    (await this._modelRuntime.checkAuth(this.model.provider)) !== undefined;
++                if (!hasConfiguredAuth) {
++                    const isOAuth = this._modelRuntime.isUsingOAuth(this.model.provider);
++                    if (isOAuth) {
++                        throw new Error(`Authentication failed for "${this.model.provider}". ` +
++                            `Credentials may have expired or network is unavailable. ` +
++                            `Run '/login ${this.model.provider}' to re-authenticate.`);
++                    }
++                    throw new Error(formatNoApiKeyFoundMessage(this.model.provider));
++                }
++                const lastAssistant = this._findLastAssistantMessage();
++                if (lastAssistant) {
++                    await this._checkCompaction(lastAssistant, false);
+                 }
+             }
++            // Emit input event for extension interception (before skill/template expansion).
++            inputResult = await this._dispatchInput(text, options?.images, inputSource, this.isStreaming ? options?.streamingBehavior : undefined);
++            if (inputResult.action === "handled") {
++                preflightResult?.(true);
++                return;
++            }
++            let currentText = inputResult.text;
++            let currentImages = inputResult.images;
++            const ingressMetadata = inputResult.ingressMetadata;
+             // Expand skill commands (/skill:name args) and prompt templates (/template args)
+             let expandedText = currentText;
+             if (expandPromptTemplates) {
+@@ -858,42 +953,15 @@ export class AgentSession {
+             }
+             // If streaming, queue via steer() or followUp() based on option
+             if (this.isStreaming) {
+-                if (!options?.streamingBehavior) {
+-                    throw new Error("Agent is already processing. Specify streamingBehavior ('steer' or 'followUp') to queue the message.");
+-                }
+                 if (options.streamingBehavior === "followUp") {
+-                    await this._queueFollowUp(expandedText, currentImages);
++                    await this._queueFollowUp(expandedText, currentImages, inputResult, inputSource);
+                 }
+                 else {
+-                    await this._queueSteer(expandedText, currentImages);
++                    await this._queueSteer(expandedText, currentImages, inputResult, inputSource);
+                 }
+                 preflightResult?.(true);
+                 return;
+             }
+-            // Flush any pending bash and custom messages before the new prompt
+-            this._flushPendingBashMessages();
+-            this._flushPendingCustomMessages();
+-            // Validate model
+-            if (!this.model) {
+-                throw new Error(formatNoModelSelectedMessage());
+-            }
+-            const hasConfiguredAuth = this._modelRuntime.hasConfiguredAuth(this.model.provider) ||
+-                (await this._modelRuntime.checkAuth(this.model.provider)) !== undefined;
+-            if (!hasConfiguredAuth) {
+-                const isOAuth = this._modelRuntime.isUsingOAuth(this.model.provider);
+-                if (isOAuth) {
+-                    throw new Error(`Authentication failed for "${this.model.provider}". ` +
+-                        `Credentials may have expired or network is unavailable. ` +
+-                        `Run '/login ${this.model.provider}' to re-authenticate.`);
+-                }
+-                throw new Error(formatNoApiKeyFoundMessage(this.model.provider));
+-            }
+-            // Check if we need to compact before sending (catches aborted responses).
+-            // The user's new prompt is sent below, so do not call agent.continue() here.
+-            const lastAssistant = this._findLastAssistantMessage();
+-            if (lastAssistant) {
+-                await this._checkCompaction(lastAssistant, false);
+-            }
+             // Build messages array (custom message if any, then user message)
+             messages = [];
+             // Add user message
+@@ -901,11 +969,14 @@ export class AgentSession {
+             if (currentImages) {
+                 userContent.push(...currentImages);
+             }
+-            messages.push({
++            userMessage = {
+                 role: "user",
+                 content: userContent,
+                 timestamp: Date.now(),
+-            });
++            };
++            if (ingressMetadata)
++                this._ingressMetadataByMessage.set(userMessage, ingressMetadata);
++            messages.push(userMessage);
+             // Inject any pending "nextTurn" messages as context alongside the user message
+             for (const msg of this._pendingNextTurnMessages) {
+                 messages.push(msg);
+@@ -940,13 +1011,24 @@ export class AgentSession {
+         }
+         catch (error) {
+             preflightResult?.(false);
++            if (inputResult?.action === "accepted") {
++                await this._failDispatchedInput(inputResult, error, inputSource, this.isStreaming ? options?.streamingBehavior : undefined, userMessage);
++            }
+             throw error;
+         }
+         if (!messages) {
+             return;
+         }
+         preflightResult?.(true);
+-        await this._runAgentPrompt(messages);
++        try {
++            await this._runAgentPrompt(messages);
++        }
++        catch (error) {
++            if (inputResult?.action === "accepted" && userMessage && this._ingressMetadataByMessage.has(userMessage)) {
++                await this._failDispatchedInput(inputResult, error, inputSource, undefined, userMessage);
++            }
++            throw error;
++        }
+     }
+     /**
+      * Try to execute an extension command. Returns true if command was found and executed.
+@@ -1013,15 +1095,23 @@ export class AgentSession {
+      * @param images Optional image attachments to include with the message
+      * @throws Error if text is an extension command
+      */
+-    async steer(text, images) {
++    async steer(text, images, source = "extension") {
+         // Check for extension commands (cannot be queued)
+         if (text.startsWith("/")) {
+             this._throwIfExtensionCommand(text);
+         }
++        const inputResult = await this._dispatchInput(text, images, source, "steer");
++        if (inputResult.action === "handled")
++            return;
+         // Expand skill commands and prompt templates
+-        let expandedText = this._expandSkillCommand(text);
++        let expandedText = this._expandSkillCommand(inputResult.text);
+         expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
+-        await this._queueSteer(expandedText, images);
++        try {
++            await this._queueSteer(expandedText, inputResult.images, inputResult, source);
++        }
++        catch (error) {
++            await this._failDispatchedInput(inputResult, error, source, "steer");
++        }
+     }
+     /**
+      * Queue a follow-up message to be processed after the agent finishes.
+@@ -1030,47 +1120,89 @@ export class AgentSession {
+      * @param images Optional image attachments to include with the message
+      * @throws Error if text is an extension command
+      */
+-    async followUp(text, images) {
++    async followUp(text, images, source = "extension") {
+         // Check for extension commands (cannot be queued)
+         if (text.startsWith("/")) {
+             this._throwIfExtensionCommand(text);
+         }
++        const inputResult = await this._dispatchInput(text, images, source, "followUp");
++        if (inputResult.action === "handled")
++            return;
+         // Expand skill commands and prompt templates
+-        let expandedText = this._expandSkillCommand(text);
++        let expandedText = this._expandSkillCommand(inputResult.text);
+         expandedText = expandPromptTemplate(expandedText, [...this.promptTemplates]);
+-        await this._queueFollowUp(expandedText, images);
++        try {
++            await this._queueFollowUp(expandedText, inputResult.images, inputResult, source);
++        }
++        catch (error) {
++            await this._failDispatchedInput(inputResult, error, source, "followUp");
++        }
+     }
+     /**
+      * Internal: Queue a steering message (already expanded, no extension command check).
+      */
+-    async _queueSteer(text, images) {
+-        this._steeringMessages.push(text);
+-        this._emitQueueUpdate();
++    async _queueSteer(text, images, inputResult, source) {
+         const content = [{ type: "text", text }];
+         if (images) {
+             content.push(...images);
+         }
+-        this.agent.steer({
++        const message = {
+             role: "user",
+             content,
+             timestamp: Date.now(),
+-        });
++        };
++        if (inputResult.ingressMetadata) {
++            this._ingressMetadataByMessage.set(message, inputResult.ingressMetadata);
++            this._queuedInputByMessage.set(message, {
++                inputId: inputResult.inputId,
++                source,
++                streamingBehavior: "steer",
++                ingressMetadata: inputResult.ingressMetadata,
++            });
++        }
++        try {
++            this.agent.steer(message);
++        }
++        catch (error) {
++            this._ingressMetadataByMessage.delete(message);
++            this._queuedInputByMessage.delete(message);
++            throw error;
++        }
++        this._steeringMessages.push(text);
++        this._emitQueueUpdate();
+     }
+     /**
+      * Internal: Queue a follow-up message (already expanded, no extension command check).
+      */
+-    async _queueFollowUp(text, images) {
+-        this._followUpMessages.push(text);
+-        this._emitQueueUpdate();
++    async _queueFollowUp(text, images, inputResult, source) {
+         const content = [{ type: "text", text }];
+         if (images) {
+             content.push(...images);
+         }
+-        this.agent.followUp({
++        const message = {
+             role: "user",
+             content,
+             timestamp: Date.now(),
+-        });
++        };
++        if (inputResult.ingressMetadata) {
++            this._ingressMetadataByMessage.set(message, inputResult.ingressMetadata);
++            this._queuedInputByMessage.set(message, {
++                inputId: inputResult.inputId,
++                source,
++                streamingBehavior: "followUp",
++                ingressMetadata: inputResult.ingressMetadata,
++            });
++        }
++        try {
++            this.agent.followUp(message);
++        }
++        catch (error) {
++            this._ingressMetadataByMessage.delete(message);
++            this._queuedInputByMessage.delete(message);
++            throw error;
++        }
++        this._followUpMessages.push(text);
++        this._emitQueueUpdate();
+     }
+     /**
+      * Throw an error if the text is an extension command.
+@@ -1192,9 +1324,23 @@ export class AgentSession {
+      * Useful for restoring to editor when user aborts.
+      * @returns Object with steering and followUp arrays
+      */
+-    clearQueue() {
++    async clearQueue() {
+         const steering = [...this._steeringMessages];
+         const followUp = [...this._followUpMessages];
++        const dropped = [...this._queuedInputByMessage.entries()];
++        if (this._extensionRunner.hasHandlers("input_result")) {
++            for (const [, input] of dropped) {
++                await this._extensionRunner.emitInputResult({
++                    type: "input_result",
++                    action: "handled",
++                    terminalReason: "queue-cleared",
++                    ...input,
++                });
++            }
++        }
++        for (const [message] of dropped)
++            this._ingressMetadataByMessage.delete(message);
++        this._queuedInputByMessage.clear();
+         this._steeringMessages = [];
+         this._followUpMessages = [];
+         this.agent.clearAllQueues();
+diff --git a/dist/core/extensions/index.d.ts b/dist/core/extensions/index.d.ts
+index 8d96beff9a809540ae8d872afbe528297a354a4a..7168ebddfa7480615031dbbc65103d31b243128c 100644
+--- a/dist/core/extensions/index.d.ts
++++ b/dist/core/extensions/index.d.ts
+@@ -6,7 +6,7 @@ export type { SourceInfo } from "../source-info.ts";
+ export { createExtensionRuntime, discoverAndLoadExtensions, loadExtensionFromFactory, loadExtensions, } from "./loader.ts";
+ export type { ExtensionErrorListener, ForkHandler, NavigateTreeHandler, NewSessionHandler, ShutdownHandler, SwitchSessionHandler, } from "./runner.ts";
+ export { ExtensionRunner } from "./runner.ts";
+-export type { AfterProviderResponseEvent, AgentEndEvent, AgentSettledEvent, AgentStartEvent, AgentToolResult, AgentToolUpdateCallback, AppendEntryHandler, AppKeybinding, AutocompleteProviderFactory, BashToolCallEvent, BashToolResultEvent, BeforeAgentStartEvent, BeforeAgentStartEventResult, BeforeProviderHeadersEvent, BeforeProviderRequestEvent, BeforeProviderRequestEventResult, BuildSystemPromptOptions, CompactOptions, ContextEvent, ContextEventResult, ContextUsage, CustomToolCallEvent, CustomToolResultEvent, EditorFactory, EditToolCallEvent, EditToolResultEvent, EntryRenderer, EntryRenderOptions, ExecOptions, ExecResult, Extension, ExtensionActions, ExtensionAPI, ExtensionCommandContext, ExtensionCommandContextActions, ExtensionContext, ExtensionContextActions, ExtensionError, ExtensionEvent, ExtensionFactory, ExtensionFlag, ExtensionHandler, ExtensionMode, ExtensionRuntime, ExtensionShortcut, ExtensionUIContext, ExtensionUIDialogOptions, ExtensionWidgetOptions, FindToolCallEvent, FindToolResultEvent, GetActiveToolsHandler, GetAllToolsHandler, GetCommandsHandler, GetThinkingLevelHandler, GrepToolCallEvent, GrepToolResultEvent, InlineExtension, InputEvent, InputEventResult, InputSource, KeybindingsManager, LoadExtensionsResult, LsToolCallEvent, LsToolResultEvent, MarkdownTransformContext, MarkdownTransformer, MessageEndEvent, MessageRenderer, MessageRenderOptions, MessageStartEvent, MessageUpdateEvent, ModelSelectEvent, ModelSelectSource, PowerShellToolCallEvent, PowerShellToolResultEvent, ProjectTrustContext, ProjectTrustEvent, ProjectTrustEventDecision, ProjectTrustEventResult, ProjectTrustHandler, ProviderConfig, ProviderModelConfig, ReadToolCallEvent, ReadToolResultEvent, RegisteredCommand, RegisteredTool, ReplacedSessionContext, ResolvedCommand, ResourcesDiscoverEvent, ResourcesDiscoverResult, SendMessageHandler, SendUserMessageHandler, SessionBeforeCompactEvent, SessionBeforeCompactResult, SessionBeforeForkEvent, SessionBeforeForkResult, SessionBeforeSwitchEvent, SessionBeforeSwitchResult, SessionBeforeTreeEvent, SessionBeforeTreeResult, SessionCompactEvent, SessionCompactFailedEvent, SessionEvent, SessionInfoChangedEvent, SessionShutdownEvent, SessionStartEvent, SessionTreeEvent, SetActiveToolsHandler, SetLabelHandler, SetModelHandler, SetThinkingLevelHandler, TerminalInputHandler, ToolCallEvent, ToolCallEventResult, ToolDefinition, ToolExecutionEndEvent, ToolExecutionMode, ToolExecutionStartEvent, ToolExecutionUpdateEvent, ToolInfo, ToolRenderResultOptions, ToolResultEvent, ToolResultEventResult, TreePreparation, TurnEndEvent, TurnStartEvent, UIPromptEndEvent, UIPromptKind, UIPromptStartEvent, UserBashEvent, UserBashEventResult, WidgetPlacement, WorkingIndicatorOptions, WriteToolCallEvent, WriteToolResultEvent, } from "./types.ts";
++export type { AfterProviderResponseEvent, AgentEndEvent, AgentSettledEvent, AgentStartEvent, AgentToolResult, AgentToolUpdateCallback, AppendEntryHandler, AppKeybinding, AutocompleteProviderFactory, BashToolCallEvent, BashToolResultEvent, BeforeAgentStartEvent, BeforeAgentStartEventResult, BeforeProviderHeadersEvent, BeforeProviderRequestEvent, BeforeProviderRequestEventResult, BuildSystemPromptOptions, CompactOptions, ContextEvent, ContextEventResult, ContextUsage, CustomToolCallEvent, CustomToolResultEvent, EditorFactory, EditToolCallEvent, EditToolResultEvent, EntryRenderer, EntryRenderOptions, ExecOptions, ExecResult, Extension, ExtensionActions, ExtensionAPI, ExtensionCommandContext, ExtensionCommandContextActions, ExtensionContext, ExtensionContextActions, ExtensionError, ExtensionEvent, ExtensionFactory, ExtensionFlag, ExtensionHandler, ExtensionMode, ExtensionRuntime, ExtensionShortcut, ExtensionUIContext, ExtensionUIDialogOptions, ExtensionWidgetOptions, FindToolCallEvent, FindToolResultEvent, GetActiveToolsHandler, GetAllToolsHandler, GetCommandsHandler, GetThinkingLevelHandler, GrepToolCallEvent, GrepToolResultEvent, InlineExtension, IngressMetadata, IngressMetadataValue, InputEvent, InputEventResult, InputResultEvent, InputSource, KeybindingsManager, LoadExtensionsResult, LsToolCallEvent, LsToolResultEvent, MarkdownTransformContext, MarkdownTransformer, MessageEndEvent, MessageRenderer, MessageRenderOptions, MessageStartEvent, MessageUpdateEvent, ModelSelectEvent, ModelSelectSource, PowerShellToolCallEvent, PowerShellToolResultEvent, ProjectTrustContext, ProjectTrustEvent, ProjectTrustEventDecision, ProjectTrustEventResult, ProjectTrustHandler, ProviderConfig, ProviderModelConfig, ReadToolCallEvent, ReadToolResultEvent, RegisteredCommand, RegisteredTool, ReplacedSessionContext, ResolvedCommand, ResourcesDiscoverEvent, ResourcesDiscoverResult, SendMessageHandler, SendUserMessageHandler, SessionBeforeCompactEvent, SessionBeforeCompactResult, SessionBeforeForkEvent, SessionBeforeForkResult, SessionBeforeSwitchEvent, SessionBeforeSwitchResult, SessionBeforeTreeEvent, SessionBeforeTreeResult, SessionCompactEvent, SessionCompactFailedEvent, SessionEvent, SessionInfoChangedEvent, SessionShutdownEvent, SessionStartEvent, SessionTreeEvent, SetActiveToolsHandler, SetLabelHandler, SetModelHandler, SetThinkingLevelHandler, TerminalInputHandler, ToolCallEvent, ToolCallEventResult, ToolDefinition, ToolExecutionEndEvent, ToolExecutionMode, ToolExecutionStartEvent, ToolExecutionUpdateEvent, ToolInfo, ToolRenderResultOptions, ToolResultEvent, ToolResultEventResult, TreePreparation, TurnEndEvent, TurnStartEvent, UIPromptEndEvent, UIPromptKind, UIPromptStartEvent, UserBashEvent, UserBashEventResult, WidgetPlacement, WorkingIndicatorOptions, WriteToolCallEvent, WriteToolResultEvent, } from "./types.ts";
+ export { defineTool, isBashToolResult, isEditToolResult, isFindToolResult, isGrepToolResult, isLsToolResult, isPowerShellToolResult, isReadToolResult, isToolCallEventType, isWriteToolResult, } from "./types.ts";
+ export { wrapRegisteredTool, wrapRegisteredTools } from "./wrapper.ts";
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
+diff --git a/dist/core/extensions/runner.d.ts b/dist/core/extensions/runner.d.ts
+index 1aad928d733d0a8600f774760af472ca45b0fdb0..7c39072886aad17eb9f21969d8ca7eb70bc112ae 100644
+--- a/dist/core/extensions/runner.d.ts
++++ b/dist/core/extensions/runner.d.ts
+@@ -9,7 +9,7 @@ import type { KeybindingsConfig } from "../keybindings.ts";
+ import type { ModelRegistry } from "../model-registry.ts";
+ import type { SessionManager } from "../session-manager.ts";
+ import type { BuildSystemPromptOptions } from "../system-prompt.ts";
+-import type { BeforeAgentStartEvent, BeforeAgentStartEventResult, BeforeProviderHeadersEvent, BeforeProviderRequestEvent, ContextEvent, EntryRenderer, Extension, ExtensionActions, ExtensionCommandContext, ExtensionCommandContextActions, ExtensionContext, ExtensionContextActions, ExtensionError, ExtensionEvent, ExtensionFlag, ExtensionMode, ExtensionRuntime, ExtensionShortcut, ExtensionUIContext, InputEvent, InputEventResult, InputSource, LoadExtensionsResult, MarkdownTransformer, MessageEndEvent, MessageRenderer, ProjectTrustContext, ProjectTrustEvent, ProjectTrustEventResult, ProviderConfig, RegisteredTool, ReplacedSessionContext, ResolvedCommand, ResourcesDiscoverEvent, SessionBeforeCompactResult, SessionBeforeForkResult, SessionBeforeSwitchResult, SessionBeforeTreeResult, SessionShutdownEvent, ToolCallEvent, ToolCallEventResult, ToolResultEvent, ToolResultEventResult, UserBashEvent, UserBashEventResult } from "./types.ts";
++import type { BeforeAgentStartEvent, BeforeAgentStartEventResult, BeforeProviderHeadersEvent, BeforeProviderRequestEvent, ContextEvent, EntryRenderer, Extension, ExtensionActions, ExtensionCommandContext, ExtensionCommandContextActions, ExtensionContext, ExtensionContextActions, ExtensionError, ExtensionEvent, ExtensionFlag, ExtensionMode, ExtensionRuntime, ExtensionShortcut, ExtensionUIContext, InputEvent, InputEventResult, InputResultEvent, InputSource, LoadExtensionsResult, MarkdownTransformer, MessageEndEvent, MessageRenderer, ProjectTrustContext, ProjectTrustEvent, ProjectTrustEventResult, ProviderConfig, RegisteredTool, ReplacedSessionContext, ResolvedCommand, ResourcesDiscoverEvent, SessionBeforeCompactResult, SessionBeforeForkResult, SessionBeforeSwitchResult, SessionBeforeTreeResult, SessionShutdownEvent, ToolCallEvent, ToolCallEventResult, ToolResultEvent, ToolResultEventResult, UserBashEvent, UserBashEventResult } from "./types.ts";
+ /** Combined result from all before_agent_start handlers */
+ interface BeforeAgentStartCombinedResult {
+     messages?: NonNullable<BeforeAgentStartEventResult["message"]>[];
+@@ -170,9 +170,11 @@ export declare class ExtensionRunner {
+             path: string;
+             extensionPath: string;
+         }>;
+-    }>;
++    }>;
++    /** Emit an input terminal event and propagate handler failure to the caller. */
++    emitInputResult(event: InputResultEvent): Promise<void>;
+     /** Emit input event. Transforms chain, "handled" short-circuits. */
+-    emitInput(text: string, images: ImageContent[] | undefined, source: InputSource, streamingBehavior?: "steer" | "followUp"): Promise<InputEventResult>;
++    emitInput(text: string, images: ImageContent[] | undefined, source: InputSource, streamingBehavior: "steer" | "followUp" | undefined, inputId: string): Promise<InputEventResult>;
+ }
+ export {};
+ //# sourceMappingURL=runner.d.ts.map
+diff --git a/dist/core/extensions/runner.js b/dist/core/extensions/runner.js
+index d23e6d50a22c2a1ec038ed3b2464a1cd0a2b6136..1b7feb2741aaa0ef978deea152bab5153b6a0a35 100644
+--- a/dist/core/extensions/runner.js
++++ b/dist/core/extensions/runner.js
+@@ -24,6 +24,59 @@ const RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS = [
+     "tui.input.copy",
+     "tui.editor.deleteToLineEnd",
+ ];
++const INGRESS_NAMESPACE_PATTERN = /^[a-z][a-z0-9.-]{0,127}$/;
++const MAX_INGRESS_METADATA_NODES = 4096;
++function snapshotIngressValue(value, seen, state, depth = 0) {
++    if (depth > 32 || state.nodes++ >= MAX_INGRESS_METADATA_NODES) {
++        throw new TypeError("Ingress metadata exceeds the supported complexity limit");
++    }
++    if (value === null || typeof value === "string" || typeof value === "boolean")
++        return value;
++    if (typeof value === "number") {
++        if (!Number.isFinite(value))
++            throw new TypeError("Ingress metadata numbers must be finite");
++        return value;
++    }
++    if (!value || typeof value !== "object")
++        throw new TypeError("Ingress metadata must be JSON-safe");
++    if (seen.has(value))
++        throw new TypeError("Ingress metadata must not be cyclic");
++    seen.add(value);
++    try {
++        if (Array.isArray(value)) {
++            return Object.freeze(value.map((item) => snapshotIngressValue(item, seen, state, depth + 1)));
++        }
++        const prototype = Object.getPrototypeOf(value);
++        if (prototype !== Object.prototype && prototype !== null) {
++            throw new TypeError("Ingress metadata objects must be plain records");
++        }
++        const result = {};
++        for (const [key, item] of Object.entries(value)) {
++            result[key] = snapshotIngressValue(item, seen, state, depth + 1);
++        }
++        return Object.freeze(result);
++    }
++    finally {
++        seen.delete(value);
++    }
++}
++function mergeIngressMetadata(current, candidate) {
++    if (candidate === undefined)
++        return current;
++    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
++        throw new TypeError("Ingress metadata must be a namespaced record");
++    }
++    const next = { ...(current ?? {}) };
++    const state = { nodes: 0 };
++    for (const [namespace, value] of Object.entries(candidate)) {
++        if (!INGRESS_NAMESPACE_PATTERN.test(namespace))
++            throw new TypeError(`Invalid ingress metadata namespace: ${namespace}`);
++        if (Object.hasOwn(next, namespace))
++            throw new TypeError(`Duplicate ingress metadata namespace: ${namespace}`);
++        next[namespace] = snapshotIngressValue(value, new Set(), state);
++    }
++    return Object.keys(next).length === 0 ? undefined : Object.freeze(next);
++}
+ const buildBuiltinKeybindings = (resolvedKeybindings) => {
+     const builtinKeybindings = {};
+     for (const [keybinding, keys] of Object.entries(resolvedKeybindings)) {
+@@ -651,6 +704,26 @@ export class ExtensionRunner {
+         }
+         return result;
+     }
++    /** Emit an input terminal event and propagate handler failure to the caller. */
++    async emitInputResult(event) {
++        const ctx = this.createContext();
++        for (const ext of this.extensions) {
++            for (const handler of ext.handlers.get("input_result") ?? []) {
++                try {
++                    await handler(event, ctx);
++                }
++                catch (err) {
++                    this.emitError({
++                        extensionPath: ext.path,
++                        event: "input_result",
++                        error: err instanceof Error ? err.message : String(err),
++                        stack: err instanceof Error ? err.stack : undefined,
++                    });
++                    throw err;
++                }
++            }
++        }
++    }
+     async emitMessageEnd(event) {
+         const ctx = this.createContext();
+         let currentMessage = event.message;
+@@ -971,23 +1044,28 @@ export class ExtensionRunner {
+         return { skillPaths, promptPaths, themePaths };
+     }
+     /** Emit input event. Transforms chain, "handled" short-circuits. */
+-    async emitInput(text, images, source, streamingBehavior) {
++    async emitInput(text, images, source, streamingBehavior, inputId) {
+         const ctx = this.createContext();
+         let currentText = text;
+         let currentImages = images;
++        let ingressMetadata;
+         for (const ext of this.extensions) {
+             for (const handler of ext.handlers.get("input") ?? []) {
+                 try {
+                     const event = {
+                         type: "input",
++                        inputId,
+                         text: currentText,
+                         images: currentImages,
+                         source,
+                         streamingBehavior,
+                     };
+                     const result = (await handler(event, ctx));
++                    ingressMetadata = mergeIngressMetadata(ingressMetadata, result?.ingressMetadata);
+                     if (result?.action === "handled")
+-                        return result;
++                        return { action: "handled", ...(ingressMetadata ? { ingressMetadata } : {}) };
++                    if (result?.action === "reject")
++                        return { action: "reject", error: result.error, ...(ingressMetadata ? { ingressMetadata } : {}) };
+                     if (result?.action === "transform") {
+                         currentText = result.text;
+                         currentImages = result.images ?? currentImages;
+@@ -1000,12 +1078,15 @@ export class ExtensionRunner {
+                         error: err instanceof Error ? err.message : String(err),
+                         stack: err instanceof Error ? err.stack : undefined,
+                     });
++                    if (err instanceof TypeError && /ingress metadata/i.test(err.message)) {
++                        return { action: "reject", error: err, ...(ingressMetadata ? { ingressMetadata } : {}) };
++                    }
+                 }
+             }
+         }
+         return currentText !== text || currentImages !== images
+-            ? { action: "transform", text: currentText, images: currentImages }
+-            : { action: "continue" };
++            ? { action: "transform", text: currentText, images: currentImages, ...(ingressMetadata ? { ingressMetadata } : {}) }
++            : { action: "continue", ...(ingressMetadata ? { ingressMetadata } : {}) };
+     }
+ }
+ //# sourceMappingURL=runner.js.map
+diff --git a/dist/core/extensions/types.d.ts b/dist/core/extensions/types.d.ts
+index 23dcd055a15cfcabfdbf3c6a9468c64c2975c34f..01acb24bd0c33b128882dd87ca740fc9acd0028d 100644
+--- a/dist/core/extensions/types.d.ts
++++ b/dist/core/extensions/types.d.ts
+@@ -653,9 +653,16 @@ export interface UserBashEvent {
+ }
+ /** Source of user input */
+ export type InputSource = "interactive" | "rpc" | "extension";
++export type IngressMetadataValue = string | number | boolean | null | IngressMetadataValue[] | {
++    [key: string]: IngressMetadataValue;
++};
++/** JSON-safe sidecar persisted on the resulting SessionMessageEntry, never sent to a provider. */
++export type IngressMetadata = Readonly<Record<string, IngressMetadataValue>>;
+ /** Fired when user input is received, before agent processing */
+ export interface InputEvent {
+     type: "input";
++    /** Stable identity for one ingress dispatch across transforms and queue delivery. */
++    inputId: string;
+     /** The input text */
+     text: string;
+     /** Attached images, if any */
+@@ -668,13 +675,31 @@ export interface InputEvent {
+ /** Result from input event handler */
+ export type InputEventResult = {
+     action: "continue";
++    ingressMetadata?: IngressMetadata;
+ } | {
+     action: "transform";
+     text: string;
+     images?: ImageContent[];
++    ingressMetadata?: IngressMetadata;
+ } | {
+     action: "handled";
++    ingressMetadata?: IngressMetadata;
++} | {
++    action: "reject";
++    error: unknown;
++    ingressMetadata?: IngressMetadata;
+ };
++/** Fired after every input chain, including a later extension's handled short-circuit. */
++export interface InputResultEvent {
++    type: "input_result";
++    inputId: string;
++    action: "accepted" | "handled" | "rejected";
++    source: InputSource;
++    streamingBehavior?: "steer" | "followUp";
++    ingressMetadata?: IngressMetadata;
++    terminalReason?: "handler" | "queue-cleared" | "preflight-failure";
++    error?: unknown;
++}
+ interface ToolCallEventBase {
+     type: "tool_call";
+     toolCallId: string;
+@@ -810,7 +835,7 @@ export declare function isToolCallEventType<TName extends string, TInput extends
+     input: TInput;
+ };
+ /** Union of all event types */
+-export type ExtensionEvent = ProjectTrustEvent | ResourcesDiscoverEvent | SessionEvent | ContextEvent | BeforeProviderRequestEvent | BeforeProviderHeadersEvent | AfterProviderResponseEvent | BeforeAgentStartEvent | AgentStartEvent | AgentEndEvent | AgentSettledEvent | UIPromptStartEvent | UIPromptEndEvent | TurnStartEvent | TurnEndEvent | MessageStartEvent | MessageUpdateEvent | MessageEndEvent | ToolExecutionStartEvent | ToolExecutionUpdateEvent | ToolExecutionEndEvent | ModelSelectEvent | ThinkingLevelSelectEvent | UserBashEvent | InputEvent | ToolCallEvent | ToolResultEvent;
++export type ExtensionEvent = ProjectTrustEvent | ResourcesDiscoverEvent | SessionEvent | ContextEvent | BeforeProviderRequestEvent | BeforeProviderHeadersEvent | AfterProviderResponseEvent | BeforeAgentStartEvent | AgentStartEvent | AgentEndEvent | AgentSettledEvent | UIPromptStartEvent | UIPromptEndEvent | TurnStartEvent | TurnEndEvent | MessageStartEvent | MessageUpdateEvent | MessageEndEvent | ToolExecutionStartEvent | ToolExecutionUpdateEvent | ToolExecutionEndEvent | ModelSelectEvent | ThinkingLevelSelectEvent | UserBashEvent | InputEvent | InputResultEvent | ToolCallEvent | ToolResultEvent;
+ export interface ContextEventResult {
+     messages?: AgentMessage[];
+ }
+@@ -940,6 +965,7 @@ export interface ExtensionAPI {
+     on(event: "tool_result", handler: ExtensionHandler<ToolResultEvent, ToolResultEventResult>): void;
+     on(event: "user_bash", handler: ExtensionHandler<UserBashEvent, UserBashEventResult>): void;
+     on(event: "input", handler: ExtensionHandler<InputEvent, InputEventResult>): void;
++    on(event: "input_result", handler: ExtensionHandler<InputResultEvent>): void;
+     /** Register a tool that the LLM can call. */
+     registerTool<TParams extends TSchema = TSchema, TDetails = unknown, TState = any>(tool: ToolDefinition<TParams, TDetails, TState>): void;
+     /** Register a custom command. */
+diff --git a/dist/core/session-manager.d.ts b/dist/core/session-manager.d.ts
+index 8cdfbdec42f696b8cd6b762a92180a81ec142433..576c999908d811bd146d17ce2c6cd6745a0923bb 100644
+--- a/dist/core/session-manager.d.ts
++++ b/dist/core/session-manager.d.ts
+@@ -23,6 +23,8 @@ export interface SessionEntryBase {
+ export interface SessionMessageEntry extends SessionEntryBase {
+     type: "message";
+     message: AgentMessage;
++    /** JSON-safe host sidecar. It is not part of AgentMessage or provider context. */
++    ingressMetadata?: Readonly<Record<string, unknown>>;
+ }
+ export interface ThinkingLevelChangeEntry extends SessionEntryBase {
+     type: "thinking_level_change";
+@@ -214,7 +216,7 @@ export declare class SessionManager {
+      * so it is easier to find them.
+      * These need to be appended via appendCompaction() and appendBranchSummary() methods.
+      */
+-    appendMessage(message: Message | CustomMessage | BashExecutionMessage): string;
++    appendMessage(message: Message | CustomMessage | BashExecutionMessage, ingressMetadata?: Readonly<Record<string, unknown>>): string;
+     /** Append a thinking level change as child of current leaf, then advance leaf. Returns entry id. */
+     appendThinkingLevelChange(thinkingLevel: string): string;
+     /** Append a model change as child of current leaf, then advance leaf. Returns entry id. */
+diff --git a/dist/core/session-manager.js b/dist/core/session-manager.js
+index f887c04976596f8956bc04c16ca59c4030e09f92..c121a143bd726f2a46f45bb0b776a7db7ae0733d 100644
+--- a/dist/core/session-manager.js
++++ b/dist/core/session-manager.js
+@@ -765,13 +765,14 @@ export class SessionManager {
+      * so it is easier to find them.
+      * These need to be appended via appendCompaction() and appendBranchSummary() methods.
+      */
+-    appendMessage(message) {
++    appendMessage(message, ingressMetadata) {
+         const entry = {
+             type: "message",
+             id: generateId(this.byId),
+             parentId: this.leafId,
+             timestamp: new Date().toISOString(),
+             message,
++            ...(ingressMetadata ? { ingressMetadata } : {}),
+         };
+         this._appendEntry(entry);
+         return entry.id;
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 3e9241dc237322f9ba64aac399f4eda31ac4715c..b330173f816af60a4347d3484b6eaddb7ea28c41 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -4,7 +4,7 @@ export { AgentSession, type AgentSessionConfig, type AgentSessionEvent, type Age
+ export { readStoredCredential } from "./core/auth-storage.ts";
+ export { type BranchPreparation, type BranchSummaryResult, type CollectEntriesResult, type CompactionResult, type CutPointResult, calculateContextTokens, collectEntriesForBranchSummary, compact, DEFAULT_COMPACTION_SETTINGS, estimateTokens, type FileOperations, findCutPoint, findTurnStartIndex, type GenerateBranchSummaryOptions, generateBranchSummary, generateSummary, generateSummaryWithUsage, getLastAssistantUsage, prepareBranchEntries, serializeConversation, shouldCompact, } from "./core/compaction/index.ts";
+ export { createEventBus, type EventBus, type EventBusController } from "./core/event-bus.ts";
+-export type { AgentEndEvent, AgentSettledEvent, AgentStartEvent, AgentToolResult, AgentToolUpdateCallback, AppKeybinding, AutocompleteProviderFactory, BashToolCallEvent, BeforeAgentStartEvent, BeforeAgentStartEventResult, BeforeProviderHeadersEvent, BeforeProviderRequestEvent, BeforeProviderRequestEventResult, BuildSystemPromptOptions, CompactOptions, ContextEvent, ContextUsage, CustomToolCallEvent, EditToolCallEvent, EntryRenderer, EntryRenderOptions, ExecOptions, ExecResult, Extension, ExtensionActions, ExtensionAPI, ExtensionCommandContext, ExtensionCommandContextActions, ExtensionContext, ExtensionContextActions, ExtensionError, ExtensionEvent, ExtensionFactory, ExtensionFlag, ExtensionHandler, ExtensionRuntime, ExtensionShortcut, ExtensionUIContext, ExtensionUIDialogOptions, ExtensionWidgetOptions, FindToolCallEvent, GrepToolCallEvent, InlineExtension, InputEvent, InputEventResult, InputSource, KeybindingsManager, LoadExtensionsResult, LsToolCallEvent, MarkdownTransformContext, MarkdownTransformer, MessageEndEvent, MessageRenderer, MessageRenderOptions, MessageStartEvent, MessageUpdateEvent, PowerShellToolCallEvent, ProjectTrustContext, ProjectTrustEvent, ProjectTrustEventDecision, ProjectTrustEventResult, ProjectTrustHandler, ProviderConfig, ProviderModelConfig, ReadToolCallEvent, RegisteredCommand, RegisteredTool, ResolvedCommand, SessionBeforeCompactEvent, SessionBeforeForkEvent, SessionBeforeSwitchEvent, SessionBeforeTreeEvent, SessionCompactEvent, SessionInfoChangedEvent, SessionShutdownEvent, SessionStartEvent, SessionTreeEvent, SlashCommandInfo, SlashCommandSource, SourceInfo, TerminalInputHandler, ToolCallEvent, ToolCallEventResult, ToolDefinition, ToolExecutionEndEvent, ToolExecutionMode, ToolExecutionStartEvent, ToolExecutionUpdateEvent, ToolInfo, ToolRenderResultOptions, ToolResultEvent, TurnEndEvent, TurnStartEvent, UIPromptEndEvent, UIPromptKind, UIPromptStartEvent, UserBashEvent, UserBashEventResult, WidgetPlacement, WorkingIndicatorOptions, WriteToolCallEvent, } from "./core/extensions/index.ts";
++export type { AgentEndEvent, AgentSettledEvent, AgentStartEvent, AgentToolResult, AgentToolUpdateCallback, AppKeybinding, AutocompleteProviderFactory, BashToolCallEvent, BeforeAgentStartEvent, BeforeAgentStartEventResult, BeforeProviderHeadersEvent, BeforeProviderRequestEvent, BeforeProviderRequestEventResult, BuildSystemPromptOptions, CompactOptions, ContextEvent, ContextUsage, CustomToolCallEvent, EditToolCallEvent, EntryRenderer, EntryRenderOptions, ExecOptions, ExecResult, Extension, ExtensionActions, ExtensionAPI, ExtensionCommandContext, ExtensionCommandContextActions, ExtensionContext, ExtensionContextActions, ExtensionError, ExtensionEvent, ExtensionFactory, ExtensionFlag, ExtensionHandler, ExtensionRuntime, ExtensionShortcut, ExtensionUIContext, ExtensionUIDialogOptions, ExtensionWidgetOptions, FindToolCallEvent, GrepToolCallEvent, InlineExtension, IngressMetadata, IngressMetadataValue, InputEvent, InputEventResult, InputResultEvent, InputSource, KeybindingsManager, LoadExtensionsResult, LsToolCallEvent, MarkdownTransformContext, MarkdownTransformer, MessageEndEvent, MessageRenderer, MessageRenderOptions, MessageStartEvent, MessageUpdateEvent, PowerShellToolCallEvent, ProjectTrustContext, ProjectTrustEvent, ProjectTrustEventDecision, ProjectTrustEventResult, ProjectTrustHandler, ProviderConfig, ProviderModelConfig, ReadToolCallEvent, RegisteredCommand, RegisteredTool, ResolvedCommand, SessionBeforeCompactEvent, SessionBeforeForkEvent, SessionBeforeSwitchEvent, SessionBeforeTreeEvent, SessionCompactEvent, SessionInfoChangedEvent, SessionShutdownEvent, SessionStartEvent, SessionTreeEvent, SlashCommandInfo, SlashCommandSource, SourceInfo, TerminalInputHandler, ToolCallEvent, ToolCallEventResult, ToolDefinition, ToolExecutionEndEvent, ToolExecutionMode, ToolExecutionStartEvent, ToolExecutionUpdateEvent, ToolInfo, ToolRenderResultOptions, ToolResultEvent, TurnEndEvent, TurnStartEvent, UIPromptEndEvent, UIPromptKind, UIPromptStartEvent, UserBashEvent, UserBashEventResult, WidgetPlacement, WorkingIndicatorOptions, WriteToolCallEvent, } from "./core/extensions/index.ts";
+ export { createExtensionRuntime, defineTool, discoverAndLoadExtensions, ExtensionRunner, isBashToolResult, isEditToolResult, isFindToolResult, isGrepToolResult, isLsToolResult, isPowerShellToolResult, isReadToolResult, isToolCallEventType, isWriteToolResult, wrapRegisteredTool, wrapRegisteredTools, } from "./core/extensions/index.ts";
+ export type { ReadonlyFooterDataProvider } from "./core/footer-data-provider.ts";
+ export { convertToLlm } from "./core/messages.ts";
+@@ -33,4 +33,5 @@ export { convertToPng } from "./utils/image-convert.ts";
+ export { formatDimensionNote, type ResizedImage, resizeImage } from "./utils/image-resize.ts";
+ export { detectSupportedImageMimeTypeFromFile } from "./utils/mime.ts";
+ export { getPowerShellConfig, getShellConfig } from "./utils/shell.ts";
++export declare const PCR_INGRESS_METADATA_CONTRACT: "pcr-ingress-metadata-v1";
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
+diff --git a/dist/index.js b/dist/index.js
+index 01017cdbf6a26b3d36e236c7f9e835fbf0fa5c3a..cda829a1797c1d1e8c7d1a5ff03069b1fe542e44 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -45,4 +45,5 @@ export { formatDimensionNote, resizeImage } from "./utils/image-resize.js";
+ export { detectSupportedImageMimeTypeFromFile } from "./utils/mime.js";
+ // Shell utilities
+ export { getPowerShellConfig, getShellConfig } from "./utils/shell.js";
++export const PCR_INGRESS_METADATA_CONTRACT = "pcr-ingress-metadata-v1";
+ //# sourceMappingURL=index.js.map
+\ No newline at end of file
+diff --git a/dist/modes/interactive/interactive-mode.js b/dist/modes/interactive/interactive-mode.js
+index a27754f8db8c6026bb88155da9f42bcc619f5ea0..b4ad76a2a9af769a35e0e2a397443b9ba6b6b656 100644
+--- a/dist/modes/interactive/interactive-mode.js
++++ b/dist/modes/interactive/interactive-mode.js
+@@ -1452,7 +1452,7 @@ export class InteractiveMode {
+             uiContext,
+             mode: "tui",
+             abortHandler: () => {
+-                this.restoreQueuedMessagesToEditor({ abort: true });
++                void this.restoreQueuedMessagesToEditor({ abort: true });
+             },
+             commandContextActions: {
+                 waitForIdle: () => this.session.waitForIdle(),
+@@ -1619,7 +1619,7 @@ export class InteractiveMode {
+             isProjectTrusted: () => this.settingsManager.isProjectTrusted(),
+             signal: this.session.agent.signal,
+             abort: () => {
+-                this.restoreQueuedMessagesToEditor({ abort: true });
++                void this.restoreQueuedMessagesToEditor({ abort: true });
+             },
+             hasPendingMessages: () => this.session.pendingMessageCount > 0,
+             shutdown: () => {
+@@ -2268,7 +2268,7 @@ export class InteractiveMode {
+         // so they work correctly regardless of which editor is active
+         this.defaultEditor.onEscape = () => {
+             if (this.session.isStreaming) {
+-                this.restoreQueuedMessagesToEditor({ abort: true });
++                void this.restoreQueuedMessagesToEditor({ abort: true });
+             }
+             else if (this.session.isBashRunning) {
+                 this.session.abortBash();
+@@ -3393,8 +3393,8 @@ export class InteractiveMode {
+             this.editor.onSubmit(text);
+         }
+     }
+-    handleDequeue() {
+-        const restored = this.restoreQueuedMessagesToEditor();
++    async handleDequeue() {
++        const restored = await this.restoreQueuedMessagesToEditor();
+         if (restored === 0) {
+             this.showStatus("No queued messages to restore");
+         }
+@@ -3565,8 +3565,8 @@ export class InteractiveMode {
+      * Clear all queued messages and return their contents.
+      * Clears both session queue and compaction queue.
+      */
+-    clearAllQueues() {
+-        const { steering, followUp } = this.session.clearQueue();
++    async clearAllQueues() {
++        const { steering, followUp } = await this.session.clearQueue();
+         const compactionSteering = this.compactionQueuedMessages
+             .filter((msg) => msg.mode === "steer")
+             .map((msg) => msg.text);
+@@ -3597,8 +3597,8 @@ export class InteractiveMode {
+             this.pendingMessagesContainer.addChild(new TruncatedText(hintText, 1, 0));
+         }
+     }
+-    restoreQueuedMessagesToEditor(options) {
+-        const { steering, followUp } = this.clearAllQueues();
++    async restoreQueuedMessagesToEditor(options) {
++        const { steering, followUp } = await this.clearAllQueues();
+         const allQueued = [...steering, ...followUp];
+         if (allQueued.length === 0) {
+             this.updatePendingMessagesDisplay();
+@@ -3639,8 +3639,8 @@ export class InteractiveMode {
+         const queuedMessages = [...this.compactionQueuedMessages];
+         this.compactionQueuedMessages = [];
+         this.updatePendingMessagesDisplay();
+-        const restoreQueue = (error) => {
+-            this.session.clearQueue();
++        const restoreQueue = async (error) => {
++            await this.session.clearQueue();
+             this.compactionQueuedMessages = queuedMessages;
+             this.updatePendingMessagesDisplay();
+             this.showError(`Failed to send queued message${queuedMessages.length > 1 ? "s" : ""}: ${error instanceof Error ? error.message : String(error)}`);
+@@ -3653,10 +3653,10 @@ export class InteractiveMode {
+                         await this.session.prompt(message.text);
+                     }
+                     else if (message.mode === "followUp") {
+-                        await this.session.followUp(message.text);
++                        await this.session.followUp(message.text, undefined, "interactive");
+                     }
+                     else {
+-                        await this.session.steer(message.text);
++                        await this.session.steer(message.text, undefined, "interactive");
+                     }
+                 }
+                 this.updatePendingMessagesDisplay();
+@@ -3681,26 +3681,24 @@ export class InteractiveMode {
+             // Start a prompt when idle, or queue it into a run still finishing compaction.
+             const promptPromise = this.session
+                 .prompt(firstPrompt.text, { streamingBehavior: firstPrompt.mode })
+-                .catch((error) => {
+-                restoreQueue(error);
+-            });
++                .catch(restoreQueue);
+             // Queue remaining messages
+             for (const message of rest) {
+                 if (this.isExtensionCommand(message.text)) {
+                     await this.session.prompt(message.text);
+                 }
+                 else if (message.mode === "followUp") {
+-                    await this.session.followUp(message.text);
++                    await this.session.followUp(message.text, undefined, "interactive");
+                 }
+                 else {
+-                    await this.session.steer(message.text);
++                    await this.session.steer(message.text, undefined, "interactive");
+                 }
+             }
+             this.updatePendingMessagesDisplay();
+             void promptPromise;
+         }
+         catch (error) {
+-            restoreQueue(error);
++            await restoreQueue(error);
+         }
+     }
+     /** Move pending bash components from pending area to chat */
+@@ -4387,7 +4385,7 @@ export class InteractiveMode {
+                 }
+                 // The user committed to navigating: stop the active response first.
+                 if (this.session.isStreaming) {
+-                    this.restoreQueuedMessagesToEditor();
++                    await this.restoreQueuedMessagesToEditor();
+                     await this.session.abort();
+                 }
+                 // Set up escape handler and status indicator if summarizing
+diff --git a/dist/modes/rpc/rpc-mode.js b/dist/modes/rpc/rpc-mode.js
+index b8b3c603a54c08699d0e3fd0f56ca2e17ddb2607..6d403291ca946b0a8dce1cf5902cd4c33f03275e 100644
+--- a/dist/modes/rpc/rpc-mode.js
++++ b/dist/modes/rpc/rpc-mode.js
+@@ -319,11 +319,11 @@ export async function runRpcMode(runtimeHost) {
+                 return undefined;
+             }
+             case "steer": {
+-                await session.steer(command.message, command.images);
++                await session.steer(command.message, command.images, "rpc");
+                 return success(id, "steer");
+             }
+             case "follow_up": {
+-                await session.followUp(command.message, command.images);
++                await session.followUp(command.message, command.images, "rpc");
+                 return success(id, "follow_up");
+             }
+             case "abort": {
+@@ -331,7 +331,7 @@ export async function runRpcMode(runtimeHost) {
+                 return success(id, "abort");
+             }
+             case "clear_queue": {
+-                return success(id, "clear_queue", session.clearQueue());
++                return success(id, "clear_queue", await session.clearQueue());
+             }
+             case "new_session": {
+                 const options = command.parentSession ? { parentSession: command.parentSession } : undefined;
+diff --git a/package.json b/package.json
+index 8aa47351db845e14d68615a4250705faaf7bdcfb..3ddb170fb88a233d94f3da0e85b3490c49d7bc76 100644
+--- a/package.json
++++ b/package.json
+@@ -10 +10 @@
+-		"pi": "dist/bundle/cli.js"
++		"pi": "dist/cli.js"
+@@ -20 +20 @@
+-			"import": "./dist/bundle/rpc-entry.js"
++			"import": "./dist/rpc-entry.js"

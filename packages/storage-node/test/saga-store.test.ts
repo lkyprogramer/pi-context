@@ -10,6 +10,8 @@ import { createRuntimeCursor } from "@pcr/core";
 import type { SagaOperation } from "@pcr/runtime";
 import {
   createEncryptedBlobStore,
+  createWorkspaceBlobKeyLease,
+  createWorkspaceBlobKeyMaterial,
   openWorkspaceSagaJournal,
   openWorkspaceSqliteStore,
   WORKSPACE_SQLITE_MIGRATIONS,
@@ -86,7 +88,7 @@ describe("workspace SQLite Saga journal", () => {
     }
   });
 
-  it("upgrades an exact V1 database to V2 without changing the V1 checksum", async () => {
+  it("upgrades an exact V1 database through the current schema without changing the V1 checksum", async () => {
     const dataRoot = root("v1-upgrade");
     const scope = cursor(dataRoot);
     const workspaceRoot = join(dataRoot, scope.workspaceId);
@@ -118,7 +120,7 @@ describe("workspace SQLite Saga journal", () => {
 
     const upgraded = await openDatabase(dataRoot, scope);
     try {
-      expect(upgraded.getSchemaVersion()).toBe(2);
+      expect(upgraded.getSchemaVersion()).toBe(4);
       const inspection = new DatabaseSync(path, { readOnly: true });
       try {
         expect(inspection.prepare("SELECT checksum FROM schema_migration WHERE version = 1").get()).toEqual({ checksum });
@@ -141,8 +143,10 @@ describe("workspace SQLite Saga journal", () => {
       workspaceId: scope.workspaceId,
       maxBlobBytes: 1024,
       keys: {
-        async current() { return { keyId: "saga-key", key }; },
-        async get(_workspaceId, keyId) { return keyId === "saga-key" ? key : null; },
+        async current() { return createWorkspaceBlobKeyMaterial("saga-key", key); },
+        async get(_workspaceId, keyId) {
+          return keyId === "saga-key" ? createWorkspaceBlobKeyLease(key) : null;
+        },
       },
     });
     const ref = await blobs.put(scope, Buffer.from("durable before saga"));
@@ -153,12 +157,14 @@ describe("workspace SQLite Saga journal", () => {
     try {
       const record = await journal.prepare(operation(scope, "real", { rawBlobId: ref }));
       expect(record).toMatchObject({ state: "runtime_durable", revision: 1, rawBlobId: ref });
-      expect(database.getSchemaVersion()).toBe(2);
+      expect(database.getSchemaVersion()).toBe(4);
       const inspection = new DatabaseSync(database.path, { readOnly: true });
       try {
         expect(inspection.prepare("SELECT name FROM schema_migration ORDER BY version").all()).toEqual([
           { name: "workspace-evidence-v1" },
           { name: "workspace-saga-v2" },
+          { name: "workspace-user-turn-v3" },
+          { name: "workspace-user-turn-disposition-v4" },
         ]);
       } finally {
         inspection.close();
@@ -461,8 +467,10 @@ describe("workspace SQLite Saga journal", () => {
       workspaceId: scope.workspaceId,
       maxBlobBytes: 1024,
       keys: {
-        async current() { return { keyId: "crash-key", key }; },
-        async get(_workspaceId, keyId) { return keyId === "crash-key" ? key : null; },
+        async current() { return createWorkspaceBlobKeyMaterial("crash-key", key); },
+        async get(_workspaceId, keyId) {
+          return keyId === "crash-key" ? createWorkspaceBlobKeyLease(key) : null;
+        },
       },
     });
     const rawBlobId = await blobs.put(scope, Buffer.from("crash durable source"));
@@ -473,7 +481,7 @@ describe("workspace SQLite Saga journal", () => {
     writeFileSync(payload, JSON.stringify({ dataRoot, scope, input }));
     writeFileSync(script, `
       import { readFileSync } from "node:fs";
-      import { createEncryptedBlobStore, openWorkspaceSagaJournal, openWorkspaceSqliteStore } from ${JSON.stringify(storageEntry)};
+      import { createEncryptedBlobStore, createWorkspaceBlobKeyLease, createWorkspaceBlobKeyMaterial, openWorkspaceSagaJournal, openWorkspaceSqliteStore } from ${JSON.stringify(storageEntry)};
       const { dataRoot, scope, input } = JSON.parse(readFileSync(process.argv[2], "utf8"));
       const key = Buffer.alloc(32, 4);
       const blobs = createEncryptedBlobStore({
@@ -481,8 +489,8 @@ describe("workspace SQLite Saga journal", () => {
         workspaceId: scope.workspaceId,
         maxBlobBytes: 1024,
         keys: {
-          async current() { return { keyId: "crash-key", key }; },
-          async get(_workspaceId, keyId) { return keyId === "crash-key" ? key : null; },
+          async current() { return createWorkspaceBlobKeyMaterial("crash-key", key); },
+          async get(_workspaceId, keyId) { return keyId === "crash-key" ? createWorkspaceBlobKeyLease(key) : null; },
         },
       });
       const database = await openWorkspaceSqliteStore({ dataRoot, workspaceId: scope.workspaceId, busyTimeoutMs: 1000 });
@@ -544,7 +552,7 @@ describe("workspace SQLite Saga journal", () => {
     }
     await journal.close();
     await expect(journal.get("operation-busy")).rejects.toMatchObject({ code: "PCR_SAGA_CLOSED" });
-    expect(database.getSchemaVersion()).toBe(2);
+    expect(database.getSchemaVersion()).toBe(4);
     const liveJournal = await openJournal(database);
     await database.close();
     await expect(liveJournal.get("operation-busy")).rejects.toMatchObject({ code: "PCR_SAGA_CLOSED" });

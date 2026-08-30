@@ -24,7 +24,8 @@ function publicPorts(): RuntimeSessionPorts {
       async capture(input) {
         return {
           operationId: input.operationId,
-          userTurnId: "turn-public",
+          receiptId: "receipt-public",
+          status: "pending",
           cursor: input.cursor,
           rawTextHash: "hash-public",
           rawBlobId: publicBlobRef,

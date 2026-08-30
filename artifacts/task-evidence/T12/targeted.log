@@ -1,0 +1,26 @@
+
+> @pcr/pi-adapter@ typecheck /Users/luo/Documents/github/pi-context/packages/pi-adapter
+> tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts src/contracts/pi-0844.ts ../../tests/acceptance/user-input-flow.test.ts
+
+
+> pi-context-runtime@0.1.0-alpha.1 typecheck /Users/luo/Documents/github/pi-context/apps/pi-context-runtime
+> tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/extension.ts src/composition-root.ts src/owner.ts src/runtime.ts src/doctor.ts src/conflicts.ts
+
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/compat/pi-version-contract.test.ts (4 tests) 31ms
+(node:88862) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/acceptance/user-input-flow.test.ts (10 tests) 1556ms
+   ✓ exact user input flow on the patched Pi 0.84.4 AgentSession > is reachable through the only packaged product extension entry  332ms
+ ✓ |0| tests/acceptance/packed-install.test.ts (2 tests) 24495ms
+   ✓ packed runtime acceptance > npm packs the runtime and the required patched Pi host loads exact input  17951ms
+   ✓ packed runtime acceptance > fails during loading on stock Pi 0.84.4 instead of swallowing input  6543ms
+
+ Test Files  3 passed (3)
+      Tests  16 passed (16)
+   Start at  17:41:29
+   Duration  25.11s (transform 818ms, setup 0ms, collect 6.22s, tests 26.08s, environment 0ms, prepare 322ms)
+

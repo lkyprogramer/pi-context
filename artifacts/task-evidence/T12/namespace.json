@@ -1,0 +1,9 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T12",
+  "title": "Exact user input ledger and Pi correlation",
+  "authoritativeManifest": "artifacts/task-evidence/T12/evidence.json",
+  "legacyManifestPreserved": "artifacts/task-evidence/T12.json",
+  "legacyTaskTitle": "Reducer registry and fallback",
+  "controllerState": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/.pcr/task-status.json"
+}

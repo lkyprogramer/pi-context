@@ -46,7 +46,8 @@ function createPorts(
         async capture(input) {
           return {
             operationId: input.operationId,
-            userTurnId: `turn-${input.operationId}`,
+            receiptId: `receipt-${input.operationId}`,
+            status: "pending" as const,
             cursor: input.cursor,
             rawTextHash: `hash-${input.rawText}`,
             rawBlobId: fixtureBlobRef(input.operationId),
@@ -113,7 +114,7 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
     const session = createSession();
     const receipt = await session.ingestUserInput(userInput("op-t07-user"));
 
-    expect(receipt).toMatchObject({ operationId: "op-t07-user", userTurnId: "turn-op-t07-user" });
+    expect(receipt).toMatchObject({ operationId: "op-t07-user", receiptId: "receipt-op-t07-user" });
   });
 
   it("delegates tool projection and materialization without rewriting source, authority, or payload", async () => {
@@ -219,7 +220,8 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
             await Promise.resolve();
             return {
               operationId: input.operationId,
-              userTurnId: "turn-idempotent",
+              receiptId: "receipt-idempotent",
+              status: "pending" as const,
               cursor: input.cursor,
               rawTextHash: "hash-idempotent",
               rawBlobId: fixtureBlobRef("idempotent"),
@@ -281,7 +283,8 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
             if (captures === 1) throw new Error("storage crash");
             return {
               operationId: input.operationId,
-              userTurnId: "turn-retry",
+              receiptId: "receipt-retry",
+              status: "pending" as const,
               cursor: input.cursor,
               rawTextHash: "hash-retry",
               rawBlobId: fixtureBlobRef("retry"),
@@ -301,7 +304,7 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
     ).rejects.toMatchObject({ name: "AbortError" });
     expect(captures).toBe(0);
     await expect(session.ingestUserInput(userInput("op-retry"))).rejects.toThrow("storage crash");
-    await expect(session.ingestUserInput(userInput("op-retry"))).resolves.toMatchObject({ userTurnId: "turn-retry" });
+    await expect(session.ingestUserInput(userInput("op-retry"))).resolves.toMatchObject({ receiptId: "receipt-retry" });
     expect(captures).toBe(2);
   });
 

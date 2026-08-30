@@ -19,6 +19,7 @@ import { registerOperationsCommands } from "./commands/operations.js";
 import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
 import { claimPiContextOwner } from "./owner.js";
 import { captureUserDirectives } from "../../../packages/kernel/src/directives/capture.js";
+import { registerProductionUserTurnRuntime } from "./composition-root.js";
 
 export interface ExtensionFactoryOptions {
   claimOnCreate?: boolean;
@@ -34,7 +35,7 @@ export interface PiContextExtension {
   name: "pi-context-runtime";
   hooks: Record<string, unknown>;
   claimed: boolean;
-  release?: () => void;
+  release?: () => void | Promise<void>;
 }
 
 function isHostExtensionAPI(value: unknown): value is HostExtensionAPI {
@@ -116,6 +117,7 @@ function directivesFromPreparation(preparation: {
 
 function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   const owner = claimPiContextOwner("pi-context-runtime");
+  const userTurns = registerProductionUserTurnRuntime(pi as never);
   const materializer = new ContextMaterializer({ directives: "keep" });
   registerContextHook(pi, {
     kernel: { materialize: (input) => materializer.materialize(input) },
@@ -277,7 +279,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
           ...(await runRuntimeDoctor(
             fixtureEnvironment({
               nodeVersion: process.versions.node,
-              piVersion: "0.84.3",
+              piVersion: "0.84.4",
               packages: [],
               trusted: true,
             }),
@@ -289,7 +291,15 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
     },
   });
   registerOperationsCommands(pi, { workspaceId: "ws_0123456789abcdef" });
-  return { name: "pi-context-runtime", hooks: {}, claimed: true, release: owner.release };
+  return {
+    name: "pi-context-runtime",
+    hooks: {},
+    claimed: true,
+    async release() {
+      owner.release();
+      await userTurns.close();
+    },
+  };
 }
 
 export default createPiContextExtension;

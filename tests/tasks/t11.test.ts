@@ -8,6 +8,8 @@ import { createRuntimeCursor } from "@pcr/core";
 import type { SagaOperation } from "@pcr/runtime";
 import {
   createEncryptedBlobStore,
+  createWorkspaceBlobKeyLease,
+  createWorkspaceBlobKeyMaterial,
   openWorkspaceSagaJournal,
   openWorkspaceSqliteStore,
 } from "@pcr/storage-node";
@@ -34,8 +36,10 @@ async function runT11Fixture(): Promise<{ ok: true; task: "T11" }> {
     workspaceId: cursor.workspaceId,
     maxBlobBytes: 1024,
     keys: {
-      async current() { return { keyId: "key-t11", key }; },
-      async get(_workspaceId, keyId) { return keyId === "key-t11" ? key : null; },
+      async current() { return createWorkspaceBlobKeyMaterial("key-t11", key); },
+      async get(_workspaceId, keyId) {
+        return keyId === "key-t11" ? createWorkspaceBlobKeyLease(key) : null;
+      },
     },
   });
   const rawBlobId = await blobs.put(cursor, Buffer.from("saga source bytes"));

@@ -4,7 +4,11 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createRuntimeCursor } from "@pcr/core";
-import { createEncryptedBlobStore } from "@pcr/storage-node";
+import {
+  createEncryptedBlobStore,
+  createWorkspaceBlobKeyLease,
+  createWorkspaceBlobKeyMaterial,
+} from "@pcr/storage-node";
 import { rotateWorkspaceKeys } from "../../packages/storage/src/operations/key-rotation.js";
 
 const roots: string[] = [];
@@ -31,8 +35,10 @@ describe("v2 CAS key-rotation boundary", () => {
       workspaceId: cursor.workspaceId,
       maxBlobBytes: 1024,
       keys: {
-        async current() { return { keyId: "old", key: oldKey }; },
-        async get(_workspaceId, keyId) { return keyId === "old" ? oldKey : null; },
+        async current() { return createWorkspaceBlobKeyMaterial("old", oldKey); },
+        async get(_workspaceId, keyId) {
+          return keyId === "old" ? createWorkspaceBlobKeyLease(oldKey) : null;
+        },
       },
     });
     const ref = await store.put(cursor, Buffer.from("must survive rejected legacy rotation"));
@@ -68,8 +74,10 @@ describe("v2 CAS key-rotation boundary", () => {
       workspaceId: cursor.workspaceId,
       maxBlobBytes: 1024,
       keys: {
-        async current() { return { keyId: "old", key: oldKey }; },
-        async get(_workspaceId, keyId) { return keyId === "old" ? oldKey : null; },
+        async current() { return createWorkspaceBlobKeyMaterial("old", oldKey); },
+        async get(_workspaceId, keyId) {
+          return keyId === "old" ? createWorkspaceBlobKeyLease(oldKey) : null;
+        },
       },
     });
     const ref = await store.put(cursor, Buffer.from("damaged v2"));

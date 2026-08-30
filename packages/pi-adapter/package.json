@@ -3,13 +3,17 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/capabilities.ts",
+    ".": "./src/index.ts",
     "./contracts/pi-0844": "./src/contracts/pi-0844.ts"
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": ">=0.84.3 <0.85.0"
+    "@earendil-works/pi-coding-agent": "0.84.4"
+  },
+  "dependencies": {
+    "@pcr/contracts": "workspace:*",
+    "@pcr/runtime": "workspace:*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/capabilities.ts src/contracts/pi-0844.ts"
+    "typecheck": "tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts src/contracts/pi-0844.ts ../../tests/acceptance/user-input-flow.test.ts"
   }
 }

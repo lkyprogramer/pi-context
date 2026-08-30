@@ -32,7 +32,19 @@ describe("T06 Real npm pack and clean Pi install harness", () => {
           maxTokens: 16384,
         },
         missingHooks: [],
-        behavior: { contextPassed: true, toolPassed: true, compactionPassed: true },
+        hostContract: "pcr-ingress-metadata-v1",
+        requiredHostContract: {
+          version: "0.84.4",
+          runtimeExport: "PCR_INGRESS_METADATA_CONTRACT=pcr-ingress-metadata-v1",
+          distributionTask: "T52",
+        },
+        behavior: {
+          contextPassed: true,
+          toolPassed: true,
+          compactionPassed: true,
+          exactInputPassed: true,
+          providerIsolationPassed: true,
+        },
       });
       expect(readdirSync(tempRoot)).toEqual([]);
     },
@@ -69,6 +81,11 @@ describe("T06 Real npm pack and clean Pi install harness", () => {
       packageVersion: "0.1.0-alpha.1",
       entry: "./dist/extension.js",
       packagePolicy: { private: true, license: "UNLICENSED" },
+      hostContract: {
+        version: "0.84.4",
+        runtimeExport: "PCR_INGRESS_METADATA_CONTRACT=pcr-ingress-metadata-v1",
+        distributionTask: "T52",
+      },
     });
   });
 

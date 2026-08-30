@@ -1,0 +1,4 @@
+command=pnpm exec tsc --noEmit --strict --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 --types node artifacts/task-evidence/T12/public-consumer.ts
+node=v22.19.0
+pnpm=10.15.0
+exitCode=0

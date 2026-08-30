@@ -44,7 +44,8 @@ function resources(disposals: string[], contexts: string[]): ProductionSessionRe
             async capture(input) {
               return {
                 operationId: input.operationId,
-                userTurnId: `turn-${ctx.sessionId}`,
+                receiptId: `receipt-${ctx.sessionId}`,
+                status: "pending" as const,
                 cursor: input.cursor,
                 rawTextHash: "a".repeat(64),
                 rawBlobId: fixtureBlobRef(ctx.sessionId),

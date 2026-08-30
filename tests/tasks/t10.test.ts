@@ -4,7 +4,11 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createRuntimeCursor } from "@pcr/core";
-import { createEncryptedBlobStore } from "@pcr/storage-node";
+import {
+  createEncryptedBlobStore,
+  createWorkspaceBlobKeyLease,
+  createWorkspaceBlobKeyMaterial,
+} from "@pcr/storage-node";
 
 const roots: string[] = [];
 
@@ -28,8 +32,10 @@ async function runT10Fixture(): Promise<{ ok: true; task: "T10" }> {
     workspaceId: cursor.workspaceId,
     maxBlobBytes: 1024 * 1024,
     keys: {
-      async current() { return { keyId: "key-t10", key }; },
-      async get(_workspaceId, keyId) { return keyId === "key-t10" ? key : null; },
+      async current() { return createWorkspaceBlobKeyMaterial("key-t10", key); },
+      async get(_workspaceId, keyId) {
+        return keyId === "key-t10" ? createWorkspaceBlobKeyLease(key) : null;
+      },
     },
   });
   const plain = Buffer.from("encrypted durable bytes", "utf8");
@@ -68,8 +74,8 @@ describe("T10 Encrypted content-addressed blob store", () => {
       workspaceId: cursor.workspaceId,
       maxBlobBytes: 1024,
       keys: {
-        async current() { return { keyId: "key-scope", key }; },
-        async get() { reads += 1; return key; },
+        async current() { return createWorkspaceBlobKeyMaterial("key-scope", key); },
+        async get() { reads += 1; return createWorkspaceBlobKeyLease(key); },
       },
     });
     const ref = await store.put(cursor, Buffer.from("scoped"));

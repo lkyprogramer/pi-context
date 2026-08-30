@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const lockPath = join(root, "compat/pi.lock.json");
 
-export const PINNED_PI_VERSION = "0.84.3";
+export const PINNED_PI_VERSION = "0.84.4";
 export const BASELINE_COMMIT = "938109e7259068ff736dbba3bed14c81af25abbe";
 
 export function readCompatLock() {
@@ -19,6 +19,7 @@ export function writeCompatLock(lock) {
 }
 
 export function installCommand(version = PINNED_PI_VERSION) {
+  if (version === PINNED_PI_VERSION) return "pnpm install --frozen-lockfile";
   return `npm install -g @earendil-works/pi-coding-agent@${version}`;
 }
 

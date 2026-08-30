@@ -52,7 +52,7 @@ export const userTurnRecordSchema = {
   title: "UserTurnRecord",
   type: "object",
   additionalProperties: false,
-  required: ["userTurnId", "cursor", "rawTextHash", "rawBlobId", "utf8Bytes", "sourceClass", "capturedAt"],
+  required: ["userTurnId", "cursor", "rawTextHash", "rawBlobId", "utf8Bytes", "hostMessageId", "sourceClass", "capturedAt"],
   properties: {
     userTurnId: identifier,
     cursor: { $ref: "runtime-cursor.schema.json" },
@@ -60,7 +60,7 @@ export const userTurnRecordSchema = {
     rawBlobId: blobReference,
     utf8Bytes: { type: "integer", minimum: 0 },
     hostMessageId: identifier,
-    sourceClass: { enum: ["authenticated-user", "untrusted-user"] },
+    sourceClass: { enum: ["authenticated-user", "untrusted-user", "agent-derived"] },
     capturedAt: { type: "integer", minimum: 0 },
   },
 };

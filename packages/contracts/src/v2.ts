@@ -13,8 +13,8 @@ export interface UserTurnRecord {
   rawTextHash: string;
   rawBlobId: BlobRef;
   utf8Bytes: number;
-  hostMessageId?: string;
-  sourceClass: "authenticated-user" | "untrusted-user";
+  hostMessageId: string;
+  sourceClass: "authenticated-user" | "untrusted-user" | "agent-derived";
   capturedAt: number;
 }
 

@@ -7,12 +7,12 @@ import { payloadProbeUnavailable, verifyPiCompatibility } from "../../scripts/ch
 
 describe("Pi runtime probe", () => {
   it("is not ready until verifyPiCompatibility exists and reports the locked version", async () => {
-    const report = await verifyPiCompatibility("0.84.3", {
+    const report = await verifyPiCompatibility("0.84.4", {
       probeCapabilities: async () => ({ ready: true, missing: [] }),
       probe: () => ({ ready: true, missing: [] }),
     });
     expect(report.ready).toBe(true);
-    expect(report.version).toBe("0.84.3");
+    expect(report.version).toBe("0.84.4");
   });
 
   it("passes thinking-only assistants, compactionSummary, and hook usage.totalTokens", () => {

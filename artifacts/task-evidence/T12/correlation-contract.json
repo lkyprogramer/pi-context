@@ -1,0 +1,34 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T12",
+  "piVersion": "0.84.4",
+  "requiredPatch": {
+    "path": "patches/@earendil-works__pi-coding-agent@0.84.4.patch",
+    "sha256": "2d89fec86b8f4e74c6d5199bc026f5747f4d057baeacd11b88edd097e7d0a636"
+  },
+  "hostCapabilityPolicy": "The product imports PCR_INGRESS_METADATA_CONTRACT from Pi's loader-provided host module and fails during extension loading on stock 0.84.4. T12 is supported only on the exact patched host; publishable self-contained host distribution remains T52 scope.",
+  "stockProbeIsolationPolicy": "The acceptance probe resolves the pnpm package symlink to a real package directory, copies it into a disposable root, reverses the patch only in that copy, and verifies that the repository host digest is unchanged.",
+  "inputFields": ["type", "inputId", "text", "images", "source", "streamingBehavior"],
+  "inputResultFields": ["type", "inputId", "action", "source", "streamingBehavior", "ingressMetadata"],
+  "sessionEntryFields": ["type", "id", "parentId", "timestamp", "message", "ingressMetadata"],
+  "identityPolicy": {
+    "receipt": "Provisional receipt identity is derived from the full capture cursor, exact raw SHA-256, source, timestamp, operation ID and injected occurrence nonce.",
+    "transit": "Patched Pi carries pcr.user-input-receipt.v1 as namespaced JSON-safe ingressMetadata keyed by the stable inputId; it never encodes correlation in user text, array adjacency, FIFO state or provider-visible message metadata.",
+    "handled": "Patched Pi emits input_result for every accepted or handled dispatch. A handled dispatch durably moves the receipt from pending to handled and cannot be linked by a successor input.",
+    "turn": "Final userTurnId is derived only from the sidecar-bearing Pi SessionMessageEntry's own stable ID after scanning the complete append-only entry set. Copied historical sidecars from a forked session are ignored unless their origin session matches the active cursor."
+  },
+  "durabilityOrder": ["encrypted cursor-scoped CAS", "SQLite pending receipt", "Pi user SessionMessageEntry ingressMetadata sidecar", "SQLite final link"],
+  "handledDurabilityOrder": ["encrypted cursor-scoped CAS", "SQLite pending receipt", "Pi input_result handled", "SQLite handled terminal"],
+  "hardFailurePolicy": "Predictable prompt preflight validation runs before durable capture. Capture or unsupported-input failures return a rejected input outcome. Any failure after capture but before host message ownership emits a strict input_result rejected terminal before rethrowing; terminal persistence failure is propagated rather than converted into success.",
+  "queueDropPolicy": "Queued steer/followUp messages retain inputId, source and sidecar until delivery. clearQueue strictly persists every queue-cleared terminal before mutating either Pi queue; a terminal handler failure rejects clearQueue and leaves the queue available for retry.",
+  "providerPolicy": "ingressMetadata is stored only on SessionMessageEntry and is never copied onto AgentMessage or provider context.",
+  "branchPolicy": "Reconciliation scans SessionManager.getEntries() across active and inactive branches and binds by sidecar identity, not topology adjacency.",
+  "hostOwnershipPolicy": "A host message ID is unique within workspace and session, independent of leaf, lineage or model cursor dimensions.",
+  "imagePolicy": "Image-bearing inputs fail closed until attachment bytes have an exact durable envelope; images are never silently dropped.",
+  "sourcePolicy": {
+    "interactive": "authenticated-user",
+    "rpc": "untrusted-user",
+    "extension": "agent-derived",
+    "tuiCompactionQueue": "interactive call sites explicitly preserve authenticated-user"
+  }
+}

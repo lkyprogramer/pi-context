@@ -6,8 +6,8 @@ os:
   - ubuntu-latest
   - macos-latest
 pi:
-  min: "0.84.3"
-  current: "0.84.3"
+  min: "0.84.4"
+  current: "0.84.4"
   latest: advisory
 modes:
   - print

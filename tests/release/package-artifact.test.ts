@@ -21,7 +21,7 @@ describe("release package", () => {
   it("keeps the Node/OS matrix and does not hide unsupported Pi versions", async () => {
     const artifact = await inspectPackedRelease();
     expect(artifact.nodeMatrix).toEqual(["22.19.0", "24.18.1", "26.5.1"]);
-    expect(artifact.supportedRange).toBe(">=0.84.3 <0.85.0");
+    expect(artifact.supportedRange).toBe("0.84.4");
     expect(artifact.unsupportedHidden).toBe(false);
   });
 

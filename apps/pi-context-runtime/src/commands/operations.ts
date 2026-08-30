@@ -27,7 +27,7 @@ export async function runOperationsDoctor(runtime: OperationsRuntime): Promise<R
   const report = await runRuntimeDoctor(
     fixtureEnvironment({
       nodeVersion: process.versions.node,
-      piVersion: "0.84.3",
+      piVersion: "0.84.4",
       packages: [],
       trusted: true,
       dataRoot: runtime.workspaceRoot,

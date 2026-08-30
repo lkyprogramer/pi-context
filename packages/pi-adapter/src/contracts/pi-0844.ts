@@ -6,6 +6,7 @@ import {
   type ExtensionAPI,
   type ExtensionEvent,
   type InputEvent,
+  type InputResultEvent,
   type MessageEndEvent,
   type SessionBeforeCompactEvent,
   type SessionCompactEvent,
@@ -25,6 +26,7 @@ export type Pi0844SessionStartEvent = SessionStartEvent;
 export type Pi0844SessionTreeEvent = SessionTreeEvent;
 export type Pi0844SessionShutdownEvent = SessionShutdownEvent;
 export type Pi0844InputEvent = InputEvent;
+export type Pi0844InputResultEvent = InputResultEvent;
 export type Pi0844MessageEndEvent = MessageEndEvent;
 export type Pi0844ModelSelectEvent = Extract<ExtensionEvent, { type: "model_select" }>;
 export type Pi0844AgentSettledEvent = AgentSettledEvent;
@@ -40,6 +42,7 @@ export const PI_0844_REQUIRED_HOOKS = [
   "agent_settled",
   "context",
   "input",
+  "input_result",
   "message_end",
   "model_select",
   "session_before_compact",
@@ -72,6 +75,7 @@ export function registerPi0844ContractHandlers(pi: ExtensionAPI): void {
   pi.on("session_tree", () => undefined);
   pi.on("session_shutdown", () => undefined);
   pi.on("input", () => undefined);
+  pi.on("input_result", () => undefined);
   pi.on("message_end", () => undefined);
   pi.on("model_select", () => undefined);
   pi.on("agent_settled", () => undefined);
@@ -134,6 +138,7 @@ export async function probePi0844PublicApi(input: Pi0844ProbeInput): Promise<{
     lifecycle: [
       "agent_settled",
       "input",
+      "input_result",
       "message_end",
       "model_select",
       "session_shutdown",

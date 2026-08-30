@@ -22,7 +22,7 @@ import type { BlobRef, ByteRange, RuntimeCursor } from "@pcr/contracts";
 import type {
   BlobStore,
   EncryptedBlobStoreDependencies,
-  WorkspaceBlobKeyMaterial,
+  WorkspaceBlobKeyLease,
 } from "./contracts.js";
 import { BlobStoreError } from "./contracts.js";
 import {
@@ -112,12 +112,35 @@ function validateKeyId(keyId: unknown): asserts keyId is string {
   }
 }
 
-function copyKey(material: WorkspaceBlobKeyMaterial | Uint8Array | null): Buffer {
-  const raw = material instanceof Uint8Array ? material : material?.key;
-  if (!(raw instanceof Uint8Array) || raw.byteLength !== 32) {
+interface AcquiredKey {
+  readonly key: Buffer;
+  destroy(): void;
+}
+
+function acquireKey(lease: WorkspaceBlobKeyLease | null): AcquiredKey {
+  if (
+    !lease
+    || !(lease.key instanceof Uint8Array)
+    || lease.key.byteLength !== 32
+    || typeof lease.destroy !== "function"
+  ) {
+    lease?.destroy?.();
     throw new BlobStoreError("PCR_BLOB_KEY_UNAVAILABLE");
   }
-  return Buffer.from(raw);
+  const key = Buffer.from(lease.key);
+  let destroyed = false;
+  return {
+    key,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      try {
+        key.fill(0);
+      } finally {
+        lease.destroy();
+      }
+    },
+  };
 }
 
 function assertDirectory(path: string, operation: string, enforcePrivateMode: boolean): void {
@@ -319,8 +342,13 @@ class NodeEncryptedBlobStore implements BlobStore {
 
       const material = await this.#keys.current(this.#workspaceId);
       const keyId = material?.keyId;
-      validateKeyId(keyId);
-      const key = copyKey(material);
+      try {
+        validateKeyId(keyId);
+      } catch (error) {
+        material?.destroy?.();
+        throw error;
+      }
+      const acquired = acquireKey(material);
       let encoded: Buffer;
       try {
         encoded = encodeEncryptedEnvelope({
@@ -328,10 +356,10 @@ class NodeEncryptedBlobStore implements BlobStore {
           workspaceId: this.#workspaceId,
           plain,
           keyId,
-          key,
+          key: acquired.key,
         }).encoded;
       } finally {
-        key.fill(0);
+        acquired.destroy();
       }
       let won: boolean;
       try {
@@ -370,10 +398,9 @@ class NodeEncryptedBlobStore implements BlobStore {
         throw new BlobStoreError("PCR_BLOB_TAMPERED", { field: "envelope.ref" });
       }
       validateKeyId(envelope.keyId);
-      const material = await this.#keys.get(this.#workspaceId, envelope.keyId);
-      const key = copyKey(material);
+      const acquired = acquireKey(await this.#keys.get(this.#workspaceId, envelope.keyId));
       try {
-        const plain = decryptEncryptedEnvelope(envelope, key);
+        const plain = decryptEncryptedEnvelope(envelope, acquired.key);
         if (range && range.endExclusive > plain.byteLength) {
           plain.fill(0);
           throw new BlobStoreError("PCR_BLOB_RANGE_INVALID");
@@ -383,7 +410,7 @@ class NodeEncryptedBlobStore implements BlobStore {
         plain.fill(0);
         return selected;
       } finally {
-        key.fill(0);
+        acquired.destroy();
       }
     } finally {
       raw.fill(0);

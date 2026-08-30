@@ -404,7 +404,7 @@ class WorkspaceSqliteEvidenceStoreImpl implements WorkspaceSqliteEvidenceStore {
       this.#db.exec("BEGIN IMMEDIATE");
       const existing = this.#db.prepare(`SELECT ${EVIDENCE_COLUMNS} FROM evidence WHERE evidence_id = ?`).get(
         record.evidenceId,
-      ) as EvidenceRow | undefined;
+      ) as unknown as EvidenceRow | undefined;
       if (existing) {
         if (!rowMatches(existing, normalized)) {
           throw new StorageNodeError("PCR_SQLITE_EVIDENCE_CONFLICT", { evidenceId: record.evidenceId });
@@ -465,7 +465,7 @@ class WorkspaceSqliteEvidenceStoreImpl implements WorkspaceSqliteEvidenceStore {
         cursor.leafId,
         cursor.lineageHash,
         cursor.modelKey,
-      ) as EvidenceRow | undefined;
+      ) as unknown as EvidenceRow | undefined;
       return row ? toEvidenceRecord(row) : null;
     } catch (error) {
       throw mapSqliteError(error, "get-evidence");

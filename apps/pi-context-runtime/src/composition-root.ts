@@ -1,5 +1,10 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { join } from "node:path";
+import type { RuntimeCursor } from "../../../packages/contracts/src/index.js";
+import { createRuntimeCursor } from "../../../packages/core/src/index.js";
+import { registerUserInputHook, type RegisteredUserInputHook } from "../../../packages/pi-adapter/src/index.js";
 import {
+  createUserTurnService,
   createRuntimeSession,
   createRuntimeSessionRegistry,
   RuntimeSessionRegistryError,
@@ -7,7 +12,16 @@ import {
   type RuntimeSession,
   type RuntimeSessionPorts,
   type RuntimeSessionRegistry,
+  type UserTurnService,
 } from "../../../packages/runtime/src/index.js";
+import {
+  createEncryptedBlobStore,
+  openLocalWorkspaceBlobKeyProvider,
+  openWorkspaceSqliteStore,
+  openWorkspaceUserTurnLedger,
+  type LocalWorkspaceBlobKeyProvider,
+  type WorkspaceSqliteEvidenceStore,
+} from "../../../packages/storage-node/src/index.js";
 import { claimPiContextOwner } from "./owner.js";
 
 export type PiRuntimeContext = Pick<ExtensionContext, "cwd" | "model" | "sessionManager" | "signal">;
@@ -253,4 +267,155 @@ export function createProductionPiContextExtension(
     throw error;
   }
   return { name: "pi-context-runtime", claimed: true, release: owner.release };
+}
+
+export interface ProductionUserTurnRuntimeOptions {
+  identity?: ProductionSessionIdentityFactory;
+  dataRoot?(ctx: ExtensionContext): string;
+  environment?: Readonly<Record<string, string | undefined>>;
+  clock?: { now(): number };
+  busyTimeoutMs?: number;
+  maxBlobBytes?: number;
+  onHardFailure?(error: unknown, phase: string, ctx: ExtensionContext): void | Promise<void>;
+}
+
+export interface ProductionUserTurnRuntime {
+  readonly hook: RegisteredUserInputHook;
+  close(): Promise<void>;
+}
+
+interface WorkspaceUserTurnOwner {
+  readonly dataRoot: string;
+  readonly database: WorkspaceSqliteEvidenceStore;
+  readonly keys: LocalWorkspaceBlobKeyProvider;
+  readonly services: Map<string, UserTurnService>;
+  service(cursor: RuntimeCursor): UserTurnService;
+  close(): Promise<void>;
+}
+
+function cursorKey(cursor: RuntimeCursor): string {
+  return JSON.stringify([
+    cursor.workspaceId,
+    cursor.sessionId,
+    cursor.leafId,
+    cursor.lineageHash,
+    cursor.modelKey,
+  ]);
+}
+
+/** Register the durable T12 ingress path on the same Pi extension entry that owns lifecycle hooks. */
+export function registerProductionUserTurnRuntime(
+  pi: ExtensionAPI,
+  options: ProductionUserTurnRuntimeOptions = {},
+): ProductionUserTurnRuntime {
+  const identity = options.identity ?? { create: createRuntimeCursor };
+  const clock = options.clock ?? { now: Date.now };
+  const owners = new Map<string, Promise<WorkspaceUserTurnOwner>>();
+
+  const cursorFromContext = (ctx: ExtensionContext): RuntimeCursor => {
+    const derived = derivePiSessionContext(ctx, identity);
+    return Object.freeze({
+      workspaceId: derived.workspaceId,
+      sessionId: derived.sessionId,
+      leafId: derived.leafId,
+      lineageHash: derived.lineageHash,
+      modelKey: derived.modelKey,
+    });
+  };
+
+  const ownerFor = async (cursor: RuntimeCursor, ctx: ExtensionContext): Promise<WorkspaceUserTurnOwner> => {
+    const dataRoot = options.dataRoot?.(ctx)
+      ?? join(ctx.sessionManager.getSessionDir(), ".context-runtime");
+    const existing = owners.get(cursor.workspaceId);
+    if (existing) {
+      const owner = await existing;
+      if (owner.dataRoot !== dataRoot) {
+        throw new ProductionCompositionError("PCR_PI_SESSION_SCOPE_CONFLICT", {
+          expectedDataRoot: owner.dataRoot,
+          actualDataRoot: dataRoot,
+        });
+      }
+      return owner;
+    }
+    const opening = (async (): Promise<WorkspaceUserTurnOwner> => {
+      const database = await openWorkspaceSqliteStore({
+        dataRoot,
+        workspaceId: cursor.workspaceId,
+        busyTimeoutMs: options.busyTimeoutMs ?? 1_000,
+        ...(ctx.signal === undefined ? {} : { signal: ctx.signal }),
+      });
+      let keys: LocalWorkspaceBlobKeyProvider | undefined;
+      try {
+        keys = openLocalWorkspaceBlobKeyProvider({
+          dataRoot,
+          workspaceId: cursor.workspaceId,
+          ...(options.environment === undefined ? {} : { environment: options.environment }),
+        });
+        const blobs = createEncryptedBlobStore({
+          dataRoot,
+          workspaceId: cursor.workspaceId,
+          maxBlobBytes: options.maxBlobBytes ?? 8 * 1024 * 1024,
+          keys,
+        });
+        const ledger = await openWorkspaceUserTurnLedger({ database });
+        const services = new Map<string, UserTurnService>();
+        return {
+          dataRoot,
+          database,
+          keys,
+          services,
+          service(candidate) {
+            const key = cursorKey(candidate);
+            let service = services.get(key);
+            if (!service) {
+              service = createUserTurnService({ cursor: candidate, blobs, ledger });
+              services.set(key, service);
+            }
+            return service;
+          },
+          async close() {
+            services.clear();
+            try {
+              await ledger.close();
+              await database.close();
+            } finally {
+              keys!.close();
+            }
+          },
+        };
+      } catch (error) {
+        keys?.close();
+        await database.close().catch(() => undefined);
+        throw error;
+      }
+    })();
+    owners.set(cursor.workspaceId, opening);
+    try {
+      return await opening;
+    } catch (error) {
+      if (owners.get(cursor.workspaceId) === opening) owners.delete(cursor.workspaceId);
+      throw error;
+    }
+  };
+
+  const hook = registerUserInputHook(pi, {
+    cursor: cursorFromContext,
+    async service(cursor, ctx) {
+      return (await ownerFor(cursor, ctx)).service(cursor);
+    },
+    clock,
+    async onHardFailure(error, phase, ctx) {
+      await options.onHardFailure?.(error, phase, ctx);
+    },
+  });
+
+  const close = async (): Promise<void> => {
+    const pending = [...owners.values()];
+    owners.clear();
+    const settled = await Promise.allSettled(pending.map(async (owner) => (await owner).close()));
+    const rejected = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
+    if (rejected) throw rejected.reason;
+  };
+  pi.on("session_shutdown", async () => close());
+  return Object.freeze({ hook, close });
 }

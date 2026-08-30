@@ -32,7 +32,7 @@ describe("packed install", () => {
       peerDependencies: Record<string, string>;
     };
     expect(manifest.pi.extensions).toHaveLength(1);
-    expect(manifest.peerDependencies["@earendil-works/pi-coding-agent"]).toBe("*");
+    expect(manifest.peerDependencies["@earendil-works/pi-coding-agent"]).toBe("0.84.4");
 
     resetOwnerForTest();
     const live = createPiContextExtension({ claimOnCreate: true });

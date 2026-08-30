@@ -27,6 +27,7 @@ describe("T05 Pi 0.84.4 public API contract harness", () => {
       "agent_settled",
       "context",
       "input",
+      "input_result",
       "message_end",
       "model_select",
       "session_before_compact",

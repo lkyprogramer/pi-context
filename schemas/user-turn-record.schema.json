@@ -10,6 +10,7 @@
     "rawTextHash",
     "rawBlobId",
     "utf8Bytes",
+    "hostMessageId",
     "sourceClass",
     "capturedAt"
   ],
@@ -40,7 +41,8 @@
     "sourceClass": {
       "enum": [
         "authenticated-user",
-        "untrusted-user"
+        "untrusted-user",
+        "agent-derived"
       ]
     },
     "capturedAt": {

@@ -27,7 +27,7 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - name: Select Pi compatibility target
-        run: node scripts/install-pi-version.mjs "${{ matrix.lane == 'min' && '0.84.3' || matrix.lane == 'current' && '0.84.4' || 'latest' }}"
+        run: node scripts/install-pi-version.mjs "${{ (matrix.lane == 'min' || matrix.lane == 'current') && '0.84.4' || 'latest' }}"
       - name: Package boundaries
         run: node scripts/ci/run-gate.mjs --name package-boundaries --log artifacts/ci/package-boundaries.log -- pnpm check:boundaries
       - name: Production package build

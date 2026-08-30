@@ -34,7 +34,7 @@ export function fixtureEnvironment(partial: Partial<DoctorEnvironment> = {}): Do
   return {
     packages: [],
     nodeVersion: process.versions.node,
-    piVersion: "0.84.3",
+    piVersion: "0.84.4",
     capabilities: [...REQUIRED_PI_CAPABILITIES],
     trusted: true,
     storageWritable: true,
