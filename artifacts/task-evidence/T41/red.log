@@ -1,0 +1,126 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t41.test.ts (7 tests | 7 failed) 10ms
+   × T41 Real trace capture and anonymization > real_trace_capture_and_anonymization 5ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T41 Real trace capture and anonymization > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T41 Real trace capture and anonymization > rejects malformed capture input and unknown clusters 0ms
+     → (0 , createTraceCapture) is not a function
+   × T41 Real trace capture and anonymization > replays equal hashes for the same redacted session 0ms
+     → (0 , createTraceCapture) is not a function
+   × T41 Real trace capture and anonymization > rejects session rows from another workspace 0ms
+     → (0 , createTraceCapture) is not a function
+   × T41 Real trace capture and anonymization > stops at the abort boundary before writing 1ms
+     → (0 , createTraceCapture) is not a function
+   × T41 Real trace capture and anonymization > writes redacted artifacts to a file-backed store 1ms
+     → (0 , createFileTraceStore) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t41.test.ts > T41 Real trace capture and anonymization > real_trace_capture_and_anonymization
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t41.test.ts:88:33
+     86| describe("T41 Real trace capture and anonymization", () => {
+     87|   it("real_trace_capture_and_anonymization", async () => {
+     88|     await expect(runT41Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     89|   });
+     90| 
+
+Caused by: TypeError: (0 , createTraceCapture) is not a function
+ ❯ runT41Fixture tests/tasks/t41.test.ts:56:19
+ ❯ tests/tasks/t41.test.ts:88:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t41.test.ts > T41 Real trace capture and anonymization > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_TRACE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_4__.createTraceCapture) is not a function",
+  }
+
+ ❯ tests/tasks/t41.test.ts:92:51
+     90| 
+     91|   it("fails construction when production dependencies are absent", () …
+     92|     expect(() => createTraceCapture({} as never)).toThrowError(
+       |                                                   ^
+     93|       expect.objectContaining({ code: "PCR_TRACE_DEPENDENCY_MISSING" }…
+     94|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t41.test.ts > T41 Real trace capture and anonymization > rejects malformed capture input and unknown clusters
+TypeError: (0 , createTraceCapture) is not a function
+ ❯ tests/tasks/t41.test.ts:98:21
+     96| 
+     97|   it("rejects malformed capture input and unknown clusters", async () …
+     98|     const capture = createTraceCapture({ corpusId: "pcr-bench", cluste…
+       |                     ^
+     99|     await expect(capture.capture({} as never)).rejects.toMatchObject({…
+    100|     await expect(capture.capture({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t41.test.ts > T41 Real trace capture and anonymization > replays equal hashes for the same redacted session
+TypeError: (0 , createTraceCapture) is not a function
+ ❯ tests/tasks/t41.test.ts:110:21
+    108| 
+    109|   it("replays equal hashes for the same redacted session", async () =>…
+    110|     const capture = createTraceCapture({ corpusId: "pcr-bench", cluste…
+       |                     ^
+    111|     const input = {
+    112|       clusterId: "temporal",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t41.test.ts > T41 Real trace capture and anonymization > rejects session rows from another workspace
+TypeError: (0 , createTraceCapture) is not a function
+ ❯ tests/tasks/t41.test.ts:124:21
+    122| 
+    123|   it("rejects session rows from another workspace", async () => {
+    124|     const capture = createTraceCapture({ corpusId: "pcr-bench", cluste…
+       |                     ^
+    125|     await expect(capture.capture({
+    126|       clusterId: "temporal",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t41.test.ts > T41 Real trace capture and anonymization > stops at the abort boundary before writing
+TypeError: (0 , createTraceCapture) is not a function
+ ❯ tests/tasks/t41.test.ts:136:21
+    134|   it("stops at the abort boundary before writing", async () => {
+    135|     let wrote = 0;
+    136|     const capture = createTraceCapture({
+       |                     ^
+    137|       corpusId: "pcr-bench",
+    138|       clusters: CLUSTERS,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t41.test.ts > T41 Real trace capture and anonymization > writes redacted artifacts to a file-backed store
+TypeError: (0 , createFileTraceStore) is not a function
+ ❯ tests/tasks/t41.test.ts:158:19
+    156|   it("writes redacted artifacts to a file-backed store", async () => {
+    157|     const root = dataRoot();
+    158|     const store = createFileTraceStore({ root, corpusId: "pcr-bench" }…
+       |                   ^
+    159|     const capture = createTraceCapture({ corpusId: "pcr-bench", cluste…
+    160|     const first = await capture.capture({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  07:47:01
+   Duration  368ms (transform 67ms, setup 0ms, collect 96ms, tests 10ms, environment 0ms, prepare 56ms)
+

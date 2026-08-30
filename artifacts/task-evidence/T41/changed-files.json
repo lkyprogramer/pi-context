@@ -1,0 +1,20 @@
+{
+  "taskId": "T41",
+  "production": [
+    "blockers/T41-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/trace/capture.ts",
+    "packages/benchmark/src/trace/cli.ts",
+    "packages/benchmark/src/trace/errors.ts",
+    "packages/benchmark/src/trace/file-store.ts",
+    "packages/benchmark/src/trace/index.ts",
+    "packages/benchmark/src/trace/redact.ts",
+    "packages/benchmark/src/trace/types.ts",
+    "scripts/capture-trace.mjs"
+  ],
+  "tests": [
+    "packages/benchmark/test/trace.test.ts",
+    "tests/tasks/t41.test.ts"
+  ]
+}
