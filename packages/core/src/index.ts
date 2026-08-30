@@ -118,4 +118,15 @@ export {
   type CreateCheckpointVerifierInput,
   type VerificationReport,
 } from "./compaction/checkpoint.js";
+export {
+  SemanticVerifierError,
+  createSemanticVerifier,
+  type CreateSemanticVerifierInput,
+  type SemanticDirectiveFact,
+  type SemanticRuntimeSnapshot,
+  type SemanticVerification,
+  type SemanticVerifier,
+  type SemanticVerifierErrorCode,
+  type SemanticVerifierIssue,
+} from "./verifier/index.js";
 

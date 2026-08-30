@@ -1,0 +1,126 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t36.test.ts (7 tests | 7 failed) 16ms
+   × T36 Deterministic semantic verifier and patcher > deterministic_semantic_verifier_and_patcher 12ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T36 Deterministic semantic verifier and patcher > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T36 Deterministic semantic verifier and patcher > rejects malformed proposals and empty claims 0ms
+     → (0 , createSemanticVerifier) is not a function
+   × T36 Deterministic semantic verifier and patcher > replays equal verification for the same proposal and snapshot 0ms
+     → (0 , createSemanticVerifier) is not a function
+   × T36 Deterministic semantic verifier and patcher > rejects a snapshot cursor from another workspace 0ms
+     → (0 , createSemanticVerifier) is not a function
+   × T36 Deterministic semantic verifier and patcher > stops at the abort boundary before inspecting claims 0ms
+     → (0 , createSemanticVerifier) is not a function
+   × T36 Deterministic semantic verifier and patcher > fails closed when a proposal rewrites an active directive to must-not 0ms
+     → (0 , createSemanticVerifier) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t36.test.ts > T36 Deterministic semantic verifier and patcher > deterministic_semantic_verifier_and_patcher
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t36.test.ts:76:33
+     74| describe("T36 Deterministic semantic verifier and patcher", () => {
+     75|   it("deterministic_semantic_verifier_and_patcher", async () => {
+     76|     await expect(runT36Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     77|   });
+     78| 
+
+Caused by: TypeError: (0 , createSemanticVerifier) is not a function
+ ❯ runT36Fixture tests/tasks/t36.test.ts:44:20
+ ❯ tests/tasks/t36.test.ts:76:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |0| tests/tasks/t36.test.ts > T36 Deterministic semantic verifier and patcher > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_VERIFIER_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createSemanticVerifier) is not a function",
+  }
+
+ ❯ tests/tasks/t36.test.ts:80:55
+     78| 
+     79|   it("fails construction when production dependencies are absent", () …
+     80|     expect(() => createSemanticVerifier({} as never)).toThrowError(
+       |                                                       ^
+     81|       expect.objectContaining({ code: "PCR_VERIFIER_DEPENDENCY_MISSING…
+     82|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |0| tests/tasks/t36.test.ts > T36 Deterministic semantic verifier and patcher > rejects malformed proposals and empty claims
+TypeError: (0 , createSemanticVerifier) is not a function
+ ❯ tests/tasks/t36.test.ts:87:22
+     85|   it("rejects malformed proposals and empty claims", async () => {
+     86|     const bound = cursor();
+     87|     const verifier = createSemanticVerifier({ cursor: bound });
+       |                      ^
+     88|     await expect(verifier.verify({} as never, snapshot(bound))).reject…
+     89|       code: "PCR_VERIFIER_INPUT_INVALID",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |0| tests/tasks/t36.test.ts > T36 Deterministic semantic verifier and patcher > replays equal verification for the same proposal and snapshot
+TypeError: (0 , createSemanticVerifier) is not a function
+ ❯ tests/tasks/t36.test.ts:98:22
+     96|   it("replays equal verification for the same proposal and snapshot", …
+     97|     const bound = cursor();
+     98|     const verifier = createSemanticVerifier({ cursor: bound });
+       |                      ^
+     99|     const input = proposal();
+    100|     const first = await verifier.verify(input, snapshot(bound));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |0| tests/tasks/t36.test.ts > T36 Deterministic semantic verifier and patcher > rejects a snapshot cursor from another workspace
+TypeError: (0 , createSemanticVerifier) is not a function
+ ❯ tests/tasks/t36.test.ts:108:22
+    106|   it("rejects a snapshot cursor from another workspace", async () => {
+    107|     const bound = cursor();
+    108|     const verifier = createSemanticVerifier({ cursor: bound });
+       |                      ^
+    109|     const other = createRuntimeCursor({
+    110|       workspacePath: `${WORK}-other`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |0| tests/tasks/t36.test.ts > T36 Deterministic semantic verifier and patcher > stops at the abort boundary before inspecting claims
+TypeError: (0 , createSemanticVerifier) is not a function
+ ❯ tests/tasks/t36.test.ts:123:22
+    121|   it("stops at the abort boundary before inspecting claims", async () …
+    122|     const bound = cursor();
+    123|     const verifier = createSemanticVerifier({ cursor: bound });
+       |                      ^
+    124|     await expect(verifier.verify(proposal(), {
+    125|       ...snapshot(bound),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |0| tests/tasks/t36.test.ts > T36 Deterministic semantic verifier and patcher > fails closed when a proposal rewrites an active directive to must-not
+TypeError: (0 , createSemanticVerifier) is not a function
+ ❯ tests/tasks/t36.test.ts:132:22
+    130|   it("fails closed when a proposal rewrites an active directive to mus…
+    131|     const bound = cursor();
+    132|     const verifier = createSemanticVerifier({ cursor: bound });
+       |                      ^
+    133|     const rewritten = proposal({
+    134|       claims: [{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed (7)
+   Start at  05:52:58
+   Duration  435ms (transform 135ms, setup 0ms, collect 189ms, tests 16ms, environment 0ms, prepare 61ms)
+

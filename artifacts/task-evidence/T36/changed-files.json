@@ -1,0 +1,14 @@
+{
+  "taskId": "T36",
+  "production": [
+    "blockers/T36-scope-expansion.md",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "packages/core/src/verifier/index.ts",
+    "packages/core/src/verifier/semantic.ts"
+  ],
+  "tests": [
+    "packages/core/test/verifier/semantic.test.ts",
+    "tests/tasks/t36.test.ts"
+  ]
+}

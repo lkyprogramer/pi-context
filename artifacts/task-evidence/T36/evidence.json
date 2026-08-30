@@ -1,0 +1,32 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T36",
+  "status": "review-candidate",
+  "parentCommit": "5467cdcf39d43ebf8bcf2b9d65ea1d1010542e1f",
+  "redLog": "artifacts/task-evidence/T36/red.log",
+  "greenLog": "artifacts/task-evidence/T36/green.log",
+  "fullGateLog": "artifacts/task-evidence/T36/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "uncitedClaimsPatched": true,
+    "polarityRewriteFailClosed": true,
+    "repositoryGateFiles": 134,
+    "repositoryGateTests": 652,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "artifacts/task-evidence/T36/changed-files.json": "ae89ef11243924ecbdc74eac0bdc0d0103a6c3e645c26b767f17219668834b86",
+    "artifacts/task-evidence/T36/full-gate.log": "4e2cbde8910164116ab4246cfe2bff2cb77e74e3752faa836a3760264cbe7c97",
+    "artifacts/task-evidence/T36/green.log": "c85bd74782ccb6fe508bd452d25d0aaf2ba9e6fa65070e79c6c28dd5b94c2550",
+    "artifacts/task-evidence/T36/preflight-git.txt": "2ff83ac64e642d8107c67d59af8ab005c025920f7c39d56879f3c0e57ab5b581",
+    "artifacts/task-evidence/T36/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T36/red.log": "b428917b8345eaa9350254eb3818c797f12e01b5e411c2b1679d7d19754643be",
+    "blockers/T36-scope-expansion.md": "c19c8488b757269b7d3a52a4b0ed2e36152c13b51a103f8ea386643120f1de09",
+    "packages/core/package.json": "8cc6f31581d70edd907ec75a462c769d3e6323eb0658bc864038735c1b6def56",
+    "packages/core/src/index.ts": "f290599883a8f0d76270a9f76d916995509048797f4e58492f24ef0157c813af",
+    "packages/core/src/verifier/index.ts": "3fb84124adcfa3f1a0e5ee5d7378271ef4791707932ec592edbd47f4c3bdffbd",
+    "packages/core/src/verifier/semantic.ts": "7222a4100cd3361decbe404f2778ccdec79481ea569188551a85719fe73c1378",
+    "packages/core/test/verifier/semantic.test.ts": "f1ab2cd10123d7b95c019d3163ca17395bba5a7f6d67da6a035ae3fb8d2e7f03",
+    "tests/tasks/t36.test.ts": "8069d8316f10f3deecdb8e8aabeeb427986c4fcedf322a7479ba5b7034efb074"
+  }
+}

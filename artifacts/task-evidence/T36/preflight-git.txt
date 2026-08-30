@@ -1,0 +1,26 @@
+ M HANDOFF.md
+?? artifacts/task-evidence/T36/preflight-git.txt
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T12/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T13/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T14/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T15/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T16/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T17/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T18/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T19/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T20/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T21/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T22/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T23/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T24/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T25/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T26/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T27/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T28/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T29/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T30/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T31/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T32/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T33/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T34/
+?? docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/artifacts/task-evidence/T35/
