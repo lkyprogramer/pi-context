@@ -1,0 +1,133 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t24.test.ts (7 tests | 6 failed) 10ms
+   × T24 Lossless Pi message envelope codec > lossless_pi_message_envelope_codec 5ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T24 Lossless Pi message envelope codec > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T24 Lossless Pi message envelope codec > rejects malformed raw messages 1ms
+     → expected [Function] to throw error matching /PCR_MESSAGE_CODEC_INPUT_INVALID/ but got '(0 , createMess…'
+   × T24 Lossless Pi message envelope codec > replays the same raw message to an equal envelope 0ms
+     → (0 , createMessageCodec) is not a function
+   × T24 Lossless Pi message envelope codec > rejects a cursor from another workspace/session/branch 0ms
+     → expected [Function] to throw error matching /PCR_MESSAGE_CODEC_SCOPE_MISMATCH/ but got '(0 , createMess…'
+   × T24 Lossless Pi message envelope codec > does not invent zero usage for an assistant message 0ms
+     → (0 , createMessageCodec) is not a function
+   ✓ T24 Lossless Pi message envelope codec > stops at the abort boundary before hashing 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t24.test.ts > T24 Lossless Pi message envelope codec > lossless_pi_message_envelope_codec
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t24.test.ts:70:33
+     68| describe("T24 Lossless Pi message envelope codec", () => {
+     69|   it("lossless_pi_message_envelope_codec", async () => {
+     70|     await expect(runT24Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     71|   });
+     72| 
+
+Caused by: TypeError: (0 , createMessageCodec) is not a function
+ ❯ codec tests/tasks/t24.test.ts:17:10
+ ❯ roundTrip tests/tasks/t24.test.ts:22:10
+ ❯ runT24Fixture tests/tasks/t24.test.ts:26:16
+ ❯ tests/tasks/t24.test.ts:70:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t24.test.ts > T24 Lossless Pi message envelope codec > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_MESSAGE_CODEC_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createMessageCodec) is not a function",
+  }
+
+ ❯ tests/tasks/t24.test.ts:74:51
+     72| 
+     73|   it("fails construction when production dependencies are absent", () …
+     74|     expect(() => createMessageCodec({} as never)).toThrowError(
+       |                                                   ^
+     75|       expect.objectContaining({ code: "PCR_MESSAGE_CODEC_DEPENDENCY_MI…
+     76|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t24.test.ts > T24 Lossless Pi message envelope codec > rejects malformed raw messages
+AssertionError: expected [Function] to throw error matching /PCR_MESSAGE_CODEC_INPUT_INVALID/ but got '(0 , createMess…'
+
+- Expected: 
+/PCR_MESSAGE_CODEC_INPUT_INVALID/
+
++ Received: 
+"(0 , __vite_ssr_import_2__.createMessageCodec) is not a function"
+
+ ❯ tests/tasks/t24.test.ts:80:63
+     78| 
+     79|   it("rejects malformed raw messages", () => {
+     80|     expect(() => codec().wrap({ cursor: cursor(), raw: {} })).toThrowE…
+       |                                                               ^
+     81|     expect(() => codec().unwrap({} as never)).toThrowError(/PCR_MESSAG…
+     82|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t24.test.ts > T24 Lossless Pi message envelope codec > replays the same raw message to an equal envelope
+TypeError: (0 , createMessageCodec) is not a function
+ ❯ codec tests/tasks/t24.test.ts:17:10
+     15| 
+     16| function codec() {
+     17|   return createMessageCodec({ cursor: cursor() });
+       |          ^
+     18| }
+     19| 
+ ❯ roundTrip tests/tasks/t24.test.ts:22:10
+ ❯ tests/tasks/t24.test.ts:86:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t24.test.ts > T24 Lossless Pi message envelope codec > rejects a cursor from another workspace/session/branch
+AssertionError: expected [Function] to throw error matching /PCR_MESSAGE_CODEC_SCOPE_MISMATCH/ but got '(0 , createMess…'
+
+- Expected: 
+/PCR_MESSAGE_CODEC_SCOPE_MISMATCH/
+
++ Received: 
+"(0 , __vite_ssr_import_2__.createMessageCodec) is not a function"
+
+ ❯ tests/tasks/t24.test.ts:94:9
+     92|       cursor: other,
+     93|       raw: { role: "user", content: "x", timestamp: 1 },
+     94|     })).toThrowError(/PCR_MESSAGE_CODEC_SCOPE_MISMATCH/);
+       |         ^
+     95|   });
+     96| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t24.test.ts > T24 Lossless Pi message envelope codec > does not invent zero usage for an assistant message
+TypeError: (0 , createMessageCodec) is not a function
+ ❯ codec tests/tasks/t24.test.ts:17:10
+     15| 
+     16| function codec() {
+     17|   return createMessageCodec({ cursor: cursor() });
+       |          ^
+     18| }
+     19| 
+ ❯ roundTrip tests/tasks/t24.test.ts:22:10
+ ❯ tests/tasks/t24.test.ts:98:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  01:27:24
+   Duration  1.09s (transform 123ms, setup 0ms, collect 863ms, tests 10ms, environment 0ms, prepare 52ms)
+

@@ -1,0 +1,13 @@
+{
+  "taskId": "T24",
+  "production": [
+    "blockers/T24-scope-expansion.md",
+    "packages/pi-adapter/package.json",
+    "packages/pi-adapter/src/index.ts",
+    "packages/pi-adapter/src/message-codec.ts"
+  ],
+  "tests": [
+    "packages/pi-adapter/test/message-codec.test.ts",
+    "tests/tasks/t24.test.ts"
+  ]
+}

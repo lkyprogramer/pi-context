@@ -4,6 +4,15 @@ export { bindToolResultCapture, registerToolResultHook } from "./tool-result-hoo
 export { bindToolCallGate } from "../../kernel/src/security/action-gate.js";
 export { registerContextHook, normalizePcrError } from "./context-hook.js";
 export { toHostMessages, toPiMessages } from "./message-conversion.js";
+export {
+  createMessageCodec,
+  MessageCodecError,
+  type CreateMessageCodecInput,
+  type MessageCodec,
+  type PiMessageEnvelope,
+  type WrapMessageInput,
+} from "./message-codec.js";
+
 export * from "./user-input-hook.js";
 export {
   createRetrievalTools,
