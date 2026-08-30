@@ -120,7 +120,7 @@ describe("workspace SQLite Saga journal", () => {
 
     const upgraded = await openDatabase(dataRoot, scope);
     try {
-      expect(upgraded.getSchemaVersion()).toBe(4);
+      expect(upgraded.getSchemaVersion()).toBe(WORKSPACE_SQLITE_MIGRATIONS.length);
       const inspection = new DatabaseSync(path, { readOnly: true });
       try {
         expect(inspection.prepare("SELECT checksum FROM schema_migration WHERE version = 1").get()).toEqual({ checksum });
@@ -157,15 +157,12 @@ describe("workspace SQLite Saga journal", () => {
     try {
       const record = await journal.prepare(operation(scope, "real", { rawBlobId: ref }));
       expect(record).toMatchObject({ state: "runtime_durable", revision: 1, rawBlobId: ref });
-      expect(database.getSchemaVersion()).toBe(4);
+      expect(database.getSchemaVersion()).toBe(WORKSPACE_SQLITE_MIGRATIONS.length);
       const inspection = new DatabaseSync(database.path, { readOnly: true });
       try {
-        expect(inspection.prepare("SELECT name FROM schema_migration ORDER BY version").all()).toEqual([
-          { name: "workspace-evidence-v1" },
-          { name: "workspace-saga-v2" },
-          { name: "workspace-user-turn-v3" },
-          { name: "workspace-user-turn-disposition-v4" },
-        ]);
+        expect(inspection.prepare("SELECT name FROM schema_migration ORDER BY version").all()).toEqual(
+          WORKSPACE_SQLITE_MIGRATIONS.map((migration) => ({ name: migration.name })),
+        );
       } finally {
         inspection.close();
       }
@@ -552,7 +549,7 @@ describe("workspace SQLite Saga journal", () => {
     }
     await journal.close();
     await expect(journal.get("operation-busy")).rejects.toMatchObject({ code: "PCR_SAGA_CLOSED" });
-    expect(database.getSchemaVersion()).toBe(4);
+    expect(database.getSchemaVersion()).toBe(WORKSPACE_SQLITE_MIGRATIONS.length);
     const liveJournal = await openJournal(database);
     await database.close();
     await expect(liveJournal.get("operation-busy")).rejects.toMatchObject({ code: "PCR_SAGA_CLOSED" });

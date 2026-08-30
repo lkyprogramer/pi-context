@@ -1,0 +1,148 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:66278) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ |0| tests/tasks/t15.test.ts (8 tests | 8 failed) 176ms
+   × T15 Evidence admission, FTS indexing and exact read > evidence_admission_fts_indexing_and_exact_read 49ms
+     → promise rejected "TypeError: (0 , ope…" instead of resolving
+   × T15 Evidence admission, FTS indexing and exact read > fails construction when production dependencies are absent 3ms
+     → expected error to match asymmetric matcher
+   × T15 Evidence admission, FTS indexing and exact read > rejects malformed admission before writing 20ms
+     → (0 , openWorkspaceEvidenceRepository) is not a function
+   × T15 Evidence admission, FTS indexing and exact read > does not elevate untrusted origin even when a reducer requests act 20ms
+     → (0 , openWorkspaceEvidenceRepository) is not a function
+   × T15 Evidence admission, FTS indexing and exact read > replays duplicate admission with the same evidence ids 20ms
+     → (0 , openWorkspaceEvidenceRepository) is not a function
+   × T15 Evidence admission, FTS indexing and exact read > denies search and exact read from another workspace session 20ms
+     → (0 , openWorkspaceEvidenceRepository) is not a function
+   × T15 Evidence admission, FTS indexing and exact read > stops at the abort boundary before admitting 19ms
+     → (0 , openWorkspaceEvidenceRepository) is not a function
+   × T15 Evidence admission, FTS indexing and exact read > exact read is deterministic across two runs and preserves a byte range 26ms
+     → (0 , openWorkspaceEvidenceRepository) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > evidence_admission_fts_indexing_and_exact_read
+AssertionError: promise rejected "TypeError: (0 , ope…" instead of resolving
+ ❯ tests/tasks/t15.test.ts:141:33
+    139| describe("T15 Evidence admission, FTS indexing and exact read", () => {
+    140|   it("evidence_admission_fts_indexing_and_exact_read", async () => {
+    141|     await expect(runT15Fixture()).resolves.toEqual({ ok: true, task: "…
+       |                                 ^
+    142|   });
+    143| 
+
+Caused by: TypeError: (0 , openWorkspaceEvidenceRepository) is not a function
+ ❯ openStack tests/tasks/t15.test.ts:63:22
+ ❯ runT15Fixture tests/tasks/t15.test.ts:76:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_EVIDENCE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_7__.createEvidenceService) is not a function",
+  }
+
+ ❯ tests/tasks/t15.test.ts:145:54
+    143| 
+    144|   it("fails construction when production dependencies are absent", () …
+    145|     expect(() => createEvidenceService({} as never)).toThrowError(
+       |                                                      ^
+    146|       expect.objectContaining({ code: "PCR_EVIDENCE_DEPENDENCY_MISSING…
+    147|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > rejects malformed admission before writing
+TypeError: (0 , openWorkspaceEvidenceRepository) is not a function
+ ❯ openStack tests/tasks/t15.test.ts:63:22
+     61|     busyTimeoutMs: 1_000,
+     62|   });
+     63|   const repository = openWorkspaceEvidenceRepository({ database });
+       |                      ^
+     64|   const fts = openWorkspaceEvidenceFtsIndex({ database });
+     65|   const service = createEvidenceService({
+ ❯ tests/tasks/t15.test.ts:152:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > does not elevate untrusted origin even when a reducer requests act
+TypeError: (0 , openWorkspaceEvidenceRepository) is not a function
+ ❯ openStack tests/tasks/t15.test.ts:63:22
+     61|     busyTimeoutMs: 1_000,
+     62|   });
+     63|   const repository = openWorkspaceEvidenceRepository({ database });
+       |                      ^
+     64|   const fts = openWorkspaceEvidenceFtsIndex({ database });
+     65|   const service = createEvidenceService({
+ ❯ tests/tasks/t15.test.ts:162:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > replays duplicate admission with the same evidence ids
+TypeError: (0 , openWorkspaceEvidenceRepository) is not a function
+ ❯ openStack tests/tasks/t15.test.ts:63:22
+     61|     busyTimeoutMs: 1_000,
+     62|   });
+     63|   const repository = openWorkspaceEvidenceRepository({ database });
+       |                      ^
+     64|   const fts = openWorkspaceEvidenceFtsIndex({ database });
+     65|   const service = createEvidenceService({
+ ❯ tests/tasks/t15.test.ts:187:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > denies search and exact read from another workspace session
+TypeError: (0 , openWorkspaceEvidenceRepository) is not a function
+ ❯ openStack tests/tasks/t15.test.ts:63:22
+     61|     busyTimeoutMs: 1_000,
+     62|   });
+     63|   const repository = openWorkspaceEvidenceRepository({ database });
+       |                      ^
+     64|   const fts = openWorkspaceEvidenceFtsIndex({ database });
+     65|   const service = createEvidenceService({
+ ❯ tests/tasks/t15.test.ts:214:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > stops at the abort boundary before admitting
+TypeError: (0 , openWorkspaceEvidenceRepository) is not a function
+ ❯ openStack tests/tasks/t15.test.ts:63:22
+     61|     busyTimeoutMs: 1_000,
+     62|   });
+     63|   const repository = openWorkspaceEvidenceRepository({ database });
+       |                      ^
+     64|   const fts = openWorkspaceEvidenceFtsIndex({ database });
+     65|   const service = createEvidenceService({
+ ❯ tests/tasks/t15.test.ts:244:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |0| tests/tasks/t15.test.ts > T15 Evidence admission, FTS indexing and exact read > exact read is deterministic across two runs and preserves a byte range
+TypeError: (0 , openWorkspaceEvidenceRepository) is not a function
+ ❯ openStack tests/tasks/t15.test.ts:63:22
+     61|     busyTimeoutMs: 1_000,
+     62|   });
+     63|   const repository = openWorkspaceEvidenceRepository({ database });
+       |                      ^
+     64|   const fts = openWorkspaceEvidenceFtsIndex({ database });
+     65|   const service = createEvidenceService({
+ ❯ tests/tasks/t15.test.ts:270:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  22:51:01
+   Duration  727ms (transform 151ms, setup 0ms, collect 220ms, tests 176ms, environment 0ms, prepare 61ms)
+

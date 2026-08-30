@@ -1,0 +1,39 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T15",
+  "status": "review-candidate",
+  "parentCommit": "b798af0e160f849fad29ac63b94e9f45b6245279",
+  "redLog": "artifacts/task-evidence/T15/red.log",
+  "greenLog": "artifacts/task-evidence/T15/green.log",
+  "fullGateLog": "artifacts/task-evidence/T15/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "hashVerifiableEvidenceRetrieval": true,
+    "ftsSearchScoped": true,
+    "exactReadSha256AndByteLength": true,
+    "noDefaultFakeDependencies": true,
+    "untrustedOriginCannotElevate": true,
+    "repositoryGateFiles": 92,
+    "repositoryGateTests": 480,
+    "acceptanceGateTests": 25
+  },
+  "files": {
+    "artifacts/task-evidence/T15/changed-files.json": "a527c74ae0e7c56490794e55ac1e46a0577d7f57857da86c64a862466c01016f",
+    "artifacts/task-evidence/T15/full-gate.log": "7bbe837959aa4fcda77f46e540dabf28261f01aa9e63eaba878f3bc7e30fb816",
+    "artifacts/task-evidence/T15/green.log": "2d882d48cd652223c35c9afbd77b94f9dcecea86be5fa9184ddb6fd3e6ac16b5",
+    "artifacts/task-evidence/T15/preflight-git.txt": "23b5f2ac910efef3da2965b511454f31145d32d3fbae6ba41cfdd17cc5c2880b",
+    "artifacts/task-evidence/T15/preflight-toolchain.txt": "230379c89cb3f942c21fb2fa39aa0d0f1cfbbe7ab707012d518d17b4a41d6541",
+    "artifacts/task-evidence/T15/red.log": "f169c96aa09c16e3ff313e3b32a2d0b527021ecba982df1839272de8a7b69ce6",
+    "blockers/T15-scope-expansion.md": "9076eb8cbafdd52ee1651c409c01fe72e2e1930142651ea198e9e1283a3cb091",
+    "packages/runtime/src/evidence-service.ts": "18649593e8a6f854ad92022b9a8b63ed19c22c3f7a586e32bb64be4c3a17077d",
+    "packages/runtime/src/index.ts": "b52fd27dca99a92e74434fa87bc58ccf6ddbf5688d259744557ab6467aaf13c9",
+    "packages/storage-node/src/evidence-repository.ts": "28ae7db3c60ee52509cf4d0fe7f0f84e3932afa80654f8d0a64f18ebfe09c384",
+    "packages/storage-node/src/fts-index.ts": "5e8c3ca2928fff19151e885b4b6c5047af9b33a4c7d83121dfc4c4fe16ec6bed",
+    "packages/storage-node/src/index.ts": "0d0c2c9710e7261efc73efaee457a2c13185875f02913a707a12fc5a6f8c9875",
+    "packages/storage-node/src/schema/migrations.ts": "afb87d7a17ac64dd8cd64b29fefdd510b10c9833a55c94ae6785ab9c3b850fd1",
+    "packages/storage-node/test/saga-store.test.ts": "706a5fc25be01a64b81afdd319e0413f813a76432b33f96e55d159f6c26445b5",
+    "packages/storage-node/test/user-turn-store.test.ts": "6148d87426245b58125b70c036122c72eec5ba66b146fe876715a1b716960f71",
+    "tests/acceptance/evidence-recovery.test.ts": "7e316406243cab2470587ca3a18fcccb1c1221205cb7de6ce3d9fd9ecbcddf5a",
+    "tests/tasks/t15.test.ts": "a75b2620b186ae19e9c81eae6858c823db7a7fbce140756cb3309a9f91d8c90d"
+  }
+}

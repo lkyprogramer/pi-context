@@ -151,11 +151,20 @@ CREATE UNIQUE INDEX user_turn_session_host ON user_turn_ledger (
 ) WHERE host_message_id IS NOT NULL;
 `;
 
+const V5_SQL = `
+CREATE VIRTUAL TABLE evidence_fts USING fts5(
+  evidence_id UNINDEXED,
+  body,
+  tokenize = 'unicode61'
+);
+`;
+
 export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = Object.freeze([
   Object.freeze({ version: 1, name: "workspace-evidence-v1", sql: V1_SQL }),
   Object.freeze({ version: 2, name: "workspace-saga-v2", sql: V2_SQL }),
   Object.freeze({ version: 3, name: "workspace-user-turn-v3", sql: V3_SQL }),
   Object.freeze({ version: 4, name: "workspace-user-turn-disposition-v4", sql: V4_SQL }),
+  Object.freeze({ version: 5, name: "workspace-evidence-fts-v5", sql: V5_SQL }),
 ]);
 
 export const WORKSPACE_SQLITE_SCHEMA_VERSION = WORKSPACE_SQLITE_MIGRATIONS.at(-1)?.version ?? 0;

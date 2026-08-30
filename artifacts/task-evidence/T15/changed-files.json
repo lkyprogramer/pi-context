@@ -1,0 +1,18 @@
+{
+  "taskId": "T15",
+  "production": [
+    "blockers/T15-scope-expansion.md",
+    "packages/runtime/src/evidence-service.ts",
+    "packages/runtime/src/index.ts",
+    "packages/storage-node/src/evidence-repository.ts",
+    "packages/storage-node/src/fts-index.ts",
+    "packages/storage-node/src/index.ts",
+    "packages/storage-node/src/schema/migrations.ts",
+    "packages/storage-node/test/saga-store.test.ts",
+    "packages/storage-node/test/user-turn-store.test.ts"
+  ],
+  "tests": [
+    "tests/tasks/t15.test.ts",
+    "tests/acceptance/evidence-recovery.test.ts"
+  ]
+}

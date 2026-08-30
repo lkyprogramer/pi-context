@@ -5,3 +5,5 @@ export * from "./blob/key-provider.js";
 export * from "./blob/store.js";
 export * from "./saga-store.js";
 export * from "./user-turn-store.js";
+export * from "./evidence-repository.js";
+export * from "./fts-index.js";

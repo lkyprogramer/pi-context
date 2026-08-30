@@ -92,7 +92,7 @@ describe("workspace user turn ledger", () => {
         hostMessageId: "pi-entry-exact",
         rawBlobId: receipt.rawBlobId,
       });
-      expect(database.getSchemaVersion()).toBe(4);
+      expect(database.getSchemaVersion()).toBe(WORKSPACE_SQLITE_MIGRATIONS.length);
     } finally {
       await ledger.close();
       await database.close();
@@ -134,7 +134,7 @@ describe("workspace user turn ledger", () => {
 
     const upgraded = await openWorkspaceSqliteStore({ dataRoot, workspaceId: scope.workspaceId, busyTimeoutMs: 1_000 });
     try {
-      expect(upgraded.getSchemaVersion()).toBe(4);
+      expect(upgraded.getSchemaVersion()).toBe(WORKSPACE_SQLITE_MIGRATIONS.length);
       const inspection = new DatabaseSync(path, { readOnly: true });
       try {
         expect(inspection.prepare("SELECT version, checksum FROM schema_migration WHERE version <= 2 ORDER BY version").all())
