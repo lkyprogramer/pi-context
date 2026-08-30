@@ -1,0 +1,16 @@
+{
+  "name": "@pcr/benchmark",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@pcr/contracts": "workspace:*",
+    "@pcr/pi-adapter": "workspace:*",
+    "@pcr/runtime": "workspace:*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts"
+  }
+}

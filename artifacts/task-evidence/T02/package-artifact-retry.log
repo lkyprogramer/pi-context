@@ -1,0 +1,15 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/release/package-artifact.test.ts (4 tests) 2445ms
+   ✓ release package > contains one extension entry, runtime dependencies and no source-private imports  672ms
+   ✓ release package > verifies clean-home extract, uninstall/reinstall, and temporary pi -e entry  618ms
+   ✓ release package > keeps the Node/OS matrix and does not hide unsupported Pi versions  578ms
+   ✓ release package > ships license/security docs and the gate-derived semantic default  576ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  10:28:20
+   Duration  2.96s (transform 133ms, setup 0ms, collect 208ms, tests 2.44s, environment 0ms, prepare 54ms)
+

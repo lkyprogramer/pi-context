@@ -1,0 +1,11 @@
+{
+  "taskId": "T02",
+  "parentCommit": "56c351d042a0881209fa077499e4783ac97250b2",
+  "toolchain": {
+    "node": "v22.19.0",
+    "pnpm": "10.15.0",
+    "pi": "0.84.4"
+  },
+  "knownControlInput": "docs/pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0/** is user-provided and untracked",
+  "phaseBoundary": "T02 creates and validates the target package graph; legacy packages remain unconnected until their vertical slices migrate."
+}

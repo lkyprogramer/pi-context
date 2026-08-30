@@ -30,13 +30,49 @@ importers:
         specifier: '*'
         version: 1.3.22
 
+  packages/benchmark:
+    dependencies:
+      '@pcr/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@pcr/pi-adapter':
+        specifier: workspace:*
+        version: link:../pi-adapter
+      '@pcr/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/contracts: {}
+
+  packages/core:
+    dependencies:
+      '@pcr/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/kernel: {}
 
   packages/pi-adapter: {}
 
+  packages/runtime:
+    dependencies:
+      '@pcr/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@pcr/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/storage: {}
+
+  packages/storage-node:
+    dependencies:
+      '@pcr/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@pcr/runtime':
+        specifier: workspace:*
+        version: link:../runtime
 
   packages/testkit: {}
 

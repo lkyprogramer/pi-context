@@ -1,0 +1,8 @@
+{
+  "taskId": "T02",
+  "path": "pnpm-lock.yaml",
+  "reason": "Adding workspace package manifests with workspace:* dependency edges makes the frozen lockfile stale.",
+  "interfaceImpact": "Adds only four workspace importers and local link edges; no external dependency version changes.",
+  "rejectedAlternative": "Leaving package manifests dependency-free would make the declared package graph non-executable and would reopen T01/F017.",
+  "verification": "pnpm install --frozen-lockfile --ignore-scripts passes after regeneration."
+}

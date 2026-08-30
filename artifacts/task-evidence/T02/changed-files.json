@@ -1,0 +1,21 @@
+{
+  "taskId": "T02",
+  "production": [
+    "packages/contracts/src/index.ts",
+    "packages/contracts/src/package-boundary.ts",
+    "packages/core/package.json",
+    "packages/core/src/index.ts",
+    "packages/runtime/package.json",
+    "packages/runtime/src/index.ts",
+    "packages/storage-node/package.json",
+    "packages/storage-node/src/index.ts",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "pnpm-lock.yaml"
+  ],
+  "tests": [
+    "tests/tasks/t02.test.ts"
+  ],
+  "evidenceDirectory": "artifacts/task-evidence/T02",
+  "unrelatedTrackedChanges": []
+}
