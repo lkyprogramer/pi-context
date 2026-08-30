@@ -1,5 +1,5 @@
 diff --git a/dist/core/agent-session.d.ts b/dist/core/agent-session.d.ts
-index 8c7cfec6fc0ec004f17c08c52a58c354b28b3978..674216fbd465a0f8225928fb20a71b6992e7e80a 100644
+index 8c7cfec6fc0ec004f17c08c52a58c354b28b3978..e83aeeb441d7449644d51037d03d2cef5953e079 100644
 --- a/dist/core/agent-session.d.ts
 +++ b/dist/core/agent-session.d.ts
 @@ -377,7 +377,7 @@ export declare class AgentSession {
@@ -11,7 +11,7 @@ index 8c7cfec6fc0ec004f17c08c52a58c354b28b3978..674216fbd465a0f8225928fb20a71b69
      /**
       * Queue a follow-up message to be processed after the agent finishes.
       * Delivered only when agent has no more tool calls or steering messages.
-@@ -385,7 +385,7 @@ export declare class AgentSession {
+@@ -385,9 +385,11 @@ export declare class AgentSession {
       * @param images Optional image attachments to include with the message
       * @throws Error if text is an extension command
       */
@@ -19,8 +19,12 @@ index 8c7cfec6fc0ec004f17c08c52a58c354b28b3978..674216fbd465a0f8225928fb20a71b69
 +    followUp(text: string, images?: ImageContent[], source?: InputSource): Promise<void>;
      private _queueSteer;
      private _queueFollowUp;
++    private _dropClearedQueuedInput;
++    private _removeAgentQueuedMessage;
      /**
-@@ -432,10 +432,10 @@ export declare class AgentSession {
+      * Throw an error if the text is an extension command.
+      */
+@@ -432,10 +434,10 @@ export declare class AgentSession {
       * Useful for restoring to editor when user aborts.
       * @returns Object with steering and followUp arrays
       */
@@ -34,7 +38,7 @@ index 8c7cfec6fc0ec004f17c08c52a58c354b28b3978..674216fbd465a0f8225928fb20a71b69
      get pendingMessageCount(): number;
      /** Get pending steering messages (read-only) */
 diff --git a/dist/core/agent-session.js b/dist/core/agent-session.js
-index fd82b71cf332715f185d07459429f04ed7491ce9..f440dd1aaf17b45aa9f65f34d63afc62c581ca28 100644
+index fd82b71cf332715f185d07459429f04ed7491ce9..bf0579b5387510d9e81c6b14dde261b4dce1d014 100644
 --- a/dist/core/agent-session.js
 +++ b/dist/core/agent-session.js
 @@ -12,6 +12,7 @@
@@ -176,10 +180,7 @@ index fd82b71cf332715f185d07459429f04ed7491ce9..f440dd1aaf17b45aa9f65f34d63afc62
 +                this._flushPendingCustomMessages();
 +                if (!this.model) {
 +                    throw new Error(formatNoModelSelectedMessage());
-                 }
--                if (inputResult.action === "transform") {
--                    currentText = inputResult.text;
--                    currentImages = inputResult.images ?? currentImages;
++                }
 +                const hasConfiguredAuth = this._modelRuntime.hasConfiguredAuth(this.model.provider) ||
 +                    (await this._modelRuntime.checkAuth(this.model.provider)) !== undefined;
 +                if (!hasConfiguredAuth) {
@@ -190,7 +191,10 @@ index fd82b71cf332715f185d07459429f04ed7491ce9..f440dd1aaf17b45aa9f65f34d63afc62
 +                            `Run '/login ${this.model.provider}' to re-authenticate.`);
 +                    }
 +                    throw new Error(formatNoApiKeyFoundMessage(this.model.provider));
-+                }
+                 }
+-                if (inputResult.action === "transform") {
+-                    currentText = inputResult.text;
+-                    currentImages = inputResult.images ?? currentImages;
 +                const lastAssistant = this._findLastAssistantMessage();
 +                if (lastAssistant) {
 +                    await this._checkCompaction(lastAssistant, false);
@@ -426,7 +430,7 @@ index fd82b71cf332715f185d07459429f04ed7491ce9..f440dd1aaf17b45aa9f65f34d63afc62
      }
      /**
       * Throw an error if the text is an extension command.
-@@ -1192,9 +1324,23 @@ export class AgentSession {
+@@ -1192,14 +1324,54 @@ export class AgentSession {
       * Useful for restoring to editor when user aborts.
       * @returns Object with steering and followUp arrays
       */
@@ -434,23 +438,59 @@ index fd82b71cf332715f185d07459429f04ed7491ce9..f440dd1aaf17b45aa9f65f34d63afc62
 +    async clearQueue() {
          const steering = [...this._steeringMessages];
          const followUp = [...this._followUpMessages];
+-        this._steeringMessages = [];
+-        this._followUpMessages = [];
+-        this.agent.clearAllQueues();
+-        this._emitQueueUpdate();
+-        return { steering, followUp };
 +        const dropped = [...this._queuedInputByMessage.entries()];
-+        if (this._extensionRunner.hasHandlers("input_result")) {
-+            for (const [, input] of dropped) {
-+                await this._extensionRunner.emitInputResult({
-+                    type: "input_result",
-+                    action: "handled",
-+                    terminalReason: "queue-cleared",
-+                    ...input,
-+                });
++        try {
++            for (const [message, input] of dropped) {
++                if (this._extensionRunner.hasHandlers("input_result")) {
++                    await this._extensionRunner.emitInputResult({
++                        type: "input_result",
++                        action: "handled",
++                        terminalReason: "queue-cleared",
++                        ...input,
++                    });
++                }
++                this._dropClearedQueuedInput(message, input);
 +            }
++            this._steeringMessages = [];
++            this._followUpMessages = [];
++            this.agent.clearAllQueues();
++            this._emitQueueUpdate();
++            return { steering, followUp };
 +        }
-+        for (const [message] of dropped)
-+            this._ingressMetadataByMessage.delete(message);
-+        this._queuedInputByMessage.clear();
-         this._steeringMessages = [];
-         this._followUpMessages = [];
-         this.agent.clearAllQueues();
++        catch (error) {
++            this._emitQueueUpdate();
++            throw error;
++        }
++    }
++    _dropClearedQueuedInput(message, input) {
++        this._ingressMetadataByMessage.delete(message);
++        this._queuedInputByMessage.delete(message);
++        const text = contentText(message.content, "");
++        if (input.streamingBehavior === "steer") {
++            const index = this._steeringMessages.indexOf(text);
++            if (index !== -1)
++                this._steeringMessages.splice(index, 1);
++        }
++        else if (input.streamingBehavior === "followUp") {
++            const index = this._followUpMessages.indexOf(text);
++            if (index !== -1)
++                this._followUpMessages.splice(index, 1);
++        }
++        this._removeAgentQueuedMessage(this.agent.steeringQueue, message);
++        this._removeAgentQueuedMessage(this.agent.followUpQueue, message);
++    }
++    _removeAgentQueuedMessage(queue, message) {
++        if (!queue || !Array.isArray(queue.messages))
++            return;
++        queue.messages = queue.messages.filter((item) => item !== message);
+     }
+     /** Number of pending messages (includes both steering and follow-up) */
+     get pendingMessageCount() {
 diff --git a/dist/core/extensions/index.d.ts b/dist/core/extensions/index.d.ts
 index 8d96beff9a809540ae8d872afbe528297a354a4a..7168ebddfa7480615031dbbc65103d31b243128c 100644
 --- a/dist/core/extensions/index.d.ts
@@ -466,7 +506,7 @@ index 8d96beff9a809540ae8d872afbe528297a354a4a..7168ebddfa7480615031dbbc65103d31
  //# sourceMappingURL=index.d.ts.map
 \ No newline at end of file
 diff --git a/dist/core/extensions/runner.d.ts b/dist/core/extensions/runner.d.ts
-index 1aad928d733d0a8600f774760af472ca45b0fdb0..7c39072886aad17eb9f21969d8ca7eb70bc112ae 100644
+index 1aad928d733d0a8600f774760af472ca45b0fdb0..901cada81c1a4f0b774d71f09bf7714b1bbd42d1 100644
 --- a/dist/core/extensions/runner.d.ts
 +++ b/dist/core/extensions/runner.d.ts
 @@ -9,7 +9,7 @@ import type { KeybindingsConfig } from "../keybindings.ts";
@@ -478,12 +518,10 @@ index 1aad928d733d0a8600f774760af472ca45b0fdb0..7c39072886aad17eb9f21969d8ca7eb7
  /** Combined result from all before_agent_start handlers */
  interface BeforeAgentStartCombinedResult {
      messages?: NonNullable<BeforeAgentStartEventResult["message"]>[];
-@@ -170,9 +170,11 @@ export declare class ExtensionRunner {
-             path: string;
+@@ -171,8 +171,10 @@ export declare class ExtensionRunner {
              extensionPath: string;
          }>;
--    }>;
-+    }>;
+     }>;
 +    /** Emit an input terminal event and propagate handler failure to the caller. */
 +    emitInputResult(event: InputResultEvent): Promise<void>;
      /** Emit input event. Transforms chain, "handled" short-circuits. */
@@ -492,8 +530,9 @@ index 1aad928d733d0a8600f774760af472ca45b0fdb0..7c39072886aad17eb9f21969d8ca7eb7
  }
  export {};
  //# sourceMappingURL=runner.d.ts.map
+\ No newline at end of file
 diff --git a/dist/core/extensions/runner.js b/dist/core/extensions/runner.js
-index d23e6d50a22c2a1ec038ed3b2464a1cd0a2b6136..1b7feb2741aaa0ef978deea152bab5153b6a0a35 100644
+index d23e6d50a22c2a1ec038ed3b2464a1cd0a2b6136..307a8d57016516a9280aa7ac587c667786bae2e6 100644
 --- a/dist/core/extensions/runner.js
 +++ b/dist/core/extensions/runner.js
 @@ -24,6 +24,59 @@ const RESERVED_KEYBINDINGS_FOR_EXTENSION_CONFLICTS = [
@@ -632,8 +671,9 @@ index d23e6d50a22c2a1ec038ed3b2464a1cd0a2b6136..1b7feb2741aaa0ef978deea152bab515
      }
  }
  //# sourceMappingURL=runner.js.map
+\ No newline at end of file
 diff --git a/dist/core/extensions/types.d.ts b/dist/core/extensions/types.d.ts
-index 23dcd055a15cfcabfdbf3c6a9468c64c2975c34f..01acb24bd0c33b128882dd87ca740fc9acd0028d 100644
+index 23dcd055a15cfcabfdbf3c6a9468c64c2975c34f..281d6c84328751b5b10c8b87c996a3db9d524b5f 100644
 --- a/dist/core/extensions/types.d.ts
 +++ b/dist/core/extensions/types.d.ts
 @@ -653,9 +653,16 @@ export interface UserBashEvent {

@@ -2,17 +2,14 @@ command=pnpm install --frozen-lockfile
 node=v22.19.0
 pnpm=10.15.0
 pi=0.84.4
-expectedPatchSha256=2d89fec86b8f4e74c6d5199bc026f5747f4d057baeacd11b88edd097e7d0a636
+expectedPatchSha256=549c2a5cbde0127f51796e87a7c66e99af74133aca17af248a0e51f66c2a40b4
 Scope: all 12 workspace projects
 Lockfile is up to date, resolution step is skipped
-Progress: resolved 1, reused 0, downloaded 0, added 0
-Packages: +1 -1
-+-
-Progress: resolved 1, reused 1, downloaded 0, added 1, done
+Already up to date
 
-Done in 870ms using pnpm v10.15.0
-installedRoot=/Users/luo/Documents/github/pi-context/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.84.4_patch_hash=2d89fec86b8f4e74c6d5199bc026f5747f4d0_0b5a032af14eb3324c2ad99bea4f3267/node_modules/@earendil-works/pi-coding-agent
-patchSha256=2d89fec86b8f4e74c6d5199bc026f5747f4d057baeacd11b88edd097e7d0a636
+Done in 338ms using pnpm v10.15.0
+installedRoot=/Users/luo/Documents/github/pi-context/node_modules/.pnpm/@earendil-works+pi-coding-agent@0.84.4_patch_hash=549c2a5cbde0127f51796e87a7c66e99af741_465ecd609bee393355e0b1f15aec6468/node_modules/@earendil-works/pi-coding-agent
+patchSha256=549c2a5cbde0127f51796e87a7c66e99af74133aca17af248a0e51f66c2a40b4
 packageJsonSha256=3cbf1bd8fa6766123d98078995016f9894e24e17309050b729a6bd95444868e5
 publicTypesSha256=923da1f859c247e0c23b4d10dbf71ad69bb36a26b103d9509ae4994c9fc00032
 runtimeMarker=pcr-ingress-metadata-v1

@@ -4,7 +4,7 @@
   "piVersion": "0.84.4",
   "requiredPatch": {
     "path": "patches/@earendil-works__pi-coding-agent@0.84.4.patch",
-    "sha256": "2d89fec86b8f4e74c6d5199bc026f5747f4d057baeacd11b88edd097e7d0a636"
+    "sha256": "549c2a5cbde0127f51796e87a7c66e99af74133aca17af248a0e51f66c2a40b4"
   },
   "hostCapabilityPolicy": "The product imports PCR_INGRESS_METADATA_CONTRACT from Pi's loader-provided host module and fails during extension loading on stock 0.84.4. T12 is supported only on the exact patched host; publishable self-contained host distribution remains T52 scope.",
   "stockProbeIsolationPolicy": "The acceptance probe resolves the pnpm package symlink to a real package directory, copies it into a disposable root, reverses the patch only in that copy, and verifies that the repository host digest is unchanged.",
@@ -20,7 +20,7 @@
   "durabilityOrder": ["encrypted cursor-scoped CAS", "SQLite pending receipt", "Pi user SessionMessageEntry ingressMetadata sidecar", "SQLite final link"],
   "handledDurabilityOrder": ["encrypted cursor-scoped CAS", "SQLite pending receipt", "Pi input_result handled", "SQLite handled terminal"],
   "hardFailurePolicy": "Predictable prompt preflight validation runs before durable capture. Capture or unsupported-input failures return a rejected input outcome. Any failure after capture but before host message ownership emits a strict input_result rejected terminal before rethrowing; terminal persistence failure is propagated rather than converted into success.",
-  "queueDropPolicy": "Queued steer/followUp messages retain inputId, source and sidecar until delivery. clearQueue strictly persists every queue-cleared terminal before mutating either Pi queue; a terminal handler failure rejects clearQueue and leaves the queue available for retry.",
+  "queueDropPolicy": "Queued steer/followUp messages retain inputId, source and sidecar until delivery. clearQueue persists each queue-cleared terminal then immediately drops that message from sidecar maps, UI arrays and the live agent queue. A later terminal handler failure rejects clearQueue and retains only unterminalized receipts for retry.",
   "providerPolicy": "ingressMetadata is stored only on SessionMessageEntry and is never copied onto AgentMessage or provider context.",
   "branchPolicy": "Reconciliation scans SessionManager.getEntries() across active and inactive branches and binds by sidecar identity, not topology adjacency.",
   "hostOwnershipPolicy": "A host message ID is unique within workspace and session, independent of leaf, lineage or model cursor dimensions.",

@@ -596,6 +596,69 @@ describe("exact user input flow on the patched Pi 0.84.4 AgentSession", () => {
     }
   });
 
+  it("shrinks the live queue when only a later queue-cleared terminal fails", async () => {
+    let releaseFirst!: () => void;
+    let markStarted!: () => void;
+    let abandonCalls = 0;
+    const firstGate = new Promise<void>((resolve) => { releaseFirst = resolve; });
+    const started = new Promise<void>((resolve) => { markStarted = resolve; });
+    const harness = await createHarness({
+      wrapService(service) {
+        return {
+          capture: (input) => service.capture(input),
+          async abandon(receiptId, reason) {
+            abandonCalls += 1;
+            if (abandonCalls === 2) throw new Error("queue-terminal-storage-failure");
+            return service.abandon(receiptId, reason);
+          },
+          link: (receiptId, hostMessageId) => service.link(receiptId, hostMessageId),
+        };
+      },
+      async stream(_context, call) {
+        if (call === 0) {
+          markStarted();
+          await firstGate;
+        }
+        return completedStream(`ok-${call}`);
+      },
+    });
+    try {
+      const running = harness.session.prompt("initial");
+      await started;
+      await harness.session.steer("cleared-steer", undefined, "interactive");
+      await harness.session.followUp("retained-follow", undefined, "interactive");
+      const queued = harness.inputResults.filter((event) =>
+        (event as { action?: string }).action === "accepted"
+        && (event as { streamingBehavior?: string }).streamingBehavior !== undefined) as Array<{
+          ingressMetadata: { "pcr.user-input-receipt.v1": { receiptId: string; cursor: RuntimeCursor } };
+        }>;
+
+      await expect(harness.session.clearQueue()).rejects.toThrow("queue-terminal-storage-failure");
+      expect(harness.session.pendingMessageCount).toBe(1);
+      expect(harness.session.getSteeringMessages()).toEqual([]);
+      expect(harness.session.getFollowUpMessages()).toEqual(["retained-follow"]);
+      const records = await Promise.all(queued.map((event) => {
+        const metadata = event.ingressMetadata["pcr.user-input-receipt.v1"];
+        return harness.ledger.get(metadata.cursor, metadata.receiptId);
+      }));
+      expect(records).toEqual([
+        expect.objectContaining({ status: "handled" }),
+        expect.objectContaining({ status: "pending" }),
+      ]);
+
+      releaseFirst();
+      await running;
+      expect(userEntries(harness.manager).map((entry) => JSON.stringify(entry.message))).toEqual([
+        expect.stringContaining("initial"),
+        expect.stringContaining("retained-follow"),
+      ]);
+      expect(JSON.stringify(userEntries(harness.manager))).not.toContain("cleared-steer");
+    } finally {
+      releaseFirst?.();
+      await harness.close();
+    }
+  });
+
   it("durably rejects a direct steer when the host queue refuses the captured message", async () => {
     const harness = await createHarness();
     const originalSteer = harness.session.agent.steer;

@@ -36,6 +36,7 @@ describe("Pi public API boundary", () => {
     );
     expect(session).toContain("async clearQueue()");
     expect(session).toContain('terminalReason: "queue-cleared"');
+    expect(session).toContain("_dropClearedQueuedInput");
     const rpc = readFileSync(
       "node_modules/@earendil-works/pi-coding-agent/dist/modes/rpc/rpc-mode.js",
       "utf8",

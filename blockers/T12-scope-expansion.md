@@ -72,6 +72,8 @@ The next immutable review found four remaining terminal-state gaps: hard capture
 
 The final reviewer then identified two narrower capture-to-terminal windows. Predictable prompt checks now complete before `_dispatchInput()`, while failures after capture and before host ownership emit a strict `preflight-failure` terminal. Direct `steer` and `followUp` roll back local sidecars if the host queue rejects the message. `input_result` terminal handlers now propagate failure, and `clearQueue()` does not mutate Pi queues until every durable `queue-cleared` terminal succeeds. A frozen-install evidence log binds the final patch digest, materialized pnpm root, public type digest and runtime capability marker.
 
+A later review found that sequential `queue-cleared` terminals were not atomic: the first receipt could become `handled` while its message stayed in the live agent queue if a later persist failed. `clearQueue()` now drops each successfully terminalized message from sidecar maps, UI arrays and the live agent queue immediately, retaining only unterminalized receipts. An AgentSession acceptance test covers first-success/later-fail plus non-delivery of the handled receipt.
+
 The same review found that the local key provider returned a temporary master-key copy which the blob store copied again without destroying the provider-owned bytes. The storage contract now returns explicit one-shot key leases with mandatory `destroy()`. The blob store destroys both the provider lease and its own working copy on success and failure; storage and compatibility fixtures were updated to use the same ownership contract.
 
 ## Interface and State Impact
