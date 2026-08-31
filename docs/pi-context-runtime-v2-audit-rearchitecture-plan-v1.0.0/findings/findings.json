@@ -357,7 +357,8 @@
       "S09"
     ],
     "remediation": "只对环境验证成功任务计算 cost/success，并报告失败成本。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F027-cost-on-success.md"
   },
   {
     "id": "F028",
@@ -369,7 +370,8 @@
       "S13"
     ],
     "remediation": "冻结 benchmark version 与 holdout hash；Gate 失败后只能修算法或发布新 benchmark major。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F028-locked-w1-corpus.md"
   },
   {
     "id": "F029",
@@ -381,7 +383,8 @@
       "S08"
     ],
     "remediation": "每次 Gate 产物写 content-addressed bundle，上传 CI artifact/release，保留 runner commit。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F029-immutable-gate-bundle.md"
   },
   {
     "id": "F030",
@@ -393,7 +396,8 @@
       "S08"
     ],
     "remediation": "Runner 必须 clean tree，记录 git diff hash=empty、container/model/config digests。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F030-clean-tree-attestation.md"
   },
   {
     "id": "F031",
@@ -405,7 +409,8 @@
       "S02"
     ],
     "remediation": "运行 `npm pack` 当前包，在空目录 `pi install`，执行真实 context/tool/compaction。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F031-real-npm-pack.md"
   },
   {
     "id": "F032",
@@ -417,7 +422,8 @@
       "S02"
     ],
     "remediation": "建立 Pi SDK/RPC acceptance harness，所有关键 Hook 做 vertical assertions。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F032-real-agent-session.md"
   },
   {
     "id": "F033",
@@ -429,7 +435,8 @@
       "S03"
     ],
     "remediation": "同时保存 utf8ByteRange、utf16Range、codePointRange，并用原文 hash 校验。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F033-utf8-byte-range.md"
   },
   {
     "id": "F034",
@@ -441,7 +448,8 @@
       "S05"
     ],
     "remediation": "引入 ToolTrustPolicy；默认 custom/external 为 untrusted-tool。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F034-untrusted-tool-default.md"
   },
   {
     "id": "F035",
@@ -453,7 +461,8 @@
       "S05"
     ],
     "remediation": "保留 undefined；只在测试 codec 层提供明确 synthetic usage。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F035-no-invented-usage.md"
   },
   {
     "id": "F036",
@@ -465,7 +474,8 @@
       "S04"
     ],
     "remediation": "RuntimeSession 保存上一 committed view receipt，按 section hash 比较。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F036-previous-cache-plan.md"
   },
   {
     "id": "F037",
@@ -477,7 +487,8 @@
       "S02"
     ],
     "remediation": "Semantic 前先完成 durable candidate table 与 lifecycle integration。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F037-durable-candidate-table.md"
   },
   {
     "id": "F038",
@@ -489,6 +500,7 @@
       "S08"
     ],
     "remediation": "fast acceptance 进入 PR；live 100×3 进入 nightly/manual protected environment。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F038-live-not-default-pnpm-test.md"
   }
 ]
