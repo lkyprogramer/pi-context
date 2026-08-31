@@ -108,5 +108,19 @@ export {
   type NumericPair,
   type StatisticsErrorCode,
 } from "./statistics/cluster.js";
+export {
+  PerformanceLaneError,
+  createPerformanceLaneRunner,
+  type CompactReason,
+  type CreatePerformanceLaneRunnerInput,
+  type PerformanceCache,
+  type PerformanceClone,
+  type PerformanceErrorCode,
+  type PerformanceLane,
+  type PerformanceLaneRunner,
+  type PerformanceLaneSample,
+  type PerformanceReport,
+  type RouteWindow,
+} from "./performance/lanes.js";
 
 

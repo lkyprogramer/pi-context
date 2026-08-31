@@ -1,0 +1,14 @@
+{
+  "taskId": "T48",
+  "production": [
+    "blockers/T48-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/performance/lanes.ts"
+  ],
+  "tests": [
+    "tests/fault/overflow-lane.test.ts",
+    "tests/performance/lanes.test.ts",
+    "tests/tasks/t48.test.ts"
+  ]
+}

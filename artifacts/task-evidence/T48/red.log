@@ -1,0 +1,116 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t48.test.ts (6 tests | 6 failed) 9ms
+   × T48 Performance, cache and fault lanes > performance_cache_and_fault_lanes 5ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T48 Performance, cache and fault lanes > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T48 Performance, cache and fault lanes > rejects malformed measure input 0ms
+     → (0 , createPerformanceLaneRunner) is not a function
+   × T48 Performance, cache and fault lanes > replays equal reports for the same sample 0ms
+     → (0 , createPerformanceLaneRunner) is not a function
+   × T48 Performance, cache and fault lanes > denies cache reads from another workspace 0ms
+     → (0 , createPerformanceLaneRunner) is not a function
+   × T48 Performance, cache and fault lanes > stops at the abort boundary before cache or clone I/O 0ms
+     → (0 , createPerformanceLaneRunner) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t48.test.ts > T48 Performance, cache and fault lanes > performance_cache_and_fault_lanes
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t48.test.ts:82:33
+     80| describe("T48 Performance, cache and fault lanes", () => {
+     81|   it("performance_cache_and_fault_lanes", async () => {
+     82|     await expect(runT48Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     83|   });
+     84| 
+
+Caused by: TypeError: (0 , createPerformanceLaneRunner) is not a function
+ ❯ runner tests/tasks/t48.test.ts:51:10
+ ❯ runT48Fixture tests/tasks/t48.test.ts:60:17
+ ❯ tests/tasks/t48.test.ts:82:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t48.test.ts > T48 Performance, cache and fault lanes > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_PERFORMANCE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createPerformanceLaneRunner) is not a function",
+  }
+
+ ❯ tests/tasks/t48.test.ts:86:60
+     84| 
+     85|   it("fails construction when production dependencies are absent", () …
+     86|     expect(() => createPerformanceLaneRunner({} as never)).toThrowErro…
+       |                                                            ^
+     87|       expect.objectContaining({ code: "PCR_PERFORMANCE_DEPENDENCY_MISS…
+     88|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t48.test.ts > T48 Performance, cache and fault lanes > rejects malformed measure input
+TypeError: (0 , createPerformanceLaneRunner) is not a function
+ ❯ runner tests/tasks/t48.test.ts:51:10
+     49| 
+     50| function runner() {
+     51|   return createPerformanceLaneRunner({
+       |          ^
+     52|     workspaceId: "ws-t48",
+     53|     routes: { [MODEL]: ROUTE },
+ ❯ tests/tasks/t48.test.ts:92:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t48.test.ts > T48 Performance, cache and fault lanes > replays equal reports for the same sample
+TypeError: (0 , createPerformanceLaneRunner) is not a function
+ ❯ runner tests/tasks/t48.test.ts:51:10
+     49| 
+     50| function runner() {
+     51|   return createPerformanceLaneRunner({
+       |          ^
+     52|     workspaceId: "ws-t48",
+     53|     routes: { [MODEL]: ROUTE },
+ ❯ tests/tasks/t48.test.ts:96:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t48.test.ts > T48 Performance, cache and fault lanes > denies cache reads from another workspace
+TypeError: (0 , createPerformanceLaneRunner) is not a function
+ ❯ runner tests/tasks/t48.test.ts:51:10
+     49| 
+     50| function runner() {
+     51|   return createPerformanceLaneRunner({
+       |          ^
+     52|     workspaceId: "ws-t48",
+     53|     routes: { [MODEL]: ROUTE },
+ ❯ tests/tasks/t48.test.ts:103:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t48.test.ts > T48 Performance, cache and fault lanes > stops at the abort boundary before cache or clone I/O
+TypeError: (0 , createPerformanceLaneRunner) is not a function
+ ❯ tests/tasks/t48.test.ts:111:19
+    109|     let cacheReads = 0;
+    110|     let cloneReads = 0;
+    111|     const lanes = createPerformanceLaneRunner({
+       |                   ^
+    112|       workspaceId: "ws-t48",
+    113|       routes: { [MODEL]: ROUTE },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  10:52:10
+   Duration  484ms (transform 114ms, setup 0ms, collect 168ms, tests 9ms, environment 0ms, prepare 66ms)
+

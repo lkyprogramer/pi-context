@@ -1,0 +1,33 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T48",
+  "status": "review-candidate",
+  "parentCommit": "e9f2559bd2ab8132de15aae42c3b6b57c01c5179",
+  "redLog": "artifacts/task-evidence/T48/red.log",
+  "greenLog": "artifacts/task-evidence/T48/green.log",
+  "fullGateLog": "artifacts/task-evidence/T48/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "naturalThresholdRequiresWindow": true,
+    "cacheFromReceiptNotProbeDelta": true,
+    "cloneFromPort": true,
+    "repositoryGateFiles": 158,
+    "repositoryGateTests": 741,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "blockers/T48-scope-expansion.md": "85212d2f203e78c162aeb97f4d4322a4621177576a998fcb01c5327729db1ed3",
+    "packages/benchmark/package.json": "62f3d9a653873879b391d911975c719d359a22b06da617b39fb5a657c6a80b60",
+    "packages/benchmark/src/index.ts": "2cca163bdee037f2dea438edf33f740d00fa593445ed2b59ebd69b7cfb1cf840",
+    "packages/benchmark/src/performance/lanes.ts": "88d1a88f21f6b6085d1d568e4a810c59709b96a9aa7a6be3a253abc6fd835087",
+    "tests/fault/overflow-lane.test.ts": "dfbb44fffbc4b0939984170c1b99cd5b4a4584c5b06215634450532374d77768",
+    "tests/performance/lanes.test.ts": "d48728793c322bc3258a8ff64aaf105d28dcdc8f8e071802c8047ae880afff61",
+    "tests/tasks/t48.test.ts": "aa27dc7018e82870258c3908463266b3ccfd555349428aa3df0e2208147c25a6",
+    "artifacts/task-evidence/T48/preflight-git.txt": "6ef65b8d94b7f954725b932f6ea77cc5a00e01727c1b7831e5bc9d47a44a1850",
+    "artifacts/task-evidence/T48/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T48/red.log": "4bfbe826b1927f5f8fc0d13f145faec7c317cb5602db5df616d83e7ae6f8c3ff",
+    "artifacts/task-evidence/T48/green.log": "badd937e599fdeebb1a83b00ca525f5449f3ed72b9a894bd7695b56d0db533f7",
+    "artifacts/task-evidence/T48/full-gate.log": "0407f48a8e3801635259d0b6687efa4fc2d1d6a42cde112a142d73119e9e2521",
+    "artifacts/task-evidence/T48/changed-files.json": "4bdf41a96e857421ec475ccffa28cc9da70ad4b780886b77472094d3a8be6319"
+  }
+}
