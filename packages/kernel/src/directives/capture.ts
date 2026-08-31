@@ -23,6 +23,15 @@ function makeDirectiveId(messageId: string, start: number, end: number): string 
   return `ud_${domainHash("directive", { messageId, start, end })}`;
 }
 
+function expandToClause(text: string, start: number, end: number): { start: number; end: number } {
+  let from = start;
+  while (from > 0 && !/[。；;\n]/.test(text[from - 1]!)) from -= 1;
+  let to = end;
+  while (to < text.length && !/[。；;\n]/.test(text[to]!)) to += 1;
+  if (to < text.length && /[。；;]/.test(text[to]!)) to += 1;
+  return { start: from, end: to };
+}
+
 export function explicitDirectiveSpans(text: string): DirectiveSpan[] {
   const spans: DirectiveSpan[] = [];
   const rules: Array<{ pattern: RegExp; kind: DirectiveSpan["kind"]; polarity: DirectiveSpan["polarity"] }> = [
@@ -37,8 +46,13 @@ export function explicitDirectiveSpans(text: string): DirectiveSpan[] {
     rule.pattern.lastIndex = 0;
     let match: RegExpExecArray | null;
     while ((match = rule.pattern.exec(text))) {
-      const start = match.index;
-      const end = start + match[0].length;
+      let start = match.index;
+      let end = start + match[0].length;
+      if (rule.kind === "correction") {
+        const clause = expandToClause(text, start, end);
+        start = clause.start;
+        end = clause.end;
+      }
       const key = `${start}:${end}`;
       if (seen.has(key)) continue;
       seen.add(key);

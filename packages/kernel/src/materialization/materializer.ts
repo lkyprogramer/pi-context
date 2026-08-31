@@ -55,11 +55,10 @@ export class ContextMaterializer {
 
   private buildSections(input: MaterializationInput, exactSuffix: HostMessage[]): BuiltSection[] {
     const history = input.canonicalMessages.slice(0, input.canonicalMessages.length - exactSuffix.length);
+    const directiveBody = this.directiveSection(input);
     return [
       section("runtime-preamble", "stable-prefix", "pcr-runtime", [textMessage("preamble", "pcr-runtime", "system")]),
-      section("hard-directives", "stable-prefix", this.options.directives ?? "", [
-        textMessage("directives", this.options.directives ?? "", "authenticated-user"),
-      ]),
+      section("hard-directives", "stable-prefix", directiveBody.text, directiveBody.messages),
       section("stable-continuity", "stable-prefix", this.options.continuityText ?? "continuity", [
         textMessage("continuity", this.options.continuityText ?? "continuity", "system"),
       ]),
@@ -71,8 +70,25 @@ export class ContextMaterializer {
       section("retrieval-page", "volatile-augmentation", this.options.recallText ?? "", [
         textMessage("recall", this.options.recallText ?? "", "system"),
       ]),
-      section("active-turn", "active-turn", suffixFingerprint(exactSuffix), exactSuffix),
+      section("active-turn", "active-turn", historyText(exactSuffix), exactSuffix),
     ];
+  }
+
+  private directiveSection(input: MaterializationInput): { text: string; messages: HostMessage[] } {
+    const declared = this.options.directives;
+    if (declared && declared !== "keep") {
+      return { text: declared, messages: [textMessage("directives", declared, "authenticated-user")] };
+    }
+    const users = input.canonicalMessages
+      .filter((message) => message.role === "user")
+      .map((message) => ({
+        ...message,
+        content: message.content.map((block) => ({ ...block })),
+      }));
+    if (users.length > 0) {
+      return { text: historyText(users), messages: users };
+    }
+    return { text: "", messages: [textMessage("directives", "", "authenticated-user")] };
   }
 
   private buildView(
@@ -137,10 +153,6 @@ function historyText(messages: readonly HostMessage[]): string {
   return messages
     .map((item) => item.content.map((block) => (block.type === "text" ? block.text : "")).join(""))
     .join("\n");
-}
-
-function suffixFingerprint(messages: readonly HostMessage[]): string {
-  return messages.map((item) => item.hostMessageId).join(",");
 }
 
 function assertDirectivesPresent(selected: readonly MaterializedSection[], original: readonly MaterializedSection[]): void {

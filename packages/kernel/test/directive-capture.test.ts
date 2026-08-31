@@ -27,6 +27,18 @@ describe("directive capture", () => {
     expect(captureUserDirectives({ sourceClass: "agent-derived", text, messageId: "m1" })).toEqual([]);
   });
 
+  it("captures the full correction clause, not only the marker word", () => {
+    const text = "改为 version 7；以最新值为准";
+    const [correction] = captureUserDirectives({
+      sourceClass: "authenticated-user",
+      text,
+      messageId: "m-correction",
+    });
+    expect(correction?.kind).toBe("correction");
+    expect(correction?.quote).toContain("version 7");
+    expect(correction?.quote).not.toBe("改为");
+  });
+
   it("lets a later authenticated correction supersede only the exact target", () => {
     const text = "不要修改 public API；测试至少运行 3 次，文件是 src/api.ts。";
     const [first, second] = captureUserDirectives({ sourceClass: "authenticated-user", text, messageId: "m1" });
