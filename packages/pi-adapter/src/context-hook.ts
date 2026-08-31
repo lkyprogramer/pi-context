@@ -1,4 +1,4 @@
-import type { HostMessage, MaterializedView, RuntimeCursor } from "@pcr/contracts";
+import { domainHash, type HostMessage, type MaterializedView, type RuntimeCursor } from "@pcr/contracts";
 import { createMessageCodec, type PiMessageEnvelope } from "./message-codec.js";
 import { emptyPiUsage, toHostMessages, toPiMessages, type PiAgentMessage } from "./message-conversion.js";
 
@@ -9,6 +9,8 @@ export interface PiSessionContext {
   lineageHash: string;
   modelKey: string;
   signal?: AbortSignal;
+  currentContextWindow?: number;
+  maxOutputTokens?: number;
 }
 
 export interface ContextHookSession {
@@ -180,7 +182,28 @@ function sessionContextFrom(ctx: ContextHookCtx): PiSessionContext {
     lineageHash: ctx.lineageHash,
     modelKey,
     signal: ctx.signal,
+    ...(typeof ctx.currentContextWindow === "number" ? { currentContextWindow: ctx.currentContextWindow } : {}),
+    ...(typeof ctx.maxOutputTokens === "number" ? { maxOutputTokens: ctx.maxOutputTokens } : {}),
   };
+}
+
+function stableContextEntryId(raw: PiAgentMessage): string {
+  const record = raw && typeof raw === "object" ? raw as PiAgentMessage & { id?: string } : undefined;
+  if (record && typeof record.id === "string" && record.id.length > 0) return record.id;
+  const content = typeof record?.content === "string"
+    ? record.content
+    : Array.isArray(record?.content)
+      ? record.content.map((block) => {
+        if (typeof block === "string") return block;
+        if (block && typeof block === "object" && "text" in block) return String(block.text ?? "");
+        return "";
+      }).join("\n")
+      : "";
+  return `ctx_${domainHash("ctx-entry", {
+    role: record?.role ?? null,
+    toolCallId: record?.toolCallId ?? null,
+    content,
+  }).slice(0, 16)}`;
 }
 
 function cursorFrom(context: PiSessionContext): RuntimeCursor {
@@ -232,8 +255,9 @@ export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRe
       const codec = createMessageCodec({ cursor });
       const envelopes = new Map<string, PiMessageEnvelope>();
       const canonical: HostMessage[] = [];
-      for (const [index, raw] of event.messages.entries()) {
-        const envelope = codec.wrap({ cursor, raw, entryId: `ctx_${index}` });
+      for (const raw of event.messages) {
+        const stableId = stableContextEntryId(raw);
+        const envelope = codec.wrap({ cursor, raw, entryId: stableId });
         envelopes.set(envelope.hostMessageId, envelope);
         canonical.push(envelope.normalized);
       }

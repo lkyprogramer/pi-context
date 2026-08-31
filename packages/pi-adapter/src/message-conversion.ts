@@ -1,4 +1,4 @@
-import type { HostMessage, SourceClass } from "../../contracts/src/index.js";
+import { domainHash, type HostMessage, type SourceClass } from "../../contracts/src/index.js";
 
 export interface PiUsage {
   input: number;
@@ -28,12 +28,17 @@ export interface PiAgentMessage {
 }
 
 export function toHostMessages(messages: readonly PiAgentMessage[]): HostMessage[] {
-  return messages.map((message, index) => {
+  return messages.map((message) => {
     const role = normalizeRole(message.role);
     return {
-      hostMessageId: `pi_${index}`,
+      hostMessageId: `pi_${domainHash("pi-host", {
+        role,
+        toolCallId: message.toolCallId ?? null,
+        timestamp: message.timestamp ?? null,
+        content: message.content ?? null,
+      }).slice(0, 16)}`,
       role,
-      timestamp: message.timestamp ?? index,
+      timestamp: message.timestamp ?? 0,
       content: toBlocks(message.content),
       sourceClass: sourceClassFor(role, message.role),
       toolCallId: message.toolCallId,
