@@ -9,7 +9,8 @@
       "S02"
     ],
     "remediation": "删除现有 Composition Root，建立真实 `RuntimeSessionRegistry + RuntimeSession` 纵向编排。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F001-derived-runtime.md"
   },
   {
     "id": "F002",
@@ -49,7 +50,8 @@
       "S08"
     ],
     "remediation": "采用 Unicode clause segmentation，捕获完整原句；结构化解析失败时保留整句 exact quote。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F004-full-correction-clause.md"
   },
   {
     "id": "F005",
@@ -75,7 +77,8 @@
       "S02"
     ],
     "remediation": "从同一事务快照读取 directives/claims/continuity/evidence pointers，生成 snapshot hash。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F006-snapshot-pointers.md"
   },
   {
     "id": "F007",
@@ -101,7 +104,8 @@
       "S04"
     ],
     "remediation": "MaterializationInput 显式携带 active directives；Materializer 不持有静态业务数据。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F008-directives-from-messages.md"
   },
   {
     "id": "F009",
@@ -113,7 +117,8 @@
       "S04"
     ],
     "remediation": "按完整 block/tokenizer 计价，active turn 不可修复时 fail closed。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F009-active-turn-content-tokens.md"
   },
   {
     "id": "F010",
@@ -125,7 +130,8 @@
       "S05"
     ],
     "remediation": "使用 round-trip message envelope，一次性返回完整 ordered AgentMessage[]；不做 positional stitching。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F010-envelope-roundtrip.md"
   },
   {
     "id": "F011",
@@ -137,7 +143,8 @@
       "S05"
     ],
     "remediation": "从 SessionEntry.id/toolCallId/content hash 生成稳定 Host ID。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F011-stable-host-ids.md"
   },
   {
     "id": "F012",
@@ -149,7 +156,8 @@
       "S02"
     ],
     "remediation": "从 `ctx.cwd + sessionManager.getSessionId/getLeafId` 派生真实 cursor。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F012-derived-session-identity.md"
   },
   {
     "id": "F013",
@@ -187,7 +195,8 @@
       "S02"
     ],
     "remediation": "使用 workspace package dependencies + build bundle；clean install 测试真实 tarball。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F015-compiled-tarball.md"
   },
   {
     "id": "F016",
@@ -212,7 +221,8 @@
       "S12"
     ],
     "remediation": "第一波先修 lockfile，并让 build/typecheck/unit/acceptance 全部成为 required checks。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F017-ci-runs-tests.md"
   },
   {
     "id": "F018",
@@ -225,7 +235,8 @@
       "S11"
     ],
     "remediation": "Oracle validator 必须证明每个 exact expected value 有 source witness 或合法 deterministic derivation。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F018-oracle-source-witness.md"
   },
   {
     "id": "F019",
@@ -238,7 +249,8 @@
       "S09"
     ],
     "remediation": "动作遵循只评分 probe/action/environment；summary fidelity 单独评分。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F019-probe-only-closed-loop.md"
   },
   {
     "id": "F020",
@@ -251,7 +263,8 @@
       "S09"
     ],
     "remediation": "恢复门必须读取实际 blob，比较 byte length + SHA-256，并做 scope denial。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F020-cas-recovery.md"
   },
   {
     "id": "F021",
@@ -264,7 +277,8 @@
       "S09"
     ],
     "remediation": "从实际 artifacts 计算 pairing；同快照运行两次并比较 outputHash。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F021-observed-pairing.md"
   },
   {
     "id": "F022",
@@ -276,7 +290,8 @@
       "S10"
     ],
     "remediation": "按 scenario cluster bootstrap；建立锁定 held-out real traces。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F022-cluster-report.md"
   },
   {
     "id": "F023",
@@ -289,7 +304,8 @@
       "S11"
     ],
     "remediation": "分离 boundary replay、natural threshold、provider overflow 三条 Lane。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F023-lane-classification.md"
   },
   {
     "id": "F024",
@@ -302,7 +318,8 @@
       "S09"
     ],
     "remediation": "恢复同一 workspace snapshot，启用工具，用测试命令、diff、side-effect ledger 判成功。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F024-environment-continuation.md"
   },
   {
     "id": "F025",
@@ -314,7 +331,8 @@
       "S08"
     ],
     "remediation": "增加 `Pi Native + same ingress scrub/reducer` 基线，安全 Gate 独立。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F025-same-ingress-scrub.md"
   },
   {
     "id": "F026",
@@ -326,7 +344,8 @@
       "S09"
     ],
     "remediation": "按 provider prices 和 successful-task denominator 计算 realized net，质量失败不得计收益。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F026-realized-net.md"
   },
   {
     "id": "F027",
