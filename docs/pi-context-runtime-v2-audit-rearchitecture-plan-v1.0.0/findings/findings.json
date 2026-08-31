@@ -22,7 +22,8 @@
       "S06"
     ],
     "remediation": "在单一 Pi adapter 中注册真实 `tool_result` Hook，并以实际 event 字段构造 Observation。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F002-tool-result-product-path.md"
   },
   {
     "id": "F003",
@@ -34,7 +35,8 @@
       "S06"
     ],
     "remediation": "按 Pi 0.84.3 公开事件类型实现 codec；禁止默认常量。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F003-real-tool-result-fields.md"
   },
   {
     "id": "F004",
@@ -60,7 +62,8 @@
       "S03"
     ],
     "remediation": "Directive 类型、极性、scope、status 必须端到端保留，禁止适配层重写。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F005-directive-polarity.md"
   },
   {
     "id": "F006",
@@ -84,7 +87,8 @@
       "S02"
     ],
     "remediation": "工具必须调用 RuntimeSession 的 storage-backed `readEvidence/searchCatalog`。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F007-retrieval-same-store.md"
   },
   {
     "id": "F008",
@@ -157,7 +161,8 @@
       "S02"
     ],
     "remediation": "软失败返回 `undefined` 让 Pi Native 接管；仅 integrity hard failure abort。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F013-native-fallback.md"
   },
   {
     "id": "F014",
@@ -169,7 +174,8 @@
       "S07"
     ],
     "remediation": "Storage port 接收完整 EvidenceRecord，禁止 SQL 内业务常量。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F014-sqlite-cursor.md"
   },
   {
     "id": "F015",
@@ -193,7 +199,8 @@
       "S02"
     ],
     "remediation": "明确许可证与发布策略；Release Gate 检查 `npm pack` 和 `pi install`。",
-    "status": "open"
+    "status": "closed",
+    "closureEvidence": "findings/evidence/F016-private-unlicensed-docs.md"
   },
   {
     "id": "F017",
