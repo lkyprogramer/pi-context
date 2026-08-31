@@ -1,0 +1,13 @@
+{
+  "taskId": "T43",
+  "production": [
+    "blockers/T43-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/arms/w2.ts"
+  ],
+  "tests": [
+    "tests/live/w2-paired.test.ts",
+    "tests/tasks/t43.test.ts"
+  ]
+}

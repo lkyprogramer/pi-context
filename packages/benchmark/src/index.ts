@@ -51,5 +51,18 @@ export {
   type W1IngressPort,
   type W1RecallPort,
 } from "./arms/w1.js";
+export {
+  W2ArmError,
+  createW2ArmRunner,
+  type CreateW2ArmRunnerInput,
+  type W2ArmErrorCode,
+  type W2ArmId,
+  type W2ArmResult,
+  type W2ArmRunner,
+  type W2NativeCompactor,
+  type W2PcrCompactor,
+  type W2SourceSpan,
+  type W2TraceShaper,
+} from "./arms/w2.js";
 
 
