@@ -17,6 +17,10 @@ jobs:
             lane: latest
             os: ubuntu-latest
             advisory: true
+          - node: "26.5.1"
+            lane: current
+            os: ubuntu-latest
+            advisory: true
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.advisory == true }}
     steps:
@@ -24,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: corepack enable
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
       - run: pnpm install --frozen-lockfile
       - name: Select Pi compatibility target
         run: node scripts/install-pi-version.mjs "${{ (matrix.lane == 'min' || matrix.lane == 'current') && '0.84.4' || 'latest' }}"
@@ -39,13 +43,26 @@ jobs:
       - name: Acceptance tests
         run: node scripts/ci/run-gate.mjs --name acceptance --log artifacts/ci/acceptance.log -- pnpm vitest run tests/acceptance --passWithNoTests
       - name: Pi compatibility contract
-        run: node scripts/ci/run-gate.mjs --name pi-contract --log artifacts/ci/pi-contract.log -- pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts
+        run: node scripts/ci/run-gate.mjs --name pi-contract --log artifacts/ci/pi-contract.log -- pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts tests/compat/matrix.test.ts
       - name: Public Pi import scan
         run: node scripts/ci/run-gate.mjs --name public-pi-imports --log artifacts/ci/public-pi-imports.log -- node scripts/check-public-pi-imports.mjs
+      - name: Record compatibility cell
+        if: always()
+        run: node compat/matrix.mjs --workspace ci --node "${{ matrix.node }}" --os "${{ runner.os }}" --pi 0.84.4 --log-dir artifacts/ci --out "artifacts/compat/cell-${{ matrix.os }}-node-${{ matrix.node }}-${{ matrix.lane }}.json"
       - name: Upload CI gate logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ci-gates-${{ matrix.os }}-node-${{ matrix.node }}-${{ matrix.lane }}
-          path: artifacts/ci/*.log
+          path: |
+            artifacts/ci/*.log
+            artifacts/compat/*.json
           if-no-files-found: error
+  compatibility-required:
+    name: compatibility-required
+    if: always()
+    needs: pi-matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require non-advisory matrix cells
+        run: test "${{ needs.pi-matrix.result }}" != "failure"

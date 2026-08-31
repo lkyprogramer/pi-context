@@ -1,0 +1,13 @@
+{
+  "taskId": "T53",
+  "production": [
+    ".github/workflows/compatibility.yml",
+    "blockers/T53-scope-expansion.md",
+    "compat/matrix.mjs",
+    "compat/toolchain.lock.json"
+  ],
+  "tests": [
+    "tests/compat/matrix.test.ts",
+    "tests/tasks/t53.test.ts"
+  ]
+}

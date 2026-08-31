@@ -1,0 +1,13 @@
+{
+  "pnpm": "10.15.0",
+  "node": {
+    "required": ["22.19.0", "24.18.1"],
+    "advisory": ["26.5.1"]
+  },
+  "os": {
+    "required": ["linux", "darwin"]
+  },
+  "pi": {
+    "supported": "0.84.4"
+  }
+}
