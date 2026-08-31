@@ -151,9 +151,12 @@ function rewriteWorkspaceImports(dist) {
       if (!entry.name.endsWith(".js") && !entry.name.endsWith(".d.ts")) continue;
       let source = readFileSync(path, "utf8");
       for (const [specifier, jsTarget] of Object.entries(entries)) {
-        const target = entry.name.endsWith(".d.ts") ? jsTarget.replace(/\.js$/u, ".d.ts") : jsTarget;
-        if (!existsSync(target)) throw new Error(`compiled workspace entry is missing: ${target}`);
-        let replacement = relative(dirname(path), target).replaceAll("\\", "/");
+        // Keep .js specifiers in both .js and .d.ts. Rewriting declaration files to
+        // another .d.ts makes value imports (e.g. domainHash) fail TS2846.
+        const dtsTarget = jsTarget.replace(/\.js$/u, ".d.ts");
+        if (!existsSync(jsTarget)) throw new Error(`compiled workspace entry is missing: ${jsTarget}`);
+        if (!existsSync(dtsTarget)) throw new Error(`compiled workspace types are missing: ${dtsTarget}`);
+        let replacement = relative(dirname(path), jsTarget).replaceAll("\\", "/");
         if (!replacement.startsWith(".")) replacement = `./${replacement}`;
         source = source.replaceAll(`"${specifier}"`, `"${replacement}"`).replaceAll(`'${specifier}'`, `'${replacement}'`);
       }
