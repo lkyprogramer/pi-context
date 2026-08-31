@@ -1,0 +1,7 @@
+{
+  "task": "T50",
+  "files": {
+    "commit.txt": "f123a4cc03cd1ee6ab977a3426733707260e691f7880338eac88d2edb07785f3",
+    "root-evidence.sha256": "9f013a413237186860960c97645d5a9ddc48393ebe50afd61268c56f19aaf35c"
+  }
+}
