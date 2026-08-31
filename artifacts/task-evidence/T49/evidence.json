@@ -2,7 +2,7 @@
   "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
   "taskId": "T49",
   "status": "review-candidate",
-  "parentCommit": "902c27ae2dd1ee8197df5b03882eaac4f209077c",
+  "parentCommit": "e22d5238765d78835b3186202f4d34751889b6a4",
   "redLog": "artifacts/task-evidence/T49/red.log",
   "greenLog": "artifacts/task-evidence/T49/green.log",
   "fullGateLog": "artifacts/task-evidence/T49/full-gate.log",
@@ -12,8 +12,9 @@
     "environmentNotSummary": true,
     "contentAddressedBundle": true,
     "dirtyTreeInfrastructureFix": true,
+    "writeAttestsLiveCommit": true,
     "repositoryGateFiles": 160,
-    "repositoryGateTests": 751,
+    "repositoryGateTests": 753,
     "acceptanceGateTests": 32
   },
   "files": {
@@ -21,15 +22,15 @@
     "packages/benchmark/package.json": "206778b0c04c99b36456c06c93a5b63a7b29003fc9727b2873b0e637983926ac",
     "packages/benchmark/src/index.ts": "7f947b7fcdc6a434ddd48ead930227b852dc8e5bc62913bb6438dfcc3b818200",
     "packages/benchmark/src/report/cli.ts": "a4210faf669fabedae946b0bc5ee7cd37946dc415abdfd9e092ccd5a70580365",
-    "packages/benchmark/src/report/engine.ts": "a92387106cbe19026808f9d22d4f0ffbab8b690ae0fc680d74882f53a0f95e15",
+    "packages/benchmark/src/report/engine.ts": "1f1d406050a7be41462c0991fb5f245fd3a3812754d5556ee1491982f9272640",
     "scripts/run-gate.mjs": "daa5f7435020d4719148dd56c176f06c047dafca9dad261f4c536ace0cd6e48a",
-    "packages/benchmark/test/report.test.ts": "315a2bc861a6c7ebf4e53f668c9576b3012b14ff1a21ad1ed3c008a93c48183c",
-    "tests/tasks/t49.test.ts": "6e8de502b206036128c827756a275d9193d77074a02b7e34af22beaf0a8fbba6",
+    "packages/benchmark/test/report.test.ts": "c464da2ec6fe2c39e1c273b88e1204804e98463657c5470f06a8a3c7825363c0",
+    "tests/tasks/t49.test.ts": "2f89f2fb25f869097e88edbaf42a115f20366a2d8b66b96c34d86687a25389e1",
     "artifacts/task-evidence/T49/preflight-git.txt": "db9170ddcb0deb8b6b0cb9e3b595ffa6118fb6a2436025740381e4fc556b6c73",
     "artifacts/task-evidence/T49/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
     "artifacts/task-evidence/T49/red.log": "520474013dc23c5b3bdd58a3eb43865ccdcb356f453c890cbcd0a6650063d83d",
-    "artifacts/task-evidence/T49/green.log": "a9f4be547a433d159f2d112c805d2e33950b60974e7df3e9f96b07a54f617469",
-    "artifacts/task-evidence/T49/full-gate.log": "d0c20a4e83fe5d28118edca7764585e56dd9d1bf062bc3f6d7b4621da1100b91",
+    "artifacts/task-evidence/T49/green.log": "5f1dcef8545ab902691d60704d3be6e461bea97a499135ccad02521fd208af3b",
+    "artifacts/task-evidence/T49/full-gate.log": "c6772933a2bb8d03369ba707069c4816450e989345e23a8a3f712ce761dbacf5",
     "artifacts/task-evidence/T49/changed-files.json": "3afc65fcb69993971cd8d3c9843029d83a872e9033ff0e78858cb62cbc70f373"
   }
 }

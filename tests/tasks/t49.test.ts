@@ -123,6 +123,27 @@ describe("T49 Immutable report and gate engine", () => {
     });
   });
 
+  it("refuses to seal when live git commit does not match provenance", async () => {
+    let writes = 0;
+    const gate = createGateEngine({
+      workspaceId: "ws-t49",
+      git: {
+        async status() {
+          return { commit: "f".repeat(40), diffHash: EMPTY_DIFF, dirty: false };
+        },
+      },
+      files: {
+        async mkdir() { writes += 1; },
+        async writeFile() { writes += 1; },
+      },
+    });
+    await expect(gate.writeImmutableBundle(bundle(), "/out")).rejects.toMatchObject({
+      code: "PCR_GATE_INPUT_INVALID",
+      details: { field: "provenance" },
+    });
+    expect(writes).toBe(0);
+  });
+
   it("stops at the abort boundary before writing the bundle", async () => {
     let writes = 0;
     const gate = createGateEngine({

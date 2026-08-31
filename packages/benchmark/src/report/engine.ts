@@ -293,7 +293,13 @@ export function createGateEngine(input: CreateGateEngineInput): GateEngine {
         }
         throw error;
       }
-      if (!snapshot || snapshot.dirty !== bundle.provenance.dirty || snapshot.diffHash !== bundle.provenance.diffHash) {
+      if (
+        !snapshot
+        || typeof snapshot.commit !== "string"
+        || snapshot.commit !== bundle.provenance.commit
+        || snapshot.diffHash !== bundle.provenance.diffHash
+        || snapshot.dirty !== bundle.provenance.dirty
+      ) {
         failInput("provenance");
       }
       const root = out.endsWith("/") ? out.slice(0, -1) : out;

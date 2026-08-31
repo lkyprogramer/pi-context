@@ -71,6 +71,27 @@ describe("gate engine", () => {
     expect(decision.decision).toBe("stop");
   });
 
+  it("does not write a bundle when git HEAD is not the attested commit", async () => {
+    let writes = 0;
+    const gate = createGateEngine({
+      workspaceId: "ws-report",
+      git: {
+        async status() {
+          return { commit: "1".repeat(40), diffHash: EMPTY_DIFF, dirty: false };
+        },
+      },
+      files: {
+        async mkdir() { writes += 1; },
+        async writeFile() { writes += 1; },
+      },
+    });
+    await expect(gate.writeImmutableBundle(bundle(), "/out")).rejects.toMatchObject({
+      code: "PCR_GATE_INPUT_INVALID",
+      details: { field: "provenance" },
+    });
+    expect(writes).toBe(0);
+  });
+
   it("refuses a dirty tree as infrastructure rather than a quality win", () => {
     const decision = engine().evaluate(bundle({
       provenance: { ...bundle().provenance, dirty: true, diffHash: "e".repeat(64) },
