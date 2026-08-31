@@ -2,7 +2,7 @@ import { objectParameters, type RuntimeTool, type RuntimeToolCtx, type ToolsRunt
 import {
   RetrievalToolsError,
   createRetrievalTools,
-  requireRetrievalInput,
+  resolveRetrievalInput,
   type CreateRetrievalToolsInput,
   type ReadToolInput,
 } from "./search.js";
@@ -10,8 +10,6 @@ import {
 const EVIDENCE_ID = /^ev_[a-f0-9]{8,}$/;
 
 export function createReadTool(input: CreateRetrievalToolsInput | ToolsRuntime): RuntimeTool {
-  const bound = requireRetrievalInput(input);
-  const port = createRetrievalTools(bound);
   return {
     name: "context_read",
     label: "Context Read",
@@ -25,6 +23,7 @@ export function createReadTool(input: CreateRetrievalToolsInput | ToolsRuntime):
       ["evidenceId"],
     ),
     async execute(_callId, args, _a, _b, ctx: RuntimeToolCtx | undefined) {
+      const bound = await resolveRetrievalInput(input, ctx);
       const evidenceId = String(args.evidenceId ?? "");
       if (!EVIDENCE_ID.test(evidenceId)) {
         throw Object.assign(new Error("invalid evidenceId"), { code: "PCR_INVALID_ID" });
@@ -45,7 +44,7 @@ export function createReadTool(input: CreateRetrievalToolsInput | ToolsRuntime):
           throw Object.assign(new Error("invalid range"), { code: "PCR_INVALID_RANGE" });
         }
       }
-      const page = await port.read(request);
+      const page = await createRetrievalTools(bound).read(request);
       return {
         content: [{
           type: "text",

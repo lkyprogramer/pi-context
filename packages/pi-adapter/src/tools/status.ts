@@ -52,6 +52,11 @@ export interface ToolsRuntime {
   workspaceId: string;
   cursor: RuntimeCursor;
   evidence: EvidenceService;
+  /**
+   * When set, search/read/recall resolve cursor+evidence at execute time
+   * instead of snapshotting the registration-time placeholder.
+   */
+  resolve?(ctx?: RuntimeToolCtx): Promise<{ cursor: RuntimeCursor; evidence: EvidenceService }> | { cursor: RuntimeCursor; evidence: EvidenceService };
   recalledEvidence?: Record<string, string>;
   evidenceWorkspace?: Record<string, string>;
   encryptionKey?: string;

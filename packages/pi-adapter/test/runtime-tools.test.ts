@@ -27,8 +27,23 @@ function stubEvidence(cursor = boundCursor()): EvidenceService {
       if (!body.toLowerCase().includes(query.text.toLowerCase())) return [];
       return [{ evidenceId: "ev_aaaaaaaa", kind: "note", rank: 0, snippet: body.slice(0, 160) }];
     },
-    async read() {
-      throw new Error("unused");
+    async read(req) {
+      if (req.cursor.workspaceId !== cursor.workspaceId || req.cursor.sessionId !== cursor.sessionId) {
+        throw Object.assign(new Error("PCR_EVIDENCE_SCOPE_MISMATCH"), { code: "PCR_EVIDENCE_SCOPE_MISMATCH" });
+      }
+      if (req.evidenceId !== "ev_aaaaaaaa") {
+        throw Object.assign(new Error("PCR_EVIDENCE_NOT_FOUND"), { code: "PCR_EVIDENCE_NOT_FOUND" });
+      }
+      const bytes = new TextEncoder().encode(body);
+      return {
+        evidenceId: req.evidenceId,
+        rawBlobId: "blob_" + "a".repeat(64),
+        bytes,
+        byteLength: bytes.byteLength,
+        sha256: "b".repeat(64),
+        range: { start: 0, endExclusive: bytes.byteLength },
+        verified: true as const,
+      };
     },
   };
 }

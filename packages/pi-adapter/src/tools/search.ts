@@ -120,6 +120,22 @@ export function requireRetrievalInput(input: CreateRetrievalToolsInput | ToolsRu
   };
 }
 
+export function hasRetrievalResolver(
+  input: CreateRetrievalToolsInput | ToolsRuntime,
+): input is ToolsRuntime & { resolve: NonNullable<ToolsRuntime["resolve"]> } {
+  return !!input && typeof input === "object" && typeof (input as ToolsRuntime).resolve === "function";
+}
+
+export async function resolveRetrievalInput(
+  input: CreateRetrievalToolsInput | ToolsRuntime,
+  ctx?: RuntimeToolCtx,
+): Promise<CreateRetrievalToolsInput> {
+  if (hasRetrievalResolver(input)) {
+    return requireRetrievalInput(await input.resolve(ctx));
+  }
+  return requireRetrievalInput(input);
+}
+
 export function mapRetrievalScope(error: unknown): never {
   const code = error && typeof error === "object" && "code" in error ? String((error as { code: unknown }).code) : "";
   if (
@@ -213,8 +229,6 @@ export function createRetrievalTools(input: CreateRetrievalToolsInput): Retrieva
 }
 
 export function createSearchTool(input: CreateRetrievalToolsInput | ToolsRuntime): RuntimeTool {
-  const bound = requireRetrievalInput(input);
-  const port = createRetrievalTools(bound);
   return {
     name: "context_search",
     label: "Context Search",
@@ -228,10 +242,11 @@ export function createSearchTool(input: CreateRetrievalToolsInput | ToolsRuntime
       ["query"],
     ),
     async execute(_callId, args, _a, _b, ctx: RuntimeToolCtx | undefined) {
+      const bound = await resolveRetrievalInput(input, ctx);
       if (ctx?.workspaceId && ctx.workspaceId !== bound.cursor.workspaceId) {
         throw new RetrievalToolsError("PCR_RETRIEVAL_SCOPE_DENIED");
       }
-      const result = await port.search({
+      const result = await createRetrievalTools(bound).search({
         query: String(args.query ?? ""),
         limit: args.limit,
         timeoutMs: args.timeoutMs,
