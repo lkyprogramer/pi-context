@@ -1,0 +1,13 @@
+{
+  "taskId": "T44",
+  "production": [
+    "blockers/T44-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/reader/ceiling.ts"
+  ],
+  "tests": [
+    "tests/live/reader-ceiling.test.ts",
+    "tests/tasks/t44.test.ts"
+  ]
+}

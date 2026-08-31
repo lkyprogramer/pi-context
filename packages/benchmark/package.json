@@ -11,6 +11,6 @@
     "@pcr/runtime": "workspace:*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts src/corpus/cli.ts src/trace/cli.ts src/arms/w1.ts src/arms/w2.ts test/oracle.test.ts test/trace.test.ts ../../tests/tasks/t39.test.ts ../../tests/tasks/t40.test.ts ../../tests/tasks/t41.test.ts ../../tests/tasks/t42.test.ts ../../tests/tasks/t43.test.ts ../../tests/live/w1-paired.test.ts ../../tests/live/w2-paired.test.ts"
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/index.ts src/corpus/cli.ts src/trace/cli.ts src/arms/w1.ts src/arms/w2.ts src/reader/ceiling.ts test/oracle.test.ts test/trace.test.ts ../../tests/tasks/t39.test.ts ../../tests/tasks/t40.test.ts ../../tests/tasks/t41.test.ts ../../tests/tasks/t42.test.ts ../../tests/tasks/t43.test.ts ../../tests/tasks/t44.test.ts ../../tests/live/w1-paired.test.ts ../../tests/live/w2-paired.test.ts ../../tests/live/reader-ceiling.test.ts"
   }
 }

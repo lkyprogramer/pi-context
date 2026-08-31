@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t44.test.ts (6 tests | 6 failed) 8ms
+   × T44 Full-context reader ceiling > full_context_reader_ceiling 4ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T44 Full-context reader ceiling > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T44 Full-context reader ceiling > rejects malformed evaluate input and missing cases 0ms
+     → (0 , createReaderCeiling) is not a function
+   × T44 Full-context reader ceiling > replays equal ceiling reports for the same case 0ms
+     → (0 , createReaderCeiling) is not a function
+   × T44 Full-context reader ceiling > rejects a case from another corpus or workspace 0ms
+     → (0 , createReaderCeiling) is not a function
+   × T44 Full-context reader ceiling > stops at the abort boundary before loading the case 0ms
+     → (0 , createReaderCeiling) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t44.test.ts > T44 Full-context reader ceiling > full_context_reader_ceiling
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t44.test.ts:43:33
+     41| describe("T44 Full-context reader ceiling", () => {
+     42|   it("full_context_reader_ceiling", async () => {
+     43|     await expect(runT44Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     44|   });
+     45| 
+
+Caused by: TypeError: (0 , createReaderCeiling) is not a function
+ ❯ runT44Fixture tests/tasks/t44.test.ts:23:19
+ ❯ tests/tasks/t44.test.ts:43:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t44.test.ts > T44 Full-context reader ceiling > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_READER_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createReaderCeiling) is not a function",
+  }
+
+ ❯ tests/tasks/t44.test.ts:47:52
+     45| 
+     46|   it("fails construction when production dependencies are absent", () …
+     47|     expect(() => createReaderCeiling({} as never)).toThrowError(
+       |                                                    ^
+     48|       expect.objectContaining({ code: "PCR_READER_DEPENDENCY_MISSING" …
+     49|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t44.test.ts > T44 Full-context reader ceiling > rejects malformed evaluate input and missing cases
+TypeError: (0 , createReaderCeiling) is not a function
+ ❯ tests/tasks/t44.test.ts:53:21
+     51| 
+     52|   it("rejects malformed evaluate input and missing cases", async () =>…
+     53|     const ceiling = createReaderCeiling({
+       |                     ^
+     54|       corpusId: "pcr-bench",
+     55|       cases: { async get() { return null; } },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t44.test.ts > T44 Full-context reader ceiling > replays equal ceiling reports for the same case
+TypeError: (0 , createReaderCeiling) is not a function
+ ❯ tests/tasks/t44.test.ts:62:21
+     60| 
+     61|   it("replays equal ceiling reports for the same case", async () => {
+     62|     const ceiling = createReaderCeiling({
+       |                     ^
+     63|       corpusId: "pcr-bench",
+     64|       cases: { async get() { return caseFor("7"); } },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t44.test.ts > T44 Full-context reader ceiling > rejects a case from another corpus or workspace
+TypeError: (0 , createReaderCeiling) is not a function
+ ❯ tests/tasks/t44.test.ts:72:21
+     70| 
+     71|   it("rejects a case from another corpus or workspace", async () => {
+     72|     const ceiling = createReaderCeiling({
+       |                     ^
+     73|       corpusId: "pcr-bench",
+     74|       cases: { async get() { return caseFor("7", { corpusId: "other" }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t44.test.ts > T44 Full-context reader ceiling > stops at the abort boundary before loading the case
+TypeError: (0 , createReaderCeiling) is not a function
+ ❯ tests/tasks/t44.test.ts:83:21
+     81|   it("stops at the abort boundary before loading the case", async () =…
+     82|     let loaded = 0;
+     83|     const ceiling = createReaderCeiling({
+       |                     ^
+     84|       corpusId: "pcr-bench",
+     85|       cases: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  09:53:42
+   Duration  382ms (transform 96ms, setup 0ms, collect 135ms, tests 8ms, environment 0ms, prepare 72ms)
+

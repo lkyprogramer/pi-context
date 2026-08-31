@@ -1,0 +1,31 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T44",
+  "status": "review-candidate",
+  "parentCommit": "fc5fe40777563f6f43d820490214e24fa1fe5c8f",
+  "redLog": "artifacts/task-evidence/T44/red.log",
+  "greenLog": "artifacts/task-evidence/T44/green.log",
+  "fullGateLog": "artifacts/task-evidence/T44/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "inventedOracleNotAnswerable": true,
+    "candidateRetentionVsFull": true,
+    "repositoryGateFiles": 149,
+    "repositoryGateTests": 712,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "blockers/T44-scope-expansion.md": "1e196c30018b91048c0377c18be7ebde7a1303d0353544ae432b0f7f4fc1f811",
+    "packages/benchmark/package.json": "d1df4ae3219fee20b3a6a7f4bb98eb3f409438f9d42eb04634c664101f5679d0",
+    "packages/benchmark/src/index.ts": "076835baa8c8f363ee847ce7b59f07d9b5f9d1f978ed06be4b38ea55cc729244",
+    "packages/benchmark/src/reader/ceiling.ts": "8f3b9c8459a64031f64feb141e760a23b7d03f20145ea5dae594c41491cd597d",
+    "tests/live/reader-ceiling.test.ts": "f9700942057309df43d0283a8dc2938c38f835e18a94bbcfb194b194d54d3375",
+    "tests/tasks/t44.test.ts": "eee46c67a97f6baf2d7c8c9d1bebc2898d25b3968779970ccc1a0767e5ed2b1b",
+    "artifacts/task-evidence/T44/preflight-git.txt": "bcf58a9bc6faf4f8da61bc0c28405343c7d443ba745df21c3446743bbd6d8404",
+    "artifacts/task-evidence/T44/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T44/red.log": "32c60cd6ff950f3240dc3d0afd115db3d1369968a888ddc80b9e345c4130280f",
+    "artifacts/task-evidence/T44/green.log": "311792f219b1dd71434d31b4bcf2fd76251441abc1d8cd0bbd756dcde5c4c4ae",
+    "artifacts/task-evidence/T44/full-gate.log": "7bda0caa4853a43a00c511b7c3d199d6e652d21ab54f7ce8cb5aba6314e2c237",
+    "artifacts/task-evidence/T44/changed-files.json": "72f62b7cd4727c63b9b8680b08b45c41d3f2f27ec75483ceca342fe173ffe5ff"
+  }
+}

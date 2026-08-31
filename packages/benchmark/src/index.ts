@@ -64,5 +64,13 @@ export {
   type W2SourceSpan,
   type W2TraceShaper,
 } from "./arms/w2.js";
+export {
+  ReaderCeilingError,
+  createReaderCeiling,
+  type CreateReaderCeilingInput,
+  type ReaderCeiling,
+  type ReaderCeilingErrorCode,
+  type ReaderCeilingResult,
+} from "./reader/ceiling.js";
 
 
