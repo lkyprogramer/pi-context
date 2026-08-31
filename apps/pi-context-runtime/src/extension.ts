@@ -197,7 +197,11 @@ function toPiDecision(decision: Awaited<ReturnType<ReturnType<typeof createCompa
   return { kind: "pcr", result };
 }
 
-function createProductCompactionService(cursor: RuntimeCursor, preparation: CompactionPreparation) {
+function createProductCompactionService(
+  cursor: RuntimeCursor,
+  preparation: CompactionPreparation,
+  pointers: () => ReadonlyArray<{ ref: string; kind: string }> = () => [],
+) {
   const records = directiveRecordsFromPreparation(cursor, preparation);
   return createCompactionService({
     cursor,
@@ -219,7 +223,11 @@ function createProductCompactionService(cursor: RuntimeCursor, preparation: Comp
             }));
         },
       },
-      evidence: { async pointers() { return []; } },
+      evidence: {
+        async pointers() {
+          return [...pointers()];
+        },
+      },
     }),
     renderer: createCheckpointRenderer({ cursor }),
     verifier: createCheckpointVerifier({
@@ -233,10 +241,16 @@ function createExtensionContextRegistry(): RuntimeSessionRegistry {
   return {
     async open(ctx) {
       const cursor = sessionCursor(ctx);
+      const contextWindow = typeof ctx.currentContextWindow === "number" && Number.isFinite(ctx.currentContextWindow)
+        ? ctx.currentContextWindow
+        : 200192;
+      const maxOutputTokens = typeof ctx.maxOutputTokens === "number" && Number.isFinite(ctx.maxOutputTokens)
+        ? ctx.maxOutputTokens
+        : 16384;
       const route = {
         modelKey: cursor.modelKey,
-        contextWindow: 200192,
-        maxOutputTokens: 16384,
+        contextWindow,
+        maxOutputTokens,
         providerReservedTokens: 0,
       };
       const pricer = createTokenPricer({ cursor, routes: { [cursor.modelKey]: route } });
@@ -273,7 +287,16 @@ function createExtensionContextRegistry(): RuntimeSessionRegistry {
             signal: request.signal,
           }, {
             cursor,
-            directives: request.canonicalMessages.filter((message) => message.role === "user"),
+            directives: request.canonicalMessages
+              .filter((message) => message.role === "user")
+              .map((message) => ({
+                hostMessageId: message.hostMessageId,
+                role: message.role,
+                timestamp: message.timestamp,
+                sourceClass: message.sourceClass,
+                content: message.content.map((block) => ({ ...block })),
+                ...(message.toolCallId ? { toolCallId: message.toolCallId } : {}),
+              })),
             continuity: [],
           });
         },
@@ -340,7 +363,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
             modelKey,
           });
         }
-        const service = createProductCompactionService(cursor, event.preparation);
+        const service = createProductCompactionService(cursor, event.preparation, () => userTurns.lastPointers());
         const decision = await service.prepareCompaction({
           operationId: "op_compact",
           cursor,

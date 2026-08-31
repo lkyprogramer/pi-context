@@ -303,6 +303,7 @@ export interface ProductionUserTurnRuntime {
   readonly hook: RegisteredUserInputHook;
   close(): Promise<void>;
   lastWorkspaceId(): string | undefined;
+  lastPointers(): ReadonlyArray<{ ref: string; kind: string }>;
   resolveTools(ctx?: { workspaceId?: string; sessionId?: string }): Promise<{
     cursor: RuntimeCursor;
     evidence: EvidenceService;
@@ -315,6 +316,7 @@ interface WorkspaceUserTurnOwner {
   readonly keys: LocalWorkspaceBlobKeyProvider;
   readonly blobs: EncryptedBlobStore;
   lastCursor?: RuntimeCursor;
+  lastPointers: Array<{ ref: string; kind: string }>;
   readonly services: Map<string, UserTurnService>;
   readonly observations: Map<string, ObservationService>;
   readonly evidences: Map<string, EvidenceService>;
@@ -363,6 +365,7 @@ export function registerProductionUserTurnRuntime(
   const identity = options.identity ?? { create: createRuntimeCursor };
   const clock = options.clock ?? { now: Date.now };
   const owners = new Map<string, Promise<WorkspaceUserTurnOwner>>();
+  let pointers: Array<{ ref: string; kind: string }> = [];
 
   const cursorFromContext = (ctx: ExtensionContext): RuntimeCursor => {
     const derived = derivePiSessionContext(ctx, identity);
@@ -425,6 +428,7 @@ export function registerProductionUserTurnRuntime(
           database,
           keys,
           blobs,
+          lastPointers: [],
           services,
           observations,
           evidences,
@@ -478,6 +482,8 @@ export function registerProductionUserTurnRuntime(
                     visibleText: reduced.visibleText,
                     ...(input.signal === undefined ? {} : { signal: input.signal }),
                   });
+                  owner.lastPointers = admitted.map((record) => ({ ref: record.evidenceId, kind: record.kind }));
+                  pointers = owner.lastPointers;
                   return Object.freeze({
                     ...projected,
                     evidenceIds: admitted.map((record) => record.evidenceId),
@@ -556,6 +562,9 @@ export function registerProductionUserTurnRuntime(
     lastWorkspaceId() {
       if (owners.size !== 1) return undefined;
       return [...owners.keys()][0];
+    },
+    lastPointers() {
+      return pointers;
     },
     async resolveTools(ctx?: { workspaceId?: string; sessionId?: string }) {
       let opening: Promise<WorkspaceUserTurnOwner> | undefined;
