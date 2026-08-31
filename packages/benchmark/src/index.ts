@@ -72,5 +72,18 @@ export {
   type ReaderCeilingErrorCode,
   type ReaderCeilingResult,
 } from "./reader/ceiling.js";
+export {
+  ContinuationError,
+  createContinuationRunner,
+  type AssertionResult,
+  type ContinuationAssertion,
+  type ContinuationErrorCode,
+  type ContinuationExecutor,
+  type ContinuationResult,
+  type ContinuationRunner,
+  type ContinuationWorkspace,
+  type CreateContinuationRunnerInput,
+  type ToolCallRecord,
+} from "./continuation/runner.js";
 
 

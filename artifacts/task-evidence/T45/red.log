@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t45.test.ts (6 tests | 6 failed) 8ms
+   × T45 Workspace closed-loop continuation runner > workspace_closed_loop_continuation_runner 4ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T45 Workspace closed-loop continuation runner > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T45 Workspace closed-loop continuation runner > rejects malformed run input 0ms
+     → (0 , createContinuationRunner) is not a function
+   × T45 Workspace closed-loop continuation runner > replays equal workspace hashes for the same snapshot and tools 0ms
+     → (0 , createContinuationRunner) is not a function
+   × T45 Workspace closed-loop continuation runner > rejects a run bound to another workspace id 0ms
+     → (0 , createContinuationRunner) is not a function
+   × T45 Workspace closed-loop continuation runner > stops at the abort boundary before restoring the workspace 0ms
+     → (0 , createContinuationRunner) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t45.test.ts > T45 Workspace closed-loop continuation runner > workspace_closed_loop_continuation_runner
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t45.test.ts:67:33
+     65| describe("T45 Workspace closed-loop continuation runner", () => {
+     66|   it("workspace_closed_loop_continuation_runner", async () => {
+     67|     await expect(runT45Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     68|   });
+     69| 
+
+Caused by: TypeError: (0 , createContinuationRunner) is not a function
+ ❯ runT45Fixture tests/tasks/t45.test.ts:30:18
+ ❯ tests/tasks/t45.test.ts:67:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t45.test.ts > T45 Workspace closed-loop continuation runner > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_CONTINUATION_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createContinuationRunner) is not a function",
+  }
+
+ ❯ tests/tasks/t45.test.ts:71:57
+     69| 
+     70|   it("fails construction when production dependencies are absent", () …
+     71|     expect(() => createContinuationRunner({} as never)).toThrowError(
+       |                                                         ^
+     72|       expect.objectContaining({ code: "PCR_CONTINUATION_DEPENDENCY_MIS…
+     73|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t45.test.ts > T45 Workspace closed-loop continuation runner > rejects malformed run input
+TypeError: (0 , createContinuationRunner) is not a function
+ ❯ tests/tasks/t45.test.ts:77:20
+     75| 
+     76|   it("rejects malformed run input", async () => {
+     77|     const runner = createContinuationRunner({
+       |                    ^
+     78|       corpusId: "pcr-bench",
+     79|       workspace: memoryWorkspace({}),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t45.test.ts > T45 Workspace closed-loop continuation runner > replays equal workspace hashes for the same snapshot and tools
+TypeError: (0 , createContinuationRunner) is not a function
+ ❯ tests/tasks/t45.test.ts:87:20
+     85|   it("replays equal workspace hashes for the same snapshot and tools",…
+     86|     const snapshot = { "a.txt": "keep" };
+     87|     const runner = createContinuationRunner({
+       |                    ^
+     88|       corpusId: "pcr-bench",
+     89|       workspace: memoryWorkspace(snapshot),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t45.test.ts > T45 Workspace closed-loop continuation runner > rejects a run bound to another workspace id
+TypeError: (0 , createContinuationRunner) is not a function
+ ❯ tests/tasks/t45.test.ts:99:20
+     97| 
+     98|   it("rejects a run bound to another workspace id", async () => {
+     99|     const runner = createContinuationRunner({
+       |                    ^
+    100|       corpusId: "pcr-bench",
+    101|       workspace: memoryWorkspace({}),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t45.test.ts > T45 Workspace closed-loop continuation runner > stops at the abort boundary before restoring the workspace
+TypeError: (0 , createContinuationRunner) is not a function
+ ❯ tests/tasks/t45.test.ts:115:20
+    113|   it("stops at the abort boundary before restoring the workspace", asy…
+    114|     let restored = 0;
+    115|     const runner = createContinuationRunner({
+       |                    ^
+    116|       corpusId: "pcr-bench",
+    117|       workspace: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  10:05:21
+   Duration  493ms (transform 94ms, setup 0ms, collect 138ms, tests 8ms, environment 0ms, prepare 61ms)
+

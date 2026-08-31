@@ -1,0 +1,13 @@
+{
+  "taskId": "T45",
+  "production": [
+    "blockers/T45-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/continuation/runner.ts"
+  ],
+  "tests": [
+    "tests/live/closed-loop.test.ts",
+    "tests/tasks/t45.test.ts"
+  ]
+}
