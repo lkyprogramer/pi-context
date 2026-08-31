@@ -1,0 +1,12 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| packages/benchmark/test/report.test.ts (3 tests) 2ms
+ ✓ |0| tests/tasks/t49.test.ts (6 tests) 4ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  11:14:35
+   Duration  380ms (transform 116ms, setup 0ms, collect 297ms, tests 6ms, environment 0ms, prepare 105ms)
+

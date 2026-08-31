@@ -122,5 +122,21 @@ export {
   type PerformanceReport,
   type RouteWindow,
 } from "./performance/lanes.js";
+export {
+  GateEngineError,
+  createGateEngine,
+  type CreateGateEngineInput,
+  type EfficiencySlice,
+  type GateDecision,
+  type GateDecisionKind,
+  type GateEngine,
+  type GateErrorCode,
+  type GateFileStore,
+  type GateName,
+  type GitSnapshot,
+  type IntegritySlice,
+  type RunBundle,
+  type RunProvenance,
+} from "./report/engine.js";
 
 

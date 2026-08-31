@@ -1,0 +1,15 @@
+{
+  "taskId": "T49",
+  "production": [
+    "blockers/T49-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/report/cli.ts",
+    "packages/benchmark/src/report/engine.ts",
+    "scripts/run-gate.mjs"
+  ],
+  "tests": [
+    "packages/benchmark/test/report.test.ts",
+    "tests/tasks/t49.test.ts"
+  ]
+}

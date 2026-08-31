@@ -1,0 +1,124 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t49.test.ts (6 tests | 6 failed) 8ms
+   × T49 Immutable report and gate engine > immutable_report_and_gate_engine 4ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T49 Immutable report and gate engine > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T49 Immutable report and gate engine > rejects malformed bundles 1ms
+     → expected error to match asymmetric matcher
+   × T49 Immutable report and gate engine > replays equal decisions for the same bundle 0ms
+     → (0 , createGateEngine) is not a function
+   × T49 Immutable report and gate engine > denies writes for another workspace 0ms
+     → (0 , createGateEngine) is not a function
+   × T49 Immutable report and gate engine > stops at the abort boundary before writing the bundle 0ms
+     → (0 , createGateEngine) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t49.test.ts > T49 Immutable report and gate engine > immutable_report_and_gate_engine
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t49.test.ts:100:33
+     98| describe("T49 Immutable report and gate engine", () => {
+     99|   it("immutable_report_and_gate_engine", async () => {
+    100|     await expect(runT49Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    101|   });
+    102| 
+
+Caused by: TypeError: (0 , createGateEngine) is not a function
+ ❯ runT49Fixture tests/tasks/t49.test.ts:79:16
+ ❯ tests/tasks/t49.test.ts:100:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t49.test.ts > T49 Immutable report and gate engine > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_GATE_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createGateEngine) is not a function",
+  }
+
+ ❯ tests/tasks/t49.test.ts:104:49
+    102| 
+    103|   it("fails construction when production dependencies are absent", () …
+    104|     expect(() => createGateEngine({} as never)).toThrowError(
+       |                                                 ^
+    105|       expect.objectContaining({ code: "PCR_GATE_DEPENDENCY_MISSING" }),
+    106|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t49.test.ts > T49 Immutable report and gate engine > rejects malformed bundles
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_GATE_INPUT_INVALID",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createGateEngine) is not a function",
+  }
+
+ ❯ tests/tasks/t49.test.ts:110:50
+    108| 
+    109|   it("rejects malformed bundles", () => {
+    110|     expect(() => engine().evaluate({} as never)).toThrowError(
+       |                                                  ^
+    111|       expect.objectContaining({ code: "PCR_GATE_INPUT_INVALID" }),
+    112|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t49.test.ts > T49 Immutable report and gate engine > replays equal decisions for the same bundle
+TypeError: (0 , createGateEngine) is not a function
+ ❯ engine tests/tasks/t49.test.ts:70:10
+     68| 
+     69| function engine() {
+     70|   return createGateEngine({
+       |          ^
+     71|     workspaceId: "ws-t49",
+     72|     git: gitPort(),
+ ❯ tests/tasks/t49.test.ts:116:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t49.test.ts > T49 Immutable report and gate engine > denies writes for another workspace
+TypeError: (0 , createGateEngine) is not a function
+ ❯ engine tests/tasks/t49.test.ts:70:10
+     68| 
+     69| function engine() {
+     70|   return createGateEngine({
+       |          ^
+     71|     workspaceId: "ws-t49",
+     72|     git: gitPort(),
+ ❯ tests/tasks/t49.test.ts:121:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t49.test.ts > T49 Immutable report and gate engine > stops at the abort boundary before writing the bundle
+TypeError: (0 , createGateEngine) is not a function
+ ❯ tests/tasks/t49.test.ts:128:18
+    126|   it("stops at the abort boundary before writing the bundle", async ()…
+    127|     let writes = 0;
+    128|     const gate = createGateEngine({
+       |                  ^
+    129|       workspaceId: "ws-t49",
+    130|       git: gitPort(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  11:13:05
+   Duration  385ms (transform 111ms, setup 0ms, collect 153ms, tests 8ms, environment 0ms, prepare 58ms)
+
