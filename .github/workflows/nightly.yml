@@ -27,7 +27,13 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - name: Live environment preflight
-        run: mkdir -p artifacts/live && node scripts/ci/live-env.mjs --workspace live --seeds 7,11,23 --run-seed ${{ matrix.seed }} > "artifacts/live/preflight-seed-${{ matrix.seed }}.json"
+        run: |
+          set -euo pipefail
+          out_dir="${RUNNER_TEMP}/pcr-live-preflight"
+          mkdir -p "$out_dir"
+          node scripts/ci/live-env.mjs --workspace live --seeds 7,11,23 --run-seed ${{ matrix.seed }} > "$out_dir/preflight-seed-${{ matrix.seed }}.json"
+          mkdir -p artifacts/live
+          cp "$out_dir/preflight-seed-${{ matrix.seed }}.json" "artifacts/live/"
       - name: Upload nightly seed artifact
         if: always()
         uses: actions/upload-artifact@v4

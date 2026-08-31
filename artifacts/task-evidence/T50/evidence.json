@@ -2,7 +2,7 @@
   "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
   "taskId": "T50",
   "status": "review-candidate",
-  "parentCommit": "961d75934e49be60bdd28aac76147055131352a5",
+  "parentCommit": "6924f2765fce3e3e1e01123530e725eb38160a48",
   "redLog": "artifacts/task-evidence/T50/red.log",
   "greenLog": "artifacts/task-evidence/T50/green.log",
   "fullGateLog": "artifacts/task-evidence/T50/full-gate.log",
@@ -12,22 +12,23 @@
     "protectedLiveEnvironment": true,
     "noPullRequestLive": true,
     "dirtyTreeRejected": true,
+    "preflightBeforeWorkspaceWrite": true,
     "secretsNotEchoed": true,
     "repositoryGateFiles": 161,
     "repositoryGateTests": 761,
     "acceptanceGateTests": 32
   },
   "files": {
-    ".github/workflows/live-benchmark.yml": "5db4668d4e8d58f1dde6310f20793491bda4e230c1b30d7d217e67491cf84bf7",
-    ".github/workflows/nightly.yml": "d2a7c2fbfb2f28db2f3325626775d3c7fe72cc4b4ae5d7e7d8c20158f4a10ea9",
+    ".github/workflows/live-benchmark.yml": "e11850729cd93333539de92b834975d5facb599ed48d5451c3676340f8690c41",
+    ".github/workflows/nightly.yml": "1c26ab11b421267f6533af50c9a80f5c8fdb03fd6d5669ab566310290720d4b2",
     "blockers/T50-scope-expansion.md": "c0ac954b3091b8f7e151b5216ed2a9738807b963b49fe78c15a08167823a0e17",
-    "scripts/ci/live-env.mjs": "0b9eedc0c2e00e9b436c56584e635f833cd58e790691dba751bdd623a0e3eb69",
-    "tests/tasks/t50.test.ts": "7a99c2db5179f05b78b13184aad9ad8090c34525084ef811f1905b987c0894c1",
+    "scripts/ci/live-env.mjs": "b21fbefde21f19a56c6ba6f4fef14329ebf72d32b0b38d0a6b1a34a869654e95",
+    "tests/tasks/t50.test.ts": "6a6af0ced87238bb41ddd5b27d8c05687a0e6d4d47527b7c9b8a0294c8755cad",
     "artifacts/task-evidence/T50/preflight-git.txt": "8df463845743a79d79f2d8257cc3ffdf112149ba88ef5034ec920c102f2f4225",
     "artifacts/task-evidence/T50/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
     "artifacts/task-evidence/T50/red.log": "2d59d08b6510abd692c63587d13d28d563e6409976621d86b2bd2945a02abe9d",
-    "artifacts/task-evidence/T50/green.log": "d5a1de6ba03e4710ed03be9f73eec6799d96f71980df8a14c7befa2054a69f95",
-    "artifacts/task-evidence/T50/full-gate.log": "61431af3a369aec16c4704bdbbc3045d775623d3e3947b262bd520e05ceb6acb",
+    "artifacts/task-evidence/T50/green.log": "e6222b6f8ad9f6e39bfe22e7e443ea033062f58fd3fed44971680cf018bf80bf",
+    "artifacts/task-evidence/T50/full-gate.log": "62e3aa57780ec8adf0966d67e73d84a6b4376bc09e0211f1825317b25fff4706",
     "artifacts/task-evidence/T50/changed-files.json": "f3976a20eef69bbb5f7d6ff5ff92f4e2f6767a8636814ebf595e249c211feebb"
   }
 }

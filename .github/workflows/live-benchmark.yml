@@ -25,7 +25,13 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - name: Live environment preflight
-        run: mkdir -p artifacts/live && node scripts/ci/live-env.mjs --workspace live --seeds 7,11,23 --run-seed ${{ inputs.seed }} > "artifacts/live/preflight-seed-${{ inputs.seed }}.json"
+        run: |
+          set -euo pipefail
+          out_dir="${RUNNER_TEMP}/pcr-live-preflight"
+          mkdir -p "$out_dir"
+          node scripts/ci/live-env.mjs --workspace live --seeds 7,11,23 --run-seed ${{ inputs.seed }} > "$out_dir/preflight-seed-${{ inputs.seed }}.json"
+          mkdir -p artifacts/live
+          cp "$out_dir/preflight-seed-${{ inputs.seed }}.json" "artifacts/live/"
       - name: Upload live seed artifact
         if: always()
         uses: actions/upload-artifact@v4

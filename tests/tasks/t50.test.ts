@@ -60,8 +60,13 @@ async function runT50Fixture() {
   expect(liveWorkflow).toContain("environment: live");
   expect(liveWorkflow).not.toContain("pull_request:");
   expect(nightly).toContain("scripts/ci/live-env.mjs");
+  expect(nightly).toContain("RUNNER_TEMP");
+  expect(nightly).not.toMatch(/live-env\.mjs[^\n]*>\s*"artifacts\/live/u);
+  expect(liveWorkflow).toContain("RUNNER_TEMP");
+  expect(liveWorkflow).not.toMatch(/live-env\.mjs[^\n]*>\s*"artifacts\/live/u);
   expect(liveWorkflow).toContain("secrets.PCR_LIVE_PROVIDER_KEY");
   expect(JSON.stringify(ready)).not.toContain("test-key");
+  expect(ready.provenance.commit).toMatch(/^[a-f0-9]{40}$/u);
   return { ok: true as const, task: "T50" as const, policy };
 }
 

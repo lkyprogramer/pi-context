@@ -175,7 +175,12 @@ async function main() {
     git: processGit(),
   });
   const ready = await live.prepare({ seeds, runSeed });
-  process.stdout.write(`${JSON.stringify({ ok: true, seeds: ready.seeds, policy: ready.policy })}\n`);
+  process.stdout.write(`${JSON.stringify({
+    ok: true,
+    seeds: ready.seeds,
+    policy: ready.policy,
+    provenance: ready.provenance,
+  })}\n`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
