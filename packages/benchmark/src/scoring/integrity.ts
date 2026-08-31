@@ -7,6 +7,10 @@ export interface IntegrityScore {
   deterministicHashStable: boolean;
 }
 
+export interface LeakSurfaceScore {
+  leakCount: number;
+}
+
 export interface IntegrityPair {
   toolCallId: string;
   toolName: string;
@@ -26,6 +30,8 @@ export interface IntegritySample {
   pairs: { calls: readonly IntegrityPair[]; results: readonly IntegrityPair[] };
   recoveries: readonly IntegrityRecovery[];
   hashes: { first: string; second: string };
+  secrets?: readonly string[];
+  surfaces?: readonly string[];
   signal?: AbortSignal;
 }
 
@@ -70,6 +76,30 @@ function failScope(details: Record<string, unknown> = {}): never {
 
 function sha256(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+export function scoreLeakSurfaces(secrets: readonly string[], surfaces: readonly string[]): LeakSurfaceScore {
+  return { leakCount: countLeaks(secrets, surfaces) };
+}
+
+function countLeaks(secrets: readonly string[], surfaces: readonly string[]): number {
+  if (secrets.length === 0) return 0;
+  const joined = surfaces.join("");
+  let leaks = 0;
+  for (const secret of secrets) {
+    if (typeof secret !== "string" || secret.length === 0) continue;
+    if (surfaces.some((text) => typeof text === "string" && text.includes(secret))) {
+      leaks += 1;
+      continue;
+    }
+    if (joined.includes(secret)) {
+      leaks += 1;
+      continue;
+    }
+    const encoded = Buffer.from(secret, "utf8").toString("base64");
+    if (surfaces.some((text) => typeof text === "string" && text.includes(encoded))) leaks += 1;
+  }
+  return leaks;
 }
 
 function requireNonEmpty(value: unknown, field: string): asserts value is string {

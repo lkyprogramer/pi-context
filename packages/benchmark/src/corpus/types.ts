@@ -11,6 +11,8 @@ export interface CorpusCase {
   cluster: string;
   corpusId: string;
   body: string;
+  templateId?: string;
+  oracleExpected?: string;
 }
 
 export interface CorpusStore {

@@ -1,6 +1,15 @@
 import { domainHash } from "@pcr/contracts";
 
-import { CorpusGovernorError, failConflict, failInput, failMissing, failScope } from "./errors.js";
+import {
+  CorpusGovernorError,
+  failConflict,
+  failInput,
+  failMissing,
+  failScope,
+  failSplitLeakage,
+  failTemplateDuplicate,
+  failWitnessMissing,
+} from "./errors.js";
 import type {
   CorpusCase,
   CorpusGovernor,
@@ -32,7 +41,16 @@ function snapshotCase(value: unknown, field: string): CorpusCase {
   requireNonEmpty(row.cluster, `${field}.cluster`);
   requireNonEmpty(row.corpusId, `${field}.corpusId`);
   if (typeof row.body !== "string") failInput(`${field}.body`);
-  return { id: row.id, cluster: row.cluster, corpusId: row.corpusId, body: row.body };
+  const next: CorpusCase = { id: row.id, cluster: row.cluster, corpusId: row.corpusId, body: row.body };
+  if (row.templateId !== undefined) {
+    requireNonEmpty(row.templateId, `${field}.templateId`);
+    next.templateId = row.templateId;
+  }
+  if (row.oracleExpected !== undefined) {
+    requireNonEmpty(row.oracleExpected, `${field}.oracleExpected`);
+    next.oracleExpected = row.oracleExpected;
+  }
+  return next;
 }
 
 function snapshotManifest(value: CorpusManifest | null): CorpusManifest | null {
@@ -150,6 +168,40 @@ function assignSplits(cases: readonly CorpusCase[]): {
   return { train, dev, test, clusters };
 }
 
+function templateOf(row: CorpusCase): string {
+  return row.templateId ?? row.body;
+}
+
+function assertWitnesses(cases: readonly CorpusCase[]): void {
+  for (const row of cases) {
+    if (row.oracleExpected && !row.body.includes(row.oracleExpected)) {
+      failWitnessMissing({ caseId: row.id, expected: row.oracleExpected });
+    }
+  }
+}
+
+function assertTemplates(splits: { train: CorpusCase[]; dev: CorpusCase[]; test: CorpusCase[] }): void {
+  const bySplit: Array<{ name: "train" | "dev" | "test"; rows: CorpusCase[] }> = [
+    { name: "train", rows: splits.train },
+    { name: "dev", rows: splits.dev },
+    { name: "test", rows: splits.test },
+  ];
+  const seenAcross = new Map<string, string>();
+  for (const split of bySplit) {
+    const seenInSplit = new Set<string>();
+    for (const row of split.rows) {
+      const template = templateOf(row);
+      if (seenInSplit.has(template)) failTemplateDuplicate({ split: split.name, template, caseId: row.id });
+      seenInSplit.add(template);
+      const previous = seenAcross.get(template);
+      if (previous && previous !== split.name) {
+        failSplitLeakage({ template, first: previous, second: split.name, caseId: row.id });
+      }
+      seenAcross.set(template, split.name);
+    }
+  }
+}
+
 export function createCorpusGovernor(input: CreateCorpusGovernorInput): CorpusGovernor {
   if (!input || typeof input !== "object") failMissing("input");
   if (typeof input.corpusId !== "string" || input.corpusId.length === 0) failMissing("corpusId");
@@ -168,6 +220,8 @@ export function createCorpusGovernor(input: CreateCorpusGovernorInput): CorpusGo
         if (row.corpusId !== corpusId) failScope({ expected: corpusId, actual: row.corpusId });
       }
       const splits = assignSplits(cases);
+      assertWitnesses(cases);
+      assertTemplates(splits);
       const computed = freezeManifest({
         benchmarkMajor: request.benchmarkMajor,
         trainHash: hashSplit("corpus.train", corpusId, request.benchmarkMajor, splits.train),

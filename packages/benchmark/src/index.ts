@@ -10,6 +10,11 @@ export {
   type CreateCorpusGovernorInput,
   type CreateFileCorpusStoreInput,
   type LockCorpusInput,
+  CORPUS_V2_GATE_CLUSTERS,
+  CORPUS_V2_ID,
+  CORPUS_V2_SMOKE_CLUSTERS,
+  verifyLockedCorpus,
+  type VerifyLockedCorpusInput,
 } from "./corpus/index.js";
 export {
   OracleValidationError,
@@ -37,6 +42,10 @@ export {
   type TraceCapture,
   type TraceCaptureStore,
   type TraceErrorCode,
+  freezeA1Trace,
+  type FreezeA1TraceInput,
+  type FrozenA1Trace,
+  type FrozenArmCopy,
 } from "./trace/index.js";
 export {
   W1ArmError,
@@ -88,6 +97,7 @@ export {
 export {
   IntegrityScorerError,
   createIntegrityScorer,
+  scoreLeakSurfaces,
   type IntegrityBlobStore,
   type IntegrityErrorCode,
   type IntegrityRecovery,
@@ -95,6 +105,22 @@ export {
   type IntegrityScore,
   type IntegrityScorer,
 } from "./scoring/integrity.js";
+export {
+  ProbeScorerError,
+  normalizeProbeAnswer,
+  scoreProbe,
+  type ProbeErrorCode,
+  type ProbeFamily,
+  type ProbeScore,
+} from "./scoring/probe.js";
+export {
+  EconomicsPairError,
+  pairPreservingCost,
+  type ArmUsage,
+  type EconomicsPairErrorCode,
+  type PairPreservingReport,
+  type PairedEconomicsSample,
+} from "./economics/pairing.js";
 export {
   ClusterStatisticsError,
   createClusterStatistics,
@@ -142,6 +168,15 @@ export {
   type IntegritySlice,
   type RunBundle,
   type RunProvenance,
+  type GateSampleProfile,
 } from "./report/engine.js";
+export {
+  BundleVerifyError,
+  hashRunBundle,
+  sealRunBundle,
+  verifyRunBundle,
+  type BundleVerifyErrorCode,
+  type ImmutableRunBundle,
+} from "./report/bundle.js";
 
 

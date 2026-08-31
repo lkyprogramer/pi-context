@@ -29,6 +29,7 @@ export interface W2ArmResult {
   tokensBefore: number;
   tokensAfter: number;
   outputHash: string;
+  fromHook: boolean;
 }
 
 export type ArmResult = W2ArmResult;
@@ -272,6 +273,9 @@ export function createW2ArmRunner(input: CreateW2ArmRunnerInput): W2ArmRunner {
         retainedTailStartId: shaped.retainedTailStartId,
       });
       signal?.throwIfAborted();
+      if (arm === "B2" && /SIMULATED|\[PCR\]|string-marker/iu.test(shaped.shapedText)) {
+        failInput("b2.simulated");
+      }
       const compacted = arm === "B0"
         ? snapshotCompact(await native.compact({
           cursor,
@@ -314,6 +318,7 @@ export function createW2ArmRunner(input: CreateW2ArmRunnerInput): W2ArmRunner {
         tokensBefore: shaped.tokensBefore,
         tokensAfter: compacted.tokensAfter,
         outputHash: compacted.outputHash,
+        fromHook: arm !== "B0",
       });
     },
   };

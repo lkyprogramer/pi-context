@@ -24,7 +24,15 @@
     "compat:scan": "node scripts/check-public-pi-imports.mjs",
     "compat:lock": "node scripts/install-pi-version.mjs",
     "gate:mvp": "node scripts/gates/deterministic-mvp.mjs",
-    "gate:semantic": "node scripts/gates/semantic-beta.mjs"
+    "gate:semantic": "node scripts/gates/semantic-beta.mjs",
+    "benchmark:corpus:verify": "node scripts/benchmark/corpus-verify.mjs",
+    "benchmark:trace:freeze": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/trace-freeze.test.ts",
+    "benchmark:w2:smoke": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/arms-identity.test.ts",
+    "benchmark:reader:smoke": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/reader-lane.test.ts",
+    "benchmark:closed-loop:smoke": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/closed-loop.test.ts",
+    "benchmark:integrity:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/scoring/leaks.test.ts packages/benchmark/test/scoring/integrity.test.ts",
+    "benchmark:economics:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/economics-pairing.test.ts",
+    "benchmark:bundle:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/bundle-verify.test.ts"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "0.84.4",

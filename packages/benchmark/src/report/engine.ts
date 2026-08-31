@@ -43,6 +43,12 @@ export interface RunProvenance {
   configDigest: string;
 }
 
+export interface GateSampleProfile {
+  clusters: number;
+  seedsPerCluster: number;
+  familyRegressions: readonly string[];
+}
+
 export interface RunBundle {
   runId: string;
   gate: GateName;
@@ -52,6 +58,7 @@ export interface RunBundle {
   quality: { environmentSuccessLower: number };
   efficiency: EfficiencySlice;
   provenance: RunProvenance;
+  sample?: GateSampleProfile;
   signal?: AbortSignal;
 }
 
@@ -153,6 +160,9 @@ function snapshotBundle(bundle: RunBundle): Omit<RunBundle, "signal"> {
     quality: { ...bundle.quality },
     efficiency: { ...bundle.efficiency },
     provenance: { ...bundle.provenance },
+    ...(bundle.sample
+      ? { sample: { clusters: bundle.sample.clusters, seedsPerCluster: bundle.sample.seedsPerCluster, familyRegressions: [...bundle.sample.familyRegressions] } }
+      : {}),
   };
 }
 
@@ -191,6 +201,12 @@ function parseBundle(bundle: RunBundle): RunBundle {
   requireNonEmpty(bundle.provenance.modelKey, "provenance.modelKey");
   if (typeof bundle.provenance.configDigest !== "string" || !SHA256_PATTERN.test(bundle.provenance.configDigest)) {
     failInput("provenance.configDigest");
+  }
+  if (bundle.sample !== undefined) {
+    if (!bundle.sample || typeof bundle.sample !== "object") failInput("sample");
+    requireCount(bundle.sample.clusters, "sample.clusters");
+    requireCount(bundle.sample.seedsPerCluster, "sample.seedsPerCluster");
+    if (!Array.isArray(bundle.sample.familyRegressions)) failInput("sample.familyRegressions");
   }
   return bundle;
 }
@@ -244,8 +260,17 @@ function decide(bundle: RunBundle): { decision: GateDecisionKind; hardGatePass: 
     return { decision, hardGatePass: true, reasons: [decision] };
   }
   if (bundle.gate === "w2-compactor") {
-    const decision = bundle.efficiency.realizedNetMedian > 0 ? "adopt-pcr-compactor" : "keep-pi-native";
-    return { decision, hardGatePass: true, reasons: [decision] };
+    const sample = bundle.sample;
+    if (!sample || sample.clusters < 30 || sample.seedsPerCluster < 3) {
+      return { decision: "keep-pi-native", hardGatePass: true, reasons: ["sample-profile"] };
+    }
+    if (sample.familyRegressions.length > 0) {
+      return { decision: "keep-pi-native", hardGatePass: true, reasons: ["family-regression"] };
+    }
+    if (!(bundle.efficiency.realizedNetMedian >= 1)) {
+      return { decision: "keep-pi-native", hardGatePass: true, reasons: ["insufficient-net"] };
+    }
+    return { decision: "adopt-pcr-compactor", hardGatePass: true, reasons: ["adopt-pcr-compactor"] };
   }
   return { decision: "proceed-to-semantic", hardGatePass: true, reasons: ["proceed-to-semantic"] };
 }

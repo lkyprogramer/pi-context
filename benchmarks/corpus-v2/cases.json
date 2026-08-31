@@ -1,0 +1,1442 @@
+[
+  {
+    "id": "constraint-00",
+    "cluster": "constraint",
+    "corpusId": "pcr-corpus-v2",
+    "body": "constraint case 0: keep constraint-v0 and do not deploy production",
+    "templateId": "constraint-0",
+    "oracleExpected": "constraint-v0"
+  },
+  {
+    "id": "constraint-01",
+    "cluster": "constraint",
+    "corpusId": "pcr-corpus-v2",
+    "body": "constraint case 1: keep constraint-v1 and do not deploy production",
+    "templateId": "constraint-1",
+    "oracleExpected": "constraint-v1"
+  },
+  {
+    "id": "constraint-02",
+    "cluster": "constraint",
+    "corpusId": "pcr-corpus-v2",
+    "body": "constraint case 2: keep constraint-v2 and do not deploy production",
+    "templateId": "constraint-2",
+    "oracleExpected": "constraint-v2"
+  },
+  {
+    "id": "constraint-03",
+    "cluster": "constraint",
+    "corpusId": "pcr-corpus-v2",
+    "body": "constraint case 3: keep constraint-v3 and do not deploy production",
+    "templateId": "constraint-3",
+    "oracleExpected": "constraint-v3"
+  },
+  {
+    "id": "constraint-04",
+    "cluster": "constraint",
+    "corpusId": "pcr-corpus-v2",
+    "body": "constraint case 4: keep constraint-v4 and do not deploy production",
+    "templateId": "constraint-4",
+    "oracleExpected": "constraint-v4"
+  },
+  {
+    "id": "constraint-05",
+    "cluster": "constraint",
+    "corpusId": "pcr-corpus-v2",
+    "body": "constraint case 5: keep constraint-v5 and do not deploy production",
+    "templateId": "constraint-5",
+    "oracleExpected": "constraint-v5"
+  },
+  {
+    "id": "temporal-00",
+    "cluster": "temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "temporal case 0: keep temporal-v0 and do not deploy production",
+    "templateId": "temporal-0",
+    "oracleExpected": "temporal-v0"
+  },
+  {
+    "id": "temporal-01",
+    "cluster": "temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "temporal case 1: keep temporal-v1 and do not deploy production",
+    "templateId": "temporal-1",
+    "oracleExpected": "temporal-v1"
+  },
+  {
+    "id": "temporal-02",
+    "cluster": "temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "temporal case 2: keep temporal-v2 and do not deploy production",
+    "templateId": "temporal-2",
+    "oracleExpected": "temporal-v2"
+  },
+  {
+    "id": "temporal-03",
+    "cluster": "temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "temporal case 3: keep temporal-v3 and do not deploy production",
+    "templateId": "temporal-3",
+    "oracleExpected": "temporal-v3"
+  },
+  {
+    "id": "temporal-04",
+    "cluster": "temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "temporal case 4: keep temporal-v4 and do not deploy production",
+    "templateId": "temporal-4",
+    "oracleExpected": "temporal-v4"
+  },
+  {
+    "id": "temporal-05",
+    "cluster": "temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "temporal case 5: keep temporal-v5 and do not deploy production",
+    "templateId": "temporal-5",
+    "oracleExpected": "temporal-v5"
+  },
+  {
+    "id": "polarity-00",
+    "cluster": "polarity",
+    "corpusId": "pcr-corpus-v2",
+    "body": "polarity case 0: keep polarity-v0 and do not deploy production",
+    "templateId": "polarity-0",
+    "oracleExpected": "polarity-v0"
+  },
+  {
+    "id": "polarity-01",
+    "cluster": "polarity",
+    "corpusId": "pcr-corpus-v2",
+    "body": "polarity case 1: keep polarity-v1 and do not deploy production",
+    "templateId": "polarity-1",
+    "oracleExpected": "polarity-v1"
+  },
+  {
+    "id": "polarity-02",
+    "cluster": "polarity",
+    "corpusId": "pcr-corpus-v2",
+    "body": "polarity case 2: keep polarity-v2 and do not deploy production",
+    "templateId": "polarity-2",
+    "oracleExpected": "polarity-v2"
+  },
+  {
+    "id": "polarity-03",
+    "cluster": "polarity",
+    "corpusId": "pcr-corpus-v2",
+    "body": "polarity case 3: keep polarity-v3 and do not deploy production",
+    "templateId": "polarity-3",
+    "oracleExpected": "polarity-v3"
+  },
+  {
+    "id": "polarity-04",
+    "cluster": "polarity",
+    "corpusId": "pcr-corpus-v2",
+    "body": "polarity case 4: keep polarity-v4 and do not deploy production",
+    "templateId": "polarity-4",
+    "oracleExpected": "polarity-v4"
+  },
+  {
+    "id": "polarity-05",
+    "cluster": "polarity",
+    "corpusId": "pcr-corpus-v2",
+    "body": "polarity case 5: keep polarity-v5 and do not deploy production",
+    "templateId": "polarity-5",
+    "oracleExpected": "polarity-v5"
+  },
+  {
+    "id": "branch-00",
+    "cluster": "branch",
+    "corpusId": "pcr-corpus-v2",
+    "body": "branch case 0: keep branch-v0 and do not deploy production",
+    "templateId": "branch-0",
+    "oracleExpected": "branch-v0"
+  },
+  {
+    "id": "branch-01",
+    "cluster": "branch",
+    "corpusId": "pcr-corpus-v2",
+    "body": "branch case 1: keep branch-v1 and do not deploy production",
+    "templateId": "branch-1",
+    "oracleExpected": "branch-v1"
+  },
+  {
+    "id": "branch-02",
+    "cluster": "branch",
+    "corpusId": "pcr-corpus-v2",
+    "body": "branch case 2: keep branch-v2 and do not deploy production",
+    "templateId": "branch-2",
+    "oracleExpected": "branch-v2"
+  },
+  {
+    "id": "branch-03",
+    "cluster": "branch",
+    "corpusId": "pcr-corpus-v2",
+    "body": "branch case 3: keep branch-v3 and do not deploy production",
+    "templateId": "branch-3",
+    "oracleExpected": "branch-v3"
+  },
+  {
+    "id": "branch-04",
+    "cluster": "branch",
+    "corpusId": "pcr-corpus-v2",
+    "body": "branch case 4: keep branch-v4 and do not deploy production",
+    "templateId": "branch-4",
+    "oracleExpected": "branch-v4"
+  },
+  {
+    "id": "branch-05",
+    "cluster": "branch",
+    "corpusId": "pcr-corpus-v2",
+    "body": "branch case 5: keep branch-v5 and do not deploy production",
+    "templateId": "branch-5",
+    "oracleExpected": "branch-v5"
+  },
+  {
+    "id": "tool-heavy-00",
+    "cluster": "tool-heavy",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-heavy case 0: keep tool-heavy-v0 and do not deploy production",
+    "templateId": "tool-heavy-0",
+    "oracleExpected": "tool-heavy-v0"
+  },
+  {
+    "id": "tool-heavy-01",
+    "cluster": "tool-heavy",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-heavy case 1: keep tool-heavy-v1 and do not deploy production",
+    "templateId": "tool-heavy-1",
+    "oracleExpected": "tool-heavy-v1"
+  },
+  {
+    "id": "tool-heavy-02",
+    "cluster": "tool-heavy",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-heavy case 2: keep tool-heavy-v2 and do not deploy production",
+    "templateId": "tool-heavy-2",
+    "oracleExpected": "tool-heavy-v2"
+  },
+  {
+    "id": "tool-heavy-03",
+    "cluster": "tool-heavy",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-heavy case 3: keep tool-heavy-v3 and do not deploy production",
+    "templateId": "tool-heavy-3",
+    "oracleExpected": "tool-heavy-v3"
+  },
+  {
+    "id": "tool-heavy-04",
+    "cluster": "tool-heavy",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-heavy case 4: keep tool-heavy-v4 and do not deploy production",
+    "templateId": "tool-heavy-4",
+    "oracleExpected": "tool-heavy-v4"
+  },
+  {
+    "id": "tool-heavy-05",
+    "cluster": "tool-heavy",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-heavy case 5: keep tool-heavy-v5 and do not deploy production",
+    "templateId": "tool-heavy-5",
+    "oracleExpected": "tool-heavy-v5"
+  },
+  {
+    "id": "error-fix-00",
+    "cluster": "error-fix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "error-fix case 0: keep error-fix-v0 and do not deploy production",
+    "templateId": "error-fix-0",
+    "oracleExpected": "error-fix-v0"
+  },
+  {
+    "id": "error-fix-01",
+    "cluster": "error-fix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "error-fix case 1: keep error-fix-v1 and do not deploy production",
+    "templateId": "error-fix-1",
+    "oracleExpected": "error-fix-v1"
+  },
+  {
+    "id": "error-fix-02",
+    "cluster": "error-fix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "error-fix case 2: keep error-fix-v2 and do not deploy production",
+    "templateId": "error-fix-2",
+    "oracleExpected": "error-fix-v2"
+  },
+  {
+    "id": "error-fix-03",
+    "cluster": "error-fix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "error-fix case 3: keep error-fix-v3 and do not deploy production",
+    "templateId": "error-fix-3",
+    "oracleExpected": "error-fix-v3"
+  },
+  {
+    "id": "error-fix-04",
+    "cluster": "error-fix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "error-fix case 4: keep error-fix-v4 and do not deploy production",
+    "templateId": "error-fix-4",
+    "oracleExpected": "error-fix-v4"
+  },
+  {
+    "id": "error-fix-05",
+    "cluster": "error-fix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "error-fix case 5: keep error-fix-v5 and do not deploy production",
+    "templateId": "error-fix-5",
+    "oracleExpected": "error-fix-v5"
+  },
+  {
+    "id": "side-effect-00",
+    "cluster": "side-effect",
+    "corpusId": "pcr-corpus-v2",
+    "body": "side-effect case 0: keep side-effect-v0 and do not deploy production",
+    "templateId": "side-effect-0",
+    "oracleExpected": "side-effect-v0"
+  },
+  {
+    "id": "side-effect-01",
+    "cluster": "side-effect",
+    "corpusId": "pcr-corpus-v2",
+    "body": "side-effect case 1: keep side-effect-v1 and do not deploy production",
+    "templateId": "side-effect-1",
+    "oracleExpected": "side-effect-v1"
+  },
+  {
+    "id": "side-effect-02",
+    "cluster": "side-effect",
+    "corpusId": "pcr-corpus-v2",
+    "body": "side-effect case 2: keep side-effect-v2 and do not deploy production",
+    "templateId": "side-effect-2",
+    "oracleExpected": "side-effect-v2"
+  },
+  {
+    "id": "side-effect-03",
+    "cluster": "side-effect",
+    "corpusId": "pcr-corpus-v2",
+    "body": "side-effect case 3: keep side-effect-v3 and do not deploy production",
+    "templateId": "side-effect-3",
+    "oracleExpected": "side-effect-v3"
+  },
+  {
+    "id": "side-effect-04",
+    "cluster": "side-effect",
+    "corpusId": "pcr-corpus-v2",
+    "body": "side-effect case 4: keep side-effect-v4 and do not deploy production",
+    "templateId": "side-effect-4",
+    "oracleExpected": "side-effect-v4"
+  },
+  {
+    "id": "side-effect-05",
+    "cluster": "side-effect",
+    "corpusId": "pcr-corpus-v2",
+    "body": "side-effect case 5: keep side-effect-v5 and do not deploy production",
+    "templateId": "side-effect-5",
+    "oracleExpected": "side-effect-v5"
+  },
+  {
+    "id": "recall-needed-00",
+    "cluster": "recall-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-needed case 0: keep recall-needed-v0 and do not deploy production",
+    "templateId": "recall-needed-0",
+    "oracleExpected": "recall-needed-v0"
+  },
+  {
+    "id": "recall-needed-01",
+    "cluster": "recall-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-needed case 1: keep recall-needed-v1 and do not deploy production",
+    "templateId": "recall-needed-1",
+    "oracleExpected": "recall-needed-v1"
+  },
+  {
+    "id": "recall-needed-02",
+    "cluster": "recall-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-needed case 2: keep recall-needed-v2 and do not deploy production",
+    "templateId": "recall-needed-2",
+    "oracleExpected": "recall-needed-v2"
+  },
+  {
+    "id": "recall-needed-03",
+    "cluster": "recall-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-needed case 3: keep recall-needed-v3 and do not deploy production",
+    "templateId": "recall-needed-3",
+    "oracleExpected": "recall-needed-v3"
+  },
+  {
+    "id": "recall-needed-04",
+    "cluster": "recall-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-needed case 4: keep recall-needed-v4 and do not deploy production",
+    "templateId": "recall-needed-4",
+    "oracleExpected": "recall-needed-v4"
+  },
+  {
+    "id": "recall-needed-05",
+    "cluster": "recall-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-needed case 5: keep recall-needed-v5 and do not deploy production",
+    "templateId": "recall-needed-5",
+    "oracleExpected": "recall-needed-v5"
+  },
+  {
+    "id": "recall-not-needed-00",
+    "cluster": "recall-not-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-not-needed case 0: keep recall-not-needed-v0 and do not deploy production",
+    "templateId": "recall-not-needed-0",
+    "oracleExpected": "recall-not-needed-v0"
+  },
+  {
+    "id": "recall-not-needed-01",
+    "cluster": "recall-not-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-not-needed case 1: keep recall-not-needed-v1 and do not deploy production",
+    "templateId": "recall-not-needed-1",
+    "oracleExpected": "recall-not-needed-v1"
+  },
+  {
+    "id": "recall-not-needed-02",
+    "cluster": "recall-not-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-not-needed case 2: keep recall-not-needed-v2 and do not deploy production",
+    "templateId": "recall-not-needed-2",
+    "oracleExpected": "recall-not-needed-v2"
+  },
+  {
+    "id": "recall-not-needed-03",
+    "cluster": "recall-not-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-not-needed case 3: keep recall-not-needed-v3 and do not deploy production",
+    "templateId": "recall-not-needed-3",
+    "oracleExpected": "recall-not-needed-v3"
+  },
+  {
+    "id": "recall-not-needed-04",
+    "cluster": "recall-not-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-not-needed case 4: keep recall-not-needed-v4 and do not deploy production",
+    "templateId": "recall-not-needed-4",
+    "oracleExpected": "recall-not-needed-v4"
+  },
+  {
+    "id": "recall-not-needed-05",
+    "cluster": "recall-not-needed",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recall-not-needed case 5: keep recall-not-needed-v5 and do not deploy production",
+    "templateId": "recall-not-needed-5",
+    "oracleExpected": "recall-not-needed-v5"
+  },
+  {
+    "id": "recursive-00",
+    "cluster": "recursive",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recursive case 0: keep recursive-v0 and do not deploy production",
+    "templateId": "recursive-0",
+    "oracleExpected": "recursive-v0"
+  },
+  {
+    "id": "recursive-01",
+    "cluster": "recursive",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recursive case 1: keep recursive-v1 and do not deploy production",
+    "templateId": "recursive-1",
+    "oracleExpected": "recursive-v1"
+  },
+  {
+    "id": "recursive-02",
+    "cluster": "recursive",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recursive case 2: keep recursive-v2 and do not deploy production",
+    "templateId": "recursive-2",
+    "oracleExpected": "recursive-v2"
+  },
+  {
+    "id": "recursive-03",
+    "cluster": "recursive",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recursive case 3: keep recursive-v3 and do not deploy production",
+    "templateId": "recursive-3",
+    "oracleExpected": "recursive-v3"
+  },
+  {
+    "id": "recursive-04",
+    "cluster": "recursive",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recursive case 4: keep recursive-v4 and do not deploy production",
+    "templateId": "recursive-4",
+    "oracleExpected": "recursive-v4"
+  },
+  {
+    "id": "recursive-05",
+    "cluster": "recursive",
+    "corpusId": "pcr-corpus-v2",
+    "body": "recursive case 5: keep recursive-v5 and do not deploy production",
+    "templateId": "recursive-5",
+    "oracleExpected": "recursive-v5"
+  },
+  {
+    "id": "overflow-00",
+    "cluster": "overflow",
+    "corpusId": "pcr-corpus-v2",
+    "body": "overflow case 0: keep overflow-v0 and do not deploy production",
+    "templateId": "overflow-0",
+    "oracleExpected": "overflow-v0"
+  },
+  {
+    "id": "overflow-01",
+    "cluster": "overflow",
+    "corpusId": "pcr-corpus-v2",
+    "body": "overflow case 1: keep overflow-v1 and do not deploy production",
+    "templateId": "overflow-1",
+    "oracleExpected": "overflow-v1"
+  },
+  {
+    "id": "overflow-02",
+    "cluster": "overflow",
+    "corpusId": "pcr-corpus-v2",
+    "body": "overflow case 2: keep overflow-v2 and do not deploy production",
+    "templateId": "overflow-2",
+    "oracleExpected": "overflow-v2"
+  },
+  {
+    "id": "overflow-03",
+    "cluster": "overflow",
+    "corpusId": "pcr-corpus-v2",
+    "body": "overflow case 3: keep overflow-v3 and do not deploy production",
+    "templateId": "overflow-3",
+    "oracleExpected": "overflow-v3"
+  },
+  {
+    "id": "overflow-04",
+    "cluster": "overflow",
+    "corpusId": "pcr-corpus-v2",
+    "body": "overflow case 4: keep overflow-v4 and do not deploy production",
+    "templateId": "overflow-4",
+    "oracleExpected": "overflow-v4"
+  },
+  {
+    "id": "overflow-05",
+    "cluster": "overflow",
+    "corpusId": "pcr-corpus-v2",
+    "body": "overflow case 5: keep overflow-v5 and do not deploy production",
+    "templateId": "overflow-5",
+    "oracleExpected": "overflow-v5"
+  },
+  {
+    "id": "injection-00",
+    "cluster": "injection",
+    "corpusId": "pcr-corpus-v2",
+    "body": "injection case 0: keep injection-v0 and do not deploy production",
+    "templateId": "injection-0",
+    "oracleExpected": "injection-v0"
+  },
+  {
+    "id": "injection-01",
+    "cluster": "injection",
+    "corpusId": "pcr-corpus-v2",
+    "body": "injection case 1: keep injection-v1 and do not deploy production",
+    "templateId": "injection-1",
+    "oracleExpected": "injection-v1"
+  },
+  {
+    "id": "injection-02",
+    "cluster": "injection",
+    "corpusId": "pcr-corpus-v2",
+    "body": "injection case 2: keep injection-v2 and do not deploy production",
+    "templateId": "injection-2",
+    "oracleExpected": "injection-v2"
+  },
+  {
+    "id": "injection-03",
+    "cluster": "injection",
+    "corpusId": "pcr-corpus-v2",
+    "body": "injection case 3: keep injection-v3 and do not deploy production",
+    "templateId": "injection-3",
+    "oracleExpected": "injection-v3"
+  },
+  {
+    "id": "injection-04",
+    "cluster": "injection",
+    "corpusId": "pcr-corpus-v2",
+    "body": "injection case 4: keep injection-v4 and do not deploy production",
+    "templateId": "injection-4",
+    "oracleExpected": "injection-v4"
+  },
+  {
+    "id": "injection-05",
+    "cluster": "injection",
+    "corpusId": "pcr-corpus-v2",
+    "body": "injection case 5: keep injection-v5 and do not deploy production",
+    "templateId": "injection-5",
+    "oracleExpected": "injection-v5"
+  },
+  {
+    "id": "secret-00",
+    "cluster": "secret",
+    "corpusId": "pcr-corpus-v2",
+    "body": "secret case 0: keep secret-v0 and do not deploy production",
+    "templateId": "secret-0",
+    "oracleExpected": "secret-v0"
+  },
+  {
+    "id": "secret-01",
+    "cluster": "secret",
+    "corpusId": "pcr-corpus-v2",
+    "body": "secret case 1: keep secret-v1 and do not deploy production",
+    "templateId": "secret-1",
+    "oracleExpected": "secret-v1"
+  },
+  {
+    "id": "secret-02",
+    "cluster": "secret",
+    "corpusId": "pcr-corpus-v2",
+    "body": "secret case 2: keep secret-v2 and do not deploy production",
+    "templateId": "secret-2",
+    "oracleExpected": "secret-v2"
+  },
+  {
+    "id": "secret-03",
+    "cluster": "secret",
+    "corpusId": "pcr-corpus-v2",
+    "body": "secret case 3: keep secret-v3 and do not deploy production",
+    "templateId": "secret-3",
+    "oracleExpected": "secret-v3"
+  },
+  {
+    "id": "secret-04",
+    "cluster": "secret",
+    "corpusId": "pcr-corpus-v2",
+    "body": "secret case 4: keep secret-v4 and do not deploy production",
+    "templateId": "secret-4",
+    "oracleExpected": "secret-v4"
+  },
+  {
+    "id": "secret-05",
+    "cluster": "secret",
+    "corpusId": "pcr-corpus-v2",
+    "body": "secret case 5: keep secret-v5 and do not deploy production",
+    "templateId": "secret-5",
+    "oracleExpected": "secret-v5"
+  },
+  {
+    "id": "same-basename-00",
+    "cluster": "same-basename",
+    "corpusId": "pcr-corpus-v2",
+    "body": "same-basename case 0: keep same-basename-v0 and do not deploy production",
+    "templateId": "same-basename-0",
+    "oracleExpected": "same-basename-v0"
+  },
+  {
+    "id": "same-basename-01",
+    "cluster": "same-basename",
+    "corpusId": "pcr-corpus-v2",
+    "body": "same-basename case 1: keep same-basename-v1 and do not deploy production",
+    "templateId": "same-basename-1",
+    "oracleExpected": "same-basename-v1"
+  },
+  {
+    "id": "same-basename-02",
+    "cluster": "same-basename",
+    "corpusId": "pcr-corpus-v2",
+    "body": "same-basename case 2: keep same-basename-v2 and do not deploy production",
+    "templateId": "same-basename-2",
+    "oracleExpected": "same-basename-v2"
+  },
+  {
+    "id": "same-basename-03",
+    "cluster": "same-basename",
+    "corpusId": "pcr-corpus-v2",
+    "body": "same-basename case 3: keep same-basename-v3 and do not deploy production",
+    "templateId": "same-basename-3",
+    "oracleExpected": "same-basename-v3"
+  },
+  {
+    "id": "same-basename-04",
+    "cluster": "same-basename",
+    "corpusId": "pcr-corpus-v2",
+    "body": "same-basename case 4: keep same-basename-v4 and do not deploy production",
+    "templateId": "same-basename-4",
+    "oracleExpected": "same-basename-v4"
+  },
+  {
+    "id": "same-basename-05",
+    "cluster": "same-basename",
+    "corpusId": "pcr-corpus-v2",
+    "body": "same-basename case 5: keep same-basename-v5 and do not deploy production",
+    "templateId": "same-basename-5",
+    "oracleExpected": "same-basename-v5"
+  },
+  {
+    "id": "format-00",
+    "cluster": "format",
+    "corpusId": "pcr-corpus-v2",
+    "body": "format case 0: keep format-v0 and do not deploy production",
+    "templateId": "format-0",
+    "oracleExpected": "format-v0"
+  },
+  {
+    "id": "format-01",
+    "cluster": "format",
+    "corpusId": "pcr-corpus-v2",
+    "body": "format case 1: keep format-v1 and do not deploy production",
+    "templateId": "format-1",
+    "oracleExpected": "format-v1"
+  },
+  {
+    "id": "format-02",
+    "cluster": "format",
+    "corpusId": "pcr-corpus-v2",
+    "body": "format case 2: keep format-v2 and do not deploy production",
+    "templateId": "format-2",
+    "oracleExpected": "format-v2"
+  },
+  {
+    "id": "format-03",
+    "cluster": "format",
+    "corpusId": "pcr-corpus-v2",
+    "body": "format case 3: keep format-v3 and do not deploy production",
+    "templateId": "format-3",
+    "oracleExpected": "format-v3"
+  },
+  {
+    "id": "format-04",
+    "cluster": "format",
+    "corpusId": "pcr-corpus-v2",
+    "body": "format case 4: keep format-v4 and do not deploy production",
+    "templateId": "format-4",
+    "oracleExpected": "format-v4"
+  },
+  {
+    "id": "format-05",
+    "cluster": "format",
+    "corpusId": "pcr-corpus-v2",
+    "body": "format case 5: keep format-v5 and do not deploy production",
+    "templateId": "format-5",
+    "oracleExpected": "format-v5"
+  },
+  {
+    "id": "permission-00",
+    "cluster": "permission",
+    "corpusId": "pcr-corpus-v2",
+    "body": "permission case 0: keep permission-v0 and do not deploy production",
+    "templateId": "permission-0",
+    "oracleExpected": "permission-v0"
+  },
+  {
+    "id": "permission-01",
+    "cluster": "permission",
+    "corpusId": "pcr-corpus-v2",
+    "body": "permission case 1: keep permission-v1 and do not deploy production",
+    "templateId": "permission-1",
+    "oracleExpected": "permission-v1"
+  },
+  {
+    "id": "permission-02",
+    "cluster": "permission",
+    "corpusId": "pcr-corpus-v2",
+    "body": "permission case 2: keep permission-v2 and do not deploy production",
+    "templateId": "permission-2",
+    "oracleExpected": "permission-v2"
+  },
+  {
+    "id": "permission-03",
+    "cluster": "permission",
+    "corpusId": "pcr-corpus-v2",
+    "body": "permission case 3: keep permission-v3 and do not deploy production",
+    "templateId": "permission-3",
+    "oracleExpected": "permission-v3"
+  },
+  {
+    "id": "permission-04",
+    "cluster": "permission",
+    "corpusId": "pcr-corpus-v2",
+    "body": "permission case 4: keep permission-v4 and do not deploy production",
+    "templateId": "permission-4",
+    "oracleExpected": "permission-v4"
+  },
+  {
+    "id": "permission-05",
+    "cluster": "permission",
+    "corpusId": "pcr-corpus-v2",
+    "body": "permission case 5: keep permission-v5 and do not deploy production",
+    "templateId": "permission-5",
+    "oracleExpected": "permission-v5"
+  },
+  {
+    "id": "correction-00",
+    "cluster": "correction",
+    "corpusId": "pcr-corpus-v2",
+    "body": "correction case 0: keep correction-v0 and do not deploy production",
+    "templateId": "correction-0",
+    "oracleExpected": "correction-v0"
+  },
+  {
+    "id": "correction-01",
+    "cluster": "correction",
+    "corpusId": "pcr-corpus-v2",
+    "body": "correction case 1: keep correction-v1 and do not deploy production",
+    "templateId": "correction-1",
+    "oracleExpected": "correction-v1"
+  },
+  {
+    "id": "correction-02",
+    "cluster": "correction",
+    "corpusId": "pcr-corpus-v2",
+    "body": "correction case 2: keep correction-v2 and do not deploy production",
+    "templateId": "correction-2",
+    "oracleExpected": "correction-v2"
+  },
+  {
+    "id": "correction-03",
+    "cluster": "correction",
+    "corpusId": "pcr-corpus-v2",
+    "body": "correction case 3: keep correction-v3 and do not deploy production",
+    "templateId": "correction-3",
+    "oracleExpected": "correction-v3"
+  },
+  {
+    "id": "correction-04",
+    "cluster": "correction",
+    "corpusId": "pcr-corpus-v2",
+    "body": "correction case 4: keep correction-v4 and do not deploy production",
+    "templateId": "correction-4",
+    "oracleExpected": "correction-v4"
+  },
+  {
+    "id": "correction-05",
+    "cluster": "correction",
+    "corpusId": "pcr-corpus-v2",
+    "body": "correction case 5: keep correction-v5 and do not deploy production",
+    "templateId": "correction-5",
+    "oracleExpected": "correction-v5"
+  },
+  {
+    "id": "preference-00",
+    "cluster": "preference",
+    "corpusId": "pcr-corpus-v2",
+    "body": "preference case 0: keep preference-v0 and do not deploy production",
+    "templateId": "preference-0",
+    "oracleExpected": "preference-v0"
+  },
+  {
+    "id": "preference-01",
+    "cluster": "preference",
+    "corpusId": "pcr-corpus-v2",
+    "body": "preference case 1: keep preference-v1 and do not deploy production",
+    "templateId": "preference-1",
+    "oracleExpected": "preference-v1"
+  },
+  {
+    "id": "preference-02",
+    "cluster": "preference",
+    "corpusId": "pcr-corpus-v2",
+    "body": "preference case 2: keep preference-v2 and do not deploy production",
+    "templateId": "preference-2",
+    "oracleExpected": "preference-v2"
+  },
+  {
+    "id": "preference-03",
+    "cluster": "preference",
+    "corpusId": "pcr-corpus-v2",
+    "body": "preference case 3: keep preference-v3 and do not deploy production",
+    "templateId": "preference-3",
+    "oracleExpected": "preference-v3"
+  },
+  {
+    "id": "preference-04",
+    "cluster": "preference",
+    "corpusId": "pcr-corpus-v2",
+    "body": "preference case 4: keep preference-v4 and do not deploy production",
+    "templateId": "preference-4",
+    "oracleExpected": "preference-v4"
+  },
+  {
+    "id": "preference-05",
+    "cluster": "preference",
+    "corpusId": "pcr-corpus-v2",
+    "body": "preference case 5: keep preference-v5 and do not deploy production",
+    "templateId": "preference-5",
+    "oracleExpected": "preference-v5"
+  },
+  {
+    "id": "acceptance-00",
+    "cluster": "acceptance",
+    "corpusId": "pcr-corpus-v2",
+    "body": "acceptance case 0: keep acceptance-v0 and do not deploy production",
+    "templateId": "acceptance-0",
+    "oracleExpected": "acceptance-v0"
+  },
+  {
+    "id": "acceptance-01",
+    "cluster": "acceptance",
+    "corpusId": "pcr-corpus-v2",
+    "body": "acceptance case 1: keep acceptance-v1 and do not deploy production",
+    "templateId": "acceptance-1",
+    "oracleExpected": "acceptance-v1"
+  },
+  {
+    "id": "acceptance-02",
+    "cluster": "acceptance",
+    "corpusId": "pcr-corpus-v2",
+    "body": "acceptance case 2: keep acceptance-v2 and do not deploy production",
+    "templateId": "acceptance-2",
+    "oracleExpected": "acceptance-v2"
+  },
+  {
+    "id": "acceptance-03",
+    "cluster": "acceptance",
+    "corpusId": "pcr-corpus-v2",
+    "body": "acceptance case 3: keep acceptance-v3 and do not deploy production",
+    "templateId": "acceptance-3",
+    "oracleExpected": "acceptance-v3"
+  },
+  {
+    "id": "acceptance-04",
+    "cluster": "acceptance",
+    "corpusId": "pcr-corpus-v2",
+    "body": "acceptance case 4: keep acceptance-v4 and do not deploy production",
+    "templateId": "acceptance-4",
+    "oracleExpected": "acceptance-v4"
+  },
+  {
+    "id": "acceptance-05",
+    "cluster": "acceptance",
+    "corpusId": "pcr-corpus-v2",
+    "body": "acceptance case 5: keep acceptance-v5 and do not deploy production",
+    "templateId": "acceptance-5",
+    "oracleExpected": "acceptance-v5"
+  },
+  {
+    "id": "chinese-temporal-00",
+    "cluster": "chinese-temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "chinese-temporal case 0: keep chinese-temporal-v0 and do not deploy production",
+    "templateId": "chinese-temporal-0",
+    "oracleExpected": "chinese-temporal-v0"
+  },
+  {
+    "id": "chinese-temporal-01",
+    "cluster": "chinese-temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "chinese-temporal case 1: keep chinese-temporal-v1 and do not deploy production",
+    "templateId": "chinese-temporal-1",
+    "oracleExpected": "chinese-temporal-v1"
+  },
+  {
+    "id": "chinese-temporal-02",
+    "cluster": "chinese-temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "chinese-temporal case 2: keep chinese-temporal-v2 and do not deploy production",
+    "templateId": "chinese-temporal-2",
+    "oracleExpected": "chinese-temporal-v2"
+  },
+  {
+    "id": "chinese-temporal-03",
+    "cluster": "chinese-temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "chinese-temporal case 3: keep chinese-temporal-v3 and do not deploy production",
+    "templateId": "chinese-temporal-3",
+    "oracleExpected": "chinese-temporal-v3"
+  },
+  {
+    "id": "chinese-temporal-04",
+    "cluster": "chinese-temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "chinese-temporal case 4: keep chinese-temporal-v4 and do not deploy production",
+    "templateId": "chinese-temporal-4",
+    "oracleExpected": "chinese-temporal-v4"
+  },
+  {
+    "id": "chinese-temporal-05",
+    "cluster": "chinese-temporal",
+    "corpusId": "pcr-corpus-v2",
+    "body": "chinese-temporal case 5: keep chinese-temporal-v5 and do not deploy production",
+    "templateId": "chinese-temporal-5",
+    "oracleExpected": "chinese-temporal-v5"
+  },
+  {
+    "id": "path-collision-00",
+    "cluster": "path-collision",
+    "corpusId": "pcr-corpus-v2",
+    "body": "path-collision case 0: keep path-collision-v0 and do not deploy production",
+    "templateId": "path-collision-0",
+    "oracleExpected": "path-collision-v0"
+  },
+  {
+    "id": "path-collision-01",
+    "cluster": "path-collision",
+    "corpusId": "pcr-corpus-v2",
+    "body": "path-collision case 1: keep path-collision-v1 and do not deploy production",
+    "templateId": "path-collision-1",
+    "oracleExpected": "path-collision-v1"
+  },
+  {
+    "id": "path-collision-02",
+    "cluster": "path-collision",
+    "corpusId": "pcr-corpus-v2",
+    "body": "path-collision case 2: keep path-collision-v2 and do not deploy production",
+    "templateId": "path-collision-2",
+    "oracleExpected": "path-collision-v2"
+  },
+  {
+    "id": "path-collision-03",
+    "cluster": "path-collision",
+    "corpusId": "pcr-corpus-v2",
+    "body": "path-collision case 3: keep path-collision-v3 and do not deploy production",
+    "templateId": "path-collision-3",
+    "oracleExpected": "path-collision-v3"
+  },
+  {
+    "id": "path-collision-04",
+    "cluster": "path-collision",
+    "corpusId": "pcr-corpus-v2",
+    "body": "path-collision case 4: keep path-collision-v4 and do not deploy production",
+    "templateId": "path-collision-4",
+    "oracleExpected": "path-collision-v4"
+  },
+  {
+    "id": "path-collision-05",
+    "cluster": "path-collision",
+    "corpusId": "pcr-corpus-v2",
+    "body": "path-collision case 5: keep path-collision-v5 and do not deploy production",
+    "templateId": "path-collision-5",
+    "oracleExpected": "path-collision-v5"
+  },
+  {
+    "id": "parked-front-00",
+    "cluster": "parked-front",
+    "corpusId": "pcr-corpus-v2",
+    "body": "parked-front case 0: keep parked-front-v0 and do not deploy production",
+    "templateId": "parked-front-0",
+    "oracleExpected": "parked-front-v0"
+  },
+  {
+    "id": "parked-front-01",
+    "cluster": "parked-front",
+    "corpusId": "pcr-corpus-v2",
+    "body": "parked-front case 1: keep parked-front-v1 and do not deploy production",
+    "templateId": "parked-front-1",
+    "oracleExpected": "parked-front-v1"
+  },
+  {
+    "id": "parked-front-02",
+    "cluster": "parked-front",
+    "corpusId": "pcr-corpus-v2",
+    "body": "parked-front case 2: keep parked-front-v2 and do not deploy production",
+    "templateId": "parked-front-2",
+    "oracleExpected": "parked-front-v2"
+  },
+  {
+    "id": "parked-front-03",
+    "cluster": "parked-front",
+    "corpusId": "pcr-corpus-v2",
+    "body": "parked-front case 3: keep parked-front-v3 and do not deploy production",
+    "templateId": "parked-front-3",
+    "oracleExpected": "parked-front-v3"
+  },
+  {
+    "id": "parked-front-04",
+    "cluster": "parked-front",
+    "corpusId": "pcr-corpus-v2",
+    "body": "parked-front case 4: keep parked-front-v4 and do not deploy production",
+    "templateId": "parked-front-4",
+    "oracleExpected": "parked-front-v4"
+  },
+  {
+    "id": "parked-front-05",
+    "cluster": "parked-front",
+    "corpusId": "pcr-corpus-v2",
+    "body": "parked-front case 5: keep parked-front-v5 and do not deploy production",
+    "templateId": "parked-front-5",
+    "oracleExpected": "parked-front-v5"
+  },
+  {
+    "id": "superseded-00",
+    "cluster": "superseded",
+    "corpusId": "pcr-corpus-v2",
+    "body": "superseded case 0: keep superseded-v0 and do not deploy production",
+    "templateId": "superseded-0",
+    "oracleExpected": "superseded-v0"
+  },
+  {
+    "id": "superseded-01",
+    "cluster": "superseded",
+    "corpusId": "pcr-corpus-v2",
+    "body": "superseded case 1: keep superseded-v1 and do not deploy production",
+    "templateId": "superseded-1",
+    "oracleExpected": "superseded-v1"
+  },
+  {
+    "id": "superseded-02",
+    "cluster": "superseded",
+    "corpusId": "pcr-corpus-v2",
+    "body": "superseded case 2: keep superseded-v2 and do not deploy production",
+    "templateId": "superseded-2",
+    "oracleExpected": "superseded-v2"
+  },
+  {
+    "id": "superseded-03",
+    "cluster": "superseded",
+    "corpusId": "pcr-corpus-v2",
+    "body": "superseded case 3: keep superseded-v3 and do not deploy production",
+    "templateId": "superseded-3",
+    "oracleExpected": "superseded-v3"
+  },
+  {
+    "id": "superseded-04",
+    "cluster": "superseded",
+    "corpusId": "pcr-corpus-v2",
+    "body": "superseded case 4: keep superseded-v4 and do not deploy production",
+    "templateId": "superseded-4",
+    "oracleExpected": "superseded-v4"
+  },
+  {
+    "id": "superseded-05",
+    "cluster": "superseded",
+    "corpusId": "pcr-corpus-v2",
+    "body": "superseded case 5: keep superseded-v5 and do not deploy production",
+    "templateId": "superseded-5",
+    "oracleExpected": "superseded-v5"
+  },
+  {
+    "id": "validation-00",
+    "cluster": "validation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "validation case 0: keep validation-v0 and do not deploy production",
+    "templateId": "validation-0",
+    "oracleExpected": "validation-v0"
+  },
+  {
+    "id": "validation-01",
+    "cluster": "validation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "validation case 1: keep validation-v1 and do not deploy production",
+    "templateId": "validation-1",
+    "oracleExpected": "validation-v1"
+  },
+  {
+    "id": "validation-02",
+    "cluster": "validation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "validation case 2: keep validation-v2 and do not deploy production",
+    "templateId": "validation-2",
+    "oracleExpected": "validation-v2"
+  },
+  {
+    "id": "validation-03",
+    "cluster": "validation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "validation case 3: keep validation-v3 and do not deploy production",
+    "templateId": "validation-3",
+    "oracleExpected": "validation-v3"
+  },
+  {
+    "id": "validation-04",
+    "cluster": "validation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "validation case 4: keep validation-v4 and do not deploy production",
+    "templateId": "validation-4",
+    "oracleExpected": "validation-v4"
+  },
+  {
+    "id": "validation-05",
+    "cluster": "validation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "validation case 5: keep validation-v5 and do not deploy production",
+    "templateId": "validation-5",
+    "oracleExpected": "validation-v5"
+  },
+  {
+    "id": "image-reserve-00",
+    "cluster": "image-reserve",
+    "corpusId": "pcr-corpus-v2",
+    "body": "image-reserve case 0: keep image-reserve-v0 and do not deploy production",
+    "templateId": "image-reserve-0",
+    "oracleExpected": "image-reserve-v0"
+  },
+  {
+    "id": "image-reserve-01",
+    "cluster": "image-reserve",
+    "corpusId": "pcr-corpus-v2",
+    "body": "image-reserve case 1: keep image-reserve-v1 and do not deploy production",
+    "templateId": "image-reserve-1",
+    "oracleExpected": "image-reserve-v1"
+  },
+  {
+    "id": "image-reserve-02",
+    "cluster": "image-reserve",
+    "corpusId": "pcr-corpus-v2",
+    "body": "image-reserve case 2: keep image-reserve-v2 and do not deploy production",
+    "templateId": "image-reserve-2",
+    "oracleExpected": "image-reserve-v2"
+  },
+  {
+    "id": "image-reserve-03",
+    "cluster": "image-reserve",
+    "corpusId": "pcr-corpus-v2",
+    "body": "image-reserve case 3: keep image-reserve-v3 and do not deploy production",
+    "templateId": "image-reserve-3",
+    "oracleExpected": "image-reserve-v3"
+  },
+  {
+    "id": "image-reserve-04",
+    "cluster": "image-reserve",
+    "corpusId": "pcr-corpus-v2",
+    "body": "image-reserve case 4: keep image-reserve-v4 and do not deploy production",
+    "templateId": "image-reserve-4",
+    "oracleExpected": "image-reserve-v4"
+  },
+  {
+    "id": "image-reserve-05",
+    "cluster": "image-reserve",
+    "corpusId": "pcr-corpus-v2",
+    "body": "image-reserve case 5: keep image-reserve-v5 and do not deploy production",
+    "templateId": "image-reserve-5",
+    "oracleExpected": "image-reserve-v5"
+  },
+  {
+    "id": "cache-prefix-00",
+    "cluster": "cache-prefix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "cache-prefix case 0: keep cache-prefix-v0 and do not deploy production",
+    "templateId": "cache-prefix-0",
+    "oracleExpected": "cache-prefix-v0"
+  },
+  {
+    "id": "cache-prefix-01",
+    "cluster": "cache-prefix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "cache-prefix case 1: keep cache-prefix-v1 and do not deploy production",
+    "templateId": "cache-prefix-1",
+    "oracleExpected": "cache-prefix-v1"
+  },
+  {
+    "id": "cache-prefix-02",
+    "cluster": "cache-prefix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "cache-prefix case 2: keep cache-prefix-v2 and do not deploy production",
+    "templateId": "cache-prefix-2",
+    "oracleExpected": "cache-prefix-v2"
+  },
+  {
+    "id": "cache-prefix-03",
+    "cluster": "cache-prefix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "cache-prefix case 3: keep cache-prefix-v3 and do not deploy production",
+    "templateId": "cache-prefix-3",
+    "oracleExpected": "cache-prefix-v3"
+  },
+  {
+    "id": "cache-prefix-04",
+    "cluster": "cache-prefix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "cache-prefix case 4: keep cache-prefix-v4 and do not deploy production",
+    "templateId": "cache-prefix-4",
+    "oracleExpected": "cache-prefix-v4"
+  },
+  {
+    "id": "cache-prefix-05",
+    "cluster": "cache-prefix",
+    "corpusId": "pcr-corpus-v2",
+    "body": "cache-prefix case 5: keep cache-prefix-v5 and do not deploy production",
+    "templateId": "cache-prefix-5",
+    "oracleExpected": "cache-prefix-v5"
+  },
+  {
+    "id": "tool-pair-00",
+    "cluster": "tool-pair",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-pair case 0: keep tool-pair-v0 and do not deploy production",
+    "templateId": "tool-pair-0",
+    "oracleExpected": "tool-pair-v0"
+  },
+  {
+    "id": "tool-pair-01",
+    "cluster": "tool-pair",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-pair case 1: keep tool-pair-v1 and do not deploy production",
+    "templateId": "tool-pair-1",
+    "oracleExpected": "tool-pair-v1"
+  },
+  {
+    "id": "tool-pair-02",
+    "cluster": "tool-pair",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-pair case 2: keep tool-pair-v2 and do not deploy production",
+    "templateId": "tool-pair-2",
+    "oracleExpected": "tool-pair-v2"
+  },
+  {
+    "id": "tool-pair-03",
+    "cluster": "tool-pair",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-pair case 3: keep tool-pair-v3 and do not deploy production",
+    "templateId": "tool-pair-3",
+    "oracleExpected": "tool-pair-v3"
+  },
+  {
+    "id": "tool-pair-04",
+    "cluster": "tool-pair",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-pair case 4: keep tool-pair-v4 and do not deploy production",
+    "templateId": "tool-pair-4",
+    "oracleExpected": "tool-pair-v4"
+  },
+  {
+    "id": "tool-pair-05",
+    "cluster": "tool-pair",
+    "corpusId": "pcr-corpus-v2",
+    "body": "tool-pair case 5: keep tool-pair-v5 and do not deploy production",
+    "templateId": "tool-pair-5",
+    "oracleExpected": "tool-pair-v5"
+  },
+  {
+    "id": "orphan-result-00",
+    "cluster": "orphan-result",
+    "corpusId": "pcr-corpus-v2",
+    "body": "orphan-result case 0: keep orphan-result-v0 and do not deploy production",
+    "templateId": "orphan-result-0",
+    "oracleExpected": "orphan-result-v0"
+  },
+  {
+    "id": "orphan-result-01",
+    "cluster": "orphan-result",
+    "corpusId": "pcr-corpus-v2",
+    "body": "orphan-result case 1: keep orphan-result-v1 and do not deploy production",
+    "templateId": "orphan-result-1",
+    "oracleExpected": "orphan-result-v1"
+  },
+  {
+    "id": "orphan-result-02",
+    "cluster": "orphan-result",
+    "corpusId": "pcr-corpus-v2",
+    "body": "orphan-result case 2: keep orphan-result-v2 and do not deploy production",
+    "templateId": "orphan-result-2",
+    "oracleExpected": "orphan-result-v2"
+  },
+  {
+    "id": "orphan-result-03",
+    "cluster": "orphan-result",
+    "corpusId": "pcr-corpus-v2",
+    "body": "orphan-result case 3: keep orphan-result-v3 and do not deploy production",
+    "templateId": "orphan-result-3",
+    "oracleExpected": "orphan-result-v3"
+  },
+  {
+    "id": "orphan-result-04",
+    "cluster": "orphan-result",
+    "corpusId": "pcr-corpus-v2",
+    "body": "orphan-result case 4: keep orphan-result-v4 and do not deploy production",
+    "templateId": "orphan-result-4",
+    "oracleExpected": "orphan-result-v4"
+  },
+  {
+    "id": "orphan-result-05",
+    "cluster": "orphan-result",
+    "corpusId": "pcr-corpus-v2",
+    "body": "orphan-result case 5: keep orphan-result-v5 and do not deploy production",
+    "templateId": "orphan-result-5",
+    "oracleExpected": "orphan-result-v5"
+  },
+  {
+    "id": "two-run-00",
+    "cluster": "two-run",
+    "corpusId": "pcr-corpus-v2",
+    "body": "two-run case 0: keep two-run-v0 and do not deploy production",
+    "templateId": "two-run-0",
+    "oracleExpected": "two-run-v0"
+  },
+  {
+    "id": "two-run-01",
+    "cluster": "two-run",
+    "corpusId": "pcr-corpus-v2",
+    "body": "two-run case 1: keep two-run-v1 and do not deploy production",
+    "templateId": "two-run-1",
+    "oracleExpected": "two-run-v1"
+  },
+  {
+    "id": "two-run-02",
+    "cluster": "two-run",
+    "corpusId": "pcr-corpus-v2",
+    "body": "two-run case 2: keep two-run-v2 and do not deploy production",
+    "templateId": "two-run-2",
+    "oracleExpected": "two-run-v2"
+  },
+  {
+    "id": "two-run-03",
+    "cluster": "two-run",
+    "corpusId": "pcr-corpus-v2",
+    "body": "two-run case 3: keep two-run-v3 and do not deploy production",
+    "templateId": "two-run-3",
+    "oracleExpected": "two-run-v3"
+  },
+  {
+    "id": "two-run-04",
+    "cluster": "two-run",
+    "corpusId": "pcr-corpus-v2",
+    "body": "two-run case 4: keep two-run-v4 and do not deploy production",
+    "templateId": "two-run-4",
+    "oracleExpected": "two-run-v4"
+  },
+  {
+    "id": "two-run-05",
+    "cluster": "two-run",
+    "corpusId": "pcr-corpus-v2",
+    "body": "two-run case 5: keep two-run-v5 and do not deploy production",
+    "templateId": "two-run-5",
+    "oracleExpected": "two-run-v5"
+  },
+  {
+    "id": "metadata-ablation-00",
+    "cluster": "metadata-ablation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "metadata-ablation case 0: keep metadata-ablation-v0 and do not deploy production",
+    "templateId": "metadata-ablation-0",
+    "oracleExpected": "metadata-ablation-v0"
+  },
+  {
+    "id": "metadata-ablation-01",
+    "cluster": "metadata-ablation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "metadata-ablation case 1: keep metadata-ablation-v1 and do not deploy production",
+    "templateId": "metadata-ablation-1",
+    "oracleExpected": "metadata-ablation-v1"
+  },
+  {
+    "id": "metadata-ablation-02",
+    "cluster": "metadata-ablation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "metadata-ablation case 2: keep metadata-ablation-v2 and do not deploy production",
+    "templateId": "metadata-ablation-2",
+    "oracleExpected": "metadata-ablation-v2"
+  },
+  {
+    "id": "metadata-ablation-03",
+    "cluster": "metadata-ablation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "metadata-ablation case 3: keep metadata-ablation-v3 and do not deploy production",
+    "templateId": "metadata-ablation-3",
+    "oracleExpected": "metadata-ablation-v3"
+  },
+  {
+    "id": "metadata-ablation-04",
+    "cluster": "metadata-ablation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "metadata-ablation case 4: keep metadata-ablation-v4 and do not deploy production",
+    "templateId": "metadata-ablation-4",
+    "oracleExpected": "metadata-ablation-v4"
+  },
+  {
+    "id": "metadata-ablation-05",
+    "cluster": "metadata-ablation",
+    "corpusId": "pcr-corpus-v2",
+    "body": "metadata-ablation case 5: keep metadata-ablation-v5 and do not deploy production",
+    "templateId": "metadata-ablation-5",
+    "oracleExpected": "metadata-ablation-v5"
+  }
+]
