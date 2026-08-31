@@ -1,0 +1,51 @@
+{
+  "head": "48578bef9a67aab55102831853b116e1e6fcefb6",
+  "runs": [
+    {
+      "id": "acceptance-pack-first",
+      "ranAt": "2026-08-31T07:32:18Z",
+      "command": "pnpm vitest run tests/acceptance/product-runtime-path.test.ts tests/acceptance/compaction-fallback.test.ts tests/acceptance/packed-install.test.ts tests/acceptance/w1-vertical.test.ts tests/acceptance/restart-branch-recovery.test.ts",
+      "files": 5,
+      "tests": 7,
+      "passed": 6,
+      "failed": 1,
+      "failure": {
+        "file": "tests/acceptance/packed-install.test.ts",
+        "name": "npm packs the runtime and the required patched Pi host loads exact input",
+        "code": "TS2846",
+        "detail": "packed context-hook.d.ts imported a .d.ts specifier for @pcr/contracts without import type",
+        "log": "artifacts/runs/pcr-vs-pi-native/product/packed-install-acceptance.log"
+      },
+      "notes": "stock Pi rejection case passed"
+    },
+    {
+      "id": "acceptance-pack-after-rewriter-fix",
+      "ranAt": "2026-08-31T07:57:20Z",
+      "command": "pnpm vitest run tests/acceptance/product-runtime-path.test.ts tests/acceptance/compaction-fallback.test.ts tests/acceptance/packed-install.test.ts tests/acceptance/w1-vertical.test.ts tests/acceptance/restart-branch-recovery.test.ts",
+      "files": 5,
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "fix": "scripts/pack-smoke.mjs rewriteWorkspaceImports keeps .js specifiers in .d.ts files"
+    },
+    {
+      "id": "t06-after-rewriter-fix",
+      "ranAt": "2026-08-31T07:56:44Z",
+      "command": "pnpm vitest run tests/acceptance/packed-install.test.ts tests/tasks/t06.test.ts",
+      "files": 2,
+      "tests": 11,
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "id": "lightweight-and-release-artifact",
+      "ranAt": "2026-08-31T07:35:50Z",
+      "command": "pnpm vitest run tests/acceptance/compaction-fallback.test.ts tests/acceptance/restart-branch-recovery.test.ts tests/acceptance/product-runtime-path.test.ts tests/acceptance/w1-vertical.test.ts tests/e2e/packed-install.test.ts tests/release/deterministic-mvp-gate.test.ts tests/release/package-artifact.test.ts",
+      "files": 7,
+      "tests": 19,
+      "passed": 19,
+      "failed": 0,
+      "notes": "e2e packed-install does not run downstream tsc"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/release/deterministic-mvp-gate.test.ts (9 tests) 14ms
+ ✓ |0| tests/acceptance/compaction-fallback.test.ts (1 test) 3ms
+ ✓ |0| tests/acceptance/restart-branch-recovery.test.ts (1 test) 12ms
+(node:97576) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:97575) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/acceptance/product-runtime-path.test.ts (2 tests) 115ms
+(node:97574) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:97579) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/e2e/packed-install.test.ts (1 test) 18ms
+ ✓ |0| tests/acceptance/w1-vertical.test.ts (1 test) 73ms
+ ✓ |0| tests/release/package-artifact.test.ts (4 tests) 3291ms
+   ✓ release package > contains one extension entry, runtime dependencies and no source-private imports  919ms
+   ✓ release package > verifies clean-home extract, uninstall/reinstall, and temporary pi -e entry  1024ms
+   ✓ release package > keeps the Node/OS matrix and does not hide unsupported Pi versions  714ms
+   ✓ release package > ships license/security docs and the gate-derived semantic default  632ms
+
+ Test Files  7 passed (7)
+      Tests  19 passed (19)
+   Start at  15:35:50
+   Duration  5.02s (transform 881ms, setup 0ms, collect 5.96s, tests 3.53s, environment 1ms, prepare 720ms)
+

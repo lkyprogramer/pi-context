@@ -1,0 +1,17 @@
+{
+  "gate": "w2-compactor",
+  "decision": "keep-pi-native",
+  "hardGatePass": false,
+  "publicationClaim": false,
+  "livePiNative": true,
+  "reasons": [
+    "profile=spec-smoke completed=30/30 sameCut=30",
+    "B0 fromHook=false required; observed native=true",
+    "B1 fromHook=true required; observed pcr=true",
+    "maxTokens unmodified 16384; keepRecentTokens=2048 shared",
+    "tokenMedianRelativeDelta=0.0241 realizedNetMedian=-11.5",
+    "sample below W2 publication floor (100 pairs × 3 seeds)"
+  ],
+  "reportHash": "09c059ac18402509016dbd528fa7700a17d966414c2e67e3feef43af4be5d986",
+  "reportPath": "/Users/luo/Documents/github/pi-context/artifacts/runs/w2-live-native/spec-smoke/report.json"
+}

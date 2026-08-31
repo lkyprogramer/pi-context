@@ -1,0 +1,31 @@
+{
+  "runId": "pcr-vs-pi-native-2026-08-31",
+  "head": "48578bef9a67aab55102831853b116e1e6fcefb6",
+  "generatedAt": "2026-08-31T07:40:00Z",
+  "publicationClaim": false,
+  "verdict": {
+    "w1Synthetic": "proceed-to-w2",
+    "w2Synthetic": "proceed-to-semantic",
+    "w2LiveSpecSmoke": "keep-pi-native",
+    "repoMvp": "stop-at-deterministic-slice",
+    "adoptPcrCompactor": false,
+    "publicationReady": false,
+    "acceptancePackedInstall": "pass-after-ts2846-fix"
+  },
+  "reasons": [
+    "W1 synthetic 60-pair hard+value passed; compaction remains Pi Native",
+    "W2 synthetic 100-pair passed against synthetic-pi-native-like-summarizer, not live Pi Native",
+    "Live spec-smoke 30/30 same-cut completed; B0 Native / B1 fromHook as required",
+    "Live hardGatePass=false because exactEvidenceRecovery is hardcoded false in scoreArm",
+    "Live efficiency failed: tokenMedianRelativeDelta=+0.0241, realizedNetMedian=-11.5",
+    "Sample 30×1 is below W2 publication floor 100 pairs × 3 seeds",
+    "Spec benchmark:* scripts are not implemented; PCR entrypoints used instead",
+    "tests/acceptance/packed-install.test.ts first failed TS2846; pack-smoke rewriter now keeps .js specifiers in .d.ts; retest 2/2 pass"
+  ],
+  "artifacts": {
+    "w1SyntheticReportDigest": "224685b2575e89c393e60e7fd4528ab4ddcbb1c2d69ce7fe268692c1f4b85696",
+    "w2SyntheticReportDigest": "2655f7d20a3e8c0270704d963e00c17a447abade92aa3ca8f8fe6be62e6d8891",
+    "w2LiveSpecSmokeReportHash": "09c059ac18402509016dbd528fa7700a17d966414c2e67e3feef43af4be5d986",
+    "historical100PairReportHash": "5dad9974093f137873988984bbabd71e78f42ed19d2f8185d396eb61fce9b8d8"
+  }
+}

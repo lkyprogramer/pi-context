@@ -1,0 +1,12 @@
+HEAD=48578bef9a67aab55102831853b116e1e6fcefb6
+date=2026-08-31
+node=v22.19.0
+pnpm=10.15.0
+pi=0.84.4
+model=openclaw/Qwen3.8-27B-WORK
+contextWindow=200192
+maxTokens=16384
+w1CorpusLock=879da2d405cfc891390857d9a14de616f57a35c35a6b656a03842ceceb5a04cb
+publicationClaim=false
+comparisonSha256=868fac443aacb52a67b061a9e4ce6b1fe6729999a04634e77ffbcf8d24172257
+effectSha256=df64492398a24fd94ba2dd8e618586fc2549684ce7c7f3eed05668cbb9067012

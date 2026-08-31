@@ -1,0 +1,5 @@
+{
+  "gate": "w1-early-net-value",
+  "decision": "proceed-to-w2",
+  "hardGatePass": true
+}
