@@ -1,0 +1,35 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T54",
+  "status": "review-candidate",
+  "parentCommit": "97571c2d4b8a05174e22e68fd82ee0d14951cd9b",
+  "redLog": "artifacts/task-evidence/T54/red.log",
+  "greenLog": "artifacts/task-evidence/T54/green.log",
+  "fullGateLog": "artifacts/task-evidence/T54/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "hashesFromArtifacts": true,
+    "dirtyTreeBlocked": true,
+    "f017F029Ledger": true,
+    "repositoryGateFiles": 168,
+    "repositoryGateTests": 788,
+    "acceptanceGateTests": 33
+  },
+  "files": {
+    "CHANGELOG.md": "f4a7d51909ce15bf4529acc1df0cd01017d804424c3648d22361bd00c84c34c7",
+    "blockers/T54-scope-expansion.md": "7672de9ef2d178d185e21a7c7516ca1e13b8b2df4212650f04875d3cb2f9657e",
+    "docs/INSTALL.md": "b9c280f62353e124ab3d7a337a8c4134757c3c0c5a268b7480f842a93bcbb741",
+    "docs/OPERATIONS.md": "8352d1a52fe58c912eef774f109a13f1b24f4541a6f1777763d1d62f59653289",
+    "findings/README.md": "8ebaeaea70ba9d7da83616be0f35703cb089506127e4773069bf6021bc37aa7c",
+    "findings/closure.json": "d6feba25b53d4cac503723b045d8c80bac90b9b6786f69aace37780fd56ae545",
+    "release/manifest.mjs": "b5f9a1a03d546f0cab670b5a295993fc97af5c01850fd07a7191fdb45d198134",
+    "release/rollback-drill.md": "3afbe83fd04482cc8a8806989dd2771684744d2f09e3f11b852371318548de61",
+    "tests/tasks/t54.test.ts": "f986ec9e05bd69a64accdb0aba2f007dc35a8a176b9edc1b987da16cc1b68bae",
+    "artifacts/task-evidence/T54/preflight-git.txt": "eaaf9ce9fbb69aa01fc537d9fea1d5820bac4360ad562584fbd902b0d7a7d7b9",
+    "artifacts/task-evidence/T54/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T54/red.log": "fdcf9808d667ffaed1cda6c7a146e0d072c01708d88a4ac030cba164321f6b9a",
+    "artifacts/task-evidence/T54/green.log": "60440c1e60b0ba17a5f76f9d1d72dc2f3c4ecd17dd94a7d24e27678dec307c64",
+    "artifacts/task-evidence/T54/full-gate.log": "28b2318ad25b7c3fe338c98c75fcacf1386673ce242e7b98e7c411db3e8a580e",
+    "artifacts/task-evidence/T54/changed-files.json": "f37aed108da3a3f9154d1f3c4870da894d68a15febbe6abeb9d2116ad9653a7f"
+  }
+}

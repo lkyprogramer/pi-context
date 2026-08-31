@@ -1,0 +1,16 @@
+{
+  "taskId": "T54",
+  "production": [
+    "CHANGELOG.md",
+    "blockers/T54-scope-expansion.md",
+    "docs/INSTALL.md",
+    "docs/OPERATIONS.md",
+    "findings/README.md",
+    "findings/closure.json",
+    "release/manifest.mjs",
+    "release/rollback-drill.md"
+  ],
+  "tests": [
+    "tests/tasks/t54.test.ts"
+  ]
+}

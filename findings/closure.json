@@ -1,0 +1,25 @@
+{
+  "version": "0.1.0-alpha.1",
+  "closed": [
+    {
+      "id": "F017",
+      "title": "Remote CI did not run tests",
+      "evidence": [
+        ".github/workflows/compatibility.yml",
+        "compat/toolchain.lock.json",
+        "T53 createCompatibilityMatrix"
+      ]
+    },
+    {
+      "id": "F029",
+      "title": "Live report.json was gitignored",
+      "evidence": [
+        "T49 createGateEngine writeImmutableBundle",
+        "release/manifest.mjs ReleaseManifest hashes"
+      ]
+    }
+  ],
+  "notClosedHere": [
+    "F001-F016 ledger rows in the plan findings.json remain historical; closure is evidence-backed in task commits, not a bulk rewrite of that file."
+  ]
+}

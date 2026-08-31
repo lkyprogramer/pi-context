@@ -4,12 +4,11 @@
 
 Deterministic MVP packaging. Semantic/Background remains default-off.
 
-- T01–T40: contracts, store/CAS, capture, materializer, host compaction, tools, package install
-- T41: performance spikes (SLO suggestions only)
-- T42: paired benchmark harness vs Pi Native; `publicationClaim=false`
-- T43: security suite, including period-free secret dumps
-- T44: Pi 0.84.3 lock and runtime probe
-- T45: deterministic MVP gate → stop-at-deterministic-slice
-- T46: semantic beta gate → `semanticDefault=off` / `not-enabled-by-release-profile`
-- T47: doctor, backup/restore, GC, key rotation
-- T48: npm tarball, SBOM, manifest hashes, install/rollback docs
+- T01–T48: contracts, store/CAS, capture, materializer, host compaction, tools, package install, economics, corpus, W1/W2 arms
+- T49: immutable gate engine (lexicographic integrity → environment quality → efficiency; content-addressed bundles)
+- T50: scheduled live CI on protected `environment: live` (3 seeds); not on pull_request
+- T51: end-to-end deterministic MVP acceptance verdict
+- T52: production `scripts/release/pack.mjs` compiled tarball + SBOM + empty-Pi-home probe
+- T53: Pi/Node/OS compatibility matrix + `compatibility-required` aggregator
+- T54: `ReleaseManifest` hashes, rollback drill, F017/F029 closure ledger
+- Publication claim remains false; semantic default remains off
