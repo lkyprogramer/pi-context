@@ -74,6 +74,10 @@ async function runT48Fixture() {
     tokensBefore: 6_200,
     compactReason: "manual" as never,
   }))).rejects.toMatchObject({ code: "PCR_PERFORMANCE_INPUT_INVALID" });
+  await expect(lanes.measure(sample({
+    tokensBefore: 6_200,
+    compactReason: "threshold",
+  }))).rejects.toMatchObject({ code: "PCR_PERFORMANCE_INPUT_INVALID", details: { field: "tokensBefore" } });
   return { ok: true as const, task: "T48" as const, report };
 }
 
