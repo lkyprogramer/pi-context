@@ -1,0 +1,13 @@
+{
+  "taskId": "T46",
+  "production": [
+    "blockers/T46-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/scoring/integrity.ts"
+  ],
+  "tests": [
+    "packages/benchmark/test/scoring/integrity.test.ts",
+    "tests/tasks/t46.test.ts"
+  ]
+}

@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t46.test.ts (6 tests | 6 failed) 8ms
+   × T46 Observed integrity and recovery scorers > observed_integrity_and_recovery_scorers 4ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T46 Observed integrity and recovery scorers > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T46 Observed integrity and recovery scorers > rejects malformed score input 0ms
+     → (0 , createIntegrityScorer) is not a function
+   × T46 Observed integrity and recovery scorers > replays equal scores for the same sample 0ms
+     → (0 , createIntegrityScorer) is not a function
+   × T46 Observed integrity and recovery scorers > denies recovery from another workspace 0ms
+     → (0 , createIntegrityScorer) is not a function
+   × T46 Observed integrity and recovery scorers > stops at the abort boundary before reading blobs 0ms
+     → (0 , createIntegrityScorer) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t46.test.ts > T46 Observed integrity and recovery scorers > observed_integrity_and_recovery_scorers
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t46.test.ts:73:33
+     71| describe("T46 Observed integrity and recovery scorers", () => {
+     72|   it("observed_integrity_and_recovery_scorers", async () => {
+     73|     await expect(runT46Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     74|   });
+     75| 
+
+Caused by: TypeError: (0 , createIntegrityScorer) is not a function
+ ❯ runT46Fixture tests/tasks/t46.test.ts:46:18
+ ❯ tests/tasks/t46.test.ts:73:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t46.test.ts > T46 Observed integrity and recovery scorers > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_INTEGRITY_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createIntegrityScorer) is not a function",
+  }
+
+ ❯ tests/tasks/t46.test.ts:77:54
+     75| 
+     76|   it("fails construction when production dependencies are absent", () …
+     77|     expect(() => createIntegrityScorer({} as never)).toThrowError(
+       |                                                      ^
+     78|       expect.objectContaining({ code: "PCR_INTEGRITY_DEPENDENCY_MISSIN…
+     79|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t46.test.ts > T46 Observed integrity and recovery scorers > rejects malformed score input
+TypeError: (0 , createIntegrityScorer) is not a function
+ ❯ tests/tasks/t46.test.ts:83:20
+     81| 
+     82|   it("rejects malformed score input", async () => {
+     83|     const scorer = createIntegrityScorer({ blobs: memoryBlobs({}) });
+       |                    ^
+     84|     await expect(scorer.score({} as never)).rejects.toMatchObject({ co…
+     85|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t46.test.ts > T46 Observed integrity and recovery scorers > replays equal scores for the same sample
+TypeError: (0 , createIntegrityScorer) is not a function
+ ❯ tests/tasks/t46.test.ts:88:20
+     86| 
+     87|   it("replays equal scores for the same sample", async () => {
+     88|     const scorer = createIntegrityScorer({
+       |                    ^
+     89|       blobs: memoryBlobs({ blob_1: { bytes: Buffer.from(RAW, "utf8"), …
+     90|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t46.test.ts > T46 Observed integrity and recovery scorers > denies recovery from another workspace
+TypeError: (0 , createIntegrityScorer) is not a function
+ ❯ tests/tasks/t46.test.ts:97:20
+     95| 
+     96|   it("denies recovery from another workspace", async () => {
+     97|     const scorer = createIntegrityScorer({
+       |                    ^
+     98|       blobs: memoryBlobs({ blob_1: { bytes: Buffer.from(RAW, "utf8"), …
+     99|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t46.test.ts > T46 Observed integrity and recovery scorers > stops at the abort boundary before reading blobs
+TypeError: (0 , createIntegrityScorer) is not a function
+ ❯ tests/tasks/t46.test.ts:105:20
+    103|   it("stops at the abort boundary before reading blobs", async () => {
+    104|     let reads = 0;
+    105|     const scorer = createIntegrityScorer({
+       |                    ^
+    106|       blobs: {
+    107|         async read() {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  10:20:09
+   Duration  385ms (transform 96ms, setup 0ms, collect 139ms, tests 8ms, environment 0ms, prepare 73ms)
+

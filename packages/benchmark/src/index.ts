@@ -85,5 +85,15 @@ export {
   type CreateContinuationRunnerInput,
   type ToolCallRecord,
 } from "./continuation/runner.js";
+export {
+  IntegrityScorerError,
+  createIntegrityScorer,
+  type IntegrityBlobStore,
+  type IntegrityErrorCode,
+  type IntegrityRecovery,
+  type IntegritySample,
+  type IntegrityScore,
+  type IntegrityScorer,
+} from "./scoring/integrity.js";
 
 
