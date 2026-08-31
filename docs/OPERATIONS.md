@@ -28,6 +28,6 @@ Rotation writes `keys/rotation.json` (not included in backups). A crash leaves t
 
 ## Release / rollback
 
-1. Publish only from a clean git tree via `node release/manifest.mjs` (hashes tarball, compat locks, T49 gate evidence, rollback drill).
+1. Publish only from a clean git tree via `node release/manifest.mjs`. Set `PCR_RELEASE_TARBALL` and `PCR_RELEASE_GATE_BUNDLE` to the packed tarball and a T49 `writeImmutableBundle` `bundle.json`; hashes those files plus compat locks and the rollback drill.
 2. Gate bundles are content-addressed (`createGateEngine.writeImmutableBundle`); do not treat gitignored live `report.json` as the release artifact.
 3. Rollback: `release/rollback-drill.md`. Confirm `ReleaseManifest.rollbackDrillHash` matches the drill text.

@@ -15,7 +15,7 @@
       "title": "Live report.json was gitignored",
       "evidence": [
         "T49 createGateEngine writeImmutableBundle",
-        "release/manifest.mjs ReleaseManifest hashes"
+        "release/manifest.mjs gateBundleHash via PCR_RELEASE_GATE_BUNDLE"
       ]
     }
   ],

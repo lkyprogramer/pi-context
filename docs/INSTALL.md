@@ -14,7 +14,7 @@ Pi Context Runtime `0.1.0-alpha.1` is distributed as a **local npm-pack tarball*
 node scripts/release/pack.mjs
 ```
 
-That writes a compiled self-contained tarball, CycloneDX SBOM, and clean-install log. The SHA-256 of the tarball is `ReleaseManifest.packageHash`.
+That writes a compiled self-contained tarball, CycloneDX SBOM, and clean-install log. The SHA-256 of the tarball is `ReleaseManifest.packageHash` (`PCR_RELEASE_TARBALL`). `ReleaseManifest.gateBundleHash` is the SHA-256 of a T49 `writeImmutableBundle` `bundle.json` (`PCR_RELEASE_GATE_BUNDLE`), not `artifacts/task-evidence/T49/evidence.json`.
 
 ## Project install
 

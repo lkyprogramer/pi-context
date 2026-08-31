@@ -121,11 +121,22 @@ export function sha256File(path) {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
 
-export function sha256Files(paths) {
+export function sha256Files(root, relativePaths) {
+  if (typeof root !== "string" || root.length === 0) failInput("root");
+  if (!Array.isArray(relativePaths) || relativePaths.length === 0) failInput("paths");
   const hash = createHash("sha256");
-  for (const path of paths) {
-    hash.update(path);
-    hash.update(readFileSync(path));
+  for (const rel of relativePaths) {
+    if (
+      typeof rel !== "string"
+      || rel.length === 0
+      || rel.startsWith("/")
+      || rel.includes("\\")
+      || rel.split("/").some((part) => part === "" || part === "." || part === "..")
+    ) {
+      failInput("path");
+    }
+    hash.update(rel);
+    hash.update(readFileSync(join(root, rel)));
   }
   return hash.digest("hex");
 }
@@ -154,23 +165,29 @@ function processFiles() {
   };
 }
 
-function processArtifacts(root) {
+export function processArtifacts(root, env = process.env) {
+  if (typeof root !== "string" || root.length === 0) failInput("root");
+  const environ = env && typeof env === "object" ? env : {};
   return {
     async packageHash() {
-      const tarball = process.env.PCR_RELEASE_TARBALL;
+      const tarball = environ.PCR_RELEASE_TARBALL;
       if (typeof tarball !== "string" || tarball.length === 0) {
         throw new ReleasePublisherError("PCR_RELEASE_INPUT_INVALID", { field: "PCR_RELEASE_TARBALL" });
       }
       return sha256File(tarball);
     },
     async compatHash() {
-      return sha256Files([
-        join(root, "compat/toolchain.lock.json"),
-        join(root, "compat/pi.lock.json"),
+      return sha256Files(root, [
+        "compat/toolchain.lock.json",
+        "compat/pi.lock.json",
       ]);
     },
     async gateBundleHash() {
-      return sha256File(join(root, "artifacts/task-evidence/T49/evidence.json"));
+      const bundle = environ.PCR_RELEASE_GATE_BUNDLE;
+      if (typeof bundle !== "string" || bundle.length === 0) {
+        throw new ReleasePublisherError("PCR_RELEASE_INPUT_INVALID", { field: "PCR_RELEASE_GATE_BUNDLE" });
+      }
+      return sha256File(bundle);
     },
     async rollbackDrill() {
       const path = join(root, "release/rollback-drill.md");
