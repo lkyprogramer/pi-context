@@ -271,7 +271,11 @@ function createExtensionContextRegistry(): RuntimeSessionRegistry {
             reason: request.reason,
             now: request.now,
             signal: request.signal,
-          }, { cursor, directives: [], continuity: [] });
+          }, {
+            cursor,
+            directives: request.canonicalMessages.filter((message) => message.role === "user"),
+            continuity: [],
+          });
         },
       };
     },
@@ -488,8 +492,19 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       return worker;
     },
   });
+  const deferredEvidence = {
+    async admit() {
+      throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+    },
+    async search() {
+      throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+    },
+    async read() {
+      throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+    },
+  };
   registerRuntimeTools(pi, {
-    workspaceId: "ws_0123456789abcdef",
+    workspaceId: userTurns.lastWorkspaceId() ?? "unbound",
     cursor: {
       workspaceId: `ws_${"0".repeat(40)}`,
       sessionId: "unbound",
@@ -497,25 +512,26 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       lineageHash: "0".repeat(64),
       modelKey: "unbound",
     },
-    evidence: {
-      async admit() {
-        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
-      },
-      async search() {
-        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
-      },
-      async read() {
-        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
-      },
-    },
+    evidence: deferredEvidence,
     claimed: true,
+    resolve: (ctx) => userTurns.resolveTools(ctx),
     commands: {
-      status: (ctx) =>
-        JSON.stringify({ ok: true, command: "context", workspaceId: ctx.workspaceId ?? "ws_0123456789abcdef", claimed: true }),
-      doctor: async (ctx) =>
-        JSON.stringify({
+      status: async (ctx) => {
+        try {
+          const bound = await userTurns.resolveTools(ctx);
+          return JSON.stringify({ ok: true, command: "context", workspaceId: bound.cursor.workspaceId, claimed: true });
+        } catch {
+          return JSON.stringify({ ok: false, command: "context", code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+        }
+      },
+      doctor: async (ctx) => {
+        const workspaceId = (await userTurns.resolveTools(ctx).catch(() => undefined))?.cursor.workspaceId
+          ?? userTurns.lastWorkspaceId()
+          ?? ctx.workspaceId
+          ?? "unbound";
+        return JSON.stringify({
           command: "context-doctor",
-          workspaceId: ctx.workspaceId ?? "ws_0123456789abcdef",
+          workspaceId,
           ...(await runRuntimeDoctor(
             fixtureEnvironment({
               nodeVersion: process.versions.node,
@@ -525,12 +541,23 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
             }),
             { conflictPolicy: "strict" },
           )),
-        }),
-      compact: (ctx) =>
-        JSON.stringify({ ok: true, command: "context-compact", workspaceId: ctx.workspaceId ?? "ws_0123456789abcdef" }),
+        });
+      },
+      compact: async (ctx) => {
+        try {
+          const bound = await userTurns.resolveTools(ctx);
+          return JSON.stringify({ ok: true, command: "context-compact", workspaceId: bound.cursor.workspaceId });
+        } catch {
+          return JSON.stringify({ ok: false, command: "context-compact", code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+        }
+      },
     },
   });
-  registerOperationsCommands(pi, { workspaceId: "ws_0123456789abcdef" });
+  registerOperationsCommands(pi, {
+    get workspaceId() {
+      return userTurns.lastWorkspaceId() ?? "unbound";
+    },
+  });
   return {
     name: "pi-context-runtime",
     hooks: {},

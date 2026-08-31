@@ -1,32 +1,44 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { join } from "node:path";
 import type { RuntimeCursor } from "../../../packages/contracts/src/index.js";
-import { createRuntimeCursor } from "../../../packages/core/src/index.js";
+import {
+  createProductionReducers,
+  createReducerRegistry,
+  createRuntimeCursor,
+} from "../../../packages/core/src/index.js";
 import {
   registerToolResultHook,
   registerUserInputHook,
   type RegisteredUserInputHook,
 } from "../../../packages/pi-adapter/src/index.js";
 import {
+  createEvidenceService,
   createObservationService,
   createUserTurnService,
   createRuntimeSession,
   createRuntimeSessionRegistry,
   RuntimeSessionRegistryError,
   type DurableSagaJournal,
+  type EvidenceFact,
+  type EvidenceService,
   type ObservationService,
   type PiSessionContext,
+  type ProjectedToolResult,
   type RuntimeSession,
   type RuntimeSessionPorts,
   type RuntimeSessionRegistry,
+  type ToolObservation,
   type UserTurnService,
 } from "../../../packages/runtime/src/index.js";
 import {
   createEncryptedBlobStore,
   openLocalWorkspaceBlobKeyProvider,
+  openWorkspaceEvidenceFtsIndex,
+  openWorkspaceEvidenceRepository,
   openWorkspaceSagaJournal,
   openWorkspaceSqliteStore,
   openWorkspaceUserTurnLedger,
+  type EncryptedBlobStore,
   type LocalWorkspaceBlobKeyProvider,
   type WorkspaceSqliteEvidenceStore,
 } from "../../../packages/storage-node/src/index.js";
@@ -290,16 +302,25 @@ export interface ProductionUserTurnRuntimeOptions {
 export interface ProductionUserTurnRuntime {
   readonly hook: RegisteredUserInputHook;
   close(): Promise<void>;
+  lastWorkspaceId(): string | undefined;
+  resolveTools(ctx?: { workspaceId?: string; sessionId?: string }): Promise<{
+    cursor: RuntimeCursor;
+    evidence: EvidenceService;
+  }>;
 }
 
 interface WorkspaceUserTurnOwner {
   readonly dataRoot: string;
   readonly database: WorkspaceSqliteEvidenceStore;
   readonly keys: LocalWorkspaceBlobKeyProvider;
+  readonly blobs: EncryptedBlobStore;
+  lastCursor?: RuntimeCursor;
   readonly services: Map<string, UserTurnService>;
   readonly observations: Map<string, ObservationService>;
+  readonly evidences: Map<string, EvidenceService>;
   service(cursor: RuntimeCursor): UserTurnService;
   observation(cursor: RuntimeCursor): ObservationService;
+  evidence(cursor: RuntimeCursor): EvidenceService;
   close(): Promise<void>;
 }
 
@@ -311,6 +332,27 @@ function cursorKey(cursor: RuntimeCursor): string {
     cursor.lineageHash,
     cursor.modelKey,
   ]);
+}
+
+function observationText(content: ToolObservation["content"]): string {
+  return content
+    .filter((block): block is Extract<ToolObservation["content"][number], { type: "text" }> => (
+      !!block && block.type === "text" && typeof block.text === "string"
+    ))
+    .map((block) => block.text)
+    .join("");
+}
+
+function evidenceFacts(facts: unknown, visibleText: string): EvidenceFact[] {
+  if (Array.isArray(facts) && facts.length > 0) {
+    return facts.map((fact) => {
+      if (fact && typeof fact === "object" && "kind" in fact && typeof (fact as { kind: unknown }).kind === "string") {
+        return { kind: (fact as { kind: string }).kind, value: (fact as { value?: unknown }).value };
+      }
+      return { kind: "note", value: fact };
+    });
+  }
+  return [{ kind: "note", value: visibleText.length > 0 ? visibleText : "observation" }];
 }
 
 /** Register the durable T12 ingress path on the same Pi extension entry that owns lifecycle hooks. */
@@ -345,6 +387,7 @@ export function registerProductionUserTurnRuntime(
           actualDataRoot: dataRoot,
         });
       }
+      owner.lastCursor = cursor;
       return owner;
     }
     const opening = (async (): Promise<WorkspaceUserTurnOwner> => {
@@ -372,14 +415,28 @@ export function registerProductionUserTurnRuntime(
           database,
           async verifyBlob(scope, ref) { await blobs.read(scope, ref, { start: 0, endExclusive: 0 }); },
         });
+        const repository = openWorkspaceEvidenceRepository({ database });
+        const fts = openWorkspaceEvidenceFtsIndex({ database });
         const services = new Map<string, UserTurnService>();
         const observations = new Map<string, ObservationService>();
-        return {
+        const evidences = new Map<string, EvidenceService>();
+        const owner: WorkspaceUserTurnOwner = {
           dataRoot,
           database,
           keys,
+          blobs,
           services,
           observations,
+          evidences,
+          evidence(candidate) {
+            const key = cursorKey(candidate);
+            let service = evidences.get(key);
+            if (!service) {
+              service = createEvidenceService({ cursor: candidate, repository, fts, blobs });
+              evidences.set(key, service);
+            }
+            return service;
+          },
           service(candidate) {
             const key = cursorKey(candidate);
             let service = services.get(key);
@@ -393,7 +450,42 @@ export function registerProductionUserTurnRuntime(
             const key = cursorKey(candidate);
             let service = observations.get(key);
             if (!service) {
-              service = createObservationService({ cursor: candidate, blobs, saga });
+              const inner = createObservationService({ cursor: candidate, blobs, saga });
+              const reducers = createReducerRegistry({
+                cursor: candidate,
+                reducers: createProductionReducers(),
+              });
+              service = {
+                async ingest(input: ToolObservation): Promise<ProjectedToolResult> {
+                  const projected = await inner.ingest(input);
+                  const text = observationText(input.content);
+                  const reduced = await reducers.reduce({
+                    observation: input,
+                    text,
+                    rawBlobId: projected.rawBlobId,
+                    cursor: candidate,
+                    ...(input.signal === undefined ? {} : { signal: input.signal }),
+                  });
+                  const admitted = await owner.evidence(candidate).admit({
+                    cursor: candidate,
+                    operationId: projected.operationId,
+                    observationId: projected.observationId,
+                    rawBlobId: projected.rawBlobId,
+                    reducer: { id: reduced.reducer.id, revision: "1" },
+                    sourceClass: input.sourceClass,
+                    facts: evidenceFacts(reduced.facts, reduced.visibleText),
+                    observedAt: input.capturedAt,
+                    visibleText: reduced.visibleText,
+                    ...(input.signal === undefined ? {} : { signal: input.signal }),
+                  });
+                  return Object.freeze({
+                    ...projected,
+                    evidenceIds: admitted.map((record) => record.evidenceId),
+                    reducer: { id: reduced.reducer.id, revision: "1" },
+                  });
+                },
+                acknowledge: (operationId, hostMessageId) => inner.acknowledge(operationId, hostMessageId),
+              };
               observations.set(key, service);
             }
             return service;
@@ -401,6 +493,7 @@ export function registerProductionUserTurnRuntime(
           async close() {
             services.clear();
             observations.clear();
+            evidences.clear();
             try {
               await saga.close();
               await ledger.close();
@@ -410,6 +503,7 @@ export function registerProductionUserTurnRuntime(
             }
           },
         };
+        return owner;
       } catch (error) {
         keys?.close();
         await database.close().catch(() => undefined);
@@ -418,7 +512,9 @@ export function registerProductionUserTurnRuntime(
     })();
     owners.set(cursor.workspaceId, opening);
     try {
-      return await opening;
+      const owner = await opening;
+      owner.lastCursor = cursor;
+      return owner;
     } catch (error) {
       if (owners.get(cursor.workspaceId) === opening) owners.delete(cursor.workspaceId);
       throw error;
@@ -454,5 +550,37 @@ export function registerProductionUserTurnRuntime(
     if (rejected) throw rejected.reason;
   };
   pi.on("session_shutdown", async () => close());
-  return Object.freeze({ hook, close });
+  return Object.freeze({
+    hook,
+    close,
+    lastWorkspaceId() {
+      if (owners.size !== 1) return undefined;
+      return [...owners.keys()][0];
+    },
+    async resolveTools(ctx?: { workspaceId?: string; sessionId?: string }) {
+      let opening: Promise<WorkspaceUserTurnOwner> | undefined;
+      if (ctx?.workspaceId && owners.has(ctx.workspaceId)) {
+        opening = owners.get(ctx.workspaceId);
+      } else if (owners.size === 1) {
+        opening = [...owners.values()][0];
+      }
+      if (!opening) {
+        throw new ProductionCompositionError("PCR_PRODUCTION_DEPENDENCY_MISSING", {
+          dependency: "workspaceOwner",
+        });
+      }
+      const owner = await opening;
+      const cursor = owner.lastCursor;
+      if (!cursor) {
+        throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "lastCursor" });
+      }
+      if (ctx?.workspaceId && ctx.workspaceId !== cursor.workspaceId) {
+        throw new ProductionCompositionError("PCR_PI_SESSION_SCOPE_CONFLICT", {
+          expectedWorkspaceId: cursor.workspaceId,
+          actualWorkspaceId: ctx.workspaceId,
+        });
+      }
+      return { cursor, evidence: owner.evidence(cursor) };
+    },
+  });
 }
