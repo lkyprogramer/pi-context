@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/runtime/test/runtime-session.test.ts (3 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  20:12:01
+   Duration  469ms (transform 191ms, setup 0ms, collect 272ms, tests 3ms, environment 0ms, prepare 42ms)
+

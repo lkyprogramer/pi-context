@@ -1,0 +1,2 @@
+FAIL  packages/runtime/test/runtime-session.test.ts > RuntimeSession public package contract > serializes mutations, propagates abort, and fails closed after close
+AssertionError: expected PCR_RUNTIME_SESSION_CLOSED after close; RuntimeSession only exposed ingest/materialize ports.

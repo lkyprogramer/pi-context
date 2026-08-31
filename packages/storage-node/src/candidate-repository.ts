@@ -264,6 +264,33 @@ class WorkspaceCandidateRepository implements CandidateRepository {
       throw mapStorageError(error);
     }
   }
+
+  async invalidateScope(cursorInput: RuntimeCursor, reason: string, signal?: AbortSignal): Promise<number> {
+    if (signal !== undefined && !(signal instanceof AbortSignal)) failInput("signal");
+    signal?.throwIfAborted();
+    const cursor = snapshotCursor(cursorInput, "cursor");
+    if (cursor.workspaceId !== this.#workspaceId) {
+      throw new CandidateRepositoryError("PCR_CANDIDATE_SCOPE_MISMATCH");
+    }
+    requireNonEmpty(reason, "reason");
+    try {
+      return this.#database.transaction("invalidate-candidate-scope", (db) => {
+        const result = db.prepare(`
+          UPDATE background_candidate
+          SET phase = 'stale', reason = ?, revision = revision + 1
+          WHERE workspace_id = ?
+            AND session_id = ?
+            AND leaf_id IS ?
+            AND lineage_hash = ?
+            AND model_key = ?
+            AND phase = 'prepared'
+        `).run(reason, cursor.workspaceId, cursor.sessionId, cursor.leafId, cursor.lineageHash, cursor.modelKey);
+        return Number(result.changes ?? 0);
+      });
+    } catch (error) {
+      throw mapStorageError(error);
+    }
+  }
 }
 
 export async function openWorkspaceCandidateRepository(

@@ -198,16 +198,15 @@ describe("production session registry acceptance", () => {
     expect(disposals).toBe(2);
   });
 
-  it("binds one composition root to one real workspace", async () => {
+  it("keeps two workspaces isolated on one composition root", async () => {
     const manager = SessionManager.inMemory("/tmp/pcr-t08-bound-workspace");
     const contexts: string[] = [];
     const root = createProductionCompositionRoot({ identity, resources: resources([], contexts) });
     const ctx = actualPiContext(manager);
-    await root.open(ctx);
-    await expect(root.open({ ...ctx, cwd: "/tmp/pcr-t08-other-workspace" })).rejects.toMatchObject({
-      code: "PCR_PI_SESSION_SCOPE_CONFLICT",
-    });
-    expect(contexts).toHaveLength(1);
+    const first = await root.open(ctx);
+    const second = await root.open({ ...ctx, cwd: "/tmp/pcr-t08-other-workspace" });
+    expect(second).not.toBe(first);
+    expect(new Set(contexts.map((row) => row.split(":")[0])).size).toBe(2);
     await root.close(ctx);
   });
 

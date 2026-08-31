@@ -1,0 +1,2 @@
+FAIL  tests/fault/recovery.test.ts > restart recovery via durable saga
+AssertionError: journal.reconcile was a no-op returning { actions: [] }.

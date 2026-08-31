@@ -4,6 +4,7 @@ export {
   createTokenPricer,
   estimateMessageTokens,
   estimateTextTokens,
+  reservesFromPayload,
   snapshotBudgetCursor,
   type BudgetErrorCode,
   type CreateTokenPricerInput,

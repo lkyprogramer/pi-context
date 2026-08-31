@@ -90,8 +90,13 @@ function sameScope(left: PiSessionContext, right: PiSessionContext): boolean {
     left.workspaceId === right.workspaceId &&
     left.sessionId === right.sessionId &&
     left.leafId === right.leafId &&
-    left.lineageHash === right.lineageHash
+    left.lineageHash === right.lineageHash &&
+    left.modelKey === right.modelKey
   );
+}
+
+export function sessionCursorKey(ctx: Pick<PiSessionContext, "workspaceId" | "sessionId" | "leafId" | "lineageHash" | "modelKey">): string {
+  return JSON.stringify([ctx.workspaceId, ctx.sessionId, ctx.leafId, ctx.lineageHash, ctx.modelKey]);
 }
 
 function validateHandle(value: RuntimeSessionHandle): RuntimeSessionHandle {
@@ -123,6 +128,7 @@ export class WorkspaceRuntimeSessionRegistry implements RuntimeSessionRegistry {
   readonly #workspaceId: string;
   readonly #factory: RuntimeSessionFactory;
   readonly #slots = new Map<string, SessionSlot>();
+  readonly #byCursor = new Map<string, SessionSlot>();
 
   constructor(dependencies: RuntimeSessionRegistryDependencies) {
     if (!dependencies || typeof dependencies !== "object") {
@@ -146,7 +152,8 @@ export class WorkspaceRuntimeSessionRegistry implements RuntimeSessionRegistry {
 
   async open(input: PiSessionContext): Promise<RuntimeSession> {
     const context = validateContext(input, this.#workspaceId);
-    const current = this.#slots.get(context.sessionId);
+    const cursorKey = sessionCursorKey(context);
+    const current = this.#byCursor.get(cursorKey) ?? this.#slots.get(context.sessionId);
     if (current && sameScope(current.context, context)) {
       if (current.state === "open") return current.handle!.session;
       if (current.state === "opening") return current.openPromise;
@@ -159,6 +166,7 @@ export class WorkspaceRuntimeSessionRegistry implements RuntimeSessionRegistry {
       openPromise: Promise.resolve(undefined as never),
     };
     this.#slots.set(context.sessionId, slot);
+    this.#byCursor.set(cursorKey, slot);
     slot.openPromise = (async () => {
       await predecessor;
       context.signal?.throwIfAborted();
@@ -188,6 +196,7 @@ export class WorkspaceRuntimeSessionRegistry implements RuntimeSessionRegistry {
       return handle.session;
     })().catch((error: unknown) => {
       if (this.#slots.get(context.sessionId) === slot) this.#slots.delete(context.sessionId);
+      if (this.#byCursor.get(cursorKey) === slot) this.#byCursor.delete(cursorKey);
       throw error;
     });
     return slot.openPromise;
@@ -220,6 +229,8 @@ export class WorkspaceRuntimeSessionRegistry implements RuntimeSessionRegistry {
         if (this.#slots.get(slot.context.sessionId) === slot) {
           this.#slots.delete(slot.context.sessionId);
         }
+        const key = sessionCursorKey(slot.context);
+        if (this.#byCursor.get(key) === slot) this.#byCursor.delete(key);
       }
     })();
     return slot.disposePromise;

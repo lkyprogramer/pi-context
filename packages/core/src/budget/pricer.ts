@@ -15,6 +15,9 @@ export interface RouteInfo {
   contextWindow: number;
   maxOutputTokens: number;
   providerReservedTokens: number;
+  systemTokens?: number;
+  toolsTokens?: number;
+  imageReserveTokens?: number;
 }
 
 export interface TokenPricer {
@@ -126,7 +129,38 @@ export function computeEffectiveInput(route: RouteInfo): number {
   requireNonNegativeInteger(route.contextWindow, "route.contextWindow");
   requireNonNegativeInteger(route.maxOutputTokens, "route.maxOutputTokens");
   requireNonNegativeInteger(route.providerReservedTokens, "route.providerReservedTokens");
-  return Math.max(0, route.contextWindow - route.maxOutputTokens - route.providerReservedTokens);
+  if (route.systemTokens !== undefined) requireNonNegativeInteger(route.systemTokens, "route.systemTokens");
+  if (route.toolsTokens !== undefined) requireNonNegativeInteger(route.toolsTokens, "route.toolsTokens");
+  if (route.imageReserveTokens !== undefined) {
+    requireNonNegativeInteger(route.imageReserveTokens, "route.imageReserveTokens");
+  }
+  return Math.max(
+    0,
+    route.contextWindow
+      - route.maxOutputTokens
+      - route.providerReservedTokens
+      - (route.systemTokens ?? 0)
+      - (route.toolsTokens ?? 0)
+      - (route.imageReserveTokens ?? 0),
+  );
+}
+
+export function reservesFromPayload(input: {
+  systemText?: string;
+  toolsJson?: string;
+  imageBlocks?: number;
+}): Pick<RouteInfo, "systemTokens" | "toolsTokens" | "imageReserveTokens"> {
+  if (!input || typeof input !== "object") failInput("input");
+  if (input.systemText !== undefined && typeof input.systemText !== "string") failInput("systemText");
+  if (input.toolsJson !== undefined && typeof input.toolsJson !== "string") failInput("toolsJson");
+  if (input.imageBlocks !== undefined && (!Number.isInteger(input.imageBlocks) || input.imageBlocks < 0)) {
+    failInput("imageBlocks");
+  }
+  return {
+    systemTokens: input.systemText ? estimateTextTokens(input.systemText) : 0,
+    toolsTokens: input.toolsJson ? estimateTextTokens(input.toolsJson) : 0,
+    imageReserveTokens: (input.imageBlocks ?? 0) * 765,
+  };
 }
 
 function snapshotRoutes(routes: CreateTokenPricerInput["routes"]): Readonly<Record<string, RouteInfo>> {
@@ -141,6 +175,9 @@ function snapshotRoutes(routes: CreateTokenPricerInput["routes"]): Readonly<Reco
       contextWindow: route.contextWindow,
       maxOutputTokens: route.maxOutputTokens,
       providerReservedTokens: route.providerReservedTokens,
+      ...(route.systemTokens === undefined ? {} : { systemTokens: route.systemTokens }),
+      ...(route.toolsTokens === undefined ? {} : { toolsTokens: route.toolsTokens }),
+      ...(route.imageReserveTokens === undefined ? {} : { imageReserveTokens: route.imageReserveTokens }),
     };
   }
   return Object.freeze(next);

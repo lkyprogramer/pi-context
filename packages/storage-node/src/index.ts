@@ -8,3 +8,4 @@ export * from "./user-turn-store.js";
 export * from "./evidence-repository.js";
 export * from "./fts-index.js";
 export * from "./candidate-repository.js";
+export * from "./state-store.js";

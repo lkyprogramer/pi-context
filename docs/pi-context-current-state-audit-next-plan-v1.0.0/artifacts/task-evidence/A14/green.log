@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/core/test/budget/route-budget.test.ts (3 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  20:12:07
+   Duration  335ms (transform 60ms, setup 0ms, collect 86ms, tests 3ms, environment 0ms, prepare 46ms)
+

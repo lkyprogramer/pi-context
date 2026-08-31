@@ -1,0 +1,3 @@
+FAIL  tests/acceptance/extension-one-root.test.ts > default extension production root > does not keep an in-file context registry or compaction factory
+AssertionError: expected source to not match /function createExtensionContextRegistry/
+RED recorded against W0 tree before factories moved into ProductionRuntimeCompositionRoot.

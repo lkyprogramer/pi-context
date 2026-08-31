@@ -72,6 +72,8 @@ describe("context hook acceptance", () => {
         lineageHash: bound.lineageHash,
         modelKey: bound.modelKey,
         now: 1,
+        currentContextWindow: 200_192,
+        maxOutputTokens: 16_384,
       },
     );
     expect(result.messages.at(-1)).toMatchObject({ role: "user" });

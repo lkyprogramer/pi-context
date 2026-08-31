@@ -1,0 +1,2 @@
+FAIL  packages/runtime/test/state-store.test.ts > persistent directive/claim/continuity store
+Error: no SQLite V7 tables; active heads lost across reopen.

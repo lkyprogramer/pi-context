@@ -71,6 +71,7 @@ export {
   createTokenPricer,
   estimateMessageTokens,
   estimateTextTokens,
+  reservesFromPayload,
   snapshotBudgetCursor,
   type CreateTokenPricerInput,
   type RouteInfo,

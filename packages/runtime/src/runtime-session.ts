@@ -1,11 +1,21 @@
 import type { MaterializedView } from "@pcr/contracts";
 
 import type {
+  BranchChangedEvent,
+  CompactionAckInput,
+  CompactionPrepareInput,
+  ExactReadRequest,
   MaterializationRequest,
   ProjectedToolResult,
+  RecoverRequest,
   RuntimeSession,
   RuntimeSessionPorts,
   RuntimeSessionScope,
+  SearchRequest,
+  SessionCompactionDecision,
+  SessionExactPage,
+  RecoverSessionReport,
+  SessionSearchHit,
   ToolObservation,
   UserInputEvent,
   UserInputReceipt,
@@ -73,6 +83,11 @@ function validateOperation(input: { operationId?: unknown; cursor?: unknown; sig
 export class RuntimeSessionApplicationService implements RuntimeSession {
   readonly scope: RuntimeSessionScope;
   #ports: RuntimeSessionPorts;
+  #closed = false;
+  #writeChain: Promise<void> = Promise.resolve();
+  #reads = 0;
+  #readIdle = Promise.resolve();
+  #notifyReadsIdle: (() => void) | undefined;
 
   constructor(input: RuntimeSessionDependencies) {
     const dependencies = validateDependencies(input);
@@ -81,21 +96,74 @@ export class RuntimeSessionApplicationService implements RuntimeSession {
   }
 
   async ingestUserInput(input: UserInputEvent): Promise<UserInputReceipt> {
-    this.#validate(input);
-    return this.#ports.userInput.capture(input);
+    return this.#mutate(input, () => this.#ports.userInput.capture(input));
   }
 
   async ingestToolResult(input: ToolObservation): Promise<ProjectedToolResult> {
-    this.#validate(input);
-    return this.#ports.toolResult.ingest(input);
+    return this.#mutate(input, () => this.#ports.toolResult.ingest(input));
   }
 
   async materialize(input: MaterializationRequest): Promise<MaterializedView> {
-    this.#validate(input);
-    return this.#ports.materialization.materialize(input);
+    return this.#mutate(input, () => this.#ports.materialization.materialize(input));
+  }
+
+  async prepareCompaction(input: CompactionPrepareInput): Promise<SessionCompactionDecision> {
+    return this.#mutate(input, () => {
+      assertFunction(this.#ports.compaction?.prepare, "ports.compaction.prepare");
+      return this.#ports.compaction!.prepare(input);
+    });
+  }
+
+  async acknowledgeCompaction(input: CompactionAckInput): Promise<void> {
+    return this.#mutate(input, async () => {
+      const acknowledge = this.#ports.compaction?.acknowledge;
+      assertFunction(acknowledge ?? this.#ports.compaction?.prepare, "ports.compaction.acknowledge");
+      if (typeof acknowledge === "function") await acknowledge(input);
+    });
+  }
+
+  async search(input: SearchRequest): Promise<SessionSearchHit[]> {
+    return this.#read(input, () => {
+      assertFunction(this.#ports.retrieval?.search, "ports.retrieval.search");
+      return this.#ports.retrieval!.search(input);
+    });
+  }
+
+  async read(input: ExactReadRequest): Promise<SessionExactPage> {
+    return this.#read(input, () => {
+      assertFunction(this.#ports.retrieval?.read, "ports.retrieval.read");
+      return this.#ports.retrieval!.read(input);
+    });
+  }
+
+  async branchChanged(event: BranchChangedEvent): Promise<void> {
+    return this.#mutate(event, () => {
+      assertFunction(this.#ports.recovery?.branchChanged, "ports.recovery.branchChanged");
+      return this.#ports.recovery!.branchChanged(event);
+    });
+  }
+
+  async recover(reason: RecoverRequest): Promise<RecoverSessionReport> {
+    return this.#mutate(reason, () => {
+      assertFunction(this.#ports.recovery?.recover, "ports.recovery.recover");
+      return this.#ports.recovery!.recover(reason);
+    });
+  }
+
+  async close(): Promise<void> {
+    await this.#exclusive(async () => {
+      this.#closed = true;
+    });
+  }
+
+  #assertOpen(): void {
+    if (this.#closed) {
+      throw new RuntimeSessionError("PCR_RUNTIME_SESSION_CLOSED");
+    }
   }
 
   #validate(input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal }): void {
+    this.#assertOpen();
     validateOperation(input);
     const cursor = input.cursor;
     const mismatch =
@@ -110,6 +178,55 @@ export class RuntimeSessionApplicationService implements RuntimeSession {
         expectedLeafId: this.scope.leafId,
         expectedLineageHash: this.scope.lineageHash,
       });
+    }
+  }
+
+  async #exclusive<T>(work: () => Promise<T>): Promise<T> {
+    let release!: () => void;
+    const previous = this.#writeChain;
+    this.#writeChain = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await previous;
+    while (this.#reads > 0) await this.#readIdle;
+    try {
+      return await work();
+    } finally {
+      release();
+    }
+  }
+
+  async #mutate<T>(
+    input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal },
+    work: () => Promise<T>,
+  ): Promise<T> {
+    return this.#exclusive(async () => {
+      this.#validate(input);
+      return work();
+    });
+  }
+
+  async #read<T>(
+    input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal },
+    work: () => Promise<T>,
+  ): Promise<T> {
+    await this.#writeChain;
+    this.#validate(input);
+    if (this.#reads === 0) {
+      this.#readIdle = new Promise<void>((resolve) => {
+        this.#notifyReadsIdle = resolve;
+      });
+    }
+    this.#reads += 1;
+    try {
+      return await work();
+    } finally {
+      this.#reads -= 1;
+      if (this.#reads === 0) {
+        this.#notifyReadsIdle?.();
+        this.#notifyReadsIdle = undefined;
+        this.#readIdle = Promise.resolve();
+      }
     }
   }
 }

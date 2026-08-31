@@ -1,41 +1,24 @@
-import { createHash } from "node:crypto";
 import { ackHostCompaction, emptyPiCompactionUsage, failStagedCompaction, type StagedCompaction } from "../../../packages/pi-adapter/src/compaction-ack.js";
 import {
   registerCompactionHooks,
   type CompactionDecision,
   type CompactionExtensionAPI,
-  type CompactionPreparation,
   type PiCompactionResult,
 } from "../../../packages/pi-adapter/src/compaction-hook.js";
 import {
   registerContextHook,
   type ExtensionAPI,
-  type RuntimeSessionRegistry,
 } from "../../../packages/pi-adapter/src/context-hook.js";
 import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
 import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
-import { createLifecycleRuntimeFromRecovery, registerSessionLifecycle } from "../../../packages/pi-adapter/src/lifecycle.js";
-import { blobId, domainHash, type DirectiveRecord, type RuntimeCursor } from "../../../packages/contracts/src/index.js";
-import { createTokenPricer } from "../../../packages/core/src/budget/pricer.js";
-import { createCheckpointRenderer, createCheckpointVerifier } from "../../../packages/core/src/compaction/checkpoint.js";
-import { emptyContinuityRevision } from "../../../packages/core/src/continuity/reduce.js";
-import { createDirectiveExtractor } from "../../../packages/core/src/directives/extract.js";
-import { createClauseSegmenter } from "../../../packages/core/src/directives/segment.js";
-import { toDirectiveRecord } from "../../../packages/core/src/directives/temporal.js";
+import { registerSessionLifecycle, toPcrSessionStartReason } from "../../../packages/pi-adapter/src/lifecycle.js";
+import { domainHash, type HostCheckpointDetails, type RuntimeCursor } from "../../../packages/contracts/src/index.js";
 import { createRuntimeCursor } from "../../../packages/core/src/identity/stable-identity.js";
-import { createCacheReceipt, type CacheReceiptRecord } from "../../../packages/core/src/materialization/cache.js";
-import { createMaterializer } from "../../../packages/core/src/materialization/materializer.js";
-import { createSectionPlanner } from "../../../packages/core/src/materialization/sections.js";
-import {
-  createCompactionService,
-  createCompactionSnapshotAssembler,
-  createRecoveryService,
-} from "../../../packages/runtime/src/index.js";
+import { type SessionCompactionDecision } from "../../../packages/runtime/src/index.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { registerOperationsCommands } from "./commands/operations.js";
 import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
 import { claimPiContextOwner } from "./owner.js";
-import { captureUserDirectives } from "../../../packages/kernel/src/directives/capture.js";
 import { derivePiSessionContext, registerProductionUserTurnRuntime, type PiRuntimeContext } from "./composition-root.js";
 
 export interface ExtensionFactoryOptions {
@@ -98,40 +81,6 @@ export function register(pi: HostExtensionAPI): PiContextExtension {
   return createPiContextExtension(pi);
 }
 
-function messageText(message: unknown): string {
-  if (!message || typeof message !== "object" || !("content" in message)) return "";
-  const content = message.content;
-  if (typeof content === "string") return content;
-  if (!Array.isArray(content)) return "";
-  return content
-    .map((block) => {
-      if (typeof block === "string") return block;
-      if (block && typeof block === "object" && "text" in block) return String(block.text ?? "");
-      return "";
-    })
-    .join("\n");
-}
-
-function directivesFromPreparation(preparation: {
-  directives?: Array<{ directiveId: string; quote: string }>;
-  messagesToSummarize?: unknown[];
-}): Array<{ directiveId: string; quote: string }> {
-  if (preparation.directives && preparation.directives.length > 0) return preparation.directives;
-  const found: Array<{ directiveId: string; quote: string }> = [];
-  for (const [index, message] of (preparation.messagesToSummarize ?? []).entries()) {
-    const role = message && typeof message === "object" && "role" in message ? String(message.role) : "";
-    if (role !== "user") continue;
-    for (const item of captureUserDirectives({
-      sourceClass: "authenticated-user",
-      text: messageText(message),
-      messageId: `prep_${index}`,
-    })) {
-      found.push({ directiveId: item.directiveId, quote: item.quote });
-    }
-  }
-  return found;
-}
-
 function sessionCursor(ctx: {
   workspaceId: string;
   sessionId: string;
@@ -148,42 +97,7 @@ function sessionCursor(ctx: {
   };
 }
 
-function directiveRecordsFromPreparation(cursor: RuntimeCursor, preparation: CompactionPreparation): DirectiveRecord[] {
-  const texts: string[] = [];
-  for (const item of preparation.directives ?? []) {
-    if (typeof item.quote === "string" && item.quote.length > 0) texts.push(item.quote);
-  }
-  for (const message of preparation.messagesToSummarize ?? []) {
-    const role = message && typeof message === "object" && "role" in message ? String(message.role) : "";
-    if (role !== "user") continue;
-    const text = messageText(message);
-    if (text.length > 0) texts.push(text);
-  }
-  const extractor = createDirectiveExtractor({ cursor });
-  const segmenter = createClauseSegmenter({ cursor });
-  const records: DirectiveRecord[] = [];
-  for (const [index, text] of texts.entries()) {
-    const bytes = Buffer.from(text, "utf8");
-    const turn = {
-      userTurnId: `user_turn_${domainHash("prep-turn", { index, text }).slice(0, 12)}`,
-      cursor,
-      rawTextHash: createHash("sha256").update(bytes).digest("hex"),
-      rawBlobId: blobId(`blob_${domainHash("prep-blob", text)}`),
-      utf8Bytes: bytes.byteLength,
-      hostMessageId: `prep_${index}`,
-      sourceClass: "authenticated-user" as const,
-      capturedAt: index + 1,
-    };
-    for (const candidate of extractor.extract(turn, segmenter.segment({ text, cursor }))) {
-      const stored = toDirectiveRecord(candidate);
-      const { cursor: _cursor, ...record } = stored;
-      records.push(record);
-    }
-  }
-  return records;
-}
-
-function toPiDecision(decision: Awaited<ReturnType<ReturnType<typeof createCompactionService>["prepareCompaction"]>>): CompactionDecision {
+function toPiDecision(decision: SessionCompactionDecision): CompactionDecision {
   if (decision.kind !== "pcr") return decision;
   const result: PiCompactionResult = {
     firstKeptEntryId: decision.result.firstKeptEntryId,
@@ -191,125 +105,16 @@ function toPiDecision(decision: Awaited<ReturnType<ReturnType<typeof createCompa
     tokensBefore: decision.result.tokensBefore,
     estimatedTokensAfter: decision.result.estimatedTokensAfter,
     fromExtension: true,
-    details: decision.result.details,
+    details: decision.result.details as HostCheckpointDetails,
     usage: emptyPiCompactionUsage(),
   };
   return { kind: "pcr", result };
-}
-
-function createProductCompactionService(
-  cursor: RuntimeCursor,
-  preparation: CompactionPreparation,
-  pointers: () => ReadonlyArray<{ ref: string; kind: string }> = () => [],
-) {
-  const records = directiveRecordsFromPreparation(cursor, preparation);
-  return createCompactionService({
-    cursor,
-    assembler: createCompactionSnapshotAssembler({
-      cursor,
-      transaction: { async run(work) { return work(); } },
-      directives: { async active() { return records; } },
-      continuity: { async current() { return emptyContinuityRevision(cursor); } },
-      claims: {
-        async list() {
-          return records
-            .filter((item) => item.key && item.value !== undefined)
-            .map((item) => ({
-              claimId: `cl_${item.directiveId}`,
-              key: item.key as string,
-              polarity: item.polarity,
-              status: item.status,
-              value: item.value,
-            }));
-        },
-      },
-      evidence: {
-        async pointers() {
-          return [...pointers()];
-        },
-      },
-    }),
-    renderer: createCheckpointRenderer({ cursor }),
-    verifier: createCheckpointVerifier({
-      cursor,
-      pointers: { async verify() {} },
-    }),
-  });
-}
-
-function createExtensionContextRegistry(): RuntimeSessionRegistry {
-  return {
-    async open(ctx) {
-      const cursor = sessionCursor(ctx);
-      const contextWindow = typeof ctx.currentContextWindow === "number" && Number.isFinite(ctx.currentContextWindow)
-        ? ctx.currentContextWindow
-        : 200192;
-      const maxOutputTokens = typeof ctx.maxOutputTokens === "number" && Number.isFinite(ctx.maxOutputTokens)
-        ? ctx.maxOutputTokens
-        : 16384;
-      const route = {
-        modelKey: cursor.modelKey,
-        contextWindow,
-        maxOutputTokens,
-        providerReservedTokens: 0,
-      };
-      const pricer = createTokenPricer({ cursor, routes: { [cursor.modelKey]: route } });
-      const rows: CacheReceiptRecord[] = [];
-      const materializer = createMaterializer({
-        cursor,
-        pricer,
-        planner: createSectionPlanner({ cursor, pricer }),
-        cache: createCacheReceipt({
-          cursor,
-          store: {
-            async put(receipt) { rows.push(receipt); },
-            async head() {
-              return [...rows].reverse().find((row) => (
-                row.cursor.workspaceId === cursor.workspaceId
-                && row.cursor.sessionId === cursor.sessionId
-                && row.cursor.leafId === cursor.leafId
-                && row.cursor.lineageHash === cursor.lineageHash
-                && row.cursor.modelKey === cursor.modelKey
-              )) ?? null;
-            },
-          },
-        }),
-      });
-      return {
-        async materialize(request) {
-          return materializer.materialize({
-            cursor: request.cursor,
-            canonicalMessages: request.canonicalMessages,
-            currentContextWindow: request.currentContextWindow,
-            maxOutputTokens: request.maxOutputTokens,
-            reason: request.reason,
-            now: request.now,
-            signal: request.signal,
-          }, {
-            cursor,
-            directives: request.canonicalMessages
-              .filter((message) => message.role === "user")
-              .map((message) => ({
-                hostMessageId: message.hostMessageId,
-                role: message.role,
-                timestamp: message.timestamp,
-                sourceClass: message.sourceClass,
-                content: message.content.map((block) => ({ ...block })),
-                ...(message.toolCallId ? { toolCallId: message.toolCallId } : {}),
-              })),
-            continuity: [],
-          });
-        },
-      };
-    },
-  };
 }
 
 function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   const owner = claimPiContextOwner("pi-context-runtime");
   const userTurns = registerProductionUserTurnRuntime(pi as never);
   const identity = { create: createRuntimeCursor };
-  const hookRegistry = createExtensionContextRegistry();
   registerContextHook({
     on(hook, handler) {
       pi.on(hook, async (event, ctx) => {
@@ -320,6 +125,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         } catch {
           return { messages: event.messages };
         }
+        await userTurns.ensure(ctx as never);
         const host = ctx && typeof ctx === "object"
           ? ctx as PiRuntimeContext & { abort?: () => void; now?: number; model?: { contextWindow?: number; maxTokens?: number } }
           : undefined;
@@ -339,34 +145,21 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         });
       });
     },
-  }, hookRegistry);
+  }, {
+    open: (sessionCtx) => userTurns.openSession(sessionCtx),
+  });
   let staged: StagedCompaction | null = null;
   registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
     async prepareCompaction(event, ctx) {
       try {
-        let cursor: RuntimeCursor;
-        try {
-          const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
-          cursor = sessionCursor(derived);
-        } catch {
-          const cwd = ctx && typeof ctx === "object" && "cwd" in ctx && typeof ctx.cwd === "string" && ctx.cwd.length > 0
-            ? ctx.cwd
-            : process.cwd();
-          const modelKey = ctx && typeof ctx === "object" && "model" in ctx && ctx.model && typeof ctx.model === "object" && "id" in ctx.model
-            ? String(ctx.model.id)
-            : "unbound";
-          cursor = createRuntimeCursor({
-            workspacePath: cwd,
-            sessionId: "unbound",
-            leafId: null,
-            lineageEntryIds: ["unbound"],
-            modelKey,
-          });
-        }
-        const service = createProductCompactionService(cursor, event.preparation, () => userTurns.lastPointers());
-        const decision = await service.prepareCompaction({
+        const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+        await userTurns.ensure(ctx as never);
+        const session = await userTurns.openSession(derived);
+        const compact = session.prepareCompaction;
+        if (typeof compact !== "function") return { kind: "native-fallback" };
+        const decision = await compact.call(session, {
           operationId: "op_compact",
-          cursor,
+          cursor: sessionCursor(derived),
           reason: event.reason,
           now: Date.now(),
           tokensBefore: event.preparation.tokensBefore,
@@ -403,58 +196,35 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
     },
   });
   let lastRecoveredCursor: RuntimeCursor | undefined;
-  let recovery: ReturnType<typeof createRecoveryService> | undefined;
-  const fenceKeys = new Set<string>();
-  function recoveryFor(cursor: RuntimeCursor) {
-    recovery ??= createRecoveryService({
-      cursor,
-      sessions: {
-        async open(ctx) {
-          lastRecoveredCursor = sessionCursor(ctx);
-        },
-        async close() {},
-      },
-      journal: { async reconcile() { return { actions: [] }; } },
-      candidates: {
-        async invalidate(scope, reason) {
-          const key = `${scope.sessionId}:${scope.lineageHash}:${reason}`;
-          if (fenceKeys.has(key)) return 0;
-          fenceKeys.add(key);
-          return 1;
-        },
-      },
-    });
-    return recovery;
-  }
-  registerSessionLifecycle(pi as never, createLifecycleRuntimeFromRecovery({
-    recovery: {
-      onSessionStart: (input) => recoveryFor(input.cursor).onSessionStart(input),
-      onBranchChange: (input) => recoveryFor(input.cursor).onBranchChange(input),
-      onSessionClose: (input) => recoveryFor(input.cursor).onSessionClose(input),
+  registerSessionLifecycle(pi as never, {
+    async openSession(ctx, reason, hasRawBlobs = true) {
+      const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      lastRecoveredCursor = cursor;
+      await userTurns.ensure(ctx as never);
+      const report = await userTurns.recover({
+        cursor,
+        reason: toPcrSessionStartReason(reason),
+        hasRawBlobs,
+        signal: ctx.signal,
+      });
+      lastRecoveredCursor = report.cursor;
+      return report.cursor;
     },
-    cursorFrom(ctx) {
-      try {
-        return sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
-      } catch {
-        const cwd = typeof ctx.cwd === "string" && ctx.cwd.length > 0 ? ctx.cwd : process.cwd();
-        const sessionId = ctx.sessionManager?.getSessionId() || ctx.sessionId || "unbound";
-        const leafId = ctx.sessionManager?.getLeafId() ?? null;
-        const branchIds = ctx.sessionManager?.getBranch().map((entry) => entry.id) ?? [];
-        const headerId = ctx.sessionManager?.getHeader()?.id;
-        const lineageEntryIds = branchIds.length > 0 ? branchIds : headerId ? [headerId] : leafId ? [leafId] : ["unbound"];
-        const modelKey = ctx.model?.provider && ctx.model.id
-          ? `${ctx.model.provider}/${ctx.model.id}`
-          : ctx.model?.id ?? "unbound";
-        return createRuntimeCursor({
-          workspacePath: cwd,
-          sessionId,
-          leafId,
-          lineageEntryIds,
-          modelKey,
-        });
+    async switchBranch(ctx, newLeafId) {
+      const previous = lastRecoveredCursor;
+      await userTurns.ensure(ctx as never);
+      const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      if (previous) {
+        await userTurns.branchChanged({ cursor, previousCursor: previous, newLeafId, signal: ctx.signal });
       }
+      lastRecoveredCursor = cursor;
     },
-  }));
+    async closeSession(ctx) {
+      const cursor = lastRecoveredCursor ?? sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      await userTurns.closeSession(cursor);
+    },
+    async invalidateRouteCandidates() {},
+  });
   let worker: CandidateWorker | undefined;
   const backgroundSnapshot = (): CandidateSnapshot => {
     const cursor = lastRecoveredCursor ?? createRuntimeCursor({

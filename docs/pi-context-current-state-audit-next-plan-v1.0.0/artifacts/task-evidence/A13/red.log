@@ -1,0 +1,2 @@
+FAIL  packages/core/test/materialization/cache.test.ts > reopens from the same store
+AssertionError: cache receipts lived in a per-open memory array.

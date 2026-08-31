@@ -259,12 +259,18 @@ export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRe
         envelopes.set(envelope.hostMessageId, envelope);
         canonical.push(envelope.normalized);
       }
+      if (typeof ctx.currentContextWindow !== "number" || !Number.isFinite(ctx.currentContextWindow) || ctx.currentContextWindow <= 0) {
+        throw Object.assign(new Error("PCR_BUDGET_ROUTE_UNKNOWN"), { code: "PCR_BUDGET_ROUTE_UNKNOWN" });
+      }
+      if (typeof ctx.maxOutputTokens !== "number" || !Number.isFinite(ctx.maxOutputTokens) || ctx.maxOutputTokens < 0) {
+        throw Object.assign(new Error("PCR_BUDGET_ROUTE_UNKNOWN"), { code: "PCR_BUDGET_ROUTE_UNKNOWN" });
+      }
       const view = await session.materialize({
         operationId: "op_context",
         cursor,
         canonicalMessages: canonical,
-        currentContextWindow: typeof ctx.currentContextWindow === "number" ? ctx.currentContextWindow : 200192,
-        maxOutputTokens: typeof ctx.maxOutputTokens === "number" ? ctx.maxOutputTokens : 16384,
+        currentContextWindow: ctx.currentContextWindow,
+        maxOutputTokens: ctx.maxOutputTokens,
         reason: "normal",
         now: typeof ctx.now === "number" && Number.isFinite(ctx.now) ? ctx.now : 0,
         signal: ctx.signal,

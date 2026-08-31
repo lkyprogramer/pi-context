@@ -18,4 +18,5 @@ export * from "./semantic/port.js";
 export * from "./semantic/proposer.js";
 export * from "./background/index.js";
 export * from "./economics-service.js";
+export * from "./snapshot/transaction.js";
 

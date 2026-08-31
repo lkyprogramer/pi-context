@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/core/test/materialization/cache.test.ts (2 tests) 10ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  20:12:06
+   Duration  300ms (transform 56ms, setup 0ms, collect 74ms, tests 10ms, environment 0ms, prepare 39ms)
+

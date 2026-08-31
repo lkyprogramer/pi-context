@@ -1,0 +1,2 @@
+FAIL  tests/acceptance/scope-failure.test.ts > unbound scope failure
+AssertionError: missing session manager created sessionId "unbound" persistence.

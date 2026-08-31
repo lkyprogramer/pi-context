@@ -28,6 +28,7 @@ export interface CandidateRepository {
   prepare(key: CandidateKey): Promise<Candidate>;
   publish(id: string, expectedHead: string): Promise<boolean>;
   stale(id: string, reason: string): Promise<void>;
+  invalidateScope?(cursor: RuntimeCursor, reason: string, signal?: AbortSignal): Promise<number>;
 }
 
 export interface CreateCandidateKeyInput {

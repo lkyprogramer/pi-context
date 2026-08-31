@@ -197,6 +197,102 @@ CREATE INDEX background_candidate_scope ON background_candidate (
 );
 `;
 
+const V7_SQL = `
+CREATE TABLE directive_record (
+  directive_id TEXT PRIMARY KEY CHECK (length(directive_id) > 0),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  user_turn_id TEXT NOT NULL CHECK (length(user_turn_id) > 0),
+  exact_quote TEXT NOT NULL CHECK (length(exact_quote) > 0),
+  quote_hash TEXT NOT NULL CHECK (length(quote_hash) = 64 AND quote_hash NOT GLOB '*[^0-9a-f]*'),
+  utf8_start INTEGER NOT NULL CHECK (utf8_start >= 0),
+  utf8_end INTEGER NOT NULL CHECK (utf8_end >= utf8_start),
+  utf16_start INTEGER NOT NULL CHECK (utf16_start >= 0),
+  utf16_end INTEGER NOT NULL CHECK (utf16_end >= utf16_start),
+  code_point_start INTEGER NOT NULL CHECK (code_point_start >= 0),
+  code_point_end INTEGER NOT NULL CHECK (code_point_end >= code_point_start),
+  kind TEXT NOT NULL CHECK (kind IN ('goal', 'constraint', 'prohibition', 'correction', 'permission', 'format')),
+  polarity TEXT NOT NULL CHECK (polarity IN ('must', 'must-not', 'may', 'is', 'is-not', 'unknown')),
+  key TEXT CHECK (key IS NULL OR length(key) > 0),
+  value TEXT CHECK (value IS NULL OR length(value) > 0),
+  status TEXT NOT NULL CHECK (status IN ('active', 'superseded', 'resolved', 'retracted', 'contested')),
+  superseded_by TEXT CHECK (superseded_by IS NULL OR length(superseded_by) > 0),
+  recorded_at INTEGER NOT NULL CHECK (recorded_at >= 0)
+) STRICT;
+
+CREATE INDEX directive_record_scope ON directive_record (
+  workspace_id, session_id, leaf_id, lineage_hash, model_key, status, directive_id
+);
+
+CREATE TABLE claim_record (
+  claim_id TEXT PRIMARY KEY CHECK (length(claim_id) > 0),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  key TEXT NOT NULL CHECK (length(key) > 0),
+  polarity TEXT NOT NULL CHECK (length(polarity) > 0),
+  status TEXT NOT NULL CHECK (length(status) > 0),
+  value_json TEXT NOT NULL CHECK (json_valid(value_json)),
+  authority TEXT NOT NULL CHECK (authority IN ('none', 'inform', 'propose', 'act')),
+  revision INTEGER NOT NULL CHECK (revision >= 1)
+) STRICT;
+
+CREATE UNIQUE INDEX claim_record_active_key ON claim_record (
+  workspace_id, session_id, ifnull(leaf_id, ''), lineage_hash, model_key, key
+) WHERE status = 'active';
+
+CREATE TABLE continuity_revision (
+  revision_id TEXT PRIMARY KEY CHECK (length(revision_id) > 0),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  parent_revision_id TEXT CHECK (parent_revision_id IS NULL OR length(parent_revision_id) > 0),
+  content_hash TEXT NOT NULL CHECK (length(content_hash) = 64 AND content_hash NOT GLOB '*[^0-9a-f]*'),
+  task_fronts_json TEXT NOT NULL CHECK (json_valid(task_fronts_json) AND json_type(task_fronts_json) = 'object'),
+  next_safe_actions_json TEXT NOT NULL CHECK (
+    json_valid(next_safe_actions_json) AND json_type(next_safe_actions_json) = 'array'
+  ),
+  recorded_at INTEGER NOT NULL CHECK (recorded_at >= 0)
+) STRICT;
+
+CREATE INDEX continuity_revision_scope ON continuity_revision (
+  workspace_id, session_id, leaf_id, lineage_hash, model_key, recorded_at, revision_id
+);
+
+CREATE TABLE cache_receipt (
+  view_id TEXT PRIMARY KEY CHECK (length(view_id) > 0),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  sections_json TEXT NOT NULL CHECK (json_valid(sections_json) AND json_type(sections_json) = 'array'),
+  first_different_section TEXT CHECK (first_different_section IS NULL OR length(first_different_section) > 0),
+  eligible_prefix_tokens INTEGER NOT NULL CHECK (eligible_prefix_tokens >= 0),
+  previous_view_id TEXT CHECK (previous_view_id IS NULL OR length(previous_view_id) > 0),
+  recorded_at INTEGER NOT NULL CHECK (recorded_at >= 0)
+) STRICT;
+
+CREATE INDEX cache_receipt_scope ON cache_receipt (
+  workspace_id, session_id, leaf_id, lineage_hash, model_key, recorded_at, view_id
+);
+`;
+
 export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = Object.freeze([
   Object.freeze({ version: 1, name: "workspace-evidence-v1", sql: V1_SQL }),
   Object.freeze({ version: 2, name: "workspace-saga-v2", sql: V2_SQL }),
@@ -204,6 +300,7 @@ export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = 
   Object.freeze({ version: 4, name: "workspace-user-turn-disposition-v4", sql: V4_SQL }),
   Object.freeze({ version: 5, name: "workspace-evidence-fts-v5", sql: V5_SQL }),
   Object.freeze({ version: 6, name: "workspace-background-candidate-v6", sql: V6_SQL }),
+  Object.freeze({ version: 7, name: "workspace-runtime-state-v7", sql: V7_SQL }),
 ]);
 
 export const WORKSPACE_SQLITE_SCHEMA_VERSION = WORKSPACE_SQLITE_MIGRATIONS.at(-1)?.version ?? 0;
