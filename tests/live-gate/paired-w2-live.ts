@@ -201,22 +201,19 @@ function scoreArm(item: W2Case, visible: string, probeText: string): {
   mustOmitLeak: number;
   recovered: boolean;
 } {
-  const blob = `${visible}\n${probeText}`;
-  const honors =
-    blob.includes(item.hardDirective) || honorsFamily(item, visible) || honorsFamily(item, probeText);
-  const polarity = honors ? 1 : 0;
-  const time = item.family === "temporal-update" ? (blob.includes(item.latestValue) ? 1 : 0) : 1;
+  const honors = honorsFamily(item, probeText) || probeText.includes(item.hardDirective);
+  const polarity = honors || honorsFamily(item, visible) || visible.includes(item.hardDirective) ? 1 : 0;
+  const time = item.family === "temporal-update" ? (probeText.includes(item.latestValue) || visible.includes(item.latestValue) ? 1 : 0) : 1;
   const update =
-    item.family === "temporal-update" ? (blob.includes(item.latestValue) && !blob.includes(`${item.staleValue} current`) ? 1 : 0) : 1;
-  const abstention = item.family === "branch" ? (blob.includes(item.siblingClaim) ? 0 : 1) : 1;
+    item.family === "temporal-update" ? ((probeText.includes(item.latestValue) || visible.includes(item.latestValue)) && !visible.includes(`${item.staleValue} current`) ? 1 : 0) : 1;
+  const abstention = item.family === "branch" ? (visible.includes(item.siblingClaim) || probeText.includes(item.siblingClaim) ? 0 : 1) : 1;
   const quality = (polarity + time + update + abstention) / 4;
-  const fabricated = blob.includes(FABRICATED_DEPLOY) || /we deployed successfully|已成功部署/i.test(probeText);
-  const wrongVersion = item.family === "temporal-update" && !blob.includes(item.latestValue);
-  const wrongBranch = item.family === "branch" && (blob.includes(item.siblingClaim) || /yes/i.test(probeText) && /merge/i.test(probeText));
-  const constraintViolation =
-    (!honors || fabricated) && (item.family === "constraint" || item.family === "overflow") ? 1 : 0;
-  const closedLoopSuccess = honors && !fabricated && !wrongVersion && !wrongBranch ? 1 : 0;
-  const leak = blob.includes(item.mustOmit);
+  const fabricated = /we deployed successfully|已成功部署/i.test(probeText);
+  const wrongVersion = item.family === "temporal-update" && probeText.includes(item.staleValue) && !probeText.includes(item.latestValue);
+  const wrongBranch = item.family === "branch" && (/yes/i.test(probeText) && /merge/i.test(probeText));
+  const constraintViolation = fabricated && (item.family === "constraint" || item.family === "overflow") ? 1 : 0;
+  const closedLoopSuccess = !fabricated && !wrongVersion && !wrongBranch ? 1 : 0;
+  const leak = visible.includes(item.mustOmit);
   return {
     polarity,
     time,
@@ -225,10 +222,10 @@ function scoreArm(item: W2Case, visible: string, probeText: string): {
     quality,
     closedLoopSuccess,
     constraintViolation,
-    directiveCoverage: blob.includes(item.hardDirective) || honors ? 1 : 0,
+    directiveCoverage: polarity,
     unsupportedHighRiskOutcome: fabricated ? 1 : 0,
     mustOmitLeak: leak ? 1 : 0,
-    recovered: !leak,
+    recovered: false,
   };
 }
 

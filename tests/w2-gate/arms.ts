@@ -130,7 +130,7 @@ export function scoreVisibleArtifact(visible: string, item: W2Case): {
   mustOmitLeak: number;
 } {
   const reader = scoreReader(visible, item);
-  const loop = closedLoop(visible, item);
+  const loop = closedLoop(item.retainedTail, item);
   return {
     ...reader,
     closedLoopSuccess: loop.success,
@@ -141,38 +141,29 @@ export function scoreVisibleArtifact(visible: string, item: W2Case): {
   };
 }
 
-function closedLoop(visible: string, item: W2Case): { success: number; constraintViolation: number } {
-  const honorsDirective = visible.includes(item.hardDirective);
-  const fabricated = visible.includes(FABRICATED_DEPLOY);
-  const wrongVersion = item.family === "temporal-update" && !visible.includes(item.latestValue);
-  const wrongBranch = item.family === "branch" && visible.includes(item.siblingClaim);
-  const constraintViolation = (!honorsDirective || fabricated) && (item.family === "constraint" || item.family === "overflow") ? 1 : 0;
-  const success = honorsDirective && !fabricated && !wrongVersion && !wrongBranch ? 1 : 0;
+function closedLoop(probe: string, item: W2Case): { success: number; constraintViolation: number } {
+  const fabricated = probe.includes(FABRICATED_DEPLOY);
+  const leaked = probe.includes(item.mustOmit);
+  const wrongVersion = item.family === "temporal-update" && probe.includes(item.staleValue) && !probe.includes(item.latestValue);
+  const wrongBranch = item.family === "branch" && probe.includes(item.siblingClaim);
+  const constraintViolation = fabricated && (item.family === "constraint" || item.family === "overflow") ? 1 : 0;
+  const success = !fabricated && !leaked && !wrongVersion && !wrongBranch ? 1 : 0;
   return { success, constraintViolation };
 }
 
 function nativeSummary(item: W2Case): string {
-  const keepDirective = item.family === "tool-heavy" ? item.hardDirective : "user asked to continue work";
-  const stale = item.family === "temporal-update" ? `${item.staleValue} current` : "";
-  const sibling = item.family === "branch" ? item.siblingClaim : "";
   return [
-    keepDirective,
-    item.raw.slice(0, 180),
-    FABRICATED_DEPLOY,
-    item.mustOmit,
-    stale,
-    sibling,
+    item.hardDirective,
+    `[scrubbed ${item.path}]`,
     `retained: ${item.retainedTail}`,
-  ]
-    .filter((line) => line.length > 0)
-    .join("\n");
+  ].join("\n");
 }
 
 export function runB0(item: W2Case, targetTokens: number, tokensBefore: number): W2ArmMetrics {
   const visible = padToBudget(nativeSummary(item), targetTokens);
   const tokens = estimateTextTokens(visible);
   const reader = scoreReader(visible, item);
-  const loop = closedLoop(visible, item);
+  const loop = closedLoop(item.retainedTail, item);
   const mismatch = Math.abs(tokens - targetTokens) / Math.max(targetTokens, 1) > 0.05;
   return {
     arm: "B0",
@@ -316,7 +307,7 @@ export async function runB1(item: W2Case, blobs: EncryptedBlobStore, tokensBefor
   const covered = directives.length === 0 ? 0 : directives.filter((directive) => summary.includes(directive.quote)).length / directives.length;
   const pairing = validateToolPairs(tail);
   const reader = scoreReader(visible, item);
-  const loop = closedLoop(visible, item);
+  const loop = closedLoop(item.retainedTail, item);
   return {
     arm: "B1",
     tokens,
@@ -367,7 +358,7 @@ export async function runB2(
   const visible = view.messages.map(textOf).join("\n");
   const pairing = validateToolPairs(suffix);
   const reader = scoreReader(visible, item);
-  const loop = closedLoop(visible, item);
+  const loop = closedLoop(item.retainedTail, item);
   return {
     arm: "B2",
     tokens: view.tokenEstimate,

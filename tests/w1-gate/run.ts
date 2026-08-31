@@ -7,6 +7,7 @@ import { EncryptedBlobStore } from "../../packages/storage/src/blob-store.js";
 import { TestKeyProvider } from "../../packages/storage/src/key-provider.js";
 import { denyCrossWorkspace, runA0, runW1Arm } from "./arms.js";
 import { buildSyntheticCorpus, corpusQuota } from "./corpus.js";
+import { computeRealizedNet } from "@pcr/core";
 import { evaluateW1Gate, median, pairedBootstrapCi, percentile, relativeDelta } from "./scorer.js";
 
 export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthetic"): Promise<{
@@ -62,7 +63,16 @@ export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthet
     needed.map((row) => row.a2.quality),
   );
   const recallNeededSuccessDelta = needed.reduce((sum, row) => sum + (row.a2.quality - row.a1.quality), 0) / needed.length;
-  const realized = rows.map((row) => row.a0.tokens - row.a1.tokens);
+  const prices = { inputPerToken: 1, outputPerToken: 1 };
+  const realized = rows.map((row) => computeRealizedNet({
+    tokensBefore: row.a0.tokens,
+    tokensAfter: row.a1.tokens,
+    summaryTokens: 0,
+    recallTokens: row.a2.pageSize ?? 0,
+    rewriteTokens: 0,
+    succeeded: row.a1.quality > 0,
+    overflowAvoided: row.a0.tokens > row.a1.tokens,
+  }, prices).net);
   const realizedCi = pairedBootstrapCi(
     realized.map(() => 0),
     realized,

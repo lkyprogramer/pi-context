@@ -90,6 +90,12 @@ export async function runW2CompactorGate(outDir = "artifacts/runs/w2-synthetic")
     overflow.map((row) => row.b1.quality),
   );
 
+  const clusters: Record<string, string[]> = {};
+  for (const row of rows) {
+    (clusters[row.family] ??= []).push(row.id);
+  }
+  const medianTokensBefore = median(rows.map((row) => row.b1.tokensBefore ?? row.b0.tokensBefore ?? 0));
+  const lane = medianTokensBefore >= 190_000 ? "provider-overflow" : medianTokensBefore >= 20_000 ? "natural-threshold" : "boundary-replay";
   const realized = rows.map((row) => row.b0.tokens - row.b1.tokens);
   const realizedCi = pairedBootstrapCi(
     realized.map(() => 0),
@@ -132,6 +138,8 @@ export async function runW2CompactorGate(outDir = "artifacts/runs/w2-synthetic")
     baselineArm: "B0",
     candidateArms: ["B1", "B2"],
     corpusClass: "synthetic-public",
+    clusters,
+    lane,
     publicationClaim: false,
     usedWalkthroughConstants: false,
     livePiNative: false,
