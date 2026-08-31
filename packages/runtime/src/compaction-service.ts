@@ -112,32 +112,70 @@ function mapAssemblerError(error: unknown): never {
   throw error;
 }
 
-function renderSummary(checkpoint: {
-  snapshotHash: string;
-  directives: ReadonlyArray<{
-    directiveId: string;
-    exactQuote: string;
-    kind: string;
-    polarity: string;
-    status: string;
-  }>;
-  claims: ReadonlyArray<{ claimId: string; key: string; polarity: string; status: string; value: unknown }>;
-  pointers: ReadonlyArray<{ ref: string; kind: string }>;
-  heads: Record<string, string>;
-  continuity: { revisionId: string; contentHash?: string };
-}): string {
-  return [
-    `checkpoint v2 ${checkpoint.snapshotHash}`,
-    ...checkpoint.directives.map((item) =>
-      `- [${item.directiveId}] ${item.exactQuote} kind=${item.kind} polarity=${item.polarity} status=${item.status}`
-    ),
-    `continuity ${checkpoint.continuity.revisionId}`,
-    ...checkpoint.claims.map((item) =>
-      `- [${item.claimId}] ${item.key} polarity=${item.polarity} status=${item.status} value=${String(item.value)}`
-    ),
-    ...checkpoint.pointers.map((item) => `- ${item.kind}:${item.ref}`),
-    `heads ${checkpoint.heads.directiveHead} ${checkpoint.heads.claimHead} ${checkpoint.heads.continuityHead}`,
+export function uniqueShortRefs(values: readonly string[], minLength = 12): Map<string, string> {
+  const unique = [...new Set(values.filter((value) => typeof value === "string" && value.length > 0))];
+  let length = minLength;
+  while (length <= 64) {
+    const assigned = new Map<string, string>();
+    const used = new Set<string>();
+    let collision = false;
+    for (const value of unique) {
+      const short = value.length <= length ? value : value.slice(0, length);
+      if (used.has(short)) {
+        collision = true;
+        break;
+      }
+      used.add(short);
+      assigned.set(value, short);
+    }
+    if (!collision) {
+      const out = new Map<string, string>();
+      for (const value of values) {
+        if (typeof value === "string" && value.length > 0) out.set(value, assigned.get(value) ?? value);
+      }
+      return out;
+    }
+    length += 4;
+  }
+  return new Map(unique.map((value) => [value, value]));
+}
+
+export function renderModelCheckpointView(
+  checkpoint: {
+    snapshotHash: string;
+    directives: ReadonlyArray<{
+      directiveId: string;
+      exactQuote: string;
+      kind: string;
+      polarity: string;
+      status: string;
+    }>;
+    claims: ReadonlyArray<{ claimId: string; key: string; polarity: string; status: string; value: unknown }>;
+    pointers: ReadonlyArray<{ ref: string; kind: string }>;
+    heads: Record<string, string>;
+    continuity: { revisionId: string; contentHash?: string };
+  },
+  options: { includeMetadata?: boolean } = {},
+): { summary: string; shortRefs: Record<string, string> } {
+  const includeMetadata = options.includeMetadata === true;
+  const refValues = [
+    checkpoint.snapshotHash,
+    checkpoint.continuity.revisionId,
+    ...checkpoint.directives.map((item) => item.directiveId),
+    ...checkpoint.pointers.map((item) => item.ref),
+  ];
+  const refs = uniqueShortRefs(refValues);
+  const shortOf = (value: string): string => (includeMetadata ? value : (refs.get(value) ?? value.slice(0, 12)));
+  const summary = [
+    `checkpoint v2 ${shortOf(checkpoint.snapshotHash)}`,
+    ...checkpoint.directives.map((item) => `- [${shortOf(item.directiveId)}] ${item.exactQuote}`),
+    `continuity ${shortOf(checkpoint.continuity.revisionId)}`,
+    ...checkpoint.claims.map((item) => `- ${item.key}=${String(item.value)}`),
+    ...checkpoint.pointers.map((item) => `- ${item.kind}:${shortOf(item.ref)}`),
   ].join("\n");
+  const shortRefs: Record<string, string> = {};
+  for (const [full, short] of refs) shortRefs[full] = short;
+  return { summary, shortRefs };
 }
 
 export function createCompactionService(input: CreateCompactionServiceInput): CompactionService {
@@ -187,7 +225,7 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
       if (!report.ok) {
         return { kind: "hard-stop", code: report.issues[0]?.code ?? "PCR_CHECKPOINT_VERIFY_FAILED" };
       }
-      const summary = renderSummary({
+      const view = renderModelCheckpointView({
         snapshotHash: checkpoint.snapshotHash,
         directives: checkpoint.directives,
         claims: checkpoint.claims as Array<{ claimId: string; key: string; polarity: string; status: string; value: unknown }>,
@@ -195,13 +233,13 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
         heads: checkpoint.heads as Record<string, string>,
         continuity: checkpoint.continuity as { revisionId: string; contentHash?: string },
       });
-      const estimatedTokensAfter = estimateTextTokens(summary);
+      const estimatedTokensAfter = estimateTextTokens(view.summary);
       if (!(estimatedTokensAfter < request.tokensBefore)) return { kind: "native-fallback" };
       return {
         kind: "pcr",
         result: {
           firstKeptEntryId: request.firstKeptEntryId,
-          summary,
+          summary: view.summary,
           tokensBefore: request.tokensBefore,
           estimatedTokensAfter,
           details: {
@@ -211,7 +249,10 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
             continuityHead: snapshot.heads.continuityHead,
             catalogHead: snapshot.heads.catalogHead,
             outputHash: report.outputHash,
-            reducerRevisions: [],
+            reducerRevisions: [
+              `snapshot:${checkpoint.snapshotHash}`,
+              ...checkpoint.pointers.map((item) => `pointer:${String((item as { kind?: string }).kind ?? "blob")}:${String((item as { ref?: string }).ref ?? "")}`),
+            ],
           },
         },
       };

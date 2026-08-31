@@ -11,6 +11,8 @@ import { BudgetError, snapshotBudgetCursor, type TokenPricer } from "../budget/p
 
 export type SectionKind = MaterializedSectionKind;
 
+export const CACHE_LAYOUT_VERSION = 1 as const;
+
 export const SECTION_KINDS: readonly SectionKind[] = [
   "runtime-preamble",
   "hard-directives",

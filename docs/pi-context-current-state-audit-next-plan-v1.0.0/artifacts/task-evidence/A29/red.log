@@ -1,0 +1,1 @@
+FAIL pointer port was a no-op; missing/corrupt/cross-scope blobs still verified ok

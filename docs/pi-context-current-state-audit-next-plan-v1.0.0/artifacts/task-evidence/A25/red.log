@@ -1,0 +1,1 @@
+FAIL usage.input treated serialized capacity as billed uncached input; cacheRead/cacheWrite missing

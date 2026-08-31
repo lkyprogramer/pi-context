@@ -123,6 +123,11 @@ export {
   type RouteWindow,
 } from "./performance/lanes.js";
 export {
+  compareCheckpointMetadata,
+  type CheckpointMetadataAblation,
+  type CheckpointMetadataSample,
+} from "./performance/ablation.js";
+export {
   GateEngineError,
   createGateEngine,
   type CreateGateEngineInput,

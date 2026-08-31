@@ -273,9 +273,17 @@ export function createCheckpointVerifier(input: CreateCheckpointVerifierInput): 
       if (!sameCursor(bound, cursor)) throw new CheckpointError("PCR_CHECKPOINT_SCOPE_MISMATCH");
       const rendered = parseCandidate(candidate, "candidate");
       signal?.throwIfAborted();
-      await pointers.verify(cursor, source.pointers, signal);
-      signal?.throwIfAborted();
       const issues: VerificationIssue[] = [];
+      try {
+        await pointers.verify(cursor, source.pointers, signal);
+      } catch (error) {
+        if (error && typeof error === "object" && "name" in error && error.name === "AbortError") throw error;
+        const code = error && typeof error === "object" && "code" in error && typeof error.code === "string"
+          ? error.code
+          : "PCR_CHECKPOINT_POINTER_VERIFY_FAILED";
+        issues.push({ code, path: "pointers" });
+      }
+      signal?.throwIfAborted();
       if (rendered.snapshotHash !== source.snapshotHash) {
         issues.push({ code: "PCR_CHECKPOINT_SNAPSHOT_HASH_MISMATCH", path: "snapshotHash" });
       }

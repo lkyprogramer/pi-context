@@ -160,6 +160,12 @@ export function createMessageCodec(input: CreateMessageCodecInput): MessageCodec
         ? cloned.timestamp
         : 0;
       const { blocks, opaque } = splitContent(cloned.content);
+      if (typeof cloned.summary === "string" && cloned.summary.length > 0) {
+        opaque.push({ type: "summary", summary: cloned.summary });
+      }
+      if (cloned.details !== undefined) opaque.push({ type: "details", details: cloned.details });
+      if (cloned.metadata !== undefined) opaque.push({ type: "metadata", metadata: cloned.metadata });
+      if (cloned.image !== undefined) opaque.push({ type: "image", image: cloned.image });
       const toolCallId = typeof cloned.toolCallId === "string" && cloned.toolCallId.length > 0
         ? cloned.toolCallId
         : undefined;

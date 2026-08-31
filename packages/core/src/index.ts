@@ -77,12 +77,19 @@ export {
   estimateTextTokens,
   reservesFromPayload,
   snapshotBudgetCursor,
+  envelopeFromRaw,
+  priceEnvelope,
+  priceRawPayload,
+  serializedEnvelopeText,
+  serializedRawPayload,
+  type EnvelopeMessage,
   type CreateTokenPricerInput,
   type RouteInfo,
   type RouteKey,
   type TokenPricer,
 } from "./budget/index.js";
 export {
+  CACHE_LAYOUT_VERSION,
   SECTION_KINDS,
   SECTION_ZONE,
   SectionError,
@@ -104,6 +111,7 @@ export {
   type CommitCacheInput,
   type CreateCacheReceiptInput,
 } from "./materialization/cache.js";
+export { dedupMaterializationMessages } from "./materialization/dedup.js";
 export {
   MaterializerError,
   createMaterializer,
@@ -123,6 +131,15 @@ export {
   type CreateCheckpointVerifierInput,
   type VerificationReport,
 } from "./compaction/checkpoint.js";
+export {
+  atomicCutIndex,
+  retainedTailIds,
+  toolPairsValid,
+  twoRunHash,
+  verifyHardGates,
+  type HardGateReceipt,
+  type ToolPairMessage,
+} from "./compaction/hard-gates.js";
 export {
   SemanticVerifierError,
   createSemanticVerifier,

@@ -23,4 +23,12 @@ describe("message codec", () => {
     expect(envelope.normalized.role).toBe("tool-result");
     expect(codec.unwrap(envelope)).toEqual(raw);
   });
+
+  it("keeps compactionSummary.summary in opaque blocks for envelope pricing", () => {
+    const codec = createMessageCodec({ cursor: cursor() });
+    const raw = { role: "compactionSummary", summary: "do not deploy prod", tokensBefore: 6000 };
+    const envelope = codec.wrap({ cursor: cursor(), raw });
+    expect(envelope.opaqueBlocks).toContainEqual({ type: "summary", summary: "do not deploy prod" });
+    expect(codec.unwrap(envelope)).toEqual(raw);
+  });
 });

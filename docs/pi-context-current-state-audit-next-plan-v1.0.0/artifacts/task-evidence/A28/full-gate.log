@@ -1,0 +1,14 @@
+> @ typecheck /Users/luo/Documents/github/pi-context
+> pnpm -r typecheck
+packages/* typecheck: Done
+apps/pi-context-runtime typecheck: Done
+
+> @ test:unit /Users/luo/Documents/github/pi-context
+> vitest run --config vitest.unit.config.ts
+ Test Files  170 passed (170)
+      Tests  785 passed (785)
+
+> @ test:integration /Users/luo/Documents/github/pi-context
+> vitest run --config vitest.integration.config.ts
+ Test Files  22 passed (22)
+      Tests  49 passed (49)

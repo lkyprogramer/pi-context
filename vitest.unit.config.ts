@@ -13,6 +13,7 @@ export default defineConfig({
       "tests/security/**/*.test.ts",
       "tests/fault/**/*.test.ts",
       "tests/performance/**/*.test.ts",
+      "tests/integration/**/*.test.ts",
       "tests/w1-gate/**/*.test.ts",
       "tests/w2-gate/**/*.test.ts",
       "tests/release/**/*.test.ts",

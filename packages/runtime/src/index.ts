@@ -23,4 +23,7 @@ export * from "./user-turn/retention.js";
 export * from "./evidence/catalog.js";
 export * from "./claims/attestation.js";
 export * from "./compaction/merge.js";
+export * from "./telemetry/usage.js";
+export * from "./compaction/full-state.js";
+export * from "./evidence/pointer-verify.js";
 

@@ -10,7 +10,8 @@ import {
 
 import { BudgetError, snapshotBudgetCursor, type TokenPricer } from "../budget/pricer.js";
 import { CacheError, type CacheReceiptService } from "./cache.js";
-import { SectionError, type PlanSectionInput, type SectionPlan, type SectionPlanner } from "./sections.js";
+import { dedupMaterializationMessages } from "./dedup.js";
+import { CACHE_LAYOUT_VERSION, SectionError, type PlanSectionInput, type SectionPlan, type SectionPlanner } from "./sections.js";
 
 const ZONE_ORDER: readonly CacheZone[] = [
   "stable-prefix",
@@ -40,6 +41,7 @@ export interface RuntimeSnapshot {
   cursor: RuntimeCursor;
   directives: readonly HostMessage[];
   continuity: readonly HostMessage[];
+  continuityDelta?: readonly HostMessage[];
   directory?: readonly HostMessage[];
   recall?: readonly HostMessage[];
   warnings?: readonly HostMessage[];
@@ -218,15 +220,17 @@ export function createMaterializer(input: CreateMaterializerInput): Materializer
       if (start < 0) failInput("request.canonicalMessages");
       const suffix = request.canonicalMessages.slice(start);
       const history = request.canonicalMessages.slice(0, start);
+      const owned = dedupMaterializationMessages(snapshot.directives, history, suffix);
       const sectionInput: PlanSectionInput[] = [
         { kind: "runtime-preamble", messages: [preambleMessage(requestCursor)] },
-        { kind: "hard-directives", messages: snapshot.directives },
+        { kind: "hard-directives", messages: owned.directives },
         { kind: "stable-continuity", messages: snapshot.continuity },
-        ...optionalSection("historical-tail", history),
+        ...optionalSection("historical-tail", owned.history),
+        ...optionalSection("continuity-delta", snapshot.continuityDelta),
         ...optionalSection("directory", snapshot.directory),
         ...optionalSection("retrieval-page", snapshot.recall),
         ...optionalSection("runtime-warning", snapshot.warnings),
-        { kind: "active-turn", messages: suffix },
+        { kind: "active-turn", messages: owned.active },
       ];
       let planned: SectionPlan[];
       try {
@@ -270,7 +274,7 @@ export function createMaterializer(input: CreateMaterializerInput): Materializer
         sections,
         tokenEstimate: totalCost(reduced.sections),
         cachePlan: {
-          layoutVersion: 1,
+          layoutVersion: CACHE_LAYOUT_VERSION,
           sectionOrder: sections.map((item) => item.kind),
           eligiblePrefixTokens: receipt.eligiblePrefixTokens,
           firstDifferentSection: receipt.firstDifferentSection,

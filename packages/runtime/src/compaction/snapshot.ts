@@ -1,6 +1,8 @@
 import { domainHash, type DirectiveRecord, type RuntimeCursor } from "@pcr/contracts";
 import type { ContinuityRevision } from "@pcr/core";
 
+import { buildFullCheckpointState } from "./full-state.js";
+
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
 const REASONS = new Set(["threshold", "overflow", "manual"]);
@@ -44,6 +46,11 @@ export interface CompactionSnapshot {
   claims: readonly CompactionClaim[];
   pointers: readonly CompactionPointer[];
   heads: CompactionSnapshotHeads;
+  errors: readonly string[];
+  validation: ReadonlyArray<{ id: string; status: string }>;
+  sideEffects: readonly string[];
+  nextSafeActions: ReadonlyArray<{ text: string }>;
+  taskFronts: ContinuityRevision["taskFronts"];
 }
 
 export interface CompactionSnapshotTransaction {
@@ -177,6 +184,46 @@ function freezePointers(value: unknown, field: string): readonly CompactionPoint
   }));
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
+function extractErrors(value: unknown): string[] {
+  const errors = asRecord(value).unresolvedErrors;
+  if (!Array.isArray(errors)) return [];
+  return errors.map((item) => {
+    if (typeof item === "string") return item;
+    if (item && typeof item === "object" && typeof (item as { message?: unknown }).message === "string") {
+      return (item as { message: string }).message;
+    }
+    return JSON.stringify(item);
+  });
+}
+
+function extractSideEffects(value: unknown): string[] {
+  const effects = asRecord(value).externalSideEffects;
+  if (!Array.isArray(effects)) return [];
+  return effects.map((item) => {
+    if (typeof item === "string") return item;
+    if (item && typeof item === "object") {
+      const record = item as { id?: unknown; kind?: unknown; status?: unknown };
+      return [record.kind, record.status, record.id].filter((part) => typeof part === "string").join(":");
+    }
+    return JSON.stringify(item);
+  });
+}
+
+function extractValidation(value: unknown): Array<{ id: string; status: string }> {
+  const rows = asRecord(value).validationState;
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const record = item as { id?: unknown; status?: unknown };
+    if (typeof record.id !== "string" || typeof record.status !== "string") return [];
+    return [{ id: record.id, status: record.status }];
+  });
+}
+
 function freezeContinuity(value: unknown, cursor: RuntimeCursor, field: string): ContinuityRevision {
   if (!value || typeof value !== "object") failInput(field);
   const revision = value as ContinuityRevision;
@@ -259,14 +306,32 @@ export function createCompactionSnapshotAssembler(
         request.signal?.throwIfAborted();
         const active = freezeDirectives(await directives.active(cursor, request.signal), "directives");
         request.signal?.throwIfAborted();
-        const revision = freezeContinuity(await continuity.current(cursor), cursor, "continuity");
+        const rawContinuity = await continuity.current(cursor);
+        const revision = freezeContinuity(rawContinuity, cursor, "continuity");
         request.signal?.throwIfAborted();
         const listed = freezeClaims(await claims.list(cursor, request.signal), "claims");
         request.signal?.throwIfAborted();
         const pointers = freezePointers(await evidence.pointers(cursor, request.signal), "pointers");
-        return { active, revision, listed, pointers };
+        return {
+          active,
+          revision,
+          listed,
+          pointers,
+          errors: extractErrors(rawContinuity),
+          validation: extractValidation(rawContinuity),
+          sideEffects: extractSideEffects(rawContinuity),
+        };
       }, request.signal);
       request.signal?.throwIfAborted();
+      const full = buildFullCheckpointState(cursor, {
+        directives: assembled.active,
+        claims: assembled.listed,
+        taskFronts: assembled.revision.taskFronts,
+        errors: assembled.errors,
+        validation: assembled.validation,
+        nextSafeActions: assembled.revision.nextSafeActions,
+        sideEffects: assembled.sideEffects,
+      });
       const heads = deriveHeads(cursor, assembled.active, assembled.revision, assembled.listed, assembled.pointers);
       const payload = {
         cursor,
@@ -281,6 +346,11 @@ export function createCompactionSnapshotAssembler(
       return Object.freeze({
         snapshotHash: domainHash("compaction-snapshot", payload),
         ...payload,
+        errors: full.errors,
+        validation: full.validation,
+        sideEffects: full.sideEffects,
+        nextSafeActions: full.nextSafeActions,
+        taskFronts: full.taskFronts,
       });
     },
   };
