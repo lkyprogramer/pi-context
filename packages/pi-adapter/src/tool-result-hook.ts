@@ -6,7 +6,7 @@ import type {
 import { domainHash, type RuntimeCursor } from "@pcr/contracts";
 import type { ObservationService, ProjectedToolResult, ToolObservation } from "@pcr/runtime";
 
-import { effectiveToolClass } from "../../kernel/src/security/tool-taxonomy.js";
+import { toolResultSourceClass } from "../../kernel/src/security/tool-taxonomy.js";
 
 interface ToolResultEventResult {
   content?: ToolResultEvent["content"];
@@ -57,7 +57,7 @@ function snapshotCursor(value: RuntimeCursor): RuntimeCursor {
 }
 
 function sourceClass(toolName: string): ToolObservation["sourceClass"] {
-  return effectiveToolClass(toolName) === "query" ? "trusted-tool" : "untrusted-tool";
+  return toolResultSourceClass(toolName);
 }
 
 function asContent(event: ToolResultEvent): ToolObservation["content"] {

@@ -1,6 +1,6 @@
 import { domainHash, type HostMessage, type MaterializedView, type RuntimeCursor } from "@pcr/contracts";
 import { createMessageCodec, type PiMessageEnvelope } from "./message-codec.js";
-import { emptyPiUsage, toHostMessages, toPiMessages, type PiAgentMessage } from "./message-conversion.js";
+import { toHostMessages, toPiMessages, type PiAgentMessage } from "./message-conversion.js";
 
 export interface PiSessionContext {
   workspaceId: string;
@@ -119,9 +119,7 @@ export function isOpaquePiMessage(message: PiAgentMessage): boolean {
 }
 
 function withAssistantUsage(message: PiAgentMessage): PiAgentMessage {
-  if (message.role !== "assistant") return message;
-  if (message.usage && typeof message.usage.totalTokens === "number") return message;
-  return { ...message, usage: emptyPiUsage() };
+  return message;
 }
 
 function withAssistantMeta(original: PiAgentMessage, converted: PiAgentMessage): PiAgentMessage {

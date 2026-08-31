@@ -38,7 +38,7 @@ describe("message conversion", () => {
     expect(toPiMessages(host)[0]).toMatchObject({ role: "toolResult", content: "ok", toolCallId: "call_1" });
   });
 
-  it("attaches zero usage on rematerialized assistant messages", () => {
+  it("does not invent zero usage on rematerialized assistant messages", () => {
     const pi = toPiMessages([
       {
         hostMessageId: "m1",
@@ -48,7 +48,14 @@ describe("message conversion", () => {
         content: [{ type: "text", text: "ACK" }],
       },
     ]);
-    expect(pi[0]?.usage?.totalTokens).toBe(0);
+    expect(pi[0]?.usage).toBeUndefined();
+  });
+
+  it("labels tool-result as untrusted-tool by default", () => {
+    const host = toHostMessages([
+      { role: "toolResult", toolCallId: "call_1", content: [{ type: "text", text: "ok" }] },
+    ]);
+    expect(host[0]?.sourceClass).toBe("untrusted-tool");
   });
 
   it("maps tool-result to Pi toolResult without stringifying assistant history", () => {

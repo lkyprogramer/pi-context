@@ -66,7 +66,6 @@ export function toPiMessages(messages: readonly HostMessage[]): PiAgentMessage[]
       timestamp: message.timestamp,
       toolCallId: message.toolCallId,
     };
-    if (role === "assistant") converted.usage = emptyPiUsage();
     return converted;
   });
 }
@@ -100,7 +99,7 @@ function normalizeRole(role: string): HostMessage["role"] {
 
 function sourceClassFor(role: HostMessage["role"], rawRole: string): SourceClass {
   if (role === "user") return "authenticated-user";
-  if (role === "tool-result") return "trusted-tool";
+  if (role === "tool-result") return "untrusted-tool";
   if (rawRole === "compaction" || rawRole === "branch-summary" || role === "custom") return "agent-derived";
   return "agent-derived";
 }

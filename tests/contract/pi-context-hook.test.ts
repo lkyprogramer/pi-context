@@ -99,7 +99,7 @@ describe("Pi context hook", () => {
   it("never rematerializes an assistant without usage.totalTokens", () => {
     const original = [{ role: "assistant", content: [{ type: "text", text: "ACK" }], stopReason: "stop" }];
     const converted = [{ role: "assistant", content: [{ type: "text", text: "ACK" }] }];
-    expect(stitchContextMessages(original, converted)[0]?.usage?.totalTokens).toBe(0);
+    expect(stitchContextMessages(original, converted)[0]?.usage).toBeUndefined();
   });
 
   it("restores assistant usage after rematerialization", () => {
