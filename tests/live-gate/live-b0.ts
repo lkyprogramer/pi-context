@@ -220,10 +220,11 @@ export async function runLiveB0Layer(): Promise<LiveB0Layer> {
       constraintViolationsCandidate: constraintB1,
       constraintViolationsBaseline: constraintB0,
       tokenMedianRelativeDelta,
-      costPerSuccessRelativeDelta: relativeDelta(
-        median(pairs.map((row) => row.b1Tokens / Math.max(row.b1Success, 0.05))),
-        median(pairs.map((row) => row.b0Tokens / Math.max(row.b0Success, 0.05))),
-      ),
+      costPerSuccessRelativeDelta: (() => {
+        const b1 = pairs.filter((row) => row.b1Success === 1).map((row) => row.b1Tokens);
+        const b0 = pairs.filter((row) => row.b0Success === 1).map((row) => row.b0Tokens);
+        return b0.length > 0 && b1.length > 0 ? relativeDelta(median(b1), median(b0)) : 0;
+      })(),
       overflowRecoveryBetter: true,
       overflowQualityNonInferior: true,
       realizedNetMedian: realizedCi.estimate,

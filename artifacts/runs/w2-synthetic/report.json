@@ -203,6 +203,18 @@
     "tokenMedianRelativeDelta": -0.6112266112266113,
     "budgetMismatchRate": 0,
     "costPerSuccessRelativeDelta": -0.6109979633401222,
+    "costPerSuccess": {
+      "B0": 491,
+      "B1": 191,
+      "nSuccess": {
+        "B0": 100,
+        "B1": 100
+      },
+      "failureCost": {
+        "B0": 0,
+        "B1": 0
+      }
+    },
     "overflowRecovery": {
       "B0": 0,
       "B1": 1
@@ -437,5 +449,5 @@
     "ov-18",
     "ov-19"
   ],
-  "reportDigest": "76823ecd0cae5c48b2488b09d7e1e3f6e9540b6d10e024d77f1279a5b143ed1e"
+  "reportDigest": "2655f7d20a3e8c0270704d963e00c17a447abade92aa3ca8f8fe6be62e6d8891"
 }

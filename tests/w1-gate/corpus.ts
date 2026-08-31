@@ -1,3 +1,8 @@
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 export type ScenarioFamily = "tool-heavy" | "delayed-constraint" | "recall-needed" | "recall-not-needed";
 
 export interface SyntheticCase {
@@ -125,4 +130,29 @@ export function corpusQuota(cases: SyntheticCase[]): {
     failFixVerify: cases.filter((item) => item.failFixVerify).length,
     malicious: cases.filter((item) => item.malicious).length,
   };
+}
+
+export const W1_CORPUS_MAJOR = 1;
+
+export function corpusFingerprint(cases: SyntheticCase[]): string {
+  return createHash("sha256")
+    .update(JSON.stringify(cases.map((item) => ({
+      id: item.id,
+      family: item.family,
+      raw: item.raw,
+      userText: item.userText,
+      path: item.path,
+      toolName: item.toolName,
+    }))))
+    .digest("hex");
+}
+
+export function assertLockedCorpus(cases: SyntheticCase[]): string {
+  const digest = corpusFingerprint(cases);
+  const lockPath = join(dirname(fileURLToPath(import.meta.url)), "corpus.lock.json");
+  const lock = JSON.parse(readFileSync(lockPath, "utf8")) as { major: number; sha256: string };
+  if (lock.major !== W1_CORPUS_MAJOR || lock.sha256 !== digest) {
+    throw new Error(`W1 corpus lock mismatch major=${lock.major} expected=${lock.sha256} actual=${digest}`);
+  }
+  return digest;
 }

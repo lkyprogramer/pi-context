@@ -460,10 +460,10 @@ export async function runLivePairedW2(opts: {
     relativeDelta(row.b1.probeInputTokens ?? row.b1.summaryTokens, row.b0.probeInputTokens ?? row.b0.summaryTokens),
   );
   const tokenMedianRelativeDelta = tokenDeltas.length > 0 ? median(tokenDeltas) : 0;
-  const costB0 = tokenBase.map((row) => (row.b0.probeInputTokens ?? row.b0.summaryTokens) / Math.max(row.b0.closedLoopSuccess, 0.05));
-  const costB1 = tokenBase.map((row) => (row.b1.probeInputTokens ?? row.b1.summaryTokens) / Math.max(row.b1.closedLoopSuccess, 0.05));
+  const costB0 = tokenBase.filter((row) => row.b0.closedLoopSuccess === 1).map((row) => row.b0.probeInputTokens ?? row.b0.summaryTokens);
+  const costB1 = tokenBase.filter((row) => row.b1.closedLoopSuccess === 1).map((row) => row.b1.probeInputTokens ?? row.b1.summaryTokens);
   const costPerSuccessRelativeDelta =
-    costB0.length > 0 ? relativeDelta(median(costB1), median(costB0)) : 0;
+    costB0.length > 0 && costB1.length > 0 ? relativeDelta(median(costB1), median(costB0)) : 0;
   const overflow = completed.filter((row) => row.family === "overflow");
   const overflowB0 = overflow.filter((row) => row.b0.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
   const overflowB1 = overflow.filter((row) => row.b1.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);

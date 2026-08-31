@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { EncryptedBlobStore } from "../../packages/storage/src/blob-store.js";
 import { TestKeyProvider } from "../../packages/storage/src/key-provider.js";
 import { denyCrossWorkspace, runA0, runW1Arm } from "./arms.js";
-import { buildSyntheticCorpus, corpusQuota } from "./corpus.js";
+import { assertLockedCorpus, buildSyntheticCorpus, corpusQuota } from "./corpus.js";
 import { computeRealizedNet } from "@pcr/core";
 import { evaluateW1Gate, median, pairedBootstrapCi, percentile, relativeDelta } from "./scorer.js";
 
@@ -16,6 +16,7 @@ export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthet
   report: Record<string, unknown>;
 }> {
   const cases = buildSyntheticCorpus();
+  assertLockedCorpus(cases);
   const quotas = corpusQuota(cases);
   const blobs = new EncryptedBlobStore({
     root: mkdtempSync(join(tmpdir(), "pcr-w1-gate-")),

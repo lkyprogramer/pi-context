@@ -78,9 +78,13 @@ export async function runW2CompactorGate(outDir = "artifacts/runs/w2-synthetic")
   const budgetMismatchRate = rows.filter((row) => row.b0.budgetMismatch).length / rows.length;
   const tokenDeltas = rows.map((row) => relativeDelta(row.b1.tokens, row.b0.tokens));
   const tokenMedianRelativeDelta = median(tokenDeltas);
-  const costB0 = rows.map((row) => row.b0.tokens / Math.max(row.b0.closedLoopSuccess, 0.05));
-  const costB1 = rows.map((row) => row.b1.tokens / Math.max(row.b1.closedLoopSuccess, 0.05));
-  const costPerSuccessRelativeDelta = relativeDelta(median(costB1), median(costB0));
+  const costB0 = rows.filter((row) => row.b0.closedLoopSuccess === 1).map((row) => row.b0.tokens);
+  const costB1 = rows.filter((row) => row.b1.closedLoopSuccess === 1).map((row) => row.b1.tokens);
+  const failureCostB0 = rows.filter((row) => row.b0.closedLoopSuccess !== 1).reduce((sum, row) => sum + row.b0.tokens, 0);
+  const failureCostB1 = rows.filter((row) => row.b1.closedLoopSuccess !== 1).reduce((sum, row) => sum + row.b1.tokens, 0);
+  const costPerSuccessRelativeDelta = costB0.length > 0 && costB1.length > 0
+    ? relativeDelta(median(costB1), median(costB0))
+    : 0;
 
   const overflow = rows.filter((row) => row.family === "overflow");
   const overflowB0 = overflow.filter((row) => row.b0.recovered).length / Math.max(overflow.length, 1);
@@ -182,6 +186,12 @@ export async function runW2CompactorGate(outDir = "artifacts/runs/w2-synthetic")
       tokenMedianRelativeDelta,
       budgetMismatchRate,
       costPerSuccessRelativeDelta,
+      costPerSuccess: {
+        B0: costB0.length > 0 ? median(costB0) : null,
+        B1: costB1.length > 0 ? median(costB1) : null,
+        nSuccess: { B0: costB0.length, B1: costB1.length },
+        failureCost: { B0: failureCostB0, B1: failureCostB1 },
+      },
       overflowRecovery: { B0: overflowB0, B1: overflowB1 },
       overflowQualityCi: overflowQuality,
     },

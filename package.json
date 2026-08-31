@@ -6,6 +6,7 @@
     "check:boundaries": "node scripts/check-package-boundaries.mjs",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run --workspace vitest.workspace.ts",
+    "test:live": "vitest run --workspace vitest.live-paired-w2.workspace.ts",
     "check:all": "pnpm check:boundaries && pnpm typecheck && pnpm test",
     "w1:gate": "node scripts/run-w1-gate.mjs",
     "w2:gate": "node scripts/run-w2-gate.mjs",
