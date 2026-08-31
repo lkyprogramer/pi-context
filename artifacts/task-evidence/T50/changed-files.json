@@ -1,0 +1,12 @@
+{
+  "taskId": "T50",
+  "production": [
+    ".github/workflows/live-benchmark.yml",
+    ".github/workflows/nightly.yml",
+    "blockers/T50-scope-expansion.md",
+    "scripts/ci/live-env.mjs"
+  ],
+  "tests": [
+    "tests/tasks/t50.test.ts"
+  ]
+}

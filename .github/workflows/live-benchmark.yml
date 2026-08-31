@@ -1,0 +1,36 @@
+name: live-benchmark
+on:
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "One of the nightly seeds 7, 11, or 23"
+        required: true
+        default: "7"
+concurrency:
+  group: live-benchmark
+  cancel-in-progress: false
+jobs:
+  live:
+    environment: live
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      PCR_LIVE_PROVIDER_KEY: ${{ secrets.PCR_LIVE_PROVIDER_KEY }}
+      PCR_LIVE_MODEL: ${{ secrets.PCR_LIVE_MODEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Live environment preflight
+        run: mkdir -p artifacts/live && node scripts/ci/live-env.mjs --workspace live --seeds 7,11,23 --run-seed ${{ inputs.seed }} > "artifacts/live/preflight-seed-${{ inputs.seed }}.json"
+      - name: Upload live seed artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-seed-${{ inputs.seed }}
+          path: artifacts/live/**
+          if-no-files-found: error
+          retention-days: 14
