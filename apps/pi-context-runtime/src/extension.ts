@@ -485,25 +485,49 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
     isHardPath: isHardBackgroundPath,
     snapshot: backgroundSnapshot,
     get worker() {
+      const memory = new Map<string, { id: string; key: string; phase: "preparing" | "prepared" | "stale" | "cancelled" | "failed"; reason?: string }>();
       worker ??= new CandidateWorker({
         store: {
-          async findCandidate() {
-            return undefined;
+          async findCandidate(key) {
+            return memory.get(key);
           },
           async markPreparing(key) {
-            return { id: `c_${key.slice(0, 8)}`, key, phase: "preparing" };
+            const rec = { id: `c_${key.slice(0, 16)}`, key, phase: "preparing" as const };
+            memory.set(key, rec);
+            return rec;
           },
           async markPrepared(prepared) {
-            return { ...prepared, phase: "prepared" };
+            const rec = { ...prepared, phase: "prepared" as const };
+            memory.set(prepared.key, rec);
+            const snap = backgroundSnapshot();
+            await userTurns.persistBackgroundCandidate({
+              workspaceId: snap.workspaceId,
+              sessionId: snap.sessionId,
+              leafId: snap.leafId === "header" ? null : snap.leafId,
+              lineageHash: snap.lineageHash,
+              modelKey: snap.modelKey,
+              sourceHead: domainHash("source-head", snap.sourceHead),
+              configFingerprint: domainHash("config", snap.configFingerprint),
+            }).catch(() => undefined);
+            return rec;
           },
           async markStale(id, reason) {
-            return { id, key: id, phase: "stale", reason };
+            const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "stale" as const, reason };
+            const next = { ...rec, phase: "stale" as const, reason };
+            memory.set(next.key, next);
+            return next;
           },
           async markCancelled(id) {
-            return { id, key: id, phase: "cancelled" };
+            const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "cancelled" as const };
+            const next = { ...rec, phase: "cancelled" as const };
+            memory.set(next.key, next);
+            return next;
           },
           async markFailed(id, reason) {
-            return { id, key: id, phase: "failed", reason };
+            const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "failed" as const, reason };
+            const next = { ...rec, phase: "failed" as const, reason };
+            memory.set(next.key, next);
+            return next;
           },
         },
         snapshotProvider: { current: backgroundSnapshot },

@@ -18,6 +18,7 @@ import {
   createRuntimeSession,
   createRuntimeSessionRegistry,
   RuntimeSessionRegistryError,
+  type CandidateRepository,
   type DurableSagaJournal,
   type EvidenceFact,
   type EvidenceService,
@@ -33,6 +34,7 @@ import {
 import {
   createEncryptedBlobStore,
   openLocalWorkspaceBlobKeyProvider,
+  openWorkspaceCandidateRepository,
   openWorkspaceEvidenceFtsIndex,
   openWorkspaceEvidenceRepository,
   openWorkspaceSagaJournal,
@@ -304,6 +306,15 @@ export interface ProductionUserTurnRuntime {
   close(): Promise<void>;
   lastWorkspaceId(): string | undefined;
   lastPointers(): ReadonlyArray<{ ref: string; kind: string }>;
+  persistBackgroundCandidate(input: {
+    workspaceId: string;
+    sessionId: string;
+    leafId: string | null;
+    lineageHash: string;
+    modelKey: string;
+    sourceHead: string;
+    configFingerprint: string;
+  }): Promise<void>;
   resolveTools(ctx?: { workspaceId?: string; sessionId?: string }): Promise<{
     cursor: RuntimeCursor;
     evidence: EvidenceService;
@@ -317,6 +328,7 @@ interface WorkspaceUserTurnOwner {
   readonly blobs: EncryptedBlobStore;
   lastCursor?: RuntimeCursor;
   lastPointers: Array<{ ref: string; kind: string }>;
+  readonly candidates: CandidateRepository;
   readonly services: Map<string, UserTurnService>;
   readonly observations: Map<string, ObservationService>;
   readonly evidences: Map<string, EvidenceService>;
@@ -420,6 +432,7 @@ export function registerProductionUserTurnRuntime(
         });
         const repository = openWorkspaceEvidenceRepository({ database });
         const fts = openWorkspaceEvidenceFtsIndex({ database });
+        const candidates = await openWorkspaceCandidateRepository({ database });
         const services = new Map<string, UserTurnService>();
         const observations = new Map<string, ObservationService>();
         const evidences = new Map<string, EvidenceService>();
@@ -429,6 +442,7 @@ export function registerProductionUserTurnRuntime(
           keys,
           blobs,
           lastPointers: [],
+          candidates,
           services,
           observations,
           evidences,
@@ -565,6 +579,28 @@ export function registerProductionUserTurnRuntime(
     },
     lastPointers() {
       return pointers;
+    },
+    async persistBackgroundCandidate(input: {
+      workspaceId: string;
+      sessionId: string;
+      leafId: string | null;
+      lineageHash: string;
+      modelKey: string;
+      sourceHead: string;
+      configFingerprint: string;
+    }) {
+      const opening = owners.get(input.workspaceId) ?? (owners.size === 1 ? [...owners.values()][0] : undefined);
+      if (!opening) return;
+      const owner = await opening;
+      await owner.candidates.prepare({
+        workspaceId: owner.lastCursor?.workspaceId ?? input.workspaceId,
+        sessionId: input.sessionId,
+        leafId: input.leafId,
+        lineageHash: input.lineageHash,
+        modelKey: input.modelKey,
+        sourceHead: input.sourceHead,
+        configFingerprint: input.configFingerprint,
+      });
     },
     async resolveTools(ctx?: { workspaceId?: string; sessionId?: string }) {
       let opening: Promise<WorkspaceUserTurnOwner> | undefined;
