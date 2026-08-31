@@ -30,6 +30,11 @@ export function effectiveToolClass(toolName: string): Exclude<ToolClass, "ambigu
   return classified === "query" ? "query" : "command";
 }
 
+/** Default: custom/MCP/unknown tools are untrusted. Only the query allowlist is trusted-tool. */
+export function toolResultSourceClass(toolName: string): "trusted-tool" | "untrusted-tool" {
+  return classifyTool(toolName) === "query" ? "trusted-tool" : "untrusted-tool";
+}
+
 export function hasEgressArgs(args: unknown): boolean {
   const text = JSON.stringify(args ?? {});
   return /https?:\/\/|localhost|0\.0\.0\.0|webhook/i.test(text);

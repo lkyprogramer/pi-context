@@ -23,6 +23,18 @@ function makeDirectiveId(messageId: string, start: number, end: number): string 
   return `ud_${domainHash("directive", { messageId, start, end })}`;
 }
 
+function offsetRanges(text: string, start: number, end: number) {
+  const prefix = text.slice(0, start);
+  const quote = text.slice(start, end);
+  const utf8Start = Buffer.byteLength(prefix, "utf8");
+  const codeStart = [...prefix].length;
+  return {
+    utf16Range: { start, end },
+    utf8ByteRange: { start: utf8Start, end: utf8Start + Buffer.byteLength(quote, "utf8") },
+    codePointRange: { start: codeStart, end: codeStart + [...quote].length },
+  };
+}
+
 function expandToClause(text: string, start: number, end: number): { start: number; end: number } {
   let from = start;
   while (from > 0 && !/[。；;\n]/.test(text[from - 1]!)) from -= 1;
@@ -64,20 +76,26 @@ export function explicitDirectiveSpans(text: string): DirectiveSpan[] {
 
 export function captureUserDirectives(input: DirectiveCaptureInput): UserDirective[] {
   if (input.sourceClass !== "authenticated-user") return [];
-  return explicitDirectiveSpans(input.text).map((span) => ({
-    directiveId: makeDirectiveId(input.messageId, span.start, span.end),
-    workspaceId: input.workspaceId,
-    sessionId: input.sessionId,
-    sourceInputId: input.messageId,
-    sourceMessageId: input.messageId,
-    sourceContentHash: domainHash("user-message", input.text),
-    quote: input.text.slice(span.start, span.end),
-    byteRange: { start: span.start, end: span.end },
-    kind: span.kind,
-    polarity: span.polarity,
-    status: "active",
-    scope: { kind: "session", value: input.sessionId ?? input.messageId },
-    sourceClass: "authenticated-user",
-    authority: "act",
-  }));
+  return explicitDirectiveSpans(input.text).map((span) => {
+    const ranges = offsetRanges(input.text, span.start, span.end);
+    return {
+      directiveId: makeDirectiveId(input.messageId, span.start, span.end),
+      workspaceId: input.workspaceId,
+      sessionId: input.sessionId,
+      sourceInputId: input.messageId,
+      sourceMessageId: input.messageId,
+      sourceContentHash: domainHash("user-message", input.text),
+      quote: input.text.slice(span.start, span.end),
+      byteRange: ranges.utf16Range,
+      utf8ByteRange: ranges.utf8ByteRange,
+      utf16Range: ranges.utf16Range,
+      codePointRange: ranges.codePointRange,
+      kind: span.kind,
+      polarity: span.polarity,
+      status: "active" as const,
+      scope: { kind: "session" as const, value: input.sessionId ?? input.messageId },
+      sourceClass: "authenticated-user" as const,
+      authority: "act" as const,
+    };
+  });
 }

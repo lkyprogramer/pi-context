@@ -27,6 +27,18 @@ describe("directive capture", () => {
     expect(captureUserDirectives({ sourceClass: "agent-derived", text, messageId: "m1" })).toEqual([]);
   });
 
+  it("records utf8 byte offsets separately from utf16 for CJK", () => {
+    const text = "不要部署生产";
+    const [directive] = captureUserDirectives({
+      sourceClass: "authenticated-user",
+      text,
+      messageId: "m-cjk",
+    }) as Array<{ utf8ByteRange: { start: number; end: number }; utf16Range: { start: number; end: number } }>;
+    expect(directive.utf16Range.end).toBe(text.length);
+    expect(directive.utf8ByteRange.end).toBe(Buffer.byteLength(text, "utf8"));
+    expect(directive.utf8ByteRange.end).toBeGreaterThan(directive.utf16Range.end);
+  });
+
   it("captures the full correction clause, not only the marker word", () => {
     const text = "改为 version 7；以最新值为准";
     const [correction] = captureUserDirectives({

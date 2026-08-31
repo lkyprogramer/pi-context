@@ -6,6 +6,7 @@ import {
   type MaterializedSection,
   type MaterializedSectionKind,
   type MaterializedView,
+  type PromptCachePlan,
 } from "../../../contracts/src/index.js";
 import { computeEffectiveInputBudget, estimateTextTokens } from "../budget/token-counter.js";
 import { buildExactActiveSuffix } from "./active-suffix.js";
@@ -28,6 +29,8 @@ interface BuiltSection extends MaterializedSection {
 }
 
 export class ContextMaterializer {
+  private previousPlan: PromptCachePlan | null = null;
+
   constructor(private readonly options: MaterializerOptions = {}) {}
 
   async materialize(input: MaterializationInput): Promise<MaterializedView> {
@@ -109,7 +112,7 @@ export class ContextMaterializer {
       messages: messages.map((item) => ({ role: item.role, content: item.content, sourceClass: item.sourceClass })),
       sections: selected.map((item) => ({ kind: item.kind, contentHash: item.contentHash })),
     });
-    return {
+    const view: MaterializedView = {
       viewId: `vw_${domainHash("materialized-view", outputHash).slice(0, 16)}`,
       outputHash,
       messages: messages.length > 0 ? messages : exactSuffix,
@@ -121,9 +124,11 @@ export class ContextMaterializer {
         messageIds,
       })),
       tokenEstimate,
-      cachePlan: buildCachePlan(selected, null, this.options.cacheEnabled !== false),
+      cachePlan: buildCachePlan(selected, this.previousPlan, this.options.cacheEnabled !== false),
       omissions,
     };
+    this.previousPlan = view.cachePlan;
+    return view;
   }
 }
 
