@@ -1,0 +1,31 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T51",
+  "status": "review-candidate",
+  "parentCommit": "96f6b24a1e6b8c370cbc0b6032813e45bffc0f9b",
+  "redLog": "artifacts/task-evidence/T51/red.log",
+  "greenLog": "artifacts/task-evidence/T51/green.log",
+  "fullGateLog": "artifacts/task-evidence/T51/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "verticalFromCas": true,
+    "recoveryFromSaga": true,
+    "w1GateAndsProbes": true,
+    "p0FromProductHooks": true,
+    "repositoryGateFiles": 163,
+    "repositoryGateTests": 768,
+    "acceptanceGateTests": 33
+  },
+  "files": {
+    "blockers/T51-scope-expansion.md": "be1727294ba7393d762e2c1ab23516216c7404bf602733a115d74be178ad6afe",
+    "scripts/gates/deterministic-mvp.mjs": "5c515e16b34e58a87f7f8d01c42db575acc70216aabb6ff8365b902c3c3d7ddf",
+    "tests/acceptance/deterministic-mvp.test.ts": "5aeaf1406f496ef79a35ae1073661677aa3b831967e1543c733c16d720f3a72f",
+    "tests/tasks/t51.test.ts": "2ac12311329fac6dff91ceead8227c338e9d6041105bb5bc909b7cf986879175",
+    "artifacts/task-evidence/T51/preflight-git.txt": "e6dd27708e1f5afcc5971743cc084e8c049d42a60628f3d78e898e75e9a11118",
+    "artifacts/task-evidence/T51/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T51/red.log": "141061442e2b6543a21b1c66223896cd920d2400ab60ae5d455e32d3649ba218",
+    "artifacts/task-evidence/T51/green.log": "808c7ea5ed858e55dc26c9de7cb5a0cdd183a4f8043b493e531aadb7de902c32",
+    "artifacts/task-evidence/T51/full-gate.log": "1ff41756f31a99fb2ffb9eef4e71ea0fb275fb719b2e23731c8bdf83773b44f3",
+    "artifacts/task-evidence/T51/changed-files.json": "a9ca50c5605f3bc54964e3fe902956364d855994d00f05e918624d2467fb6144"
+  }
+}

@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t51.test.ts (6 tests | 6 failed) 7ms
+   × T51 End-to-end deterministic MVP acceptance > end_to_end_deterministic_mvp_acceptance 4ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T51 End-to-end deterministic MVP acceptance > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T51 End-to-end deterministic MVP acceptance > rejects malformed accept input 0ms
+     → (0 , createMvpAcceptance) is not a function
+   × T51 End-to-end deterministic MVP acceptance > replays equal verdicts for the same probes 0ms
+     → (0 , createMvpAcceptance) is not a function
+   × T51 End-to-end deterministic MVP acceptance > denies accept from another workspace 0ms
+     → (0 , createMvpAcceptance) is not a function
+   × T51 End-to-end deterministic MVP acceptance > stops at the abort boundary before probing 0ms
+     → (0 , createMvpAcceptance) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t51.test.ts > T51 End-to-end deterministic MVP acceptance > end_to_end_deterministic_mvp_acceptance
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t51.test.ts:43:33
+     41| describe("T51 End-to-end deterministic MVP acceptance", () => {
+     42|   it("end_to_end_deterministic_mvp_acceptance", async () => {
+     43|     await expect(runT51Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     44|   });
+     45| 
+
+Caused by: TypeError: (0 , createMvpAcceptance) is not a function
+ ❯ runT51Fixture tests/tasks/t51.test.ts:20:15
+ ❯ tests/tasks/t51.test.ts:43:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t51.test.ts > T51 End-to-end deterministic MVP acceptance > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_MVP_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createMvpAcceptance) is not a function",
+  }
+
+ ❯ tests/tasks/t51.test.ts:47:52
+     45| 
+     46|   it("fails construction when production dependencies are absent", () …
+     47|     expect(() => createMvpAcceptance({} as never)).toThrowError(
+       |                                                    ^
+     48|       expect.objectContaining({ code: "PCR_MVP_DEPENDENCY_MISSING" }),
+     49|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t51.test.ts > T51 End-to-end deterministic MVP acceptance > rejects malformed accept input
+TypeError: (0 , createMvpAcceptance) is not a function
+ ❯ tests/tasks/t51.test.ts:53:18
+     51| 
+     52|   it("rejects malformed accept input", async () => {
+     53|     await expect(createMvpAcceptance(ports()).accept({} as never)).rej…
+       |                  ^
+     54|       code: "PCR_MVP_INPUT_INVALID",
+     55|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t51.test.ts > T51 End-to-end deterministic MVP acceptance > replays equal verdicts for the same probes
+TypeError: (0 , createMvpAcceptance) is not a function
+ ❯ tests/tasks/t51.test.ts:59:17
+     57| 
+     58|   it("replays equal verdicts for the same probes", async () => {
+     59|     const mvp = createMvpAcceptance(ports());
+       |                 ^
+     60|     const first = await mvp.accept({ workspaceId: WORKSPACE });
+     61|     const second = await mvp.accept({ workspaceId: WORKSPACE });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t51.test.ts > T51 End-to-end deterministic MVP acceptance > denies accept from another workspace
+TypeError: (0 , createMvpAcceptance) is not a function
+ ❯ tests/tasks/t51.test.ts:66:18
+     64| 
+     65|   it("denies accept from another workspace", async () => {
+     66|     await expect(createMvpAcceptance(ports()).accept({ workspaceId: "w…
+       |                  ^
+     67|       code: "PCR_MVP_SCOPE_MISMATCH",
+     68|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t51.test.ts > T51 End-to-end deterministic MVP acceptance > stops at the abort boundary before probing
+TypeError: (0 , createMvpAcceptance) is not a function
+ ❯ tests/tasks/t51.test.ts:73:17
+     71|   it("stops at the abort boundary before probing", async () => {
+     72|     let probes = 0;
+     73|     const mvp = createMvpAcceptance(ports({
+       |                 ^
+     74|       vertical: { async probe() { probes += 1; return true; } },
+     75|       recovery: { async probe() { probes += 1; return true; } },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  12:00:43
+   Duration  312ms (transform 42ms, setup 0ms, collect 23ms, tests 7ms, environment 0ms, prepare 83ms)
+

@@ -144,6 +144,88 @@ export function evaluateRepoDeterministicMvpGate(root = process.cwd()) {
   return { ...evaluateDeterministicMvpGate(evidence), evidence };
 }
 
+export class MvpAcceptanceError extends TypeError {
+  constructor(code, details = {}) {
+    super(code);
+    this.name = "MvpAcceptanceError";
+    this.code = code;
+    this.details = Object.freeze({ ...details });
+  }
+}
+
+function failMvpMissing(dependency) {
+  throw new MvpAcceptanceError("PCR_MVP_DEPENDENCY_MISSING", { dependency });
+}
+
+function failMvpInput(field) {
+  throw new MvpAcceptanceError("PCR_MVP_INPUT_INVALID", { field });
+}
+
+function failMvpScope(details = {}) {
+  throw new MvpAcceptanceError("PCR_MVP_SCOPE_MISMATCH", details);
+}
+
+/**
+ * @typedef {object} MvpAcceptance
+ * @property {boolean} vertical
+ * @property {boolean} recovery
+ * @property {boolean} w1Gate
+ * @property {string} w2Decision
+ * @property {number} p0Open
+ */
+
+export function createMvpAcceptance(input) {
+  if (!input || typeof input !== "object") failMvpMissing("input");
+  if (typeof input.workspaceId !== "string" || input.workspaceId.length === 0) failMvpMissing("workspaceId");
+  if (!input.vertical || typeof input.vertical.probe !== "function") failMvpMissing("vertical");
+  if (!input.recovery || typeof input.recovery.probe !== "function") failMvpMissing("recovery");
+  if (!input.w1 || typeof input.w1.evaluate !== "function") failMvpMissing("w1");
+  if (!input.w2 || typeof input.w2.decide !== "function") failMvpMissing("w2");
+  if (!input.findings || typeof input.findings.p0Open !== "function") failMvpMissing("findings");
+  const workspaceId = input.workspaceId;
+  const vertical = input.vertical;
+  const recovery = input.recovery;
+  const w1 = input.w1;
+  const w2 = input.w2;
+  const findings = input.findings;
+  return {
+    /**
+     * @param {{ workspaceId: string, signal?: AbortSignal }} request
+     * @returns {Promise<MvpAcceptance>}
+     */
+    async accept(request) {
+      if (!request || typeof request !== "object") failMvpInput("request");
+      if (request.signal !== undefined && !(request.signal instanceof AbortSignal)) failMvpInput("signal");
+      request.signal?.throwIfAborted();
+      if (typeof request.workspaceId !== "string" || request.workspaceId.length === 0) failMvpInput("workspaceId");
+      if (request.workspaceId !== workspaceId) failMvpScope({ workspaceId: request.workspaceId });
+      const scope = { workspaceId: request.workspaceId, signal: request.signal };
+      request.signal?.throwIfAborted();
+      const verticalOk = await vertical.probe(scope);
+      if (typeof verticalOk !== "boolean") failMvpInput("vertical");
+      request.signal?.throwIfAborted();
+      const recoveryOk = await recovery.probe(scope);
+      if (typeof recoveryOk !== "boolean") failMvpInput("recovery");
+      request.signal?.throwIfAborted();
+      const w1Ok = await w1.evaluate(scope);
+      if (typeof w1Ok !== "boolean") failMvpInput("w1");
+      request.signal?.throwIfAborted();
+      const w2Decision = await w2.decide(scope);
+      if (typeof w2Decision !== "string" || w2Decision.length === 0) failMvpInput("w2");
+      request.signal?.throwIfAborted();
+      const p0Open = await findings.p0Open(scope);
+      if (!Number.isSafeInteger(p0Open) || p0Open < 0) failMvpInput("p0Open");
+      return Object.freeze({
+        vertical: verticalOk,
+        recovery: recoveryOk,
+        w1Gate: verticalOk && recoveryOk && w1Ok,
+        w2Decision,
+        p0Open,
+      });
+    },
+  };
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
   const report = evaluateRepoDeterministicMvpGate(root);

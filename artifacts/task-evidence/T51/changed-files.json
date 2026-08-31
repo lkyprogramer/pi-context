@@ -1,0 +1,11 @@
+{
+  "taskId": "T51",
+  "production": [
+    "blockers/T51-scope-expansion.md",
+    "scripts/gates/deterministic-mvp.mjs"
+  ],
+  "tests": [
+    "tests/acceptance/deterministic-mvp.test.ts",
+    "tests/tasks/t51.test.ts"
+  ]
+}
