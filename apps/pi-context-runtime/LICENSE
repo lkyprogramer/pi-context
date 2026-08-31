@@ -1,0 +1,3 @@
+pi-context-runtime is distributed as a local npm-pack tarball for `pi install`.
+It is UNLICENSED: it is not published to the public npm registry (`npm publish` is not a supported path).
+Use `node scripts/release/pack.mjs` to produce the self-contained tarball, SBOM, and clean-install log.

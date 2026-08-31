@@ -1,0 +1,33 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T52",
+  "status": "review-candidate",
+  "parentCommit": "4f08b022684f7899505ec4a894c75fc0f98674b8",
+  "redLog": "artifacts/task-evidence/T52/red.log",
+  "greenLog": "artifacts/task-evidence/T52/green.log",
+  "fullGateLog": "artifacts/task-evidence/T52/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "packedTarballNotTsReexport": true,
+    "emptyPiHomeVerticalProbe": true,
+    "sbomCycloneDx": true,
+    "npmPublishFalse": true,
+    "repositoryGateFiles": 165,
+    "repositoryGateTests": 775,
+    "acceptanceGateTests": 33
+  },
+  "files": {
+    "apps/pi-context-runtime/LICENSE": "e6ce2382fd9a6a708f570c5bf0517df38f82c5c0fa8fca0eb21d8914b6007db8",
+    "apps/pi-context-runtime/package.json": "6029436cbee8aff5726ddb5fff2bc5018ff29d1db47ba648de463ea9d2c3bdf0",
+    "blockers/T52-scope-expansion.md": "8ee0b624ef9b50061726ef38115382b009a49f7be9912aef2ba2a8e8a0ca816f",
+    "scripts/release/pack.mjs": "2383bf042c2dc7b1fe0a9308fe8581f2ec3f5be15da2399e981fe0a9aaa23d4e",
+    "tests/release/clean-install.test.ts": "0f0a39564d497dcbce56a230ad9bafec6056c043fcf6648d5125acd776f59f23",
+    "tests/tasks/t52.test.ts": "6cb22f944c1358955c212c84d0f8a7106f2370dc8027d9dd8918ac5b77e81206",
+    "artifacts/task-evidence/T52/preflight-git.txt": "2b11922520cbbaa7669198e948216fa32ff1d5d137e20218ecb3b9e565e61464",
+    "artifacts/task-evidence/T52/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T52/red.log": "35bcb800f0309fdc7c93b65067539a08d1e597cdef6bf0c7a9b422a6325ff52f",
+    "artifacts/task-evidence/T52/green.log": "5d11bd769cdbdb2045ca5a94b0f638515603277c2c009693170fa951f85737a1",
+    "artifacts/task-evidence/T52/full-gate.log": "d3b62879c551da39579ad8763ecee8e8e5b0dabecc30bcb840f6eb9dca22a0c5",
+    "artifacts/task-evidence/T52/changed-files.json": "86d06644da47ec4c715aaf0161d1aa2f64235c56d0992c067ae9abd7e0bb7942"
+  }
+}

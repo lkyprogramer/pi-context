@@ -1,0 +1,13 @@
+{
+  "taskId": "T52",
+  "production": [
+    "apps/pi-context-runtime/LICENSE",
+    "apps/pi-context-runtime/package.json",
+    "blockers/T52-scope-expansion.md",
+    "scripts/release/pack.mjs"
+  ],
+  "tests": [
+    "tests/release/clean-install.test.ts",
+    "tests/tasks/t52.test.ts"
+  ]
+}

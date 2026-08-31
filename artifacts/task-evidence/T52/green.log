@@ -1,0 +1,16 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/release/clean-install.test.ts (1 test) 7186ms
+   ✓ release clean install > packs a self-contained tarball, SBOM, and clean-install log  7185ms
+ ✓ |0| tests/tasks/t52.test.ts (6 tests) 13798ms
+   ✓ T52 Production package build and clean install > loads the actual packed tarball in an empty Pi home  7166ms
+   ✓ T52 Production package build and clean install > packs deterministically from the same committed source  4442ms
+   ✓ T52 Production package build and clean install > rejects a modified tarball receipt before installation  2186ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  12:17:27
+   Duration  14.08s (transform 42ms, setup 0ms, collect 91ms, tests 20.98s, environment 0ms, prepare 108ms)
+
