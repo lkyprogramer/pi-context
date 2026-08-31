@@ -178,5 +178,25 @@ export {
   type BundleVerifyErrorCode,
   type ImmutableRunBundle,
 } from "./report/bundle.js";
+export {
+  W5LaneError,
+  buildRecursiveLaneHistory,
+  evaluateW5Gate,
+  infrastructurePolicy,
+  runBoundaryReplay,
+  runFaultSecurity,
+  runNaturalThreshold,
+  runOverflowProgress,
+  runPerformanceCache,
+  runRecursivePins,
+  sealLaneBundle,
+  type BoundaryPair,
+  type BoundaryReport,
+  type OverflowAttempt,
+  type OverflowCompactInput,
+  type OverflowReport,
+  type RecursiveReport,
+  type W5LaneId,
+} from "./lanes/w5.js";
 
 

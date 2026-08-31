@@ -1,0 +1,19 @@
+{
+  "manifestVerified": true,
+  "piExtensions": ["./dist/extension.js"],
+  "privatePiImports": [],
+  "semanticDefault": "off",
+  "publicationClaim": false,
+  "nodeMatrix": ["22.19.0", "24.18.1", "26.5.1"],
+  "supportedRange": "0.84.4",
+  "temporaryPiE": {
+    "entry": "./dist/extension.js",
+    "loaded": true
+  },
+  "cleanHome": {
+    "extracted": true,
+    "uninstalled": true,
+    "reinstalled": true
+  },
+  "verifiedBy": "tests/release/package-artifact.test.ts"
+}

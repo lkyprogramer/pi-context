@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, statSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -189,6 +189,67 @@ describe("product runtime SQLite/FTS/CAS path", () => {
       expect(readBody.verified).toBe(true);
       expect(readBody.text).toContain("cache invalidation strategy");
       expect(readBody.sha256).toMatch(/^[a-f0-9]{64}$/u);
+    } finally {
+      await (session as unknown as { dispose?: () => void }).dispose?.();
+    }
+  });
+
+  function deleteBlobObjects(root: string): number {
+    const stack = [root];
+    let removed = 0;
+    while (stack.length > 0) {
+      const dir = stack.pop()!;
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) {
+          stack.push(path);
+          continue;
+        }
+        if (name.endsWith(".bin")) {
+          unlinkSync(path);
+          removed += 1;
+        }
+      }
+    }
+    return removed;
+  }
+
+  it("hard-stops compact when a CAS pointer is missing on the extension entry", async () => {
+    const { session, manager, cursor, beforeCompact, root } = await createProductSession();
+    try {
+      await (session as unknown as {
+        _extensionRunner: { emitToolResult(event: ToolResultEvent): Promise<{ content?: unknown }> };
+      })._extensionRunner.emitToolResult({
+        type: "tool_result",
+        toolCallId: "c-pointer-missing",
+        toolName: "bash",
+        input: { command: "npm test" },
+        content: [{ type: "text", text: PAYLOAD }],
+        isError: true,
+        details: { exitCode: 1 },
+      } as ToolResultEvent);
+      expect(deleteBlobObjects(root)).toBeGreaterThan(0);
+      const host = {
+        abort() {},
+        cwd: manager.getCwd(),
+        sessionManager: manager,
+        model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
+        workspaceId: cursor.workspaceId,
+        sessionId: manager.getSessionId(),
+      };
+      const result = await beforeCompact!(
+        {
+          reason: "threshold",
+          preparation: {
+            tokensBefore: 8000,
+            firstKeptEntryId: "entry-keep",
+            allow: true,
+            messagesToSummarize: [{ role: "user", content: "do not deploy production" }],
+          },
+        },
+        host,
+      );
+      expect(result).toEqual({ cancel: true });
     } finally {
       await (session as unknown as { dispose?: () => void }).dispose?.();
     }

@@ -1,0 +1,14 @@
+{
+  "taskId": "A47",
+  "status": "done",
+  "commit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+  "redLog": "artifacts/task-evidence/A47/red.log",
+  "greenLog": "artifacts/task-evidence/A47/green.log",
+  "fullGateLog": "artifacts/task-evidence/A47/full-gate.log",
+  "sourceDigest": "95bea92f885dfea7c9588ede7e2d68b8fe0ffabb91dc8008f705629b19982956",
+  "runBundleHashes": [],
+  "findingsClosed": [
+    "F113",
+    "F138"
+  ]
+}

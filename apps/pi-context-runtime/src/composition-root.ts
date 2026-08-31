@@ -29,6 +29,7 @@ import {
   createCompactionService,
   createCompactionSnapshotAssembler,
   createEvidenceService,
+  createPointerCheck,
   createObservationService,
   createRecoveryService,
   createRuntimeSession,
@@ -737,7 +738,7 @@ export function registerProductionUserTurnRuntime(
       renderer: createCheckpointRenderer({ cursor }),
       verifier: createCheckpointVerifier({
         cursor,
-        pointers: { async verify() {} },
+        pointers: createPointerCheck(owner.blobs),
       }),
     });
     const recovery = createRecoveryService({

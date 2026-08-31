@@ -277,7 +277,7 @@ const CACHE_HEAD = `
 `;
 
 const POINTER_SELECT = `
-  SELECT evidence_id, kind
+  SELECT raw_blob_id, kind
   FROM evidence
   WHERE workspace_id = ? AND session_id = ? AND leaf_id IS ? AND lineage_hash = ? AND model_key = ?
   ORDER BY observed_at, evidence_id
@@ -295,8 +295,8 @@ function readSnapshotRows(db: DatabaseSync, cursor: RuntimeCursor, schemaVersion
   const directives = (db.prepare(DIRECTIVE_SELECT).all(...scope) as Record<string, unknown>[]).map(toDirective);
   const claims = (db.prepare(CLAIM_SELECT).all(...scope) as Record<string, unknown>[]).map(toClaim);
   const continuityRow = db.prepare(CONTINUITY_HEAD).get(...scope) as Record<string, unknown> | undefined;
-  const pointers = (db.prepare(POINTER_SELECT).all(...scope) as Array<{ evidence_id: string; kind: string }>).map(
-    (row) => ({ ref: row.evidence_id, kind: row.kind }),
+  const pointers = (db.prepare(POINTER_SELECT).all(...scope) as Array<{ raw_blob_id: string; kind: string }>).map(
+    (row) => ({ ref: row.raw_blob_id, kind: row.kind }),
   );
   const sourceEntryIds = (db.prepare(SOURCE_SELECT).all(...scope) as Array<{ operation_id: string }>).map(
     (row) => row.operation_id,

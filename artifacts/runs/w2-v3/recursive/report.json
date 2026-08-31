@@ -1,0 +1,10 @@
+{
+  "activeKeys": [
+    "version",
+    "next-action"
+  ],
+  "supersededDropped": true,
+  "sideEffectGuard": true,
+  "cycles": 3,
+  "restarted": true
+}

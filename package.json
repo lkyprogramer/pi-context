@@ -32,7 +32,15 @@
     "benchmark:closed-loop:smoke": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/closed-loop.test.ts",
     "benchmark:integrity:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/scoring/leaks.test.ts packages/benchmark/test/scoring/integrity.test.ts",
     "benchmark:economics:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/economics-pairing.test.ts",
-    "benchmark:bundle:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/bundle-verify.test.ts"
+    "benchmark:bundle:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/bundle-verify.test.ts",
+    "benchmark:w2:boundary": "node scripts/gates/deterministic-v3.mjs",
+    "benchmark:w2:natural-threshold": "node scripts/gates/deterministic-v3.mjs",
+    "benchmark:w2:overflow": "node scripts/gates/deterministic-v3.mjs",
+    "benchmark:w2:recursive": "node scripts/gates/deterministic-v3.mjs",
+    "benchmark:fault-security": "node scripts/gates/deterministic-v3.mjs",
+    "benchmark:performance-cache": "node scripts/gates/deterministic-v3.mjs",
+    "gate:deterministic-v3": "node scripts/gates/deterministic-v3.mjs",
+    "release:verify": "pnpm vitest run tests/release/package-artifact.test.ts --config vitest.unit.config.ts"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "0.84.4",

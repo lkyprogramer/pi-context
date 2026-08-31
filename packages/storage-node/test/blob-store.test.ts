@@ -7,7 +7,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { spawnSync } from "node:child_process";
+import { spawnSync, type ChildProcess } from "node:child_process";
 import { spawnTypeScriptChild } from "../../testkit/src/process-fixture.js";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -71,31 +71,67 @@ function createStore(root: string, scope: RuntimeCursor, keys?: WorkspaceBlobKey
   });
 }
 
-async function waitForFiles(paths: string[]): Promise<void> {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    if (paths.every((path) => existsSync(path))) return;
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-  throw new Error("child processes did not reach the publication barrier");
+async function waitForFiles(paths: string[], children: ChildProcess[]): Promise<void> {
+  // jiti cold-start of storage-node under the full unit pool can exceed 5s on CI.
+  const deadline = Date.now() + 20_000;
+  await new Promise<void>((resolve, reject) => {
+    const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
+      finish();
+      reject(new Error(`child exited ${code ?? signal} before the publication barrier`));
+    };
+    const timer = setInterval(() => {
+      if (paths.every((path) => existsSync(path))) {
+        finish();
+        resolve();
+        return;
+      }
+      if (Date.now() >= deadline) {
+        finish();
+        reject(new Error("child processes did not reach the publication barrier"));
+      }
+    }, 10);
+    const finish = () => {
+      clearInterval(timer);
+      for (const child of children) child.off("exit", onExit);
+    };
+    for (const child of children) {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        onExit(child.exitCode, child.signalCode);
+        return;
+      }
+      child.once("exit", onExit);
+    }
+  });
 }
 
-function runChild(script: string, payload: string, ready: string, gate: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawnTypeScriptChild(script, [payload, ready, gate], {
-      cwd: process.cwd(),
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+function runChild(script: string, payload: string, ready: string, gate: string): {
+  child: ChildProcess;
+  done: Promise<string>;
+} {
+  const child = spawnTypeScriptChild(script, [payload, ready, gate], {
+    cwd: process.cwd(),
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (!child.stdout || !child.stderr) throw new Error("child stdio is not piped");
+  const done = new Promise<string>((resolve, reject) => {
     let stdout = "";
     let stderr = "";
-    if (!child.stdout || !child.stderr) throw new Error("child stdio is not piped");
-    child.stdout.on("data", (chunk) => { stdout += String(chunk); });
-    child.stderr.on("data", (chunk) => { stderr += String(chunk); });
+    child.stdout!.on("data", (chunk) => { stdout += String(chunk); });
+    child.stderr!.on("data", (chunk) => { stderr += String(chunk); });
     child.once("error", reject);
     child.once("exit", (code) => {
       if (code === 0) resolve(stdout.trim());
       else reject(new Error(`child exited ${code}: ${stderr}`));
     });
   });
+  return { child, done };
+}
+
+async function settleChildren(children: Array<{ child: ChildProcess; done: Promise<string> }>): Promise<void> {
+  for (const { child } of children) {
+    if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+  }
+  await Promise.all(children.map(({ done }) => done.catch(() => undefined)));
 }
 
 describe("encrypted content-addressed blob store", () => {
@@ -356,14 +392,18 @@ describe("encrypted content-addressed blob store", () => {
 
     const childA = runChild(script, payload, readyA, gate);
     const childB = runChild(script, payload, readyB, gate);
-    await waitForFiles([readyA, readyB]);
-    writeFileSync(gate, "publish");
-    const refs = await Promise.all([childA, childB]);
+    try {
+      await waitForFiles([readyA, readyB], [childA.child, childB.child]);
+      writeFileSync(gate, "publish");
+      const refs = await Promise.all([childA.done, childB.done]);
 
-    expect(refs[0]).toBe(refs[1]);
-    const store = createStore(root, scope, provider({ multiprocess: Buffer.alloc(32, 9) }, "multiprocess"));
-    expect(await store.read(scope, refs[0] as BlobRef)).toEqual(Buffer.from("cross-process durable"));
-  }, 20_000);
+      expect(refs[0]).toBe(refs[1]);
+      const store = createStore(root, scope, provider({ multiprocess: Buffer.alloc(32, 9) }, "multiprocess"));
+      expect(await store.read(scope, refs[0] as BlobRef)).toEqual(Buffer.from("cross-process durable"));
+    } finally {
+      await settleChildren([childA, childB]);
+    }
+  }, 30_000);
 
   it("takes over a directory chain after its creator dies before parent fsync", async () => {
     const root = dataRoot();

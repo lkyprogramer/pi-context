@@ -1,0 +1,7 @@
+{
+  "critical": 0,
+  "high": 0,
+  "crashReplay": 1,
+  "fuzzRetained": true,
+  "platform": "darwin"
+}
