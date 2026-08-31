@@ -19,4 +19,8 @@ export * from "./semantic/proposer.js";
 export * from "./background/index.js";
 export * from "./economics-service.js";
 export * from "./snapshot/transaction.js";
+export * from "./user-turn/retention.js";
+export * from "./evidence/catalog.js";
+export * from "./claims/attestation.js";
+export * from "./compaction/merge.js";
 

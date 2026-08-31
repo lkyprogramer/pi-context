@@ -73,21 +73,38 @@ function sameCursor(left: RuntimeCursor, right: RuntimeCursor): boolean {
     && left.modelKey === right.modelKey;
 }
 
+const KEY_TOKEN = "([\\p{L}_][\\p{L}\\p{N}_.-]*)";
+const VALUE_TOKEN = "([^\\s；;。,，]+)";
+
+const ASSIGNMENT_PATTERNS: readonly RegExp[] = Object.freeze([
+  new RegExp(`instead\\s+use\\s+${KEY_TOKEN}\\s+${VALUE_TOKEN}`, "giu"),
+  new RegExp(`(?:set|use)\\s+${KEY_TOKEN}\\s+to\\s+${VALUE_TOKEN}`, "giu"),
+  new RegExp(`(?:改为|改成|换成|correction:)\\s*${KEY_TOKEN}\\s*[:=]?\\s*${VALUE_TOKEN}`, "giu"),
+  new RegExp(`${KEY_TOKEN}\\s*(?:设为|改为|改成|赋值为)\\s*${VALUE_TOKEN}`, "gu"),
+  new RegExp(`(?:^|[^\\p{L}\\p{N}_])${KEY_TOKEN}\\s*[:=]\\s*${VALUE_TOKEN}`, "gu"),
+]);
+
+function normalizeAssignmentValue(value: string): string {
+  return value.replace(/[，,；;。]+$/u, "");
+}
+
 export function parseTemporalAssignment(quote: string): { exactQuote: string; key?: string; value?: string } {
   if (typeof quote !== "string" || quote.length === 0) failInput("quote");
   const exactQuote = quote.replace(/[；;。.\s]+$/u, "").trim();
   if (exactQuote.length === 0) failInput("quote");
-  const correction = exactQuote.match(
-    /(?:改为|instead(?:\s+of)?|correction:)\s+([A-Za-z_][\w.-]*)\s*[:=]?\s*([^\s；;。]+)/iu,
-  );
-  if (correction?.[1] && correction[2]) {
-    return { exactQuote, key: correction[1].toLowerCase(), value: correction[2].replace(/[，,]+$/u, "") };
+  let parsed: { key: string; value: string } | undefined;
+  for (const pattern of ASSIGNMENT_PATTERNS) {
+    pattern.lastIndex = 0;
+    let match = pattern.exec(exactQuote);
+    while (match) {
+      const key = match[1]?.toLowerCase();
+      const value = match[2] ? normalizeAssignmentValue(match[2]) : undefined;
+      if (key && value) parsed = { key, value };
+      match = pattern.exec(exactQuote);
+    }
+    if (parsed) break;
   }
-  const assigned = exactQuote.match(/\b([A-Za-z_][\w.-]*)\s*[:=]\s*([^\s；;。]+)/u);
-  if (assigned?.[1] && assigned[2]) {
-    return { exactQuote, key: assigned[1].toLowerCase(), value: assigned[2].replace(/[，,]+$/u, "") };
-  }
-  return { exactQuote };
+  return parsed ? { exactQuote, key: parsed.key, value: parsed.value } : { exactQuote };
 }
 
 export function toDirectiveRecord(candidate: DirectiveCandidate): StoredDirectiveRecord {

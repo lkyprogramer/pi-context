@@ -68,32 +68,32 @@
     "owner": "grok-w1"
   },
   "A17": {
-    "status": "pending",
-    "owner": null
+    "status": "done",
+    "owner": "grok-w2"
   },
   "A18": {
-    "status": "pending",
-    "owner": null
+    "status": "done",
+    "owner": "grok-w2"
   },
   "A19": {
-    "status": "pending",
-    "owner": null
+    "status": "done",
+    "owner": "grok-w2"
   },
   "A20": {
-    "status": "pending",
-    "owner": null
+    "status": "done",
+    "owner": "grok-w2"
   },
   "A21": {
-    "status": "pending",
-    "owner": null
+    "status": "done",
+    "owner": "grok-w2"
   },
   "A22": {
-    "status": "pending",
-    "owner": null
+    "status": "done",
+    "owner": "grok-w2"
   },
   "A23": {
-    "status": "pending",
-    "owner": null
+    "status": "done",
+    "owner": "grok-w2"
   },
   "A24": {
     "status": "pending",

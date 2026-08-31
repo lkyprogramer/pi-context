@@ -51,6 +51,10 @@ export {
   type CreateAuthorizationMachineInput,
   type ToolOrigin,
   type ToolTrustPolicy,
+  attestOutcome,
+  type ClaimTransition,
+  type OutcomeAttestation,
+  type OutcomeKind,
 } from "./security/index.js";
 export {
   RecallError,
