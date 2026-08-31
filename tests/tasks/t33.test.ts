@@ -1,3 +1,6 @@
+import { tmpdir } from "node:os";
+import { mkdtempSync } from "node:fs";
+import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
@@ -24,7 +27,7 @@ import {
   type DirectiveRecordStore,
 } from "@pcr/runtime";
 
-const WORK = "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-14eb40de3fb3/implementer/t33";
+const WORK = mkdtempSync(join(tmpdir(), "pcr-work-"));
 
 function cursor(leafId = "leaf-t33") {
   return createRuntimeCursor({

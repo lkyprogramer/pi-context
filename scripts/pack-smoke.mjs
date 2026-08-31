@@ -392,17 +392,47 @@ function findPackageRoot(root, packageName) {
   return null;
 }
 
+export function hermeticModelsConfig(provider = DEFAULT_PROVIDER, modelId = DEFAULT_MODEL, contextWindow = DEFAULT_CONTEXT_WINDOW) {
+  const id = modelId.includes("/") ? modelId.slice(modelId.indexOf("/") + 1) : modelId;
+  return {
+    providers: {
+      [provider]: {
+        models: [
+          {
+            id,
+            name: id,
+            contextWindow,
+            maxTokens: 16384,
+          },
+        ],
+      },
+    },
+  };
+}
+
+export function liveCredentialsMissingError() {
+  const error = new Error("PCR_LIVE_CREDENTIALS_MISSING");
+  error.code = "PCR_LIVE_CREDENTIALS_MISSING";
+  return error;
+}
+
 function prepareModelConfig(agentDir, modelsPath, provider, modelId, expectedContextWindow, materializeCredentials) {
-  if (!existsSync(modelsPath)) throw new Error("Pi models.json is missing");
-  const models = JSON.parse(readFileSync(modelsPath, "utf8"));
+  mkdirSync(agentDir, { recursive: true });
+  let models;
+  if (materializeCredentials) {
+    if (!existsSync(modelsPath)) throw liveCredentialsMissingError();
+    models = JSON.parse(readFileSync(modelsPath, "utf8"));
+    copyFileSync(modelsPath, join(agentDir, "models.json"));
+  } else {
+    models = hermeticModelsConfig(provider, modelId, expectedContextWindow);
+    writeFileSync(join(agentDir, "models.json"), `${JSON.stringify(models, null, 2)}\n`);
+  }
   const providerConfig = models.providers?.[provider];
   const model = providerConfig?.models?.find((candidate) => candidate.id === modelId || `${provider}/${candidate.id}` === modelId);
   if (!providerConfig || !model) throw new Error(`model ${modelId} is not configured`);
   if (model.contextWindow !== expectedContextWindow) {
     throw new Error(`model ${modelId} context window is ${model.contextWindow}, expected ${expectedContextWindow}`);
   }
-  mkdirSync(agentDir, { recursive: true });
-  if (materializeCredentials) copyFileSync(modelsPath, join(agentDir, "models.json"));
   writeFileSync(
     join(agentDir, "settings.json"),
     `${JSON.stringify({ defaultProvider: provider, defaultModel: modelId }, null, 2)}\n`,

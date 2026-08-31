@@ -1,0 +1,13 @@
+case,arm,probe_preview,probe_only_verdict,reason,reported_closed_loop
+tu-00,B0,version=6 build=0,Fail,错误版本,1
+tu-00,B1,7,Pass,规范化为 7,1
+tu-01,B0,<tool_call> read_file src/version.ts,Fail,非回答/伪工具调用,1
+tu-01,B1,7,Pass,正确,1
+tu-08,B0,3,Fail,旧版本,1
+tu-08,B1,Looking... 7,Pass,含明确 7,1
+tu-09,B0,<tool_call> read_file src/version.ts,Fail,非回答,1
+tu-09,B1,7,Pass,正确,1
+tu-10,B0,<tool_call> read_file src/version.ts,Fail,非回答,1
+tu-10,B1,<read_file> package.json,Fail,非回答且读错文件,1
+tu-11,B0,2,Fail,错误版本,1
+tu-11,B1,7,Pass,正确,1

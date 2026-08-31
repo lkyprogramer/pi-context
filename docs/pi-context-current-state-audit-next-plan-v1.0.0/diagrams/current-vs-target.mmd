@@ -1,0 +1,16 @@
+flowchart LR
+  subgraph Current
+    PI1[Pi hooks] --> I1[Ingress runtime]
+    PI1 --> C1[Ad-hoc context registry]
+    PI1 --> P1[Ad-hoc compaction service]
+    PI1 --> R1[Stub recovery]
+    PI1 --> B1[Hardcoded background]
+  end
+  subgraph Target
+    PI2[Pi hooks] --> A2[Thin adapter]
+    A2 --> RS[RuntimeSession]
+    RS --> ST[SQLite/CAS/FTS]
+    RS --> M[Materializer]
+    RS --> CP[Checkpoint]
+    RS --> RC[Recovery]
+  end

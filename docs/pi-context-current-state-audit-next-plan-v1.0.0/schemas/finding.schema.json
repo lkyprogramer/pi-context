@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "severity",
+    "area",
+    "title",
+    "observation",
+    "impact",
+    "status",
+    "verificationTasks"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^F[0-9]{3}$"
+    },
+    "severity": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ]
+    },
+    "area": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "observation": {
+      "type": "string"
+    },
+    "impact": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "open",
+        "closed"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "implementationTasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verificationTasks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

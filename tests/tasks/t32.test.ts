@@ -1,3 +1,6 @@
+import { tmpdir } from "node:os";
+import { mkdtempSync } from "node:fs";
+import { join } from "node:path";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -17,7 +20,7 @@ import {
 
 afterEach(resetOwnerForTest);
 
-const WORK = "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-14eb40de3fb3/implementer/t32";
+const WORK = mkdtempSync(join(tmpdir(), "pcr-work-"));
 
 function cursor(leafId = "leaf-t32") {
   return createRuntimeCursor({

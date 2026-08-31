@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "gate",
+    "decision",
+    "hardGatePass",
+    "qualityGatePass",
+    "efficiencyGatePass",
+    "publicationClaim",
+    "bundleHashes",
+    "reasons"
+  ],
+  "properties": {
+    "gate": {
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "adopt-pcr-compactor",
+        "keep-pi-native",
+        "stop",
+        "repeat-after-infrastructure-fix"
+      ]
+    },
+    "hardGatePass": {
+      "type": "boolean"
+    },
+    "qualityGatePass": {
+      "type": "boolean"
+    },
+    "efficiencyGatePass": {
+      "type": "boolean"
+    },
+    "publicationClaim": {
+      "type": "boolean"
+    },
+    "bundleHashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

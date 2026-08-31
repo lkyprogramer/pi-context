@@ -1,0 +1,23 @@
+{
+  "name": "pi-context-current-state-audit-next-plan-v1.0.0",
+  "version": "1.0.0",
+  "generatedAt": "2026-08-31",
+  "audit": {
+    "repo": "lkyprogramer/pi-context",
+    "commit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "tree": "1ddd4847c1dda59485dcabeb1f3cdeb38e3176c7",
+    "reportCommit": "36ce3126cfe2e332c563c64b88004696e4356d11",
+    "ciRun": "33372538099"
+  },
+  "counts": {
+    "tasks": 51,
+    "findings": 42,
+    "sources": 40,
+    "schemas": 5
+  },
+  "limitations": [
+    "No fresh model rerun",
+    "No local repo clone due container DNS",
+    "Temporal rescore uses committed probe previews"
+  ]
+}

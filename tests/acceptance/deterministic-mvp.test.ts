@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -22,7 +23,6 @@ import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
 import { createMvpAcceptance } from "../../scripts/gates/deterministic-mvp.mjs";
 import { runW1Vertical } from "../../scripts/gates/w1-vertical.mjs";
 
-const SCRATCH = "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-14eb40de3fb3/implementer";
 const EMPTY_DIFF = createHash("sha256").update("").digest("hex");
 const roots: string[] = [];
 
@@ -32,8 +32,7 @@ afterEach(() => {
 });
 
 function dataRoot(): string {
-  mkdirSync(SCRATCH, { recursive: true });
-  const root = mkdtempSync(join(SCRATCH, "t51-mvp-"));
+  const root = mkdtempSync(join(tmpdir(), "t51-mvp-"));
   roots.push(root);
   return root;
 }

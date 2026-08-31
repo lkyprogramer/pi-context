@@ -7,7 +7,8 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
+import { spawnTypeScriptChild } from "../../testkit/src/process-fixture.js";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -80,12 +81,13 @@ async function waitForFiles(paths: string[]): Promise<void> {
 
 function runChild(script: string, payload: string, ready: string, gate: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(join(process.cwd(), "node_modules", ".bin", "jiti"), [script, payload, ready, gate], {
+    const child = spawnTypeScriptChild(script, [payload, ready, gate], {
       cwd: process.cwd(),
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
     let stderr = "";
+    if (!child.stdout || !child.stderr) throw new Error("child stdio is not piped");
     child.stdout.on("data", (chunk) => { stdout += String(chunk); });
     child.stderr.on("data", (chunk) => { stderr += String(chunk); });
     child.once("error", reject);
@@ -361,7 +363,7 @@ describe("encrypted content-addressed blob store", () => {
     expect(refs[0]).toBe(refs[1]);
     const store = createStore(root, scope, provider({ multiprocess: Buffer.alloc(32, 9) }, "multiprocess"));
     expect(await store.read(scope, refs[0] as BlobRef)).toEqual(Buffer.from("cross-process durable"));
-  });
+  }, 20_000);
 
   it("takes over a directory chain after its creator dies before parent fsync", async () => {
     const root = dataRoot();

@@ -1,0 +1,13 @@
+stateDiagram-v2
+  [*] --> Open
+  Open --> Capturing: input/tool_result
+  Capturing --> Settled: host ack
+  Settled --> Materializing: context
+  Materializing --> Settled: view receipt
+  Settled --> Preparing: compact
+  Preparing --> NativeFallback: soft reject
+  Preparing --> Staged: verified PCR
+  Staged --> Committed: session_compact ack
+  Staged --> Recovering: failure/restart
+  Recovering --> Settled
+  Open --> Closed: session_shutdown

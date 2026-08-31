@@ -1,4 +1,5 @@
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -11,7 +12,6 @@ import {
   type CorpusStore,
 } from "@pcr/benchmark";
 
-const SCRATCH = "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-14eb40de3fb3/implementer";
 const roots: string[] = [];
 
 afterEach(() => {
@@ -19,8 +19,7 @@ afterEach(() => {
 });
 
 function dataRoot(): string {
-  mkdirSync(SCRATCH, { recursive: true });
-  const root = mkdtempSync(join(SCRATCH, "t39-"));
+  const root = mkdtempSync(join(tmpdir(), "t39-"));
   roots.push(root);
   return root;
 }

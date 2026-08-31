@@ -1,0 +1,26 @@
+requirement,status,evidence,next_task
+唯一 RuntimeSession 状态所有者,Partial,存在 ProductionRuntimeCompositionRoot，但默认 Extension 仍手工接线,A08/A09
+真实 Workspace/Session/Leaf/Model 身份,Mostly,正常路径可派生；异常路径仍退化 unbound,A15/A23
+User exact turn → CAS/ledger/directive,Partial,user turn 可落 CAS；default context/compaction 未读取同一 directive store,A11/A12/A18
+Tool result → CAS → reducer → evidence → FTS,Mostly,产品 ingress 已接通；pointer 只保留 last result，host ack/recovery 仍需闭环,A19/A16
+Store-backed Context Materialization,Fail,directives 来自全部 canonical user messages，continuity/recall 为空,A12/A26
+真实 Token/I_eff 计价,Fail,opaque raw envelope、system/tools/cache 未完整计价,A14/A24/A25
+持久 Cache/View Receipt,Fail,每次 open 的内存 rows,A13/A27
+Store-built Checkpoint v2,Partial,有 assembler/renderer，但产品源为 transient preparation/empty continuity,A28
+Temporal correction/supersession,Partial,中文 case 可用；英文 instead 解析错误,A17
+Task fronts/errors/side effects,Fail,产品 checkpoint continuity 为空,A11/A28
+Exact evidence pointers verified,Fail,lastPointers + no-op verifier,A19/A29
+Tool pair/retained tail/two-run hash,Fail,产品与 live report 未真实计算,A30/A38
+Native fallback,Pass,soft error/rejection回退 Native；需保留回归测试,A30
+Restart/branch recovery,Fail,journal reconcile no-op/unbound fallback,A16/A46
+W1 A0/A1/A2 live,Partial,有真实 CAS in-process test，但不是 Pi host/model run，CI 当前失败,A33/A42
+W2 B0/B1/B2/F0 live,Fail,真实 Pi 报告只有 B0/B1；新 B0/B1/B2 test 是 stub,A34/A36
+Environment closed-loop,Fail,fixed executor，不读取 arm context,A37
+Source-witness oracle,Partial,框架存在；当前 live report未使用新 oracle lane,A32/A34
+Cluster statistics,Partial,实现存在；当前 live报告未使用且只有5模板,A40/A42
+Realized net economics,Fail,只算 usage.input 差，忽略 cache/summary/recall/latency/failure,A39
+Natural threshold/overflow/recursive,Fail,未运行,A43/A44/A45
+Current required CI green,Fail,当前 HEAD CI red,A01-A05
+Self-contained clean install,Partial,本地 pack有证据；CI依赖 models.json且失败,A02/A49
+Release metadata/license,Fail,private:true/UNLICENSED 与计划冲突,A06
+Plugin superiority supported,Fail,Gate keep-native，质量/效率证据均不满足,A48

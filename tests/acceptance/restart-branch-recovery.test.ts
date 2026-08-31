@@ -1,3 +1,6 @@
+import { tmpdir } from "node:os";
+import { mkdtempSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { blobId, domainHash } from "@pcr/contracts";
@@ -10,7 +13,7 @@ import {
   type SagaRecord,
 } from "@pcr/runtime";
 
-const WORK = "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-14eb40de3fb3/implementer/t32-accept";
+const WORK = mkdtempSync(join(tmpdir(), "pcr-work-"));
 
 describe("restart and branch recovery", () => {
   it("recovers a host-visible saga on resume using the derived session cursor", async () => {

@@ -1,0 +1,5 @@
+
+> @ check:boundaries /home/runner/work/pi-context/pi-context
+> node scripts/check-package-boundaries.mjs
+
+boundaries: ok

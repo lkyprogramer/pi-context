@@ -1,0 +1,12 @@
+flowchart TD
+  T[Same raw trace] --> A1[A1 ingress shape]
+  A1 --> F[Freeze JSONL + store + workspace + cut]
+  F --> B0[Pi Native]
+  F --> B1[PCR checkpoint]
+  F --> B2[PCR checkpoint + materializer + recall]
+  F --> F0[Full context ceiling]
+  B0 --> S[Artifact + Reader + Environment]
+  B1 --> S
+  B2 --> S
+  F0 --> S
+  S --> G[Cluster Hard/Quality/Efficiency Gate]

@@ -1,0 +1,152 @@
+[
+  {
+    "requirement": "唯一 RuntimeSession 状态所有者",
+    "status": "Partial",
+    "evidence": "存在 ProductionRuntimeCompositionRoot，但默认 Extension 仍手工接线",
+    "nextTask": "A08/A09"
+  },
+  {
+    "requirement": "真实 Workspace/Session/Leaf/Model 身份",
+    "status": "Mostly",
+    "evidence": "正常路径可派生；异常路径仍退化 unbound",
+    "nextTask": "A15/A23"
+  },
+  {
+    "requirement": "User exact turn → CAS/ledger/directive",
+    "status": "Partial",
+    "evidence": "user turn 可落 CAS；default context/compaction 未读取同一 directive store",
+    "nextTask": "A11/A12/A18"
+  },
+  {
+    "requirement": "Tool result → CAS → reducer → evidence → FTS",
+    "status": "Mostly",
+    "evidence": "产品 ingress 已接通；pointer 只保留 last result，host ack/recovery 仍需闭环",
+    "nextTask": "A19/A16"
+  },
+  {
+    "requirement": "Store-backed Context Materialization",
+    "status": "Fail",
+    "evidence": "directives 来自全部 canonical user messages，continuity/recall 为空",
+    "nextTask": "A12/A26"
+  },
+  {
+    "requirement": "真实 Token/I_eff 计价",
+    "status": "Fail",
+    "evidence": "opaque raw envelope、system/tools/cache 未完整计价",
+    "nextTask": "A14/A24/A25"
+  },
+  {
+    "requirement": "持久 Cache/View Receipt",
+    "status": "Fail",
+    "evidence": "每次 open 的内存 rows",
+    "nextTask": "A13/A27"
+  },
+  {
+    "requirement": "Store-built Checkpoint v2",
+    "status": "Partial",
+    "evidence": "有 assembler/renderer，但产品源为 transient preparation/empty continuity",
+    "nextTask": "A28"
+  },
+  {
+    "requirement": "Temporal correction/supersession",
+    "status": "Partial",
+    "evidence": "中文 case 可用；英文 instead 解析错误",
+    "nextTask": "A17"
+  },
+  {
+    "requirement": "Task fronts/errors/side effects",
+    "status": "Fail",
+    "evidence": "产品 checkpoint continuity 为空",
+    "nextTask": "A11/A28"
+  },
+  {
+    "requirement": "Exact evidence pointers verified",
+    "status": "Fail",
+    "evidence": "lastPointers + no-op verifier",
+    "nextTask": "A19/A29"
+  },
+  {
+    "requirement": "Tool pair/retained tail/two-run hash",
+    "status": "Fail",
+    "evidence": "产品与 live report 未真实计算",
+    "nextTask": "A30/A38"
+  },
+  {
+    "requirement": "Native fallback",
+    "status": "Pass",
+    "evidence": "soft error/rejection回退 Native；需保留回归测试",
+    "nextTask": "A30"
+  },
+  {
+    "requirement": "Restart/branch recovery",
+    "status": "Fail",
+    "evidence": "journal reconcile no-op/unbound fallback",
+    "nextTask": "A16/A46"
+  },
+  {
+    "requirement": "W1 A0/A1/A2 live",
+    "status": "Partial",
+    "evidence": "有真实 CAS in-process test，但不是 Pi host/model run，CI 当前失败",
+    "nextTask": "A33/A42"
+  },
+  {
+    "requirement": "W2 B0/B1/B2/F0 live",
+    "status": "Fail",
+    "evidence": "真实 Pi 报告只有 B0/B1；新 B0/B1/B2 test 是 stub",
+    "nextTask": "A34/A36"
+  },
+  {
+    "requirement": "Environment closed-loop",
+    "status": "Fail",
+    "evidence": "fixed executor，不读取 arm context",
+    "nextTask": "A37"
+  },
+  {
+    "requirement": "Source-witness oracle",
+    "status": "Partial",
+    "evidence": "框架存在；当前 live report未使用新 oracle lane",
+    "nextTask": "A32/A34"
+  },
+  {
+    "requirement": "Cluster statistics",
+    "status": "Partial",
+    "evidence": "实现存在；当前 live报告未使用且只有5模板",
+    "nextTask": "A40/A42"
+  },
+  {
+    "requirement": "Realized net economics",
+    "status": "Fail",
+    "evidence": "只算 usage.input 差，忽略 cache/summary/recall/latency/failure",
+    "nextTask": "A39"
+  },
+  {
+    "requirement": "Natural threshold/overflow/recursive",
+    "status": "Fail",
+    "evidence": "未运行",
+    "nextTask": "A43/A44/A45"
+  },
+  {
+    "requirement": "Current required CI green",
+    "status": "Fail",
+    "evidence": "当前 HEAD CI red",
+    "nextTask": "A01-A05"
+  },
+  {
+    "requirement": "Self-contained clean install",
+    "status": "Partial",
+    "evidence": "本地 pack有证据；CI依赖 models.json且失败",
+    "nextTask": "A02/A49"
+  },
+  {
+    "requirement": "Release metadata/license",
+    "status": "Fail",
+    "evidence": "private:true/UNLICENSED 与计划冲突",
+    "nextTask": "A06"
+  },
+  {
+    "requirement": "Plugin superiority supported",
+    "status": "Fail",
+    "evidence": "Gate keep-native，质量/效率证据均不满足",
+    "nextTask": "A48"
+  }
+]

@@ -3,9 +3,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/pi-contract-harness.ts"
+    ".": "./src/pi-contract-harness.ts",
+    "./process-fixture": "./src/process-fixture.ts",
+    "./temp-workspace": "./src/temp-workspace.ts"
+  },
+  "dependencies": {
+    "jiti": "2.7.0"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts"
+    "typecheck": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --types node src/fake-pi-host.ts src/pi-contract-harness.ts src/process-fixture.ts src/temp-workspace.ts"
   }
 }

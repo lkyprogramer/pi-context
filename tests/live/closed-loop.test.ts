@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createContinuationRunner } from "@pcr/benchmark";
 
-const SCRATCH = "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-14eb40de3fb3/implementer";
 const roots: string[] = [];
 
 afterEach(() => {
@@ -18,8 +18,7 @@ function sha256(text: string): string {
 
 describe("closed-loop continuation live workspace", () => {
   it("succeeds only when the restored workspace file hash matches", async () => {
-    mkdirSync(SCRATCH, { recursive: true });
-    const root = mkdtempSync(join(SCRATCH, "t45-live-"));
+    const root = mkdtempSync(join(tmpdir(), "t45-live-"));
     roots.push(root);
     const runner = createContinuationRunner({
       corpusId: "pcr-bench",

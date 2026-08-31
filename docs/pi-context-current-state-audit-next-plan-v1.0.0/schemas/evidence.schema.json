@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "taskId",
+    "status",
+    "commit",
+    "redLog",
+    "greenLog",
+    "fullGateLog",
+    "sourceDigest"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "pattern": "^A[0-9]{2}$"
+    },
+    "status": {
+      "enum": [
+        "done",
+        "blocked"
+      ]
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "redLog": {
+      "type": "string"
+    },
+    "greenLog": {
+      "type": "string"
+    },
+    "fullGateLog": {
+      "type": "string"
+    },
+    "sourceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "runBundleHashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "findingsClosed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}

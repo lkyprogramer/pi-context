@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -17,7 +18,6 @@ import {
   openWorkspaceSqliteStore,
 } from "@pcr/storage-node";
 
-const SCRATCH = "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-14eb40de3fb3/implementer";
 const roots: string[] = [];
 const RAW_TOOL = [
   `FILLER ${"x".repeat(80)}`,
@@ -34,8 +34,7 @@ afterEach(() => {
 });
 
 function dataRoot(): string {
-  mkdirSync(SCRATCH, { recursive: true });
-  const root = mkdtempSync(join(SCRATCH, "t42-live-"));
+  const root = mkdtempSync(join(tmpdir(), "t42-live-"));
   roots.push(root);
   return root;
 }

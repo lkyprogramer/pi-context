@@ -23,11 +23,7 @@ pi install ./path/to/pi-context-runtime-0.1.0-alpha.1.tgz
 pi list
 ```
 
-From this repository without packing (development only; not the release artifact):
-
-```bash
-pi -e ./apps/pi-context-runtime/dist/extension.js
-```
+Development `pi -e ./apps/pi-context-runtime/dist/extension.js` is not the release artifact. Required CI and installs must use `node scripts/release/pack.mjs` / `pnpm test:packed`.
 
 ## Global-style / clean Pi home
 

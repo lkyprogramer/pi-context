@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -18,6 +17,7 @@ import {
   type WorkspaceSqliteEvidenceStore,
 } from "@pcr/storage-node";
 import * as storageNodePublicApi from "@pcr/storage-node";
+import { crashedWithKill, spawnTypeScriptChildSync } from "../../testkit/src/process-fixture.js";
 
 const roots: string[] = [];
 
@@ -499,11 +499,11 @@ describe("workspace SQLite Saga journal", () => {
       await journal.markHostVisible(input.operationId, "host-after-crash");
       process.kill(process.pid, "SIGKILL");
     `);
-    const crashed = spawnSync(join(process.cwd(), "node_modules", ".bin", "jiti"), [script, payload], {
+    const crashed = spawnTypeScriptChildSync(script, [payload], {
       cwd: process.cwd(),
       encoding: "utf8",
     });
-    expect(crashed.signal).toBe("SIGKILL");
+    expect(crashedWithKill(crashed)).toBe(true);
 
     const snapshot = {
       cursor: scope,
@@ -532,7 +532,7 @@ describe("workspace SQLite Saga journal", () => {
     expect(await replayJournal.get(input.operationId)).toMatchObject({ state: "committed", revision: 4 });
     await replayJournal.close();
     await replayDatabase.close();
-  });
+  }, 20_000);
 
   it("maps SQLite lock waits, preserves the shared evidence owner, and fails after close", async () => {
     const dataRoot = root("busy");

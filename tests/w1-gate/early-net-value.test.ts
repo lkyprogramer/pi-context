@@ -1,4 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildSyntheticCorpus, corpusQuota } from "./corpus.js";
 import { runW1EarlyNetValueGate } from "./run.js";
@@ -18,7 +20,9 @@ describe("W1 Early Net Value Gate", () => {
   });
 
   it("evaluates live PCR arms and writes a machine-readable report", async () => {
-    const { report, reportPath, decision } = await runW1EarlyNetValueGate();
+    const outDir = mkdtempSync(join(tmpdir(), "pcr-w1-gate-"));
+    await runW1EarlyNetValueGate(outDir);
+    const { report, reportPath, decision } = await runW1EarlyNetValueGate(outDir);
     expect(existsSync(reportPath)).toBe(true);
     const disk = JSON.parse(readFileSync(reportPath, "utf8")) as typeof report;
     expect(disk.corpusClass).toBe("synthetic-public");

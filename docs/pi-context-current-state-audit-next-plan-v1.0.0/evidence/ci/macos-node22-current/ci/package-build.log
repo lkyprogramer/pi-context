@@ -1,0 +1,17 @@
+[1m[43m DEPRECATED [49m[22m [33mThe workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.[39m
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m/Users/runner/work/pi-context/pi-context[39m
+
+(node:1417) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m [30m[43m 0 [49m[39m tests/release/package-artifact.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 3385[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mcontains one extension entry, runtime dependencies and no source-private imports [33m 1007[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mverifies clean-home extract, uninstall/reinstall, and temporary pi -e entry [33m 747[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mkeeps the Node/OS matrix and does not hide unsupported Pi versions [33m 887[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mships license/security docs and the gate-derived semantic default [33m 742[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 08:21:55
+[2m   Duration [22m 4.82s[2m (transform 382ms, setup 0ms, collect 1.27s, tests 3.38s, environment 0ms, prepare 43ms)[22m
+

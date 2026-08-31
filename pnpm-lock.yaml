@@ -37,6 +37,9 @@ importers:
       '@types/node':
         specifier: ^22.18.0
         version: 22.20.1
+      jiti:
+        specifier: 2.7.0
+        version: 2.7.0
       pi-context-runtime:
         specifier: workspace:*
         version: link:apps/pi-context-runtime
@@ -113,7 +116,11 @@ importers:
         specifier: workspace:*
         version: link:../runtime
 
-  packages/testkit: {}
+  packages/testkit:
+    dependencies:
+      jiti:
+        specifier: 2.7.0
+        version: 2.7.0
 
   packages/worker: {}
 

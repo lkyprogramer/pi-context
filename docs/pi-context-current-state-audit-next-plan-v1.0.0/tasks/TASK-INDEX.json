@@ -1,0 +1,921 @@
+[
+  {
+    "id": "A00",
+    "wave": "W0",
+    "title": "冻结当前证据与审计基线",
+    "dependsOn": [],
+    "allowedFiles": [
+      "audit/current/**",
+      "artifacts/audit/**"
+    ],
+    "findingIds": [
+      "F101",
+      "F130"
+    ],
+    "document": "tasks/A00.md"
+  },
+  {
+    "id": "A01",
+    "wave": "W0",
+    "title": "移除所有硬编码临时目录",
+    "dependsOn": [
+      "A00"
+    ],
+    "allowedFiles": [
+      "tests/**",
+      "packages/*/test/**"
+    ],
+    "findingIds": [
+      "F101",
+      "F102"
+    ],
+    "document": "tasks/A01.md"
+  },
+  {
+    "id": "A02",
+    "wave": "W0",
+    "title": "建立 hermetic Pi 模型与凭证 Fixture",
+    "dependsOn": [
+      "A00"
+    ],
+    "allowedFiles": [
+      "scripts/pack-smoke.mjs",
+      "tests/acceptance/**",
+      "tests/release/**"
+    ],
+    "findingIds": [
+      "F101",
+      "F103"
+    ],
+    "document": "tasks/A02.md"
+  },
+  {
+    "id": "A03",
+    "wave": "W0",
+    "title": "修复跨进程 CAS/Saga 测试 Runner",
+    "dependsOn": [
+      "A00"
+    ],
+    "allowedFiles": [
+      "packages/storage-node/test/**",
+      "packages/testkit/**",
+      "package.json"
+    ],
+    "findingIds": [
+      "F101",
+      "F104"
+    ],
+    "document": "tasks/A03.md"
+  },
+  {
+    "id": "A04",
+    "wave": "W0",
+    "title": "拆分 Unit/Integration/Live/Pack 测试 Lane",
+    "dependsOn": [
+      "A01",
+      "A02",
+      "A03"
+    ],
+    "allowedFiles": [
+      "vitest*.ts",
+      "package.json",
+      ".github/workflows/**"
+    ],
+    "findingIds": [
+      "F101",
+      "F102",
+      "F103"
+    ],
+    "document": "tasks/A04.md"
+  },
+  {
+    "id": "A05",
+    "wave": "W0",
+    "title": "启用 Branch Protection 与 Required Checks",
+    "dependsOn": [
+      "A04"
+    ],
+    "allowedFiles": [
+      ".github/workflows/**",
+      "docs/OPERATIONS.md"
+    ],
+    "findingIds": [
+      "F101",
+      "F123"
+    ],
+    "document": "tasks/A05.md"
+  },
+  {
+    "id": "A06",
+    "wave": "W0",
+    "title": "统一 Release Metadata 与入口策略",
+    "dependsOn": [
+      "A02",
+      "A04"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/package.json",
+      "apps/pi-context-runtime/dist/**",
+      "scripts/release/**",
+      "docs/INSTALL.md"
+    ],
+    "findingIds": [
+      "F131",
+      "F132"
+    ],
+    "document": "tasks/A06.md"
+  },
+  {
+    "id": "A07",
+    "wave": "W0",
+    "title": "重开并重构 Finding Closure Gate",
+    "dependsOn": [
+      "A00",
+      "A04"
+    ],
+    "allowedFiles": [
+      "docs/**/findings/**",
+      "scripts/findingctl.py",
+      "scripts/gates/**"
+    ],
+    "findingIds": [
+      "F134",
+      "F141"
+    ],
+    "document": "tasks/A07.md"
+  },
+  {
+    "id": "A08",
+    "wave": "W1",
+    "title": "让默认 Extension 只使用 ProductionRuntimeCompositionRoot",
+    "dependsOn": [
+      "A04",
+      "A07"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/extension.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "tests/acceptance/**"
+    ],
+    "findingIds": [
+      "F105"
+    ],
+    "document": "tasks/A08.md"
+  },
+  {
+    "id": "A09",
+    "wave": "W1",
+    "title": "补全 RuntimeSession Ports 与状态机",
+    "dependsOn": [
+      "A08"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/runtime-session.ts",
+      "packages/runtime/src/ports.ts",
+      "packages/runtime/test/**"
+    ],
+    "findingIds": [
+      "F105",
+      "F133",
+      "F141"
+    ],
+    "document": "tasks/A09.md"
+  },
+  {
+    "id": "A10",
+    "wave": "W1",
+    "title": "实现 cursor-scoped Session/Tool Registry",
+    "dependsOn": [
+      "A09"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/session-registry.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/pi-adapter/src/tools/**"
+    ],
+    "findingIds": [
+      "F111",
+      "F140"
+    ],
+    "document": "tasks/A10.md"
+  },
+  {
+    "id": "A11",
+    "wave": "W1",
+    "title": "落地持久 Directive/Claim/Continuity Store",
+    "dependsOn": [
+      "A09"
+    ],
+    "allowedFiles": [
+      "packages/storage-node/src/**",
+      "packages/runtime/src/**",
+      "packages/core/src/directives/**"
+    ],
+    "findingIds": [
+      "F106",
+      "F109"
+    ],
+    "document": "tasks/A11.md"
+  },
+  {
+    "id": "A12",
+    "wave": "W1",
+    "title": "实现统一 Runtime Snapshot Transaction",
+    "dependsOn": [
+      "A11"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/snapshot/**",
+      "packages/storage-node/src/sqlite-store.ts"
+    ],
+    "findingIds": [
+      "F106",
+      "F109"
+    ],
+    "document": "tasks/A12.md"
+  },
+  {
+    "id": "A13",
+    "wave": "W1",
+    "title": "持久化 View 与 Cache Receipt",
+    "dependsOn": [
+      "A12"
+    ],
+    "allowedFiles": [
+      "packages/storage-node/src/**",
+      "packages/core/src/materialization/**",
+      "packages/runtime/src/**"
+    ],
+    "findingIds": [
+      "F108"
+    ],
+    "document": "tasks/A13.md"
+  },
+  {
+    "id": "A14",
+    "wave": "W1",
+    "title": "接入真实 Route/System/Tools Budget Port",
+    "dependsOn": [
+      "A09"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/**",
+      "packages/core/src/budget/**",
+      "packages/runtime/src/**"
+    ],
+    "findingIds": [
+      "F139"
+    ],
+    "document": "tasks/A14.md"
+  },
+  {
+    "id": "A15",
+    "wave": "W1",
+    "title": "删除 unbound Scope 降级",
+    "dependsOn": [
+      "A08",
+      "A10"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/extension.ts",
+      "packages/pi-adapter/src/**"
+    ],
+    "findingIds": [
+      "F112"
+    ],
+    "document": "tasks/A15.md"
+  },
+  {
+    "id": "A16",
+    "wave": "W1",
+    "title": "实现真实 Restart/Branch Recovery",
+    "dependsOn": [
+      "A11",
+      "A12",
+      "A15"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/recovery/**",
+      "packages/storage-node/src/saga-store.ts",
+      "tests/fault/**"
+    ],
+    "findingIds": [
+      "F112"
+    ],
+    "document": "tasks/A16.md"
+  },
+  {
+    "id": "A17",
+    "wave": "W2",
+    "title": "修复多语言 Temporal Assignment Parser",
+    "dependsOn": [
+      "A11"
+    ],
+    "allowedFiles": [
+      "packages/core/src/directives/temporal.ts",
+      "packages/core/test/directives/**"
+    ],
+    "findingIds": [
+      "F121"
+    ],
+    "document": "tasks/A17.md"
+  },
+  {
+    "id": "A18",
+    "wave": "W2",
+    "title": "Authenticated User Full-turn 保底与 Supersession",
+    "dependsOn": [
+      "A11",
+      "A17"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/user-turn/**",
+      "packages/core/src/directives/**"
+    ],
+    "findingIds": [
+      "F122"
+    ],
+    "document": "tasks/A18.md"
+  },
+  {
+    "id": "A19",
+    "wave": "W2",
+    "title": "构建 Snapshot-scoped Evidence Pointer Catalog",
+    "dependsOn": [
+      "A10",
+      "A11",
+      "A12"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/evidence/**",
+      "packages/storage-node/src/**"
+    ],
+    "findingIds": [
+      "F111"
+    ],
+    "document": "tasks/A19.md"
+  },
+  {
+    "id": "A20",
+    "wave": "W2",
+    "title": "实现 Tool Outcome Attestation 与 Claim Authority",
+    "dependsOn": [
+      "A11",
+      "A19"
+    ],
+    "allowedFiles": [
+      "packages/core/src/security/**",
+      "packages/runtime/src/claims/**"
+    ],
+    "findingIds": [],
+    "document": "tasks/A20.md"
+  },
+  {
+    "id": "A21",
+    "wave": "W2",
+    "title": "实现 Proactive Recall 与 Purpose-bound Lease",
+    "dependsOn": [
+      "A11",
+      "A19"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/retrieval/**",
+      "packages/core/src/retrieval/**"
+    ],
+    "findingIds": [],
+    "document": "tasks/A21.md"
+  },
+  {
+    "id": "A22",
+    "wave": "W2",
+    "title": "Recursive Compaction State Merge",
+    "dependsOn": [
+      "A12",
+      "A18",
+      "A20"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/compaction/**",
+      "packages/core/src/compaction/**"
+    ],
+    "findingIds": [
+      "F122"
+    ],
+    "document": "tasks/A22.md"
+  },
+  {
+    "id": "A23",
+    "wave": "W2",
+    "title": "多 Workspace/Session/Branch 隔离 Gate",
+    "dependsOn": [
+      "A10",
+      "A16",
+      "A19"
+    ],
+    "allowedFiles": [
+      "tests/security/**",
+      "tests/acceptance/**"
+    ],
+    "findingIds": [
+      "F111",
+      "F112",
+      "F133",
+      "F140"
+    ],
+    "document": "tasks/A23.md"
+  },
+  {
+    "id": "A24",
+    "wave": "W3",
+    "title": "Envelope-aware Serialized Payload Token Pricing",
+    "dependsOn": [
+      "A14"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/message-codec.ts",
+      "packages/core/src/budget/**"
+    ],
+    "findingIds": [
+      "F107",
+      "F139"
+    ],
+    "document": "tasks/A24.md"
+  },
+  {
+    "id": "A25",
+    "wave": "W3",
+    "title": "统一 Capacity/Cache/Cost Usage Telemetry",
+    "dependsOn": [
+      "A13",
+      "A14",
+      "A24"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/telemetry/**",
+      "packages/benchmark/src/**",
+      "packages/pi-adapter/src/**"
+    ],
+    "findingIds": [
+      "F107",
+      "F108",
+      "F116",
+      "F139",
+      "F142"
+    ],
+    "document": "tasks/A25.md"
+  },
+  {
+    "id": "A26",
+    "wave": "W3",
+    "title": "修复 Directive/History/Active-turn 重复注入",
+    "dependsOn": [
+      "A12",
+      "A18",
+      "A24"
+    ],
+    "allowedFiles": [
+      "packages/core/src/materialization/**",
+      "packages/runtime/src/runtime-session.ts"
+    ],
+    "findingIds": [
+      "F106"
+    ],
+    "document": "tasks/A26.md"
+  },
+  {
+    "id": "A27",
+    "wave": "W3",
+    "title": "稳定前缀 Cache Layout 与遥测",
+    "dependsOn": [
+      "A13",
+      "A25",
+      "A26"
+    ],
+    "allowedFiles": [
+      "packages/core/src/materialization/**",
+      "packages/runtime/src/telemetry/**"
+    ],
+    "findingIds": [
+      "F108"
+    ],
+    "document": "tasks/A27.md"
+  },
+  {
+    "id": "A28",
+    "wave": "W3",
+    "title": "完整 Store-built Checkpoint",
+    "dependsOn": [
+      "A12",
+      "A20",
+      "A22"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/compaction/**",
+      "packages/core/src/compaction/**"
+    ],
+    "findingIds": [
+      "F109"
+    ],
+    "document": "tasks/A28.md"
+  },
+  {
+    "id": "A29",
+    "wave": "W3",
+    "title": "真实 Pointer Verifier 与 CAS Recovery",
+    "dependsOn": [
+      "A19",
+      "A23",
+      "A28"
+    ],
+    "allowedFiles": [
+      "packages/core/src/compaction/checkpoint.ts",
+      "packages/runtime/src/evidence/**",
+      "packages/benchmark/src/scoring/**"
+    ],
+    "findingIds": [
+      "F110"
+    ],
+    "document": "tasks/A29.md"
+  },
+  {
+    "id": "A30",
+    "wave": "W3",
+    "title": "Tool-pair/Retained-tail/Two-run Hash Verifier",
+    "dependsOn": [
+      "A24",
+      "A28"
+    ],
+    "allowedFiles": [
+      "packages/core/src/compaction/**",
+      "packages/pi-adapter/src/**"
+    ],
+    "findingIds": [
+      "F110"
+    ],
+    "document": "tasks/A30.md"
+  },
+  {
+    "id": "A31",
+    "wave": "W3",
+    "title": "Checkpoint 模型视图压缩与 Metadata Ablation",
+    "dependsOn": [
+      "A25",
+      "A28",
+      "A29"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/compaction-service.ts",
+      "packages/benchmark/src/performance/**"
+    ],
+    "findingIds": [
+      "F138"
+    ],
+    "document": "tasks/A31.md"
+  },
+  {
+    "id": "A32",
+    "wave": "W4",
+    "title": "建立 v2 Source-witness Locked Corpus",
+    "dependsOn": [
+      "A07",
+      "A17",
+      "A20"
+    ],
+    "allowedFiles": [
+      "benchmarks/corpus-v2/**",
+      "packages/benchmark/src/corpus/**",
+      "schemas/oracle*.json"
+    ],
+    "findingIds": [
+      "F124"
+    ],
+    "document": "tasks/A32.md"
+  },
+  {
+    "id": "A33",
+    "wave": "W4",
+    "title": "生成真实 A1-shaped 冻结 Pi Trace",
+    "dependsOn": [
+      "A21",
+      "A32"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/trace/**",
+      "tests/live-gate/**"
+    ],
+    "findingIds": [
+      "F117"
+    ],
+    "document": "tasks/A33.md"
+  },
+  {
+    "id": "A34",
+    "wave": "W4",
+    "title": "实现真实 Pi B0/B1/B2 Runner",
+    "dependsOn": [
+      "A29",
+      "A30",
+      "A33"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/arms/**",
+      "tests/live-gate/**",
+      "scripts/benchmark/**"
+    ],
+    "findingIds": [
+      "F117",
+      "F118"
+    ],
+    "document": "tasks/A34.md"
+  },
+  {
+    "id": "A35",
+    "wave": "W4",
+    "title": "Probe-only Scorer 与 Normalizer",
+    "dependsOn": [
+      "A32",
+      "A34"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/scoring/**"
+    ],
+    "findingIds": [
+      "F114"
+    ],
+    "document": "tasks/A35.md"
+  },
+  {
+    "id": "A36",
+    "wave": "W4",
+    "title": "真实 F0/Isolated Reader Lane",
+    "dependsOn": [
+      "A32",
+      "A34"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/reader/**",
+      "scripts/benchmark/**"
+    ],
+    "findingIds": [
+      "F117",
+      "F119"
+    ],
+    "document": "tasks/A36.md"
+  },
+  {
+    "id": "A37",
+    "wave": "W4",
+    "title": "Tools-enabled Environment Closed-loop",
+    "dependsOn": [
+      "A34",
+      "A35"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/continuation/**",
+      "tests/live-gate/workspaces/**"
+    ],
+    "findingIds": [
+      "F114",
+      "F120"
+    ],
+    "document": "tasks/A37.md"
+  },
+  {
+    "id": "A38",
+    "wave": "W4",
+    "title": "整合真实 Integrity/Security Scorer",
+    "dependsOn": [
+      "A29",
+      "A30",
+      "A34"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/scoring/**",
+      "tests/security/**"
+    ],
+    "findingIds": [
+      "F115",
+      "F137"
+    ],
+    "document": "tasks/A38.md"
+  },
+  {
+    "id": "A39",
+    "wave": "W4",
+    "title": "完整 Realized Net 与 Pair-preserving Cost",
+    "dependsOn": [
+      "A25",
+      "A34",
+      "A37"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/economics/**",
+      "packages/benchmark/src/report/**"
+    ],
+    "findingIds": [
+      "F116",
+      "F127",
+      "F128",
+      "F142"
+    ],
+    "document": "tasks/A39.md"
+  },
+  {
+    "id": "A40",
+    "wave": "W4",
+    "title": "Cluster Statistics 与 Normative Gate v3",
+    "dependsOn": [
+      "A32",
+      "A35",
+      "A37",
+      "A39"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/statistics/**",
+      "packages/benchmark/src/report/engine.ts"
+    ],
+    "findingIds": [
+      "F124",
+      "F128",
+      "F135",
+      "F136"
+    ],
+    "document": "tasks/A40.md"
+  },
+  {
+    "id": "A41",
+    "wave": "W4",
+    "title": "不可变 Full Run Bundle 与复核工具",
+    "dependsOn": [
+      "A34",
+      "A38",
+      "A40"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/report/**",
+      "schemas/run*.json",
+      "scripts/benchmark/**"
+    ],
+    "findingIds": [
+      "F129",
+      "F130"
+    ],
+    "document": "tasks/A41.md"
+  },
+  {
+    "id": "A42",
+    "wave": "W5",
+    "title": "运行 Boundary Replay 30 Cluster × 3 Seeds",
+    "dependsOn": [
+      "A41"
+    ],
+    "allowedFiles": [
+      "artifacts/runs/w2-v3/boundary/**"
+    ],
+    "findingIds": [
+      "F124"
+    ],
+    "document": "tasks/A42.md"
+  },
+  {
+    "id": "A43",
+    "wave": "W5",
+    "title": "运行 Natural 200K Threshold Lane",
+    "dependsOn": [
+      "A42"
+    ],
+    "allowedFiles": [
+      "artifacts/runs/w2-v3/natural-threshold/**"
+    ],
+    "findingIds": [
+      "F125"
+    ],
+    "document": "tasks/A43.md"
+  },
+  {
+    "id": "A44",
+    "wave": "W5",
+    "title": "运行 Provider Overflow Lane",
+    "dependsOn": [
+      "A42"
+    ],
+    "allowedFiles": [
+      "artifacts/runs/w2-v3/overflow/**"
+    ],
+    "findingIds": [
+      "F125"
+    ],
+    "document": "tasks/A44.md"
+  },
+  {
+    "id": "A45",
+    "wave": "W5",
+    "title": "运行 Recursive Long-horizon Lane",
+    "dependsOn": [
+      "A42",
+      "A43"
+    ],
+    "allowedFiles": [
+      "artifacts/runs/w2-v3/recursive/**"
+    ],
+    "findingIds": [
+      "F122",
+      "F126"
+    ],
+    "document": "tasks/A45.md"
+  },
+  {
+    "id": "A46",
+    "wave": "W5",
+    "title": "运行 Fault/Security Matrix",
+    "dependsOn": [
+      "A16",
+      "A23",
+      "A38"
+    ],
+    "allowedFiles": [
+      "artifacts/runs/fault-security/**"
+    ],
+    "findingIds": [
+      "F104",
+      "F126",
+      "F137"
+    ],
+    "document": "tasks/A46.md"
+  },
+  {
+    "id": "A47",
+    "wave": "W5",
+    "title": "运行 Performance/Cache/Metadata Ablation",
+    "dependsOn": [
+      "A27",
+      "A31",
+      "A42"
+    ],
+    "allowedFiles": [
+      "artifacts/runs/performance-cache/**"
+    ],
+    "findingIds": [
+      "F113",
+      "F138"
+    ],
+    "document": "tasks/A47.md"
+  },
+  {
+    "id": "A48",
+    "wave": "W5",
+    "title": "执行 W1/W2 Deterministic Release Gate",
+    "dependsOn": [
+      "A42",
+      "A43",
+      "A44",
+      "A45",
+      "A46",
+      "A47"
+    ],
+    "allowedFiles": [
+      "artifacts/gates/deterministic-v3/**",
+      "scripts/gates/**"
+    ],
+    "findingIds": [
+      "F135"
+    ],
+    "document": "tasks/A48.md"
+  },
+  {
+    "id": "A49",
+    "wave": "W5",
+    "title": "完成 Hermetic Package/Release Matrix",
+    "dependsOn": [
+      "A05",
+      "A06",
+      "A48"
+    ],
+    "allowedFiles": [
+      "artifacts/release/**",
+      "scripts/release/**"
+    ],
+    "findingIds": [
+      "F103",
+      "F132"
+    ],
+    "document": "tasks/A49.md"
+  },
+  {
+    "id": "A50",
+    "wave": "W6",
+    "title": "Semantic/Background Beta 独立 Gate",
+    "dependsOn": [
+      "A48"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/semantic/**",
+      "packages/worker/**",
+      "artifacts/gates/semantic-v3/**"
+    ],
+    "findingIds": [
+      "F113"
+    ],
+    "document": "tasks/A50.md"
+  }
+]
