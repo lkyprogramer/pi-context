@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t47.test.ts (6 tests | 6 failed) 7ms
+   × T47 Cluster-aware paired statistics > cluster_aware_paired_statistics 4ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T47 Cluster-aware paired statistics > fails construction when production dependencies are absent 2ms
+     → expected error to match asymmetric matcher
+   × T47 Cluster-aware paired statistics > rejects malformed bootstrap input 0ms
+     → (0 , createClusterStatistics) is not a function
+   × T47 Cluster-aware paired statistics > replays equal bootstrap results for the same seed 0ms
+     → (0 , createClusterStatistics) is not a function
+   × T47 Cluster-aware paired statistics > denies pairs from another corpus 0ms
+     → (0 , createClusterStatistics) is not a function
+   × T47 Cluster-aware paired statistics > stops at the abort boundary before resampling 0ms
+     → (0 , createClusterStatistics) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t47.test.ts > T47 Cluster-aware paired statistics > cluster_aware_paired_statistics
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t47.test.ts:63:33
+     61| describe("T47 Cluster-aware paired statistics", () => {
+     62|   it("cluster_aware_paired_statistics", async () => {
+     63|     await expect(runT47Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+     64|   });
+     65| 
+
+Caused by: TypeError: (0 , createClusterStatistics) is not a function
+ ❯ runT47Fixture tests/tasks/t47.test.ts:28:17
+ ❯ tests/tasks/t47.test.ts:63:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t47.test.ts > T47 Cluster-aware paired statistics > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_STATISTICS_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_1__.createClusterStatistics) is not a function",
+  }
+
+ ❯ tests/tasks/t47.test.ts:67:56
+     65| 
+     66|   it("fails construction when production dependencies are absent", () …
+     67|     expect(() => createClusterStatistics({} as never)).toThrowError(
+       |                                                        ^
+     68|       expect.objectContaining({ code: "PCR_STATISTICS_DEPENDENCY_MISSI…
+     69|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t47.test.ts > T47 Cluster-aware paired statistics > rejects malformed bootstrap input
+TypeError: (0 , createClusterStatistics) is not a function
+ ❯ tests/tasks/t47.test.ts:73:19
+     71| 
+     72|   it("rejects malformed bootstrap input", async () => {
+     73|     const stats = createClusterStatistics({ catalog: CATALOG });
+       |                   ^
+     74|     await expect(stats.bootstrap({} as never)).rejects.toMatchObject({…
+     75|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t47.test.ts > T47 Cluster-aware paired statistics > replays equal bootstrap results for the same seed
+TypeError: (0 , createClusterStatistics) is not a function
+ ❯ tests/tasks/t47.test.ts:78:19
+     76| 
+     77|   it("replays equal bootstrap results for the same seed", async () => {
+     78|     const stats = createClusterStatistics({ catalog: CATALOG });
+       |                   ^
+     79|     const input = { corpusId: "pcr-bench-t47", pairs: numericPairs(), …
+     80|     const first = await stats.bootstrap(input);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t47.test.ts > T47 Cluster-aware paired statistics > denies pairs from another corpus
+TypeError: (0 , createClusterStatistics) is not a function
+ ❯ tests/tasks/t47.test.ts:86:19
+     84| 
+     85|   it("denies pairs from another corpus", async () => {
+     86|     const stats = createClusterStatistics({ catalog: CATALOG });
+       |                   ^
+     87|     await expect(stats.bootstrap({
+     88|       corpusId: "other-corpus",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t47.test.ts > T47 Cluster-aware paired statistics > stops at the abort boundary before resampling
+TypeError: (0 , createClusterStatistics) is not a function
+ ❯ tests/tasks/t47.test.ts:96:19
+     94| 
+     95|   it("stops at the abort boundary before resampling", async () => {
+     96|     const stats = createClusterStatistics({ catalog: CATALOG });
+       |                   ^
+     97|     const pairs = numericPairs();
+     98|     let reads = 0;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  10:39:36
+   Duration  418ms (transform 100ms, setup 0ms, collect 142ms, tests 7ms, environment 0ms, prepare 73ms)
+

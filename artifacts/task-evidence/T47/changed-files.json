@@ -1,0 +1,13 @@
+{
+  "taskId": "T47",
+  "production": [
+    "blockers/T47-scope-expansion.md",
+    "packages/benchmark/package.json",
+    "packages/benchmark/src/index.ts",
+    "packages/benchmark/src/statistics/cluster.ts"
+  ],
+  "tests": [
+    "packages/benchmark/test/statistics.test.ts",
+    "tests/tasks/t47.test.ts"
+  ]
+}

@@ -95,5 +95,18 @@ export {
   type IntegrityScore,
   type IntegrityScorer,
 } from "./scoring/integrity.js";
+export {
+  ClusterStatisticsError,
+  createClusterStatistics,
+  type BinaryPair,
+  type BootstrapInput,
+  type ClusterBootstrapResult,
+  type ClusterCatalog,
+  type ClusterStatistics,
+  type McNemarInput,
+  type McNemarResult,
+  type NumericPair,
+  type StatisticsErrorCode,
+} from "./statistics/cluster.js";
 
 
