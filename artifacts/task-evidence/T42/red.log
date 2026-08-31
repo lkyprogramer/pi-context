@@ -1,0 +1,112 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ❯ |0| tests/tasks/t42.test.ts (6 tests | 6 failed) 9ms
+   × T42 W1 A0/A1/A2 live arm runner > w1_a0_a1_a2_live_arm_runner 5ms
+     → promise rejected "TypeError: (0 , cre…" instead of resolving
+   × T42 W1 A0/A1/A2 live arm runner > fails construction when production dependencies are absent 3ms
+     → expected error to match asymmetric matcher
+   × T42 W1 A0/A1/A2 live arm runner > rejects malformed arms, seeds, and unknown cases 0ms
+     → (0 , createW1ArmRunner) is not a function
+   × T42 W1 A0/A1/A2 live arm runner > replays equal arm results for the same case, arm, and seed 0ms
+     → (0 , createW1ArmRunner) is not a function
+   × T42 W1 A0/A1/A2 live arm runner > rejects a case from another corpus or workspace 0ms
+     → (0 , createW1ArmRunner) is not a function
+   × T42 W1 A0/A1/A2 live arm runner > stops at the abort boundary before loading the case 0ms
+     → (0 , createW1ArmRunner) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |0| tests/tasks/t42.test.ts > T42 W1 A0/A1/A2 live arm runner > w1_a0_a1_a2_live_arm_runner
+AssertionError: promise rejected "TypeError: (0 , cre…" instead of resolving
+ ❯ tests/tasks/t42.test.ts:144:33
+    142| describe("T42 W1 A0/A1/A2 live arm runner", () => {
+    143|   it("w1_a0_a1_a2_live_arm_runner", async () => {
+    144|     await expect(runT42Fixture()).resolves.toMatchObject({ ok: true, t…
+       |                                 ^
+    145|   });
+    146| 
+
+Caused by: TypeError: (0 , createW1ArmRunner) is not a function
+ ❯ runT42Fixture tests/tasks/t42.test.ts:105:18
+ ❯ tests/tasks/t42.test.ts:144:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |0| tests/tasks/t42.test.ts > T42 W1 A0/A1/A2 live arm runner > fails construction when production dependencies are absent
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "PCR_W1_DEPENDENCY_MISSING",
++ TypeError {
++   "message": "(0 , __vite_ssr_import_2__.createW1ArmRunner) is not a function",
+  }
+
+ ❯ tests/tasks/t42.test.ts:148:50
+    146| 
+    147|   it("fails construction when production dependencies are absent", () …
+    148|     expect(() => createW1ArmRunner({} as never)).toThrowError(
+       |                                                  ^
+    149|       expect.objectContaining({ code: "PCR_W1_DEPENDENCY_MISSING" }),
+    150|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |0| tests/tasks/t42.test.ts > T42 W1 A0/A1/A2 live arm runner > rejects malformed arms, seeds, and unknown cases
+TypeError: (0 , createW1ArmRunner) is not a function
+ ❯ tests/tasks/t42.test.ts:154:20
+    152| 
+    153|   it("rejects malformed arms, seeds, and unknown cases", async () => {
+    154|     const runner = createW1ArmRunner({
+       |                    ^
+    155|       corpusId: "pcr-bench",
+    156|       manifest: lockedManifest(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |0| tests/tasks/t42.test.ts > T42 W1 A0/A1/A2 live arm runner > replays equal arm results for the same case, arm, and seed
+TypeError: (0 , createW1ArmRunner) is not a function
+ ❯ tests/tasks/t42.test.ts:168:20
+    166| 
+    167|   it("replays equal arm results for the same case, arm, and seed", asy…
+    168|     const runner = createW1ArmRunner({
+       |                    ^
+    169|       corpusId: "pcr-bench",
+    170|       manifest: lockedManifest(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |0| tests/tasks/t42.test.ts > T42 W1 A0/A1/A2 live arm runner > rejects a case from another corpus or workspace
+TypeError: (0 , createW1ArmRunner) is not a function
+ ❯ tests/tasks/t42.test.ts:184:20
+    182|     const record = fixtureCase();
+    183|     record.corpusId = "pcr-bench-other";
+    184|     const runner = createW1ArmRunner({
+       |                    ^
+    185|       corpusId: "pcr-bench",
+    186|       manifest: lockedManifest(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |0| tests/tasks/t42.test.ts > T42 W1 A0/A1/A2 live arm runner > stops at the abort boundary before loading the case
+TypeError: (0 , createW1ArmRunner) is not a function
+ ❯ tests/tasks/t42.test.ts:197:20
+    195|   it("stops at the abort boundary before loading the case", async () =…
+    196|     let loaded = 0;
+    197|     const runner = createW1ArmRunner({
+       |                    ^
+    198|       corpusId: "pcr-bench",
+    199|       manifest: lockedManifest(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  08:05:15
+   Duration  311ms (transform 69ms, setup 0ms, collect 97ms, tests 9ms, environment 0ms, prepare 54ms)
+

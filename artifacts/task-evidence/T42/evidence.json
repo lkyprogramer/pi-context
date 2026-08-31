@@ -1,0 +1,32 @@
+{
+  "graphId": "pi-context-runtime-v2-audit-rearchitecture-plan-v1.0.0",
+  "taskId": "T42",
+  "status": "review-candidate",
+  "parentCommit": "03b1e0f3ba279a149b3970e982942228882d79cf",
+  "redLog": "artifacts/task-evidence/T42/red.log",
+  "greenLog": "artifacts/task-evidence/T42/green.log",
+  "fullGateLog": "artifacts/task-evidence/T42/full-gate.log",
+  "acceptance": {
+    "publicInterfacesCompile": true,
+    "sameTraceAllArms": true,
+    "piNativeCompactorOnly": true,
+    "ingressIsolatedFromCompactor": true,
+    "repositoryGateFiles": 145,
+    "repositoryGateTests": 698,
+    "acceptanceGateTests": 32
+  },
+  "files": {
+    "blockers/T42-scope-expansion.md": "30180f75f3de87256359763b64f866660ddc25d06c157b46ec6f4e582593ae1f",
+    "packages/benchmark/package.json": "26b97fec81d6136843da2987c327748c96ef8b23e1f359e7d66109b45341ee99",
+    "packages/benchmark/src/index.ts": "210151fc968536adc069f019330c322aa5c1953c899b5f4aa6a8ea59564cd702",
+    "packages/benchmark/src/arms/w1.ts": "f1eab01277d096160ed155a4cac8db5499ef87c527b1832d2ef02e8165d16543",
+    "tests/live/w1-paired.test.ts": "4af357c31c8e7a661576ed50bb9d7a806428ce5f730fc2ed1c7b63466ed6eb2a",
+    "tests/tasks/t42.test.ts": "e37c1406b35e68f07a2b99f7e1cd0d1201c696b30a11daf69a8df862503bcaa7",
+    "artifacts/task-evidence/T42/preflight-git.txt": "f77395684e50af0b6bde7901a7243f1b9b368d461a67dee9f232c9f68d79ec0e",
+    "artifacts/task-evidence/T42/preflight-toolchain.txt": "9870c4dadae90a6a834e61f250fb36fd9dfe1f8353a9ea3a7a75a4176aca3b3e",
+    "artifacts/task-evidence/T42/red.log": "990d6f886e0691cd82778590b5ff9704aa907fb259b0c878c3d497287582f6c2",
+    "artifacts/task-evidence/T42/green.log": "d05b143e4a2eeef00777ad2cc15b1e8f834821a1b70cd9a1533cf1d5b1ab6d24",
+    "artifacts/task-evidence/T42/full-gate.log": "eb5f6bde94615d610d898565dda66a7b8ee70e4fa841622994a8a1d3c54a4944",
+    "artifacts/task-evidence/T42/changed-files.json": "67af0c529ccf9c460517fc985cdd1ff403bd40c2e032c214813c0bedcfea88ba"
+  }
+}

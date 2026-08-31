@@ -1,0 +1,14 @@
+ DEPRECATED  The workspace file is deprecated and will be removed in the next major. Please, use the `test.projects` field in the root config file instead.
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ |0| tests/tasks/t42.test.ts (6 tests) 14ms
+(node:29188) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |0| tests/live/w1-paired.test.ts (1 test) 94ms
+
+ Test Files  2 passed (2)
+      Tests  7 passed (7)
+   Start at  08:08:19
+   Duration  816ms (transform 333ms, setup 0ms, collect 581ms, tests 109ms, environment 0ms, prepare 172ms)
+

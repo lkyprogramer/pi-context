@@ -38,5 +38,18 @@ export {
   type TraceCaptureStore,
   type TraceErrorCode,
 } from "./trace/index.js";
+export {
+  W1ArmError,
+  createW1ArmRunner,
+  type ArmResult,
+  type CreateW1ArmRunnerInput,
+  type W1ArmCase,
+  type W1ArmCaseCatalog,
+  type W1ArmErrorCode,
+  type W1ArmId,
+  type W1ArmRunner,
+  type W1IngressPort,
+  type W1RecallPort,
+} from "./arms/w1.js";
 
 
