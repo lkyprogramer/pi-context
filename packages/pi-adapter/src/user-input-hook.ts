@@ -10,7 +10,7 @@ import type {
   SessionTreeEvent,
 } from "@earendil-works/pi-coding-agent";
 import { domainHash, type RuntimeCursor } from "@pcr/contracts";
-import type { UserInputReceipt, UserTurnService } from "@pcr/runtime";
+import type { UserInputEvent, UserInputReceipt, UserTurnService } from "@pcr/runtime";
 
 /*
  * This runtime import is intentional: Pi's extension loader aliases the package
@@ -24,15 +24,27 @@ if (PiHost.PCR_INGRESS_METADATA_CONTRACT !== "pcr-ingress-metadata-v1") {
 const METADATA_NAMESPACE = "pcr.user-input-receipt.v1";
 const INPUT_ID_PATTERN = /^pi_input_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
+export interface RuntimeSessionUserIngress {
+  ingestUserInput(input: UserInputEvent): Promise<UserInputReceipt>;
+  link(receiptId: string, hostMessageId: string): Promise<unknown>;
+  abandon(receiptId: string, reason: "handled"): Promise<unknown>;
+}
+
+export type UserInputIngress = UserTurnService | RuntimeSessionUserIngress;
+
 export interface UserInputHookDependencies {
   cursor(ctx: ExtensionContext): RuntimeCursor;
-  service(cursor: Readonly<RuntimeCursor>, ctx: ExtensionContext): UserTurnService | Promise<UserTurnService>;
+  service(cursor: Readonly<RuntimeCursor>, ctx: ExtensionContext): UserInputIngress | Promise<UserInputIngress>;
   clock: { now(): number };
   onHardFailure(
     error: unknown,
     phase: "capture" | "handled" | "link" | "metadata" | "unsupported-images",
     ctx: ExtensionContext,
   ): void | Promise<void>;
+}
+
+function isRuntimeSessionUserIngress(value: UserInputIngress): value is RuntimeSessionUserIngress {
+  return typeof (value as RuntimeSessionUserIngress).ingestUserInput === "function";
 }
 
 export interface RegisteredUserInputHook {
@@ -212,14 +224,17 @@ export function registerUserInputHook(
         streamingBehavior: event.streamingBehavior ?? null,
       })}`;
       const service = await dependencies.service(cursor, ctx);
-      const receipt = await service.capture({
+      const payload: UserInputEvent = {
         operationId,
         cursor,
         rawText: event.text,
         sourceClass: sourceClass(event.source),
         capturedAt,
         ...(ctx.signal === undefined ? {} : { signal: ctx.signal }),
-      });
+      };
+      const receipt = isRuntimeSessionUserIngress(service)
+        ? await service.ingestUserInput(payload)
+        : await service.capture(payload);
       const originSessionId = ctx.sessionManager.getSessionId();
       if (originSessionId !== cursor.sessionId) throw new TypeError("PCR_PI_INPUT_SESSION_MISMATCH");
       const ingressMetadata = {

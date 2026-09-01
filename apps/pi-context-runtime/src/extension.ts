@@ -1,4 +1,4 @@
-import { ackHostCompaction, emptyPiCompactionUsage, failStagedCompaction, type StagedCompaction } from "../../../packages/pi-adapter/src/compaction-ack.js";
+import { emptyPiCompactionUsage } from "../../../packages/pi-adapter/src/compaction-ack.js";
 import {
   registerCompactionHooks,
   type CompactionDecision,
@@ -17,7 +17,8 @@ import { createRuntimeCursor, estimateTextTokens } from "../../../packages/core/
 import { collectCompactionSourceTexts, type SessionCompactionDecision } from "../../../packages/runtime/src/index.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { registerOperationsCommands } from "./commands/operations.js";
-import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
+import { REQUIRED_PI_CAPABILITIES } from "../../../packages/pi-adapter/src/capabilities.js";
+import { runRuntimeDoctor } from "./doctor.js";
 import { claimPiContextOwner } from "./owner.js";
 import { derivePiSessionContext, registerProductionUserTurnRuntime, type PiRuntimeContext } from "./composition-root.js";
 
@@ -148,7 +149,6 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   }, {
     open: (sessionCtx) => userTurns.openSession(sessionCtx),
   });
-  let staged: StagedCompaction | null = null;
   registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
     async prepareCompaction(event, ctx) {
       try {
@@ -181,34 +181,46 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         return { kind: "native-fallback" };
       }
     },
-    async stageCompaction(result) {
-      staged = {
-        candidate: {
-          firstKeptEntryId: result.firstKeptEntryId,
-          summary: result.summary,
-          tokensBefore: result.tokensBefore,
-          estimatedTokensAfter: result.estimatedTokensAfter,
-          details: result.details,
-        },
-        result,
-      };
-    },
-    async ackHostCompaction(entry) {
-      ackHostCompaction(staged, entry, () => {
-        staged = null;
+    async stageCompaction(result, ctx) {
+      const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      const pending = await userTurns.pendingCompaction(cursor);
+      if (pending?.outputHash === result.details.outputHash && pending.firstKeptEntryId === result.firstKeptEntryId) {
+        return;
+      }
+      await userTurns.stageCompaction({
+        cursor,
+        outputHash: result.details.outputHash,
+        firstKeptEntryId: result.firstKeptEntryId,
+        payloadJson: JSON.stringify(result),
       });
     },
-    async failStagedCompaction() {
-      failStagedCompaction(staged, () => {
-        staged = null;
+    async ackHostCompaction(entry, ctx) {
+      if (!entry) return;
+      const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+      await userTurns.ensure(ctx as never);
+      const session = await userTurns.openSession(derived);
+      const ack = session.acknowledgeCompaction;
+      if (typeof ack !== "function") {
+        throw Object.assign(new Error("PCR_COMPACTION_ACK_UNSUPPORTED"), { code: "PCR_COMPACTION_ACK_UNSUPPORTED" });
+      }
+      await ack.call(session, {
+        operationId: "op_ack_compact",
+        cursor: sessionCursor(derived),
+        firstKeptEntryId: entry.firstKeptEntryId,
+        outputHash: entry.details.outputHash,
       });
+    },
+    async failStagedCompaction(_event, ctx) {
+      const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      await userTurns.failStagedCompaction(cursor);
     },
   });
-  let lastRecoveredCursor: RuntimeCursor | undefined;
+  const cursorsBySession = new Map<string, RuntimeCursor>();
+  const sessionKey = (cursor: RuntimeCursor) => `${cursor.workspaceId}:${cursor.sessionId}`;
   registerSessionLifecycle(pi as never, {
     async openSession(ctx, reason, hasRawBlobs = true) {
       const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
-      lastRecoveredCursor = cursor;
+      cursorsBySession.set(sessionKey(cursor), cursor);
       await userTurns.ensure(ctx as never);
       const report = await userTurns.recover({
         cursor,
@@ -216,51 +228,61 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         hasRawBlobs,
         signal: ctx.signal,
       });
-      lastRecoveredCursor = report.cursor;
+      cursorsBySession.set(sessionKey(report.cursor), report.cursor);
       return report.cursor;
     },
     async switchBranch(ctx, newLeafId) {
-      const previous = lastRecoveredCursor;
       await userTurns.ensure(ctx as never);
       const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
-      if (previous) {
-        await userTurns.branchChanged({ cursor, previousCursor: previous, newLeafId, signal: ctx.signal });
+      const previous = cursorsBySession.get(sessionKey(cursor));
+      if (!previous) {
+        throw Object.assign(new Error("PCR_LIFECYCLE_PREVIOUS_CURSOR_MISSING"), {
+          code: "PCR_LIFECYCLE_PREVIOUS_CURSOR_MISSING",
+        });
       }
-      lastRecoveredCursor = cursor;
+      await userTurns.branchChanged({ cursor, previousCursor: previous, newLeafId, signal: ctx.signal });
+      cursorsBySession.set(sessionKey(cursor), cursor);
     },
     async closeSession(ctx) {
-      const cursor = lastRecoveredCursor ?? sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      const derived = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+      const cursor = cursorsBySession.get(sessionKey(derived)) ?? derived;
       await userTurns.closeSession(cursor);
+      cursorsBySession.delete(sessionKey(cursor));
     },
     async invalidateRouteCandidates() {},
   });
+  const semanticBeta = process.env.PCR_SEMANTIC_BETA === "1";
   let worker: CandidateWorker | undefined;
-  const backgroundSnapshot = (): CandidateSnapshot => {
-    const cursor = lastRecoveredCursor ?? createRuntimeCursor({
-      workspacePath: process.cwd(),
-      sessionId: "unbound",
-      leafId: null,
-      lineageEntryIds: ["unbound"],
-      modelKey: "unbound",
-    });
+  const backgroundSnapshot = (_event?: unknown, ctx?: unknown): CandidateSnapshot => {
+    const derived = ctx
+      ? sessionCursor(derivePiSessionContext(ctx as PiRuntimeContext, identity))
+      : undefined;
+    const cursor = derived && cursorsBySession.get(sessionKey(derived)) || derived;
+    if (!cursor) {
+      throw Object.assign(new Error("PCR_BACKGROUND_CURSOR_MISSING"), { code: "PCR_BACKGROUND_CURSOR_MISSING" });
+    }
     return {
       workspaceId: cursor.workspaceId,
       sessionId: cursor.sessionId,
       leafId: cursor.leafId ?? "header",
       lineageHash: cursor.lineageHash,
-      sourceHead: "src_runtime",
+      sourceHead: domainHash("session-source", cursor.lineageHash),
       modelKey: cursor.modelKey,
       thinkingLevel: "off",
       contextWindow: 128000,
-      systemPromptHash: "sys_runtime",
-      activeToolSetHash: "tools_runtime",
-      reducerRevisionSet: "red_runtime",
-      extractorRevision: "ext_runtime",
+      systemPromptHash: domainHash("session-system", { sessionId: cursor.sessionId, modelKey: cursor.modelKey }),
+      activeToolSetHash: domainHash("session-tools", { sessionId: cursor.sessionId, modelKey: cursor.modelKey }),
+      reducerRevisionSet: domainHash("session-reducer", cursor.lineageHash),
+      extractorRevision: domainHash("session-extractor", cursor.lineageHash),
       schemaVersion: "1",
-      configFingerprint: "cfg_runtime",
+      configFingerprint: domainHash("session-config", {
+        workspaceId: cursor.workspaceId,
+        sessionId: cursor.sessionId,
+        modelKey: cursor.modelKey,
+      }),
     };
   };
-  registerBackgroundHook(pi as never, {
+  if (semanticBeta) registerBackgroundHook(pi as never, {
     isHardPath: isHardBackgroundPath,
     snapshot: backgroundSnapshot,
     get worker() {
@@ -330,13 +352,15 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
     },
   };
   registerRuntimeTools(pi, {
-    workspaceId: userTurns.lastWorkspaceId() ?? "unbound",
-    cursor: {
-      workspaceId: `ws_${"0".repeat(40)}`,
-      sessionId: "unbound",
-      leafId: null,
-      lineageHash: "0".repeat(64),
-      modelKey: "unbound",
+    get workspaceId() {
+      const id = userTurns.lastWorkspaceId();
+      if (!id) {
+        throw Object.assign(new Error("PCR_RUNTIME_TOOLS_CURSOR_MISSING"), { code: "PCR_RUNTIME_TOOLS_CURSOR_MISSING" });
+      }
+      return id;
+    },
+    get cursor(): RuntimeCursor {
+      throw Object.assign(new Error("PCR_RUNTIME_TOOLS_CURSOR_MISSING"), { code: "PCR_RUNTIME_TOOLS_CURSOR_MISSING" });
     },
     evidence: deferredEvidence,
     claimed: true,
@@ -351,20 +375,24 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         }
       },
       doctor: async (ctx) => {
-        const workspaceId = (await userTurns.resolveTools(ctx).catch(() => undefined))?.cursor.workspaceId
-          ?? userTurns.lastWorkspaceId()
-          ?? ctx.workspaceId
-          ?? "unbound";
+        const bound = await userTurns.resolveTools(ctx).catch(() => undefined);
+        const workspaceId = bound?.cursor.workspaceId ?? userTurns.lastWorkspaceId() ?? ctx.workspaceId;
+        if (!workspaceId) {
+          throw Object.assign(new Error("PCR_RUNTIME_TOOLS_CURSOR_MISSING"), { code: "PCR_RUNTIME_TOOLS_CURSOR_MISSING" });
+        }
+        const dataRoot = typeof ctx.cwd === "string" && ctx.cwd.length > 0 ? ctx.cwd : process.cwd();
         return JSON.stringify({
           command: "context-doctor",
           workspaceId,
           ...(await runRuntimeDoctor(
-            fixtureEnvironment({
+            {
+              packages: [],
               nodeVersion: process.versions.node,
               piVersion: "0.84.4",
-              packages: [],
+              capabilities: REQUIRED_PI_CAPABILITIES.filter((name) => name !== "agent_settled" || semanticBeta),
               trusted: true,
-            }),
+              dataRoot,
+            },
             { conflictPolicy: "strict" },
           )),
         });
@@ -381,7 +409,11 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   });
   registerOperationsCommands(pi, {
     get workspaceId() {
-      return userTurns.lastWorkspaceId() ?? "unbound";
+      const id = userTurns.lastWorkspaceId();
+      if (!id) {
+        throw Object.assign(new Error("PCR_RUNTIME_TOOLS_CURSOR_MISSING"), { code: "PCR_RUNTIME_TOOLS_CURSOR_MISSING" });
+      }
+      return id;
     },
   });
   return {

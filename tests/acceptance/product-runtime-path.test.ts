@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, rmSync, statSync, unlinkSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -148,6 +148,14 @@ async function createProductSession() {
 }
 
 describe("product runtime SQLite/FTS/CAS path", () => {
+  it("does not return owner.service or owner.observation from production hook resolvers", () => {
+    const source = readFileSync("apps/pi-context-runtime/src/composition-root.ts", "utf8");
+    expect(source).not.toMatch(/return owner\.service\(cursor\)/);
+    expect(source).not.toMatch(/return owner\.observation\(cursor\)/);
+    expect(source).toMatch(/ingestUserInput:\s*\(input\)\s*=>\s*session\.ingestUserInput\(input\)/);
+    expect(source).toMatch(/ingestToolResult:\s*\(input\)\s*=>\s*session\.ingestToolResult\(input\)/);
+  });
+
   it("admits tool_result into the same store that context_search and context_read use", async () => {
     const { session, tools, cursor, manager } = await createProductSession();
     try {
@@ -285,6 +293,67 @@ describe("product runtime SQLite/FTS/CAS path", () => {
       expect(compaction?.summary.includes("must-not/active")).toBe(false);
       expect(compaction?.summary.includes("do not deploy production")).toBe(true);
       expect(compaction?.summary.includes("改为 version 7")).toBe(true);
+    } finally {
+      await (session as unknown as { dispose?: () => void }).dispose?.();
+    }
+  });
+
+  it("uses the same runtime snapshot hash for materialize rows and product compaction", async () => {
+    const { session, manager, cursor, beforeCompact, root } = await createProductSession();
+    try {
+      manager.appendMessage({ role: "user", content: "do not deploy production; 改为 version 7" } as never);
+      const result = await beforeCompact!(
+        {
+          reason: "threshold",
+          preparation: {
+            tokensBefore: 8000,
+            firstKeptEntryId: "entry-keep",
+            allow: true,
+            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7" }],
+          },
+        },
+        {
+          abort() {},
+          cwd: manager.getCwd(),
+          sessionManager: manager,
+          model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
+          workspaceId: cursor.workspaceId,
+          sessionId: manager.getSessionId(),
+        },
+      );
+      const details = (result as { compaction?: { details?: { reducerRevisions?: string[] } } } | undefined)?.compaction?.details;
+      const snapshotLine = details?.reducerRevisions?.find((item) => item.startsWith("snapshot:"));
+      expect(snapshotLine).toMatch(/^snapshot:[a-f0-9]{64}$/u);
+    } finally {
+      await (session as unknown as { dispose?: () => void }).dispose?.();
+    }
+  });
+
+  it("hard-stops product compact on an unpaired tool result", async () => {
+    const { session, manager, cursor, beforeCompact } = await createProductSession();
+    try {
+      let aborted = 0;
+      const result = await beforeCompact!(
+        {
+          reason: "threshold",
+          preparation: {
+            tokensBefore: 8000,
+            firstKeptEntryId: "entry-keep",
+            allow: true,
+            messagesToSummarize: [{ role: "toolResult", toolCallId: "orphan-call", id: "r-orphan" }],
+          },
+        },
+        {
+          abort() { aborted += 1; },
+          cwd: manager.getCwd(),
+          sessionManager: manager,
+          model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
+          workspaceId: cursor.workspaceId,
+          sessionId: manager.getSessionId(),
+        },
+      );
+      expect(aborted).toBe(1);
+      expect(result).toEqual({ cancel: true });
     } finally {
       await (session as unknown as { dispose?: () => void }).dispose?.();
     }

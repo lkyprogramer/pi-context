@@ -1,0 +1,14 @@
+CMD: pnpm vitest run tests/fault/compaction-ack-recovery.test.ts --config vitest.integration.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:8803) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/fault/compaction-ack-recovery.test.ts (2 tests) 26ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  21:33:26
+   Duration  633ms (transform 267ms, setup 0ms, collect 403ms, tests 26ms, environment 0ms, prepare 52ms)
+
+EXIT:0

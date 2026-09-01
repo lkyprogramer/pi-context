@@ -7,12 +7,12 @@ export interface BackgroundEvent {
 
 export interface BackgroundRuntime {
   isHardPath?(event: BackgroundEvent): boolean;
-  snapshot(): Promise<CandidateSnapshot> | CandidateSnapshot;
+  snapshot(event?: BackgroundEvent, ctx?: unknown): Promise<CandidateSnapshot> | CandidateSnapshot;
   worker: CandidateWorker;
 }
 
 export interface BackgroundExtensionAPI {
-  on(hook: string, handler: (event: BackgroundEvent, ctx: unknown) => Promise<unknown>): void;
+  on(hook: string, handler: (event: BackgroundEvent, ctx?: unknown) => Promise<unknown>): void;
 }
 
 export function isHardBackgroundPath(event: BackgroundEvent): boolean {
@@ -20,9 +20,9 @@ export function isHardBackgroundPath(event: BackgroundEvent): boolean {
 }
 
 export function registerBackgroundHook(pi: BackgroundExtensionAPI, runtime: BackgroundRuntime): void {
-  pi.on("agent_settled", async (event) => {
+  pi.on("agent_settled", async (event, ctx) => {
     if (runtime.isHardPath?.(event) || isHardBackgroundPath(event)) return;
-    const snapshot = await runtime.snapshot();
+    const snapshot = await runtime.snapshot(event, ctx);
     await runtime.worker.ensure(snapshot, { wait: false });
   });
 }

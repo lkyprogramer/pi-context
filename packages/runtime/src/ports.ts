@@ -107,6 +107,7 @@ export type SessionCompactionDecision =
 
 export interface CompactionAckInput extends CancellableRuntimeOperation {
   firstKeptEntryId: string;
+  outputHash: string;
 }
 
 export interface CompactionPort {

@@ -1,0 +1,27 @@
+CMD: pnpm vitest run tests/acceptance/runtime-concurrency.test.ts tests/fault/runtime-concurrency.test.ts --config vitest.acceptance.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:8906) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/runtime-concurrency.test.ts (1 test) 7ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:33:30
+   Duration  1.16s (transform 313ms, setup 0ms, collect 916ms, tests 7ms, environment 0ms, prepare 50ms)
+
+EXIT:0
+=== B15 fault ===
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:9813) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/fault/runtime-concurrency.test.ts (1 test) 5ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:34:40
+   Duration  1.37s (transform 320ms, setup 0ms, collect 1.12s, tests 5ms, environment 0ms, prepare 62ms)
+

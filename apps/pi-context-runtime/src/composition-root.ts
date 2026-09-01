@@ -26,9 +26,10 @@ import {
 } from "../../../packages/pi-adapter/src/index.js";
 import {
   assembleRuntimeSnapshot,
+  buildFullCheckpointState,
   collectCompactionSourceTexts,
+  CompactionJournalError,
   createCompactionService,
-  createCompactionSnapshotAssembler,
   createEvidenceService,
   createPointerCheck,
   createObservationService,
@@ -37,6 +38,9 @@ import {
   createRuntimeSessionRegistry,
   createUserTurnService,
   RuntimeSessionRegistryError,
+  type CompactionJournal,
+  type CompactionSnapshotAssembler,
+  type StagedCompactionRecord,
   type BranchChange,
   type CandidateRepository,
   type CompactionClaim,
@@ -62,6 +66,7 @@ import {
   openWorkspaceEvidenceRepository,
   openWorkspaceSagaJournal,
   openWorkspaceSqliteStore,
+  openWorkspaceCompactionJournal,
   openWorkspaceStateStore,
   openWorkspaceUserTurnLedger,
   type EncryptedBlobStore,
@@ -329,12 +334,22 @@ export interface ProductionUserTurnRuntime {
   readonly hook: RegisteredUserInputHook;
   close(): Promise<void>;
   lastWorkspaceId(): string | undefined;
+  lastSnapshotHash(workspaceId?: string): Promise<string | undefined>;
   lastPointers(): ReadonlyArray<{ ref: string; kind: string }>;
   ensure(ctx: ExtensionContext): Promise<void>;
   openSession(ctx: PiSessionContext): Promise<RuntimeSession>;
   recover(input: SessionStart): Promise<SessionRecoveryReport>;
   branchChanged(input: BranchChange): Promise<void>;
   closeSession(cursor: RuntimeCursor): Promise<void>;
+  stageCompaction(input: {
+    cursor: RuntimeCursor;
+    outputHash: string;
+    firstKeptEntryId: string;
+    payloadJson: string;
+  }): Promise<void>;
+  ackCompaction(input: { cursor: RuntimeCursor; outputHash: string; firstKeptEntryId: string }): Promise<void>;
+  pendingCompaction(cursor: RuntimeCursor): Promise<StagedCompactionRecord | null>;
+  failStagedCompaction(cursor: RuntimeCursor): Promise<void>;
   persistBackgroundCandidate(input: {
     workspaceId: string;
     sessionId: string;
@@ -365,6 +380,9 @@ interface WorkspaceUserTurnOwner {
   readonly services: Map<string, UserTurnService>;
   readonly observations: Map<string, ObservationService>;
   readonly evidences: Map<string, EvidenceService>;
+  readonly compactionJournal: CompactionJournal;
+  lastRuntimeSnapshotHash?: string;
+  readonly snapshotHashByCursor: Map<string, string>;
   service(cursor: RuntimeCursor): UserTurnService;
   observation(cursor: RuntimeCursor): ObservationService;
   evidence(cursor: RuntimeCursor): EvidenceService;
@@ -475,6 +493,7 @@ export function registerProductionUserTurnRuntime(
         const services = new Map<string, UserTurnService>();
         const observations = new Map<string, ObservationService>();
         const evidences = new Map<string, EvidenceService>();
+        const compactionJournal = openWorkspaceCompactionJournal({ database });
         const owner: WorkspaceUserTurnOwner = {
           dataRoot,
           database,
@@ -490,6 +509,8 @@ export function registerProductionUserTurnRuntime(
           services,
           observations,
           evidences,
+          compactionJournal,
+          snapshotHashByCursor: new Map(),
           evidence(candidate) {
             const key = cursorKey(candidate);
             let service = evidences.get(key);
@@ -710,42 +731,62 @@ export function registerProductionUserTurnRuntime(
       planner: createSectionPlanner({ cursor, pricer }),
       cache,
     });
+    const compactionAssembler: CompactionSnapshotAssembler = {
+      async assemble(request) {
+        request.signal?.throwIfAborted();
+        const rows = await owner.state.readSnapshot(cursor);
+        const continuity = (rows.continuity as ContinuityRevision | null) ?? emptyContinuityRevision(cursor);
+        const claims = rows.claims
+          .filter((row) => row.status === "active")
+          .map((row) => ({
+            claimId: row.claimId,
+            key: row.key,
+            polarity: row.polarity,
+            status: row.status,
+            value: row.value,
+          })) as CompactionClaim[];
+        const pointers = rows.pointers.map((row) => ({ ref: row.ref, kind: row.kind }));
+        const runtime = assembleRuntimeSnapshot({
+          cursor,
+          directives: rows.directives.filter((row) => row.status === "active"),
+          claims,
+          continuity,
+          pointers,
+          sourceEntryIds: rows.sourceEntryIds,
+          schemaVersion: rows.schemaVersion,
+        });
+        owner.lastRuntimeSnapshotHash = runtime.snapshotHash;
+        owner.snapshotHashByCursor.set(cursorKey(cursor), runtime.snapshotHash);
+        const full = buildFullCheckpointState(cursor, {
+          directives: runtime.activeDirectives,
+          claims: runtime.claims,
+          taskFronts: runtime.continuity.taskFronts,
+          errors: [],
+          validation: [],
+          nextSafeActions: runtime.continuity.nextSafeActions,
+          sideEffects: [],
+        });
+        return {
+          snapshotHash: runtime.snapshotHash,
+          cursor: runtime.cursor,
+          assembledAt: request.now,
+          reason: request.reason,
+          directives: runtime.activeDirectives,
+          continuity: runtime.continuity,
+          claims,
+          pointers,
+          heads: runtime.heads,
+          errors: full.errors,
+          validation: full.validation,
+          sideEffects: full.sideEffects,
+          nextSafeActions: full.nextSafeActions,
+          taskFronts: full.taskFronts,
+        };
+      },
+    };
     const compaction = createCompactionService({
       cursor,
-      assembler: createCompactionSnapshotAssembler({
-        cursor,
-        transaction: {
-          async run(work) {
-            return work();
-          },
-        },
-        directives: {
-          async active(scope, signal) {
-            signal?.throwIfAborted();
-            return resolver.active(scope, signal);
-          },
-        },
-        continuity: {
-          async current(scope) {
-            return ((await owner.state.headContinuity(scope)) as ContinuityRevision | null)
-              ?? emptyContinuityRevision(scope);
-          },
-        },
-        claims: {
-          async list(scope, signal) {
-            signal?.throwIfAborted();
-            const rows = await owner.state.listClaims(scope);
-            return rows.filter((row) => row.status === "active") as CompactionClaim[];
-          },
-        },
-        evidence: {
-          async pointers(scope, signal) {
-            signal?.throwIfAborted();
-            const snapshot = await owner.state.readSnapshot(scope);
-            return snapshot.pointers;
-          },
-        },
-      }),
+      assembler: compactionAssembler,
       renderer: createCheckpointRenderer({ cursor }),
       verifier: createCheckpointVerifier({
         cursor,
@@ -780,15 +821,23 @@ export function registerProductionUserTurnRuntime(
         async materialize(request) {
           const rows = await owner.state.readSnapshot(cursor);
           const continuity = (rows.continuity as ContinuityRevision | null) ?? emptyContinuityRevision(cursor);
-          assembleRuntimeSnapshot({
+          const runtimeSnapshot = assembleRuntimeSnapshot({
             cursor,
             directives: rows.directives.filter((row) => row.status === "active"),
-            claims: rows.claims.filter((row) => row.status === "active"),
+            claims: rows.claims.filter((row) => row.status === "active").map((row) => ({
+              claimId: row.claimId,
+              key: row.key,
+              polarity: row.polarity,
+              status: row.status,
+              value: row.value,
+            })) as CompactionClaim[],
             continuity,
             pointers: rows.pointers,
             sourceEntryIds: rows.sourceEntryIds,
             schemaVersion: rows.schemaVersion,
           });
+          owner.lastRuntimeSnapshotHash = runtimeSnapshot.snapshotHash;
+          owner.snapshotHashByCursor.set(cursorKey(cursor), runtimeSnapshot.snapshotHash);
           const imageBlocks = request.canonicalMessages.reduce((count, message) => (
             count + message.content.filter((block) => block.type === "image-ref").length
           ), 0);
@@ -834,9 +883,29 @@ export function registerProductionUserTurnRuntime(
               });
             }
           }
-          return compaction.prepareCompaction(input);
+          const decision = await compaction.prepareCompaction(input);
+          if (decision.kind === "pcr") {
+            await owner.compactionJournal.stage({
+              cursor,
+              outputHash: decision.result.details.outputHash,
+              firstKeptEntryId: decision.result.firstKeptEntryId,
+              payloadJson: JSON.stringify(decision.result),
+              now: input.now,
+            });
+          }
+          return decision;
         },
-        async acknowledge() {},
+        async acknowledge(input) {
+          if (typeof input.outputHash !== "string" || input.outputHash.length === 0) {
+            throw new CompactionJournalError("PCR_COMPACTION_JOURNAL_INPUT_INVALID", { field: "outputHash" });
+          }
+          await owner.compactionJournal.ack({
+            cursor,
+            outputHash: input.outputHash,
+            firstKeptEntryId: input.firstKeptEntryId,
+            signal: input.signal,
+          });
+        },
       },
       retrieval: {
         search: (input) => evidence.search({ cursor: input.cursor, text: input.text, limit: input.limit, signal: input.signal }),
@@ -879,17 +948,21 @@ export function registerProductionUserTurnRuntime(
   }
 
   async function ownerByWorkspace(workspaceId: string | undefined): Promise<WorkspaceUserTurnOwner | undefined> {
-    if (workspaceId && owners.has(workspaceId)) return owners.get(workspaceId);
-    if (owners.size === 1) return [...owners.values()][0];
-    return undefined;
+    if (!workspaceId) return undefined;
+    return owners.get(workspaceId);
   }
 
   const hook = registerUserInputHook(pi, {
     cursor: cursorFromContext,
     async service(cursor, ctx) {
       const owner = await ownerFor(cursor, ctx);
-      await sessionFor(owner, cursor, ctx);
-      return owner.service(cursor);
+      const session = await sessionFor(owner, cursor, ctx);
+      const turns = owner.service(cursor);
+      return {
+        ingestUserInput: (input) => session.ingestUserInput(input),
+        link: (receiptId, hostMessageId) => turns.link(receiptId, hostMessageId),
+        abandon: (receiptId, reason) => turns.abandon(receiptId, reason),
+      };
     },
     clock,
     async onHardFailure(error, phase, ctx) {
@@ -900,8 +973,10 @@ export function registerProductionUserTurnRuntime(
     cursor: cursorFromContext,
     async service(cursor, ctx) {
       const owner = await ownerFor(cursor, ctx);
-      await sessionFor(owner, cursor, ctx);
-      return owner.observation(cursor);
+      const session = await sessionFor(owner, cursor, ctx);
+      return {
+        ingestToolResult: (input) => session.ingestToolResult(input),
+      };
     },
     clock,
     async onHardFailure(error, phase, ctx) {
@@ -916,13 +991,57 @@ export function registerProductionUserTurnRuntime(
     const rejected = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
     if (rejected) throw rejected.reason;
   };
-  pi.on("session_shutdown", async () => close());
+  pi.on("session_shutdown", async (event, ctx) => {
+    const host = (ctx && typeof ctx === "object" && "sessionManager" in ctx)
+      ? ctx as ExtensionContext
+      : (event && typeof event === "object" && "sessionManager" in event)
+        ? event as ExtensionContext
+        : undefined;
+    if (!host) {
+      throw Object.assign(new Error("PCR_SESSION_SHUTDOWN_CURSOR_INVALID"), {
+        code: "PCR_SESSION_SHUTDOWN_CURSOR_INVALID",
+      });
+    }
+    let cursor: RuntimeCursor;
+    try {
+      cursor = cursorFromContext(host);
+    } catch (error) {
+      throw Object.assign(error instanceof Error ? error : new Error(String(error)), {
+        code: "PCR_SESSION_SHUTDOWN_CURSOR_INVALID",
+      });
+    }
+    const opening = await ownerByWorkspace(cursor.workspaceId);
+    if (!opening) return;
+    const closing: RuntimeSession[] = [];
+    for (const [key, session] of opening.sessions) {
+      const parsed = JSON.parse(key) as [string, string];
+      if (parsed[0] === cursor.workspaceId && parsed[1] === cursor.sessionId) {
+        opening.sessions.delete(key);
+        closing.push(session);
+      }
+    }
+    opening.cursorsBySession.delete(cursor.sessionId);
+    await Promise.all(closing.map((session) => session.close?.() ?? Promise.resolve()));
+    if (opening.sessions.size === 0) {
+      owners.delete(cursor.workspaceId);
+      await opening.close();
+    }
+  });
   return Object.freeze({
     hook,
     close,
     lastWorkspaceId() {
       if (owners.size !== 1) return undefined;
       return [...owners.keys()][0];
+    },
+    async lastSnapshotHash(workspaceId) {
+      const opening = workspaceId
+        ? owners.get(workspaceId)
+        : (owners.size === 1 ? [...owners.values()][0] : undefined);
+      if (!opening) return undefined;
+      const owner = await opening;
+      if (owner.snapshotHashByCursor.size === 1) return [...owner.snapshotHashByCursor.values()][0];
+      return owner.lastRuntimeSnapshotHash;
     },
     lastPointers() {
       const collected: Array<{ ref: string; kind: string }> = [];
@@ -1008,7 +1127,34 @@ export function registerProductionUserTurnRuntime(
       if (!opening) return;
       const session = opening.sessions.get(cursorKey(cursor));
       opening.sessions.delete(cursorKey(cursor));
+      opening.cursorsBySession.delete(cursor.sessionId);
       await session?.close?.();
+    },
+    async stageCompaction(input) {
+      const opening = await ownerByWorkspace(input.cursor.workspaceId);
+      if (!opening) return;
+      await opening.compactionJournal.stage({
+        cursor: input.cursor,
+        outputHash: input.outputHash,
+        firstKeptEntryId: input.firstKeptEntryId,
+        payloadJson: input.payloadJson,
+        now: clock.now(),
+      });
+    },
+    async ackCompaction(input) {
+      const opening = await ownerByWorkspace(input.cursor.workspaceId);
+      if (!opening) return;
+      await opening.compactionJournal.ack(input);
+    },
+    async pendingCompaction(cursor) {
+      const opening = await ownerByWorkspace(cursor.workspaceId);
+      if (!opening) return null;
+      return opening.compactionJournal.pending(cursor);
+    },
+    async failStagedCompaction(cursor) {
+      const opening = await ownerByWorkspace(cursor.workspaceId);
+      if (!opening) return;
+      await opening.compactionJournal.fail({ cursor });
     },
     async persistBackgroundCandidate(input: {
       workspaceId: string;
@@ -1020,7 +1166,7 @@ export function registerProductionUserTurnRuntime(
       configFingerprint: string;
     }) {
       if (input.sessionId === "unbound" || input.modelKey === "unbound") return;
-      const opening = owners.get(input.workspaceId) ?? (owners.size === 1 ? [...owners.values()][0] : undefined);
+      const opening = owners.get(input.workspaceId);
       if (!opening) return;
       const owner = await opening;
       await owner.candidates.prepare({

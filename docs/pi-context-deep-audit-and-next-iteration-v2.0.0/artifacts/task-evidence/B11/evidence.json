@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B11",
+  "status": "done",
+  "currentHead": "bd804bb5a4a469dd9d2cb472ae2de3392efdde4f",
+  "allowedDiffSha256": "e60df5399140c75a8db5288f2d889031fac74932ea9bedbe08c788373b4a88c6",
+  "sourceDigest": "86a74f5cd3651cdaa5a5f47e98f45dcc9e1abeaedcf06299921bbbf19609a19a",
+  "red": {
+    "command": "B11-red",
+    "exitCode": 1,
+    "logSha256": "34402e9a096e89a1dc82fd800f6444c70c620cbce0c910dd8ea154000a7c2b5b"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/runtime/test/runtime-snapshot.test.ts tests/integration/snapshot-consistency.test.ts",
+    "exitCode": 0,
+    "logSha256": "9fd67de332bc9a7c07b657471d7f041d194599a9e4adb7b438694aac4b950109"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "8d666881c3084b9b3dd894d03fc39523422b2ac75568841af5e8c12dcf1374d2"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B11-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W1-full-gate.log"
+    }
+  ],
+  "findingsClosed": [
+    "NF006"
+  ],
+  "dirty": false
+}

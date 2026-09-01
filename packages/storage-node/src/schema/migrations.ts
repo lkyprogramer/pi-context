@@ -293,6 +293,29 @@ CREATE INDEX cache_receipt_scope ON cache_receipt (
 );
 `;
 
+const V8_SQL = `
+CREATE TABLE compaction_stage (
+  stage_id TEXT PRIMARY KEY CHECK (length(stage_id) > 0),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  output_hash TEXT NOT NULL CHECK (length(output_hash) = 64 AND output_hash NOT GLOB '*[^0-9a-f]*'),
+  first_kept_entry_id TEXT NOT NULL CHECK (length(first_kept_entry_id) > 0),
+  payload_json TEXT NOT NULL CHECK (json_valid(payload_json)),
+  generation INTEGER NOT NULL CHECK (generation >= 0),
+  state TEXT NOT NULL CHECK (state IN ('staged', 'acked', 'failed')),
+  recorded_at INTEGER NOT NULL CHECK (recorded_at >= 0)
+) STRICT;
+
+CREATE INDEX compaction_stage_scope ON compaction_stage (
+  workspace_id, session_id, leaf_id, lineage_hash, model_key, generation, recorded_at
+);
+`;
+
 export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = Object.freeze([
   Object.freeze({ version: 1, name: "workspace-evidence-v1", sql: V1_SQL }),
   Object.freeze({ version: 2, name: "workspace-saga-v2", sql: V2_SQL }),
@@ -301,6 +324,7 @@ export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = 
   Object.freeze({ version: 5, name: "workspace-evidence-fts-v5", sql: V5_SQL }),
   Object.freeze({ version: 6, name: "workspace-background-candidate-v6", sql: V6_SQL }),
   Object.freeze({ version: 7, name: "workspace-runtime-state-v7", sql: V7_SQL }),
+  Object.freeze({ version: 8, name: "workspace-compaction-stage-v8", sql: V8_SQL }),
 ]);
 
 export const WORKSPACE_SQLITE_SCHEMA_VERSION = WORKSPACE_SQLITE_MIGRATIONS.at(-1)?.version ?? 0;

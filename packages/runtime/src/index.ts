@@ -12,6 +12,7 @@ export * from "./lease-service.js";
 export * from "./token-calibration.js";
 export * from "./compaction/snapshot.js";
 export * from "./compaction-service.js";
+export * from "./compaction-journal.js";
 export * from "./compaction/retention.js";
 export * from "./recovery-service.js";
 export * from "./semantic/port.js";

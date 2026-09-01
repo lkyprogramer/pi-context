@@ -101,4 +101,12 @@ describe("cursor-scoped session registry", () => {
     const branched = await root.open(host(firstManager, "other-model"));
     expect(branched).not.toBe(switched);
   });
+
+  it("does not keep a single lastRecoveredCursor fallback in the default extension", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync("apps/pi-context-runtime/src/extension.ts", "utf8");
+    expect(source).not.toMatch(/lastRecoveredCursor/);
+    expect(source).toMatch(/cursorsBySession/);
+    expect(source).toMatch(/PCR_LIFECYCLE_PREVIOUS_CURSOR_MISSING/);
+  });
 });

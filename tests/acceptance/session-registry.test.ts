@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { blobId, domainHash } from "@pcr/contracts";
 import { createRuntimeCursor } from "@pcr/core";
@@ -7,12 +10,18 @@ import {
   createProductionCompositionRoot,
   createProductionPiContextExtension,
   derivePiSessionContext,
+  registerProductionUserTurnRuntime,
   type PiRuntimeContext,
   type ProductionSessionResourcesFactory,
 } from "pi-context-runtime/composition-root";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
 
-afterEach(resetOwnerForTest);
+const roots: string[] = [];
+
+afterEach(() => {
+  resetOwnerForTest();
+  for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true });
+});
 
 const identity = { create: createRuntimeCursor };
 
@@ -102,6 +111,14 @@ function host() {
 }
 
 describe("production session registry acceptance", () => {
+  it("does not close every workspace owner from a single session_shutdown", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync("apps/pi-context-runtime/src/composition-root.ts", "utf8");
+    expect(source).not.toMatch(/pi\.on\("session_shutdown", async \(\) => close\(\)\)/);
+    expect(source).toMatch(/session_shutdown", async \(event, ctx\)/);
+    expect(source).toMatch(/PCR_SESSION_SHUTDOWN_CURSOR_INVALID/);
+  });
+
   it("derives stable identity from a real Pi 0.84.4 SessionManager without fixture IDs", () => {
     const manager = SessionManager.inMemory("/tmp/pcr-t08-workspace");
     const ctx = actualPiContext(manager);
@@ -237,6 +254,44 @@ describe("production session registry acceptance", () => {
     await pi.hooks.get("session_shutdown")!({ type: "session_shutdown", reason: "quit" }, actualPiContext(manager));
     expect(disposals).toHaveLength(2);
     extension.release?.();
+  });
+
+  it("keeps a sibling production session after session-scoped shutdown", async () => {
+    const root = mkdtempSync(join(tmpdir(), "pcr-shutdown-scope-"));
+    roots.push(root);
+    const hooks = new Map<string, (event: unknown, ctx: PiRuntimeContext) => Promise<unknown>>();
+    const runtime = registerProductionUserTurnRuntime({
+      on(name: string, handler: (event: unknown, ctx: PiRuntimeContext) => Promise<unknown>) {
+        hooks.set(name, handler);
+      },
+      registerTool() {},
+      registerCommand() {},
+      hasTool() { return false; },
+    } as never, { dataRoot: () => root });
+    const first = SessionManager.inMemory(join(root, "a"));
+    const second = SessionManager.inMemory(join(root, "b"));
+    const ctxA = actualPiContext(first);
+    const ctxB = actualPiContext(second);
+    await runtime.ensure(ctxA as never);
+    await runtime.ensure(ctxB as never);
+    const sessionA = await runtime.openSession(derivePiSessionContext(ctxA, identity));
+    const sessionB = await runtime.openSession(derivePiSessionContext(ctxB, identity));
+    await sessionA.ingestUserInput({
+      operationId: "op-a",
+      cursor: derivePiSessionContext(ctxA, identity),
+      rawText: "alpha",
+      sourceClass: "authenticated-user",
+      capturedAt: 1,
+    });
+    await hooks.get("session_shutdown")!({ type: "session_shutdown", reason: "quit" }, ctxA);
+    await expect(sessionB.ingestUserInput({
+      operationId: "op-b",
+      cursor: derivePiSessionContext(ctxB, identity),
+      rawText: "beta",
+      sourceClass: "authenticated-user",
+      capturedAt: 2,
+    })).resolves.toMatchObject({ operationId: "op-b" });
+    await runtime.close();
   });
 
   it("fails closed before lifecycle registration when stateful resources are absent", () => {

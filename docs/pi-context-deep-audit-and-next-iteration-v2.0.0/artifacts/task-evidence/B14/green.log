@@ -1,0 +1,25 @@
+CMD: pnpm vitest run tests/acceptance/default-profile.test.ts tests/security/scope-isolation.test.ts --config vitest.acceptance.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/acceptance/default-profile.test.ts (1 test) 2ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:33:29
+   Duration  216ms (transform 20ms, setup 0ms, collect 15ms, tests 2ms, environment 0ms, prepare 57ms)
+
+EXIT:0
+=== B14 security ===
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:9783) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/security/scope-isolation.test.ts (1 test) 17ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:34:38
+   Duration  720ms (transform 296ms, setup 0ms, collect 429ms, tests 17ms, environment 0ms, prepare 70ms)
+

@@ -1,4 +1,4 @@
-import { estimateTextTokens, type CheckpointRenderer, type CheckpointVerifier } from "@pcr/core";
+import { estimateTextTokens, twoRunHash, verifyHardGates, type CheckpointRenderer, type CheckpointVerifier, type ToolPairMessage } from "@pcr/core";
 import type { HostCheckpointDetails, RuntimeCursor } from "@pcr/contracts";
 
 import type { CompactionSnapshotAssembler } from "./compaction/snapshot.js";
@@ -145,6 +145,16 @@ function mapAssemblerError(error: unknown): never {
   throw error;
 }
 
+function toolPairMessages(value: unknown): ToolPairMessage[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const record = item as ToolPairMessage;
+    if (typeof record.role !== "string") return [];
+    return [record];
+  });
+}
+
 export function uniqueShortRefs(values: readonly string[], minLength = 12): Map<string, string> {
   const unique = [...new Set(values.filter((value) => typeof value === "string" && value.length > 0))];
   let length = minLength;
@@ -253,7 +263,34 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
         mapAssemblerError(error);
       }
       request.signal?.throwIfAborted();
+      const pairMessages = toolPairMessages(request.messagesToSummarize);
+      const hardGate = verifyHardGates({
+        messages: pairMessages,
+        firstKeptId: request.firstKeptEntryId,
+        payload: {
+          snapshotHash: snapshot.snapshotHash,
+          firstKeptEntryId: request.firstKeptEntryId,
+          pointers: snapshot.pointers,
+        },
+      });
+      if (!hardGate.toolPairOk) {
+        return { kind: "hard-stop", code: "PCR_HARD_GATE_TOOL_PAIR" };
+      }
+      const keptIndex = pairMessages.findIndex((item) => (
+        item.hostMessageId === request.firstKeptEntryId || item.id === request.firstKeptEntryId
+      ));
+      if (keptIndex >= 0) {
+        const kept = pairMessages[keptIndex]!;
+        const isResult = kept.role === "toolResult" || kept.role === "tool-result";
+        if (isResult) {
+          return { kind: "hard-stop", code: "PCR_HARD_GATE_BROKEN_TAIL" };
+        }
+      }
       const checkpoint = await renderer.render(snapshot, request.signal);
+      const secondCheckpoint = await renderer.render(snapshot, request.signal);
+      if (twoRunHash(checkpoint) !== twoRunHash(secondCheckpoint)) {
+        return { kind: "hard-stop", code: "PCR_HARD_GATE_HASH_DRIFT" };
+      }
       const report = await verifier.verify(snapshot, checkpoint, request.signal);
       if (!report.ok) {
         return { kind: "hard-stop", code: report.issues[0]?.code ?? "PCR_CHECKPOINT_VERIFY_FAILED" };
@@ -292,6 +329,10 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
             outputHash: report.outputHash,
             reducerRevisions: [
               `snapshot:${checkpoint.snapshotHash}`,
+              `hard-gate:toolPairOk=${hardGate.toolPairOk}`,
+              `hard-gate:outputHash=${hardGate.outputHash}`,
+              `hard-gate:secondRunHash=${hardGate.secondRunHash}`,
+              `hard-gate:retainedTail=${hardGate.retainedTailIds.join(",")}`,
               ...checkpoint.pointers.map((item) => `pointer:${String((item as { kind?: string }).kind ?? "blob")}:${String((item as { ref?: string }).ref ?? "")}`),
             ],
           },

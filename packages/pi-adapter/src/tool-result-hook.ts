@@ -18,15 +18,25 @@ interface ToolResultEventResult {
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
 
+export interface RuntimeSessionToolIngress {
+  ingestToolResult(input: ToolObservation): Promise<ProjectedToolResult>;
+}
+
+export type ToolResultIngress = ObservationService | RuntimeSessionToolIngress;
+
 export interface ToolResultHookDependencies {
   cursor(ctx: ExtensionContext): RuntimeCursor;
-  service(cursor: Readonly<RuntimeCursor>, ctx: ExtensionContext): ObservationService | Promise<ObservationService>;
+  service(cursor: Readonly<RuntimeCursor>, ctx: ExtensionContext): ToolResultIngress | Promise<ToolResultIngress>;
   clock: { now(): number };
   onHardFailure(
     error: unknown,
     phase: "ingest" | "integrity",
     ctx: ExtensionContext,
   ): void | Promise<void>;
+}
+
+function isRuntimeSessionToolIngress(value: ToolResultIngress): value is RuntimeSessionToolIngress {
+  return typeof (value as RuntimeSessionToolIngress).ingestToolResult === "function";
 }
 
 export interface ToolResultHost {
@@ -130,7 +140,7 @@ export function registerToolResultHook(
         toolName: event.toolName,
       })}`;
       const service = await dependencies.service(cursor, ctx);
-      const projected = await service.ingest({
+      const observation: ToolObservation = {
         operationId,
         cursor,
         toolCallId: event.toolCallId,
@@ -143,7 +153,10 @@ export function registerToolResultHook(
         sourceClass: sourceClass(event.toolName),
         authority: "inform",
         ...(ctx?.signal === undefined ? {} : { signal: ctx.signal }),
-      });
+      };
+      const projected = isRuntimeSessionToolIngress(service)
+        ? await service.ingestToolResult(observation)
+        : await service.ingest(observation);
       return toHostResult(projected, event);
     } catch (error) {
       await fail(error, "integrity", ctx);

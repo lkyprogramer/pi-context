@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B13",
+  "status": "done",
+  "currentHead": "bd804bb5a4a469dd9d2cb472ae2de3392efdde4f",
+  "allowedDiffSha256": "9ec22c1b3427f87109949c2243ca7a79077060fcf61c25c63109c9db42182855",
+  "sourceDigest": "3ba3a92b669b6b169d5317272435704740d98d1a92b860ce8939b2c9668c022d",
+  "red": {
+    "command": "B13-red",
+    "exitCode": 1,
+    "logSha256": "76e31b20a01b0f727321ac257358a55511e53bef15a296028c94a6d2d3a003be"
+  },
+  "green": {
+    "command": "pnpm vitest run tests/integration/checkpoint-hard-gates.test.ts tests/contract/pi-compaction-takeover.test.ts",
+    "exitCode": 0,
+    "logSha256": "c1f2a48ddd49c3f4ad07d74b6054f9e0a7eda7ca2f90aa70ed3ed8b327d3870c"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "937a6936e58a00d2679205b0f42fc8f5cd789805170fea9a7526dd7739cd571a"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B13-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W1-full-gate.log"
+    }
+  ],
+  "findingsClosed": [
+    "NF008"
+  ],
+  "dirty": false
+}

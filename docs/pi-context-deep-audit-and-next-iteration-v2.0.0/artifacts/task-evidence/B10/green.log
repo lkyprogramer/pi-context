@@ -1,0 +1,17 @@
+CMD: pnpm vitest run tests/acceptance/session-registry.test.ts tests/acceptance/multi-session-registry.test.ts --config vitest.acceptance.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:8733) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:8734) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/multi-session-registry.test.ts (2 tests) 6ms
+ ✓ tests/acceptance/session-registry.test.ts (9 tests) 11ms
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  21:33:23
+   Duration  1.29s (transform 367ms, setup 0ms, collect 2.07s, tests 17ms, environment 0ms, prepare 119ms)
+
+EXIT:0

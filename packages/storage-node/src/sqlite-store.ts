@@ -19,6 +19,7 @@ import {
   WORKSPACE_SQLITE_SCHEMA_VERSION,
   type WorkspaceSqliteMigration,
 } from "./schema/migrations.js";
+import { CompactionJournalError } from "@pcr/runtime";
 import { registerWorkspaceSqliteAccess } from "./internal/sqlite-access.js";
 
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
@@ -370,6 +371,7 @@ class WorkspaceSqliteEvidenceStoreImpl implements WorkspaceSqliteEvidenceStore {
           }
           return result;
         } catch (error) {
+          if (error instanceof CompactionJournalError) throw error;
           throw mapSqliteError(error, stage);
         }
       },
@@ -385,6 +387,7 @@ class WorkspaceSqliteEvidenceStoreImpl implements WorkspaceSqliteEvidenceStore {
           return result;
         } catch (error) {
           rollback(this.#db);
+          if (error instanceof CompactionJournalError) throw error;
           throw mapSqliteError(error, stage);
         }
       },

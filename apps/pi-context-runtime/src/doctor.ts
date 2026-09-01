@@ -1,3 +1,6 @@
+import { mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { probePiCapabilities, REQUIRED_PI_CAPABILITIES } from "../../../packages/pi-adapter/src/capabilities.js";
 import { checkKnownOwnerConflicts, type ConflictPolicy } from "./conflicts.js";
 
@@ -89,13 +92,33 @@ function checkRequiredCapabilities(env: DoctorEnvironment): DoctorFinding[] {
 
 async function checkStorageAndKeys(env: DoctorEnvironment): Promise<DoctorFinding[]> {
   const findings: DoctorFinding[] = [];
-  if (env.storageWritable === false) findings.push({ code: "PCR_STORAGE_UNWRITABLE", severity: "blocking", message: "storage is not writable" });
-  if (env.keyAvailable === false) findings.push({ code: "PCR_KEY_MISSING", severity: "blocking", message: "workspace key is missing" });
+  if (env.storageWritable === false) {
+    findings.push({ code: "PCR_STORAGE_UNWRITABLE", severity: "blocking", message: "storage is not writable" });
+  } else if (env.storageWritable !== true) {
+    if (typeof env.dataRoot !== "string" || env.dataRoot.length === 0 || !probeStorageWritable(env.dataRoot)) {
+      findings.push({ code: "PCR_STORAGE_UNWRITABLE", severity: "blocking", message: "storage is not writable" });
+    }
+  }
+  if (env.keyAvailable === false) {
+    findings.push({ code: "PCR_KEY_MISSING", severity: "blocking", message: "workspace key is missing" });
+  }
   return findings;
 }
 
+export function probeStorageWritable(dataRoot: string): boolean {
+  try {
+    mkdirSync(dataRoot, { recursive: true });
+    const probe = join(dataRoot, ".pcr-doctor-write");
+    writeFileSync(probe, "ok");
+    unlinkSync(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function checkDiskAndPermissions(env: DoctorEnvironment): DoctorFinding[] {
-  if ((env.diskFreeBytes ?? 0) < 8 * 1024 * 1024) {
+  if (typeof env.diskFreeBytes === "number" && env.diskFreeBytes < 8 * 1024 * 1024) {
     return [{ code: "PCR_DISK_LOW", severity: "blocking", message: "insufficient disk" }];
   }
   return [];

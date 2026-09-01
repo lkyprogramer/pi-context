@@ -9,3 +9,4 @@ export * from "./evidence-repository.js";
 export * from "./fts-index.js";
 export * from "./candidate-repository.js";
 export * from "./state-store.js";
+export * from "./compaction-journal.js";

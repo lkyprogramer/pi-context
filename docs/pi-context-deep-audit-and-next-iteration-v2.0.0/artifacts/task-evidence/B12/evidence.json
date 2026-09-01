@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B12",
+  "status": "done",
+  "currentHead": "bd804bb5a4a469dd9d2cb472ae2de3392efdde4f",
+  "allowedDiffSha256": "d44730d2a45576ebf98bd27411d685f4c9bfa02c0b241e2b43421656b82d9cd2",
+  "sourceDigest": "ec89a9e105994bd460173c6228328faadda2b0de54e04a5555e299c6db1207c9",
+  "red": {
+    "command": "B12-red",
+    "exitCode": 1,
+    "logSha256": "1a848017a5e39017415ceb010274aa1298deac4700529d777212a262b2d72940"
+  },
+  "green": {
+    "command": "pnpm vitest run tests/fault/compaction-ack-recovery.test.ts --config vitest.integration.config.ts",
+    "exitCode": 0,
+    "logSha256": "1eb48b83e23ac67e00f8c641903b3b3a4426ae9d9aa575e33231906ac9c1d11c"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "d4e72c412a4c6e94e1bea48d42d7183857cbcdb6c79fff5094c720bdde84c743"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B12-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W1-full-gate.log"
+    }
+  ],
+  "findingsClosed": [
+    "NF007"
+  ],
+  "dirty": false
+}

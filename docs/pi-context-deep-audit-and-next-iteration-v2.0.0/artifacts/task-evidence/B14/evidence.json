@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B14",
+  "status": "done",
+  "currentHead": "bd804bb5a4a469dd9d2cb472ae2de3392efdde4f",
+  "allowedDiffSha256": "03d45bf293401e2752a82a6774896425cd5e05ca67e6ebc56dfdfa8468bf28d0",
+  "sourceDigest": "674facdebe28b766e125e3ef0a62ce01808b8f6b85cd92c375a49f6d64731b19",
+  "red": {
+    "command": "B14-red",
+    "exitCode": 1,
+    "logSha256": "be46ccf6bd2d70a795a3e5eb5f6e233976b503680a9a4443881bb3da0ae2fa6a"
+  },
+  "green": {
+    "command": "pnpm vitest run tests/acceptance/default-profile.test.ts tests/security/scope-isolation.test.ts",
+    "exitCode": 0,
+    "logSha256": "f718d191e5e33e104d792d7813d2056b7089d2e5bd45a516c6ee92c90f423c34"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "f2ae97c8e6e71b09d91ca229760e9e3a7c6709c5f1d22a98be0c55153389af47"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B14-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W1-full-gate.log"
+    }
+  ],
+  "findingsClosed": [
+    "NF018"
+  ],
+  "dirty": false
+}

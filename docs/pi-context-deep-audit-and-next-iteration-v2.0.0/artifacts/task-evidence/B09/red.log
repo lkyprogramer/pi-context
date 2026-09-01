@@ -1,0 +1,1 @@
+B09-red: lastRecoveredCursor was a process-global fallback across sessions.

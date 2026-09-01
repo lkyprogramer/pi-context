@@ -1,0 +1,1 @@
+B12-red: compaction stage lived in a process variable; acknowledge() was empty; restart could not ack by outputHash.

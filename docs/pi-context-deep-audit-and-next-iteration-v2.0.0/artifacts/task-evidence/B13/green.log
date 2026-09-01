@@ -1,0 +1,23 @@
+CMD: pnpm vitest run tests/integration/checkpoint-hard-gates.test.ts tests/contract/pi-compaction-takeover.test.ts --config vitest.integration.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/integration/checkpoint-hard-gates.test.ts (3 tests) 11ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:33:28
+   Duration  562ms (transform 223ms, setup 0ms, collect 324ms, tests 11ms, environment 0ms, prepare 55ms)
+
+EXIT:0
+=== B13 contract takeover ===
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/contract/pi-compaction-takeover.test.ts (4 tests) 13ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  21:34:37
+   Duration  722ms (transform 297ms, setup 0ms, collect 452ms, tests 13ms, environment 0ms, prepare 59ms)
+
