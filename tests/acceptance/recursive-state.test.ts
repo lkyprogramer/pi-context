@@ -49,10 +49,25 @@ describe("recursive compaction state", () => {
       sourceClass: "authenticated-user",
       capturedAt: 1,
     });
+    const projected = await session.ingestToolResult({
+      operationId: "op-side-effect",
+      cursor: derived,
+      toolCallId: "c-deploy-receipt",
+      toolName: "bash",
+      args: { command: "echo deployed-staging" },
+      content: [{ type: "text", text: "wrote staging receipt; do not deploy production" }],
+      details: { exitCode: 0 },
+      isError: false,
+      capturedAt: 1,
+      sourceClass: "trusted-tool",
+      authority: "inform",
+    });
+    expect(projected.evidenceIds[0]).toMatch(/^ev_/u);
     const compact = session.prepareCompaction;
     expect(compact).toEqual(expect.any(Function));
+    let last: unknown;
     for (let cycle = 0; cycle < 3; cycle += 1) {
-      await compact!.call(session, {
+      last = await compact!.call(session, {
         operationId: `op-compact-${cycle}`,
         cursor: derived,
         reason: "threshold",
@@ -62,6 +77,10 @@ describe("recursive compaction state", () => {
         messagesToSummarize: [{ role: "user", content: "do not deploy production; keep version 7" }],
       });
     }
+    expect(last).toMatchObject({ kind: "pcr" });
+    const details = JSON.stringify(last);
+    expect(details).toMatch(/pointer:/u);
+    expect(details).toContain(projected.rawBlobId);
     const view = await session.materialize({
       operationId: "op-view",
       cursor: derived,

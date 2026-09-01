@@ -2,39 +2,42 @@
   "schemaVersion": 2,
   "taskId": "B16",
   "status": "done",
-  "currentHead": "74c39b86fcbac31c721546310022223caf6df2ac",
-  "allowedDiffSha256": "404a8897bc35867c91eef0302f9a81a12aa2a403ee9e9bbed0b59277783b6121",
-  "sourceDigest": "6a30068faa42fecdc69e9051199abee22fdaf0b317ae3b3e1048bd003edde0f6",
+  "currentHead": "60bb7a9114d663a65ac77d7b1b811a127d1c6167",
+  "allowedDiffSha256": "ce41a2152aedd731d169b7eed994d8f851af8eca41aae75115a0bd296f6d0840",
+  "sourceDigest": "01be76e9bc43dd137e62e88d50e9923542daceb1a68196e1126bece1128157f2",
   "red": {
     "command": "B16-red",
     "exitCode": 1,
     "logSha256": "8653da9ac592e67fb5f37ebbd77634bf4fac986300a087c943a93761eab365dd"
   },
   "green": {
-    "command": "pnpm vitest run tests/performance/token-accounting.test.ts tests/acceptance/context-budget.test.ts",
+    "command": "pnpm vitest run tests/acceptance/context-budget.test.ts --config vitest.acceptance.config.ts && pnpm vitest run tests/performance/token-accounting.test.ts --config vitest.publication.config.ts",
     "exitCode": 0,
-    "logSha256": "0f29cf11de69f02dcd38a0c9d37fef8091cf0def61c6f2d3514fe8b9b869a9f3"
+    "logSha256": "1d3f857d23b8d677c8a3d4186c850170362762e7af02e99575942c32e6e6d419"
   },
   "fullGate": {
     "command": "pnpm test:acceptance && pnpm test:integration",
     "exitCode": 0,
-    "logSha256": "ec7609d2d27067f5c2d1836a3c13f1073caec62b99911ca6bd3afaa01947b2f5"
+    "logSha256": "235ccb4b9b1fbe6eb34d440a3275350fd0a5c385c848e485c9dc25a3e7faa528"
   },
   "runBundleHashes": [],
   "acceptanceAssertions": [
     {
+      "id": "host-api-blocker",
+      "ok": true,
+      "evidence": "host-api-blocker.md"
+    },
+    {
       "id": "local-green",
       "ok": true,
-      "evidence": "B16-green.log"
+      "evidence": "green.log"
     },
     {
       "id": "wave-full-gate",
       "ok": true,
-      "evidence": "W2-full-gate.log"
+      "evidence": "full-gate.log"
     }
   ],
-  "findingsClosed": [
-    "NF016"
-  ],
+  "findingsClosed": [],
   "dirty": false
 }

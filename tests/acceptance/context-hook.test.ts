@@ -80,6 +80,93 @@ describe("context hook acceptance", () => {
     expect(result.messages.some((item) => item && typeof item === "object" && "usage" in item)).toBe(false);
   });
 
+  it("reads cacheRead/cacheWrite from sessionManager.getEntries() assistant usage", async () => {
+    const bound = createRuntimeCursor({
+      workspacePath: "/tmp/pcr-accept-cache-entries",
+      sessionId: "session-cache",
+      leafId: "leaf-cache",
+      lineageEntryIds: ["root", "leaf-cache"],
+      modelKey: "openclaw/Qwen3.8-27B-WORK",
+    });
+    let handler: ((event: { messages: unknown[] }, ctx: unknown) => Promise<{ messages: unknown[] }>) | undefined;
+    let captured: { cacheReadTokens?: number; cacheWriteTokens?: number; inputTokens?: number } | undefined;
+    registerContextHook(
+      { on(_hook, next) { handler = next as typeof handler; } },
+      createRuntimeSessionRegistry({
+        workspaceId: bound.workspaceId,
+        factory: {
+          async create() {
+            return {
+              session: {
+                async ingestUserInput() { throw new Error("unused"); },
+                async ingestToolResult() { throw new Error("unused"); },
+                async materialize(request: { providerUsage?: typeof captured }) {
+                  captured = request.providerUsage;
+                  return {
+                    viewId: "vw_cache",
+                    outputHash: "b".repeat(64),
+                    messages: [
+                      {
+                        hostMessageId: "hm_user",
+                        role: "user",
+                        timestamp: 1,
+                        sourceClass: "authenticated-user",
+                        content: [{ type: "text", text: "now" }],
+                      },
+                    ],
+                    sections: [],
+                    tokenEstimate: 1,
+                    cachePlan: {
+                      layoutVersion: 1,
+                      sectionOrder: ["active-turn"],
+                      eligiblePrefixTokens: 0,
+                      firstDifferentSection: "active-turn",
+                      previousViewId: null,
+                      providerCapability: "automatic-prefix",
+                    },
+                    omissions: [],
+                  };
+                },
+              },
+              dispose: async () => undefined,
+            };
+          },
+        },
+      }),
+    );
+    await handler!(
+      { messages: [{ role: "user", content: "now", timestamp: 1 }] },
+      {
+        abort() {},
+        workspaceId: bound.workspaceId,
+        sessionId: bound.sessionId,
+        leafId: bound.leafId,
+        lineageHash: bound.lineageHash,
+        modelKey: bound.modelKey,
+        now: 1,
+        currentContextWindow: 200_192,
+        maxOutputTokens: 16_384,
+        sessionManager: {
+          getEntries() {
+            return [{
+              type: "message",
+              message: {
+                role: "assistant",
+                usage: { cacheRead: 40, cacheWrite: 7, input: 12, output: 3 },
+              },
+            }];
+          },
+        },
+      },
+    );
+    expect(captured).toEqual({
+      cacheReadTokens: 40,
+      cacheWriteTokens: 7,
+      inputTokens: 12,
+      outputTokens: 3,
+    });
+  });
+
   it("createPiContextExtension materializes through T27 and does not rewrite a hook throw to the original list", async () => {
     let handler: ((event: { messages: unknown[] }, ctx: unknown) => Promise<{ messages: unknown[] }>) | undefined;
     const ext = createPiContextExtension({

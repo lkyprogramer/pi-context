@@ -6,7 +6,7 @@ CMD: pnpm vitest run packages/benchmark/test/performance/ablation.test.ts --conf
 
  Test Files  1 passed (1)
       Tests  2 passed (2)
-   Start at  22:15:32
-   Duration  552ms (transform 220ms, setup 0ms, collect 327ms, tests 2ms, environment 0ms, prepare 54ms)
+   Start at  23:12:04
+   Duration  609ms (transform 220ms, setup 0ms, collect 336ms, tests 2ms, environment 0ms, prepare 43ms)
 
 EXIT:0

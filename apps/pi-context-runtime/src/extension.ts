@@ -26,10 +26,19 @@ export interface ExtensionFactoryOptions {
   claimOnCreate?: boolean;
 }
 
+export interface HostToolInfo {
+  name: string;
+  description?: string;
+  parameters?: unknown;
+  promptGuidelines?: string[];
+}
+
 export interface HostExtensionAPI extends ExtensionAPI {
-  registerTool: (tool: { name: string }) => void;
+  registerTool: (tool: HostToolInfo) => void;
   registerCommand: (name: string, spec: { description: string; handler: unknown }) => void;
   hasTool?: (name: string) => boolean;
+  getAllTools?: () => HostToolInfo[];
+  getActiveTools?: () => string[];
 }
 
 export interface PiContextExtension {
@@ -112,12 +121,39 @@ function toPiDecision(decision: SessionCompactionDecision): CompactionDecision {
   return { kind: "pcr", result };
 }
 
+function serializeHostTools(tools: readonly HostToolInfo[]): string {
+  return JSON.stringify({
+    tools: tools.map((tool) => ({
+      name: tool.name,
+      ...(typeof tool.description === "string" ? { description: tool.description } : {}),
+      ...(tool.parameters === undefined ? {} : { parameters: tool.parameters }),
+      ...(Array.isArray(tool.promptGuidelines) ? { promptGuidelines: tool.promptGuidelines } : {}),
+    })),
+  });
+}
+
+function toolsJsonFromHost(pi: HostExtensionAPI, registered: readonly HostToolInfo[]): string {
+  const fromHost = typeof pi.getAllTools === "function" ? pi.getAllTools() : undefined;
+  if (Array.isArray(fromHost) && fromHost.length > 0) return serializeHostTools(fromHost);
+  const active = typeof pi.getActiveTools === "function" ? pi.getActiveTools() : undefined;
+  if (Array.isArray(active) && active.length > 0) {
+    const byName = new Map(registered.map((tool) => [tool.name, tool]));
+    return serializeHostTools(active.map((name) => byName.get(name) ?? { name }));
+  }
+  return serializeHostTools(registered);
+}
+
 function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   const owner = claimPiContextOwner("pi-context-runtime");
-  const registeredTools: Array<{ name: string }> = [];
+  const registeredTools: HostToolInfo[] = [];
   const hostRegisterTool = pi.registerTool.bind(pi);
-  pi.registerTool = ((tool: { name: string }) => {
-    registeredTools.push({ name: tool.name });
+  pi.registerTool = ((tool: HostToolInfo) => {
+    registeredTools.push({
+      name: tool.name,
+      ...(typeof tool.description === "string" ? { description: tool.description } : {}),
+      ...(tool.parameters === undefined ? {} : { parameters: tool.parameters }),
+      ...(Array.isArray(tool.promptGuidelines) ? { promptGuidelines: tool.promptGuidelines } : {}),
+    });
     return hostRegisterTool(tool);
   }) as typeof pi.registerTool;
   const userTurns = registerProductionUserTurnRuntime(pi as never);
@@ -139,15 +175,11 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
             now?: number;
             model?: { contextWindow?: number; maxTokens?: number; providerReservedTokens?: number };
             getSystemPrompt?: () => string;
-            getContextUsage?: () => { tokens?: number | null; contextWindow?: number } | undefined;
+            sessionManager?: { getEntries?: () => readonly unknown[] };
           }
           : undefined;
         const systemText = typeof host?.getSystemPrompt === "function" ? host.getSystemPrompt() : undefined;
-        const toolsJson = JSON.stringify({ tools: registeredTools });
-        const hostUsage = typeof host?.getContextUsage === "function" ? host.getContextUsage() : undefined;
-        const providerUsage = hostUsage && typeof hostUsage.tokens === "number"
-          ? { inputTokens: hostUsage.tokens }
-          : undefined;
+        const toolsJson = toolsJsonFromHost(pi, registeredTools);
         return handler(event, {
           abort: () => {
             if (typeof host?.abort === "function") host.abort();
@@ -166,7 +198,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
             : 0,
           ...(systemText === undefined ? {} : { systemText }),
           toolsJson,
-          ...(providerUsage === undefined ? {} : { providerUsage }),
+          ...(host?.sessionManager === undefined ? {} : { sessionManager: host.sessionManager }),
         });
       });
     },

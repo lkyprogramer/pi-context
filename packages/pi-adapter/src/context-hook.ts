@@ -67,6 +67,7 @@ export interface ContextHookCtx {
   systemText?: string;
   toolsJson?: string;
   providerReservedTokens?: number;
+  sessionManager?: { getEntries?: () => readonly unknown[] };
   providerUsage?: {
     inputTokens?: number;
     cacheReadTokens?: number;
@@ -227,6 +228,55 @@ function stableContextEntryId(raw: PiAgentMessage): string {
   }).slice(0, 16)}`;
 }
 
+function asNonNegativeInt(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
+export function cacheTokensFromSessionEntries(entries: readonly unknown[]): {
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+} {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as { type?: unknown; message?: unknown };
+    if (record.type !== "message" || !record.message || typeof record.message !== "object") continue;
+    const message = record.message as { role?: unknown; usage?: unknown };
+    if (message.role !== "assistant" || !message.usage || typeof message.usage !== "object") continue;
+    const usage = message.usage as Record<string, unknown>;
+    const cacheReadTokens = asNonNegativeInt(usage.cacheReadTokens) ?? asNonNegativeInt(usage.cacheRead);
+    const cacheWriteTokens = asNonNegativeInt(usage.cacheWriteTokens) ?? asNonNegativeInt(usage.cacheWrite);
+    const inputTokens = asNonNegativeInt(usage.inputTokens) ?? asNonNegativeInt(usage.input);
+    const outputTokens = asNonNegativeInt(usage.outputTokens) ?? asNonNegativeInt(usage.output);
+    if (
+      cacheReadTokens === undefined
+      && cacheWriteTokens === undefined
+      && inputTokens === undefined
+      && outputTokens === undefined
+    ) {
+      continue;
+    }
+    return {
+      ...(cacheReadTokens === undefined ? {} : { cacheReadTokens }),
+      ...(cacheWriteTokens === undefined ? {} : { cacheWriteTokens }),
+      ...(inputTokens === undefined ? {} : { inputTokens }),
+      ...(outputTokens === undefined ? {} : { outputTokens }),
+    };
+  }
+  return {};
+}
+
+function mergeProviderUsage(
+  ctx: ContextHookCtx,
+): ContextHookCtx["providerUsage"] {
+  const entries = typeof ctx.sessionManager?.getEntries === "function" ? ctx.sessionManager.getEntries() : [];
+  const fromEntries = cacheTokensFromSessionEntries(entries);
+  const merged = { ...fromEntries, ...(ctx.providerUsage ?? {}) };
+  return Object.keys(merged).length === 0 ? undefined : merged;
+}
+
 function thinkingTextFromPiMessages(messages: readonly PiAgentMessage[]): string {
   const parts: string[] = [];
   for (const message of messages) {
@@ -316,6 +366,7 @@ export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRe
       const providerReservedTokens = typeof ctx.providerReservedTokens === "number"
         ? ctx.providerReservedTokens
         : (typeof ctx.model?.providerReservedTokens === "number" ? ctx.model.providerReservedTokens : 0);
+      const providerUsage = mergeProviderUsage(ctx);
       const view = await session.materialize({
         operationId: "op_context",
         cursor,
@@ -327,7 +378,7 @@ export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRe
         ...(systemText === undefined ? {} : { systemText }),
         ...(toolsJson === undefined ? {} : { toolsJson }),
         ...(reasoningText.length === 0 ? {} : { reasoningText }),
-        ...(ctx.providerUsage === undefined ? {} : { providerUsage: ctx.providerUsage }),
+        ...(providerUsage === undefined ? {} : { providerUsage }),
         reason: "normal",
         now: typeof ctx.now === "number" && Number.isFinite(ctx.now) ? ctx.now : 0,
         signal: ctx.signal,

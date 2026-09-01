@@ -2,35 +2,35 @@
   "schemaVersion": 2,
   "taskId": "B18",
   "status": "done",
-  "currentHead": "74c39b86fcbac31c721546310022223caf6df2ac",
+  "currentHead": "60bb7a9114d663a65ac77d7b1b811a127d1c6167",
   "allowedDiffSha256": "0c973eed4d06510b9b1ccb3caf6436716ea05dbd6d3dfdeafbb9752dfa8eda28",
-  "sourceDigest": "4678883065f7c3d7f0da55c5fe453d3b433e27e2f07a883e17046ce77d33befc",
+  "sourceDigest": "1d9a26bb971d04dbcf32eeff70d595883568e6648810599ee824eaa9df7b31fb",
   "red": {
     "command": "B18-red",
     "exitCode": 1,
     "logSha256": "7904a449d27fbb140cd00bc7a870840f13abd9609e6cc534b662e782d6bf009d"
   },
   "green": {
-    "command": "pnpm vitest run packages/runtime/test/usage.test.ts packages/worker/test/telemetry-economics.test.ts",
+    "command": "pnpm vitest run packages/runtime/test/usage.test.ts packages/worker/test/telemetry-economics.test.ts --config vitest.unit.config.ts",
     "exitCode": 0,
-    "logSha256": "662a400ace9f8123d2b8f59981b4ab0eaaf11cdd958a824aedc2fa3608f5652f"
+    "logSha256": "894c22117f3c465af2277eb2622fece73606cd72d7cc7e5461081c4817f04c03"
   },
   "fullGate": {
     "command": "pnpm test:acceptance && pnpm test:integration",
     "exitCode": 0,
-    "logSha256": "e30d81561ee34c91f42f50c416aaf66e95c3ea8498ef77e686f8697e5d56a3de"
+    "logSha256": "235ccb4b9b1fbe6eb34d440a3275350fd0a5c385c848e485c9dc25a3e7faa528"
   },
   "runBundleHashes": [],
   "acceptanceAssertions": [
     {
       "id": "local-green",
       "ok": true,
-      "evidence": "B18-green.log"
+      "evidence": "green.log"
     },
     {
       "id": "wave-full-gate",
       "ok": true,
-      "evidence": "W2-full-gate.log"
+      "evidence": "full-gate.log"
     }
   ],
   "findingsClosed": [],

@@ -2,8 +2,8 @@
   "schemaVersion": 2,
   "taskId": "B19",
   "status": "done",
-  "currentHead": "74c39b86fcbac31c721546310022223caf6df2ac",
-  "allowedDiffSha256": "6e1e6eefac188c2ab310649dd236681583cc0d789c4fab69ee79f36188df27a1",
+  "currentHead": "60bb7a9114d663a65ac77d7b1b811a127d1c6167",
+  "allowedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "sourceDigest": "0f1ca237462c346c87c04906acb8f808337fa066a40d60a56d2e520e76399e85",
   "red": {
     "command": "B19-red",
@@ -11,26 +11,31 @@
     "logSha256": "29127b1aefebf2619696dbe272db07612b9db108478e709a85df172e36d2ed01"
   },
   "green": {
-    "command": "pnpm vitest run packages/benchmark/test/performance/ablation.test.ts",
+    "command": "pnpm vitest run packages/benchmark/test/performance/ablation.test.ts --config vitest.unit.config.ts",
     "exitCode": 0,
-    "logSha256": "19d2ba49370be7071b28ca64f5cb33c9f9b437045e49527d26f641ddcb0e7964"
+    "logSha256": "f94c16f9cd9619b8eeea25be687c07fa99440ce08ff3a969dc6fbc32c862e78d"
   },
   "fullGate": {
     "command": "pnpm test:acceptance && pnpm test:integration",
     "exitCode": 0,
-    "logSha256": "c9297b758c91cee932bd14f5a86a909d7150e617c8125eff7c5ba3f6cdbbff55"
+    "logSha256": "235ccb4b9b1fbe6eb34d440a3275350fd0a5c385c848e485c9dc25a3e7faa528"
   },
   "runBundleHashes": [],
   "acceptanceAssertions": [
     {
+      "id": "live-cache-unrun",
+      "ok": true,
+      "evidence": "live-cache-unrun.md"
+    },
+    {
       "id": "local-green",
       "ok": true,
-      "evidence": "B19-green.log"
+      "evidence": "green.log"
     },
     {
       "id": "wave-full-gate",
       "ok": true,
-      "evidence": "W2-full-gate.log"
+      "evidence": "full-gate.log"
     }
   ],
   "findingsClosed": [],

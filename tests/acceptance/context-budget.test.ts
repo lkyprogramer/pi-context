@@ -107,6 +107,57 @@ describe("product context I_eff envelope", () => {
     await runtime.close();
   });
 
+  it("binds last-assistant cacheRead/cacheWrite from session entries onto request usage", async () => {
+    const root = mkdtempSync(join(tmpdir(), "pcr-budget-cache-"));
+    roots.push(root);
+    const runtime = registerProductionUserTurnRuntime({
+      on() {},
+      registerTool() {},
+      registerCommand() {},
+      hasTool() { return false; },
+    } as never, { dataRoot: () => root });
+    const manager = SessionManager.inMemory(root);
+    const ctx = {
+      cwd: root,
+      sessionManager: manager,
+      model: {
+        provider: "openclaw",
+        id: "Qwen3.8-27B-WORK",
+        contextWindow: 3_200,
+        maxTokens: 1_000,
+      },
+    };
+    await runtime.ensure(ctx as never);
+    const derived = derivePiSessionContext(ctx as never, { create: createRuntimeCursor });
+    const session = await runtime.openSession(derived);
+    const view = await session.materialize({
+      operationId: "op-cache",
+      cursor: derived,
+      canonicalMessages: [{
+        hostMessageId: "u-cache",
+        role: "user",
+        timestamp: 1,
+        sourceClass: "authenticated-user",
+        content: [{ type: "text", text: "now" }],
+      }],
+      currentContextWindow: 3_200,
+      maxOutputTokens: 1_000,
+      providerUsage: {
+        cacheReadTokens: 40,
+        cacheWriteTokens: 7,
+        inputTokens: 12,
+      },
+      reason: "normal",
+      now: 1,
+    });
+    const usage = await runtime.lastRequestUsage(derived.workspaceId);
+    expect(usage?.viewId).toBe(view.viewId);
+    expect(usage?.outputHash).toBe(view.outputHash);
+    expect(usage?.cacheReadTokens).toBe(40);
+    expect(usage?.cacheWriteTokens).toBe(7);
+    await runtime.close();
+  });
+
   it("reads system prompt from the real Pi ctx.getSystemPrompt() on the product extension", async () => {
     const root = mkdtempSync(join(tmpdir(), "pcr-budget-host-"));
     roots.push(root);
@@ -139,6 +190,53 @@ describe("product context I_eff envelope", () => {
     };
     const result = await handler!({ messages: history }, ctx);
     expect(result.messages.length).toBeGreaterThan(0);
+    await extension.release?.();
+  });
+
+  it("reduces Host-path history when pi.getAllTools() schema grows", async () => {
+    const root = mkdtempSync(join(tmpdir(), "pcr-budget-host-tools-"));
+    roots.push(root);
+    let handler: ((event: { messages: unknown[] }, ctx: unknown) => Promise<{ messages: unknown[] }>) | undefined;
+    let tools: Array<{ name: string; description?: string; parameters?: unknown }> = [
+      { name: "bash", description: "run", parameters: { type: "object" } },
+    ];
+    const extension = createPiContextExtension({
+      on(hook, next) {
+        if (hook === "context") handler = next as typeof handler;
+      },
+      registerTool() {},
+      registerCommand() {},
+      hasTool() { return false; },
+      getAllTools() {
+        return tools;
+      },
+    });
+    const manager = SessionManager.inMemory(root);
+    const history = Array.from({ length: 30 }, (_, index) => ({
+      role: "user",
+      content: `turn ${index} ${"history ".repeat(40)}`,
+      timestamp: index,
+    }));
+    const ctx = {
+      abort() {},
+      cwd: root,
+      sessionManager: manager,
+      model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 50_000, maxTokens: 1_000 },
+      getSystemPrompt() {
+        return "agent";
+      },
+    };
+    const compact = await handler!({ messages: history }, ctx);
+    tools = Array.from({ length: 80 }, (_, index) => ({
+      name: `tool_${index}`,
+      description: "x".repeat(2_000),
+      parameters: {
+        type: "object",
+        properties: { q: { type: "string", description: "x".repeat(2_000) } },
+      },
+    }));
+    const reduced = await handler!({ messages: history }, ctx);
+    expect(reduced.messages.length).toBeLessThan(compact.messages.length);
     await extension.release?.();
   });
 });

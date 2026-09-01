@@ -699,6 +699,20 @@ export function registerProductionUserTurnRuntime(
     }));
   }
 
+  function mergePointers(
+    stored: ReadonlyArray<{ ref: string; kind: string }>,
+    live: ReadonlyArray<{ ref: string; kind: string }>,
+  ): Array<{ ref: string; kind: string }> {
+    const seen = new Set<string>();
+    const merged: Array<{ ref: string; kind: string }> = [];
+    for (const item of [...stored, ...live]) {
+      if (seen.has(item.ref)) continue;
+      seen.add(item.ref);
+      merged.push(item);
+    }
+    return merged;
+  }
+
   function directoryMessages(pointers: ReadonlyArray<{ ref: string; kind: string }>): HostMessage[] {
     const bounded = pointers.slice(0, 16);
     if (bounded.length === 0) return [];
@@ -712,6 +726,42 @@ export function registerProductionUserTurnRuntime(
         text: bounded.map((item) => `${item.kind} ${item.ref}`).join("\n"),
       }],
     }];
+  }
+
+  function leaseMessages(leases: readonly LeaseRecord[]): HostMessage[] {
+    if (leases.length === 0) return [];
+    const lines = leases.map((lease) => (
+      `lease ${lease.leaseId} page=${lease.pageId} purpose=${lease.purpose} authority=${lease.authority} expiresAt=${lease.expiresAt}`
+    ));
+    return [{
+      hostMessageId: `lease_${domainHash("lease-view", leases.map((item) => item.leaseId)).slice(0, 16)}`,
+      role: "custom" as const,
+      timestamp: 0,
+      sourceClass: "system" as const,
+      content: [{ type: "text" as const, text: lines.join("\n") }],
+    }];
+  }
+
+  function extraStringList(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item) => {
+      if (typeof item === "string" && item.length > 0) return [item];
+      if (!item || typeof item !== "object") return [];
+      const record = item as { id?: unknown; kind?: unknown; status?: unknown; message?: unknown };
+      if (typeof record.message === "string" && record.message.length > 0) return [record.message];
+      const joined = [record.kind, record.status, record.id].filter((part) => typeof part === "string").join(":");
+      return joined.length > 0 ? [joined] : [];
+    });
+  }
+
+  function extraValidation(value: unknown): Array<{ id: string; status: string }> {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const record = item as { id?: unknown; status?: unknown };
+      if (typeof record.id !== "string" || typeof record.status !== "string") return [];
+      return [{ id: record.id, status: record.status }];
+    });
   }
 
   function recallMessages(items: ReadonlyArray<{ evidenceId: string; quote: string }>): HostMessage[] {
@@ -813,21 +863,28 @@ export function registerProductionUserTurnRuntime(
         owner.snapshotHashByCursor.set(cursorKey(cursor), runtime.snapshotHash);
         const extra = continuity as ContinuityRevision & {
           unresolvedErrors?: unknown;
+          externalSideEffects?: unknown;
           sideEffects?: unknown;
+          validationState?: unknown;
           validation?: unknown;
         };
+        const pointerReceipts = pointers.map((item) => `${item.kind}:${item.ref}`);
+        const storedEffects = extraStringList(extra.externalSideEffects);
+        const legacyEffects = extraStringList(extra.sideEffects);
         const full = buildFullCheckpointState(cursor, {
           directives: checkpointDirectives,
           claims: runtime.claims,
           taskFronts: runtime.continuity.taskFronts,
-          errors: Array.isArray(extra.unresolvedErrors) ? extra.unresolvedErrors.filter((item): item is string => typeof item === "string") : [],
-          validation: Array.isArray(extra.validation)
-            ? extra.validation.filter((item): item is { id: string; status: string } => (
-              !!item && typeof item === "object" && typeof (item as { id?: unknown }).id === "string"
-            ))
-            : [],
+          errors: extraStringList(extra.unresolvedErrors),
+          validation: extraValidation(extra.validationState).length > 0
+            ? extraValidation(extra.validationState)
+            : extraValidation(extra.validation),
           nextSafeActions: runtime.continuity.nextSafeActions,
-          sideEffects: Array.isArray(extra.sideEffects) ? extra.sideEffects.filter((item): item is string => typeof item === "string") : [],
+          sideEffects: storedEffects.length > 0
+            ? storedEffects
+            : legacyEffects.length > 0
+              ? legacyEffects
+              : pointerReceipts,
         });
         return {
           snapshotHash: runtime.snapshotHash,
@@ -995,6 +1052,11 @@ export function registerProductionUserTurnRuntime(
               [...prior, ...recall.page.items.map((item) => item.evidenceId)].slice(-32),
             );
           }
+          const activeLeases = await leaseStore.list(cursor);
+          const directoryPointers = mergePointers(
+            rows.pointers,
+            owner.pointersByCursor.get(cursorKey(cursor)) ?? [],
+          );
           const previousContinuity = owner.lastContinuityHash.get(cursorKey(cursor));
           owner.lastContinuityHash.set(cursorKey(cursor), continuity.contentHash);
           const continuityDelta = previousContinuity && previousContinuity !== continuity.contentHash
@@ -1027,8 +1089,9 @@ export function registerProductionUserTurnRuntime(
               ...claimMessages(rows.claims.filter((row) => row.status === "active")),
             ],
             ...(continuityDelta.length === 0 ? {} : { continuityDelta }),
-            directory: directoryMessages(rows.pointers),
+            directory: directoryMessages(directoryPointers),
             recall: recallMessages(recall.kind === "needed" ? recall.page.items : []),
+            warnings: leaseMessages(activeLeases),
           });
           const serializedInputTokens = view.tokenEstimate;
           const usage = reconcileUsage({

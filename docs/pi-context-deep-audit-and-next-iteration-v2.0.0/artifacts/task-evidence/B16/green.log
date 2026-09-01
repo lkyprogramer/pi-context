@@ -1,26 +1,24 @@
-CMD: pnpm vitest run tests/performance/token-accounting.test.ts tests/acceptance/context-budget.test.ts --config vitest.acceptance.config.ts
+CMD: pnpm vitest run tests/acceptance/context-budget.test.ts --config vitest.acceptance.config.ts && pnpm vitest run tests/performance/token-accounting.test.ts --config vitest.publication.config.ts
 
  RUN  v3.2.4 /Users/luo/Documents/github/pi-context
 
-(node:19666) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:27111) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ tests/acceptance/context-budget.test.ts (1 test) 70ms
+ ✓ tests/acceptance/context-budget.test.ts (4 tests) 251ms
 
  Test Files  1 passed (1)
-      Tests  1 passed (1)
-   Start at  22:15:24
-   Duration  1.54s (transform 381ms, setup 0ms, collect 1.24s, tests 70ms, environment 0ms, prepare 69ms)
+      Tests  4 passed (4)
+   Start at  23:11:56
+   Duration  2.35s (transform 547ms, setup 0ms, collect 1.63s, tests 251ms, environment 0ms, prepare 63ms)
 
-EXIT:0
-CMD: pnpm vitest run tests/performance/token-accounting.test.ts --config vitest.publication.config.ts
 
  RUN  v3.2.4 /Users/luo/Documents/github/pi-context
 
- ✓ tests/performance/token-accounting.test.ts (1 test) 10ms
+ ✓ tests/performance/token-accounting.test.ts (1 test) 9ms
 
  Test Files  1 passed (1)
       Tests  1 passed (1)
-   Start at  22:15:26
-   Duration  427ms (transform 143ms, setup 0ms, collect 208ms, tests 10ms, environment 0ms, prepare 56ms)
+   Start at  23:11:59
+   Duration  497ms (transform 139ms, setup 0ms, collect 204ms, tests 9ms, environment 0ms, prepare 47ms)
 
 EXIT:0
