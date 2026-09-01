@@ -32,6 +32,7 @@ export interface MaterializationRequest {
   systemTokens?: number;
   toolsTokens?: number;
   imageReserveTokens?: number;
+  reasoningTokens?: number;
   reason: "normal" | "overflow-retry" | "manual-preview";
   now: number;
   signal?: AbortSignal;
@@ -211,6 +212,7 @@ export function createMaterializer(input: CreateMaterializerInput): Materializer
           ...(request.systemTokens === undefined ? {} : { systemTokens: request.systemTokens }),
           ...(request.toolsTokens === undefined ? {} : { toolsTokens: request.toolsTokens }),
           ...(request.imageReserveTokens === undefined ? {} : { imageReserveTokens: request.imageReserveTokens }),
+          ...(request.reasoningTokens === undefined ? {} : { reasoningTokens: request.reasoningTokens }),
         });
       } catch (error) {
         mapBoundError(error);

@@ -20,6 +20,20 @@ export interface ContextHookSession {
     canonicalMessages: readonly HostMessage[];
     currentContextWindow: number;
     maxOutputTokens: number;
+    providerReservedTokens?: number;
+    systemTokens?: number;
+    toolsTokens?: number;
+    imageReserveTokens?: number;
+    reasoningTokens?: number;
+    systemText?: string;
+    toolsJson?: string;
+    reasoningText?: string;
+    providerUsage?: {
+      inputTokens?: number;
+      cacheReadTokens?: number;
+      cacheWriteTokens?: number;
+      outputTokens?: number;
+    };
     reason: "normal" | "overflow-retry" | "manual-preview";
     now: number;
     signal?: AbortSignal;
@@ -39,7 +53,7 @@ export interface ExtensionAPI {
 
 export interface ContextHookCtx {
   abort(): void;
-  model?: { id?: string };
+  model?: { id?: string; providerReservedTokens?: number };
   thinkingLevel?: string;
   signal?: AbortSignal;
   workspaceId?: string;
@@ -50,6 +64,15 @@ export interface ContextHookCtx {
   now?: number;
   currentContextWindow?: number;
   maxOutputTokens?: number;
+  systemText?: string;
+  toolsJson?: string;
+  providerReservedTokens?: number;
+  providerUsage?: {
+    inputTokens?: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+    outputTokens?: number;
+  };
 }
 
 export interface NormalizedPcrError {
@@ -204,6 +227,25 @@ function stableContextEntryId(raw: PiAgentMessage): string {
   }).slice(0, 16)}`;
 }
 
+function thinkingTextFromPiMessages(messages: readonly PiAgentMessage[]): string {
+  const parts: string[] = [];
+  for (const message of messages) {
+    if (!message || typeof message !== "object") continue;
+    const thinking = (message as { thinking?: unknown }).thinking;
+    if (typeof thinking === "string" && thinking.length > 0) parts.push(thinking);
+    if (!Array.isArray(message.content)) continue;
+    for (const block of message.content) {
+      if (!block || typeof block !== "object") continue;
+      const record = block as { type?: unknown; thinking?: unknown; text?: unknown };
+      if (record.type === "thinking" && typeof record.text === "string" && record.text.length > 0) {
+        parts.push(record.text);
+      }
+      if (typeof record.thinking === "string" && record.thinking.length > 0) parts.push(record.thinking);
+    }
+  }
+  return parts.join("\n");
+}
+
 function cursorFrom(context: PiSessionContext): RuntimeCursor {
   return {
     workspaceId: context.workspaceId,
@@ -265,12 +307,27 @@ export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRe
       if (typeof ctx.maxOutputTokens !== "number" || !Number.isFinite(ctx.maxOutputTokens) || ctx.maxOutputTokens < 0) {
         throw Object.assign(new Error("PCR_BUDGET_ROUTE_UNKNOWN"), { code: "PCR_BUDGET_ROUTE_UNKNOWN" });
       }
+      const imageBlocks = canonical.reduce((count, message) => (
+        count + message.content.filter((block) => block.type === "image-ref").length
+      ), 0);
+      const systemText = typeof ctx.systemText === "string" ? ctx.systemText : undefined;
+      const toolsJson = typeof ctx.toolsJson === "string" ? ctx.toolsJson : undefined;
+      const reasoningText = thinkingTextFromPiMessages(event.messages);
+      const providerReservedTokens = typeof ctx.providerReservedTokens === "number"
+        ? ctx.providerReservedTokens
+        : (typeof ctx.model?.providerReservedTokens === "number" ? ctx.model.providerReservedTokens : 0);
       const view = await session.materialize({
         operationId: "op_context",
         cursor,
         canonicalMessages: canonical,
         currentContextWindow: ctx.currentContextWindow,
         maxOutputTokens: ctx.maxOutputTokens,
+        providerReservedTokens,
+        imageReserveTokens: imageBlocks * 765,
+        ...(systemText === undefined ? {} : { systemText }),
+        ...(toolsJson === undefined ? {} : { toolsJson }),
+        ...(reasoningText.length === 0 ? {} : { reasoningText }),
+        ...(ctx.providerUsage === undefined ? {} : { providerUsage: ctx.providerUsage }),
         reason: "normal",
         now: typeof ctx.now === "number" && Number.isFinite(ctx.now) ? ctx.now : 0,
         signal: ctx.signal,

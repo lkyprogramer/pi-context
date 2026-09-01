@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B17",
+  "status": "done",
+  "currentHead": "74c39b86fcbac31c721546310022223caf6df2ac",
+  "allowedDiffSha256": "acd9b08b7bf57d4ee0d2379444abecff79b673c13ed911378e550a618dc33697",
+  "sourceDigest": "2ed75651cf7377984aaa0ddc4022dbc8105c0c85442dd32d8dd1a22a81b87565",
+  "red": {
+    "command": "B17-red",
+    "exitCode": 1,
+    "logSha256": "69f2fc9b4d45ce315d4b67a35e6b8d40e91e4a358aacfbf7776e005d0e4fbf2c"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/runtime/test/proactive-recall.test.ts tests/acceptance/materialized-recall.test.ts",
+    "exitCode": 0,
+    "logSha256": "95f43832635b67b51ac3c856365b687f725dac6d4b424fc8b8b38a63e8227b30"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "9f76e6b634e2ef875edb7eb03f59ecc5fc47391fce29ffd686fdeba493f2a0f3"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B17-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W2-full-gate.log"
+    }
+  ],
+  "findingsClosed": [
+    "NF017"
+  ],
+  "dirty": false
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B19",
+  "status": "done",
+  "currentHead": "74c39b86fcbac31c721546310022223caf6df2ac",
+  "allowedDiffSha256": "6e1e6eefac188c2ab310649dd236681583cc0d789c4fab69ee79f36188df27a1",
+  "sourceDigest": "0f1ca237462c346c87c04906acb8f808337fa066a40d60a56d2e520e76399e85",
+  "red": {
+    "command": "B19-red",
+    "exitCode": 1,
+    "logSha256": "29127b1aefebf2619696dbe272db07612b9db108478e709a85df172e36d2ed01"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/benchmark/test/performance/ablation.test.ts",
+    "exitCode": 0,
+    "logSha256": "19d2ba49370be7071b28ca64f5cb33c9f9b437045e49527d26f641ddcb0e7964"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "c9297b758c91cee932bd14f5a86a909d7150e617c8125eff7c5ba3f6cdbbff55"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B19-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W2-full-gate.log"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

@@ -80,6 +80,7 @@ export {
   envelopeFromRaw,
   priceEnvelope,
   priceRawPayload,
+  reasoningTextFromMessages,
   serializedEnvelopeText,
   serializedRawPayload,
   type EnvelopeMessage,

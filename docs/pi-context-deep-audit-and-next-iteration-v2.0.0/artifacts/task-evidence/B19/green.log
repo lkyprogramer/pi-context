@@ -1,0 +1,12 @@
+CMD: pnpm vitest run packages/benchmark/test/performance/ablation.test.ts --config vitest.unit.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark/test/performance/ablation.test.ts (2 tests) 2ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  22:15:32
+   Duration  552ms (transform 220ms, setup 0ms, collect 327ms, tests 2ms, environment 0ms, prepare 54ms)
+
+EXIT:0

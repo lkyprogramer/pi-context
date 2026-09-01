@@ -125,3 +125,20 @@ export function priceRawPayload(raw: unknown): number {
   const text = serializedRawPayload(raw);
   return text.length === 0 ? 0 : estimateTextTokens(text);
 }
+
+export function reasoningTextFromMessages(messages: readonly unknown[]): string {
+  const parts: string[] = [];
+  for (const message of messages) {
+    if (!message || typeof message !== "object") continue;
+    collectValue(parts, (message as { thinking?: unknown }).thinking, 0);
+    const content = (message as { content?: unknown }).content;
+    if (Array.isArray(content)) {
+      for (const block of content) {
+        if (!block || typeof block !== "object") continue;
+        const record = block as EnvelopeBlock & { type?: string };
+        if (record.type === "thinking" || typeof record.thinking === "string") collectBlock(parts, record);
+      }
+    }
+  }
+  return parts.join("\n");
+}

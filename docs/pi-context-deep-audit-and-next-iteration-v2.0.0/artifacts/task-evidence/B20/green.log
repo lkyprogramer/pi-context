@@ -1,0 +1,28 @@
+CMD: pnpm vitest run tests/acceptance/recursive-state.test.ts --config vitest.acceptance.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:19850) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/recursive-state.test.ts (1 test) 81ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:15:33
+   Duration  1.28s (transform 338ms, setup 0ms, collect 974ms, tests 81ms, environment 0ms, prepare 53ms)
+
+EXIT:0
+CMD: pnpm vitest run tests/fault/recursive-restart.test.ts --config vitest.integration.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:19880) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/fault/recursive-restart.test.ts (1 test) 91ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  22:15:35
+   Duration  1.25s (transform 324ms, setup 0ms, collect 953ms, tests 91ms, environment 0ms, prepare 56ms)
+
+EXIT:0

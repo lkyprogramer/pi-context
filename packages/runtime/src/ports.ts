@@ -66,6 +66,16 @@ export interface MaterializationRequest extends CancellableRuntimeOperation {
   systemTokens?: number;
   toolsTokens?: number;
   imageReserveTokens?: number;
+  reasoningTokens?: number;
+  systemText?: string;
+  toolsJson?: string;
+  reasoningText?: string;
+  providerUsage?: {
+    inputTokens?: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+    outputTokens?: number;
+  };
   reason: "normal" | "overflow-retry" | "manual-preview";
   now: number;
 }

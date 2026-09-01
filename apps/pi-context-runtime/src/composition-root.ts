@@ -14,6 +14,7 @@ import {
   createRuntimeCursor,
   createSectionPlanner,
   createTokenPricer,
+  createProactiveRecallPolicy,
   emptyContinuityRevision,
   reservesFromPayload,
   type CacheReceiptRecord,
@@ -30,6 +31,9 @@ import {
   collectCompactionSourceTexts,
   CompactionJournalError,
   createCompactionService,
+  createLeaseService,
+  estimateErrorBucket,
+  reconcileUsage,
   createEvidenceService,
   createPointerCheck,
   createObservationService,
@@ -40,6 +44,8 @@ import {
   RuntimeSessionRegistryError,
   type CompactionJournal,
   type CompactionSnapshotAssembler,
+  type LeaseRecord,
+  type LeaseStore,
   type StagedCompactionRecord,
   type BranchChange,
   type CandidateRepository,
@@ -74,6 +80,7 @@ import {
   type WorkspaceSqliteEvidenceStore,
   type WorkspaceStateStore,
 } from "../../../packages/storage-node/src/index.js";
+import { createMemorySink, emitTelemetry } from "../../../packages/worker/src/telemetry/sink.js";
 import { claimPiContextOwner } from "./owner.js";
 
 export type PiRuntimeContext = Pick<ExtensionContext, "cwd" | "model" | "sessionManager" | "signal">;
@@ -335,6 +342,7 @@ export interface ProductionUserTurnRuntime {
   close(): Promise<void>;
   lastWorkspaceId(): string | undefined;
   lastSnapshotHash(workspaceId?: string): Promise<string | undefined>;
+  lastRequestUsage(workspaceId?: string): Promise<(ReturnType<typeof reconcileUsage> & { viewId: string; outputHash: string; estimateBucket: ReturnType<typeof estimateErrorBucket> }) | undefined>;
   lastPointers(): ReadonlyArray<{ ref: string; kind: string }>;
   ensure(ctx: ExtensionContext): Promise<void>;
   openSession(ctx: PiSessionContext): Promise<RuntimeSession>;
@@ -383,6 +391,11 @@ interface WorkspaceUserTurnOwner {
   readonly compactionJournal: CompactionJournal;
   lastRuntimeSnapshotHash?: string;
   readonly snapshotHashByCursor: Map<string, string>;
+  readonly leases: Map<string, LeaseRecord>;
+  readonly recalledBySession: Map<string, string[]>;
+  readonly lastContinuityHash: Map<string, string>;
+  lastUsage?: ReturnType<typeof reconcileUsage> & { viewId: string; outputHash: string; estimateBucket: ReturnType<typeof estimateErrorBucket> };
+  readonly telemetry: ReturnType<typeof createMemorySink>;
   service(cursor: RuntimeCursor): UserTurnService;
   observation(cursor: RuntimeCursor): ObservationService;
   evidence(cursor: RuntimeCursor): EvidenceService;
@@ -511,6 +524,10 @@ export function registerProductionUserTurnRuntime(
           evidences,
           compactionJournal,
           snapshotHashByCursor: new Map(),
+          leases: new Map(),
+          recalledBySession: new Map(),
+          lastContinuityHash: new Map(),
+          telemetry: createMemorySink(),
           evidence(candidate) {
             const key = cursorKey(candidate);
             let service = evidences.get(key);
@@ -682,6 +699,40 @@ export function registerProductionUserTurnRuntime(
     }));
   }
 
+  function directoryMessages(pointers: ReadonlyArray<{ ref: string; kind: string }>): HostMessage[] {
+    const bounded = pointers.slice(0, 16);
+    if (bounded.length === 0) return [];
+    return [{
+      hostMessageId: `dir_${domainHash("directory", bounded.map((item) => item.ref)).slice(0, 16)}`,
+      role: "custom" as const,
+      timestamp: 0,
+      sourceClass: "system" as const,
+      content: [{
+        type: "text" as const,
+        text: bounded.map((item) => `${item.kind} ${item.ref}`).join("\n"),
+      }],
+    }];
+  }
+
+  function recallMessages(items: ReadonlyArray<{ evidenceId: string; quote: string }>): HostMessage[] {
+    return items.map((item) => ({
+      hostMessageId: item.evidenceId,
+      role: "custom" as const,
+      timestamp: 0,
+      sourceClass: "system" as const,
+      content: [{ type: "text" as const, text: item.quote }],
+    }));
+  }
+
+  function lastAuthenticatedUserText(messages: readonly HostMessage[]): string {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (!message || message.role !== "user" || message.sourceClass !== "authenticated-user") continue;
+      return message.content.filter((block) => block.type === "text").map((block) => block.text).join("\n");
+    }
+    return "";
+  }
+
   async function portsFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSessionPorts> {
     const userTurn = owner.service(cursor);
     const observation = owner.observation(cursor);
@@ -737,7 +788,7 @@ export function registerProductionUserTurnRuntime(
         const rows = await owner.state.readSnapshot(cursor);
         const continuity = (rows.continuity as ContinuityRevision | null) ?? emptyContinuityRevision(cursor);
         const claims = rows.claims
-          .filter((row) => row.status === "active")
+          .filter((row) => row.status === "active" || row.status === "superseded")
           .map((row) => ({
             claimId: row.claimId,
             key: row.key,
@@ -746,9 +797,12 @@ export function registerProductionUserTurnRuntime(
             value: row.value,
           })) as CompactionClaim[];
         const pointers = rows.pointers.map((row) => ({ ref: row.ref, kind: row.kind }));
+        const checkpointDirectives = rows.directives.filter((row) => (
+          row.status === "active" || row.status === "superseded"
+        ));
         const runtime = assembleRuntimeSnapshot({
           cursor,
-          directives: rows.directives.filter((row) => row.status === "active"),
+          directives: checkpointDirectives,
           claims,
           continuity,
           pointers,
@@ -757,21 +811,30 @@ export function registerProductionUserTurnRuntime(
         });
         owner.lastRuntimeSnapshotHash = runtime.snapshotHash;
         owner.snapshotHashByCursor.set(cursorKey(cursor), runtime.snapshotHash);
+        const extra = continuity as ContinuityRevision & {
+          unresolvedErrors?: unknown;
+          sideEffects?: unknown;
+          validation?: unknown;
+        };
         const full = buildFullCheckpointState(cursor, {
-          directives: runtime.activeDirectives,
+          directives: checkpointDirectives,
           claims: runtime.claims,
           taskFronts: runtime.continuity.taskFronts,
-          errors: [],
-          validation: [],
+          errors: Array.isArray(extra.unresolvedErrors) ? extra.unresolvedErrors.filter((item): item is string => typeof item === "string") : [],
+          validation: Array.isArray(extra.validation)
+            ? extra.validation.filter((item): item is { id: string; status: string } => (
+              !!item && typeof item === "object" && typeof (item as { id?: unknown }).id === "string"
+            ))
+            : [],
           nextSafeActions: runtime.continuity.nextSafeActions,
-          sideEffects: [],
+          sideEffects: Array.isArray(extra.sideEffects) ? extra.sideEffects.filter((item): item is string => typeof item === "string") : [],
         });
         return {
           snapshotHash: runtime.snapshotHash,
           cursor: runtime.cursor,
           assembledAt: request.now,
           reason: request.reason,
-          directives: runtime.activeDirectives,
+          directives: full.directives,
           continuity: runtime.continuity,
           claims,
           pointers,
@@ -841,11 +904,109 @@ export function registerProductionUserTurnRuntime(
           const imageBlocks = request.canonicalMessages.reduce((count, message) => (
             count + message.content.filter((block) => block.type === "image-ref").length
           ), 0);
-          const reserves = reservesFromPayload({ imageBlocks });
+          const reserves = reservesFromPayload({
+            imageBlocks,
+            ...(typeof request.systemText === "string" ? { systemText: request.systemText } : {}),
+            ...(typeof request.toolsJson === "string" ? { toolsJson: request.toolsJson } : {}),
+            ...(typeof request.reasoningText === "string" ? { reasoningText: request.reasoningText } : {}),
+          });
           if (typeof request.currentContextWindow !== "number" || request.currentContextWindow <= 0) {
             throw Object.assign(new Error("PCR_BUDGET_ROUTE_UNKNOWN"), { code: "PCR_BUDGET_ROUTE_UNKNOWN" });
           }
-          return materializer.materialize({
+          const userText = lastAuthenticatedUserText(request.canonicalMessages);
+          const leaseStore: LeaseStore = {
+            async put(lease) {
+              owner.leases.set(`${cursorKey(lease.cursor)}:${lease.leaseId}`, lease);
+            },
+            async get(scope, leaseId) {
+              return owner.leases.get(`${cursorKey(scope)}:${leaseId}`) ?? null;
+            },
+            async findByPage(scope, pageId) {
+              return [...owner.leases.values()].find((row) => (
+                row.pageId === pageId
+                && row.cursor.sessionId === scope.sessionId
+                && row.cursor.workspaceId === scope.workspaceId
+              )) ?? null;
+            },
+            async delete(scope, leaseId) {
+              owner.leases.delete(`${cursorKey(scope)}:${leaseId}`);
+            },
+            async list(scope) {
+              return [...owner.leases.values()].filter((row) => (
+                row.cursor.workspaceId === scope.workspaceId && row.cursor.sessionId === scope.sessionId
+              ));
+            },
+          };
+          const recallPolicy = createProactiveRecallPolicy({
+            cursor,
+            catalog: {
+              async search(query) {
+                const hits = await evidence.search({
+                  cursor: query.cursor,
+                  text: query.text,
+                  limit: 8,
+                  signal: query.signal,
+                });
+                const pages: Array<{ evidenceId: string; quote: string; tokens: number }> = [];
+                for (const hit of hits) {
+                  let quote = hit.snippet ?? "";
+                  if (quote.length === 0) {
+                    try {
+                      const page = await evidence.read({
+                        cursor: query.cursor,
+                        evidenceId: hit.evidenceId,
+                        range: { start: 0, endExclusive: 240 },
+                        signal: query.signal,
+                      });
+                      quote = new TextDecoder().decode(page.bytes);
+                    } catch {
+                      continue;
+                    }
+                  }
+                  pages.push({
+                    evidenceId: hit.evidenceId,
+                    quote,
+                    tokens: Math.max(8, Math.ceil(quote.length / 4)),
+                  });
+                }
+                return pages;
+              },
+            },
+            leases: createLeaseService({
+              cursor,
+              store: leaseStore,
+              clock,
+              limits: { maxTurns: 4, maxTokenTurns: 2_000, ttlMs: 15 * 60 * 1_000 },
+            }),
+          });
+          const recall = userText.length === 0
+            ? { kind: "not-needed" as const, page: { items: [] as Array<{ evidenceId: string; quote: string }> } }
+            : await recallPolicy.decide({
+              cursor,
+              userText,
+              maxTokens: 256,
+              recentlyInjected: owner.recalledBySession.get(cursor.sessionId) ?? [],
+              signal: request.signal,
+            });
+          if (recall.kind === "needed") {
+            const prior = owner.recalledBySession.get(cursor.sessionId) ?? [];
+            owner.recalledBySession.set(
+              cursor.sessionId,
+              [...prior, ...recall.page.items.map((item) => item.evidenceId)].slice(-32),
+            );
+          }
+          const previousContinuity = owner.lastContinuityHash.get(cursorKey(cursor));
+          owner.lastContinuityHash.set(cursorKey(cursor), continuity.contentHash);
+          const continuityDelta = previousContinuity && previousContinuity !== continuity.contentHash
+            ? [{
+              hostMessageId: `delta_${continuity.revisionId}`,
+              role: "custom" as const,
+              timestamp: 0,
+              sourceClass: "system" as const,
+              content: [{ type: "text" as const, text: `continuity ${previousContinuity.slice(0, 12)} -> ${continuity.contentHash.slice(0, 12)}` }],
+            }]
+            : [];
+          const view = await materializer.materialize({
             cursor: request.cursor,
             canonicalMessages: request.canonicalMessages,
             currentContextWindow: request.currentContextWindow,
@@ -853,7 +1014,11 @@ export function registerProductionUserTurnRuntime(
             reason: request.reason,
             now: request.now,
             signal: request.signal,
+            providerReservedTokens: request.providerReservedTokens ?? 0,
             ...reserves,
+            ...(request.systemTokens === undefined ? {} : { systemTokens: request.systemTokens }),
+            ...(request.toolsTokens === undefined ? {} : { toolsTokens: request.toolsTokens }),
+            ...(request.reasoningTokens === undefined ? {} : { reasoningTokens: request.reasoningTokens }),
           }, {
             cursor,
             directives: quoteMessages(rows.directives.filter((row) => row.status === "active")),
@@ -861,7 +1026,39 @@ export function registerProductionUserTurnRuntime(
               ...continuityMessages(continuity),
               ...claimMessages(rows.claims.filter((row) => row.status === "active")),
             ],
+            ...(continuityDelta.length === 0 ? {} : { continuityDelta }),
+            directory: directoryMessages(rows.pointers),
+            recall: recallMessages(recall.kind === "needed" ? recall.page.items : []),
           });
+          const serializedInputTokens = view.tokenEstimate;
+          const usage = reconcileUsage({
+            serializedInputTokens,
+            cacheHit: (request.providerUsage?.cacheReadTokens ?? 0) > 0,
+            overflowRetry: request.reason === "overflow-retry",
+            ...(request.providerUsage === undefined ? {} : { provider: request.providerUsage }),
+          });
+          const actual = request.providerUsage?.inputTokens;
+          owner.lastUsage = {
+            ...usage,
+            viewId: view.viewId,
+            outputHash: view.outputHash,
+            estimateBucket: estimateErrorBucket(serializedInputTokens, actual ?? serializedInputTokens),
+          };
+          emitTelemetry({
+            name: "pcr.usage",
+            timestamp: request.now,
+            workspaceId: cursor.workspaceId,
+            sessionId: cursor.sessionId,
+            viewId: view.viewId,
+            dimensions: { outputHash: view.outputHash },
+            metrics: {
+              serializedInputTokens: usage.serializedInputTokens,
+              cacheReadTokens: usage.cacheReadTokens,
+              cacheWriteTokens: usage.cacheWriteTokens,
+              uncachedInputTokens: usage.uncachedInputTokens,
+            },
+          }, owner.telemetry);
+          return view;
         },
       },
       compaction: {
@@ -1033,6 +1230,13 @@ export function registerProductionUserTurnRuntime(
     lastWorkspaceId() {
       if (owners.size !== 1) return undefined;
       return [...owners.keys()][0];
+    },
+    async lastRequestUsage(workspaceId) {
+      const opening = workspaceId
+        ? owners.get(workspaceId)
+        : (owners.size === 1 ? [...owners.values()][0] : undefined);
+      if (!opening) return undefined;
+      return (await opening).lastUsage;
     },
     async lastSnapshotHash(workspaceId) {
       const opening = workspaceId

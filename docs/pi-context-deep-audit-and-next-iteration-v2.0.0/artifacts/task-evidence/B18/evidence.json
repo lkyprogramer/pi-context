@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B18",
+  "status": "done",
+  "currentHead": "74c39b86fcbac31c721546310022223caf6df2ac",
+  "allowedDiffSha256": "0c973eed4d06510b9b1ccb3caf6436716ea05dbd6d3dfdeafbb9752dfa8eda28",
+  "sourceDigest": "4678883065f7c3d7f0da55c5fe453d3b433e27e2f07a883e17046ce77d33befc",
+  "red": {
+    "command": "B18-red",
+    "exitCode": 1,
+    "logSha256": "7904a449d27fbb140cd00bc7a870840f13abd9609e6cc534b662e782d6bf009d"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/runtime/test/usage.test.ts packages/worker/test/telemetry-economics.test.ts",
+    "exitCode": 0,
+    "logSha256": "662a400ace9f8123d2b8f59981b4ab0eaaf11cdd958a824aedc2fa3608f5652f"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "e30d81561ee34c91f42f50c416aaf66e95c3ea8498ef77e686f8697e5d56a3de"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B18-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W2-full-gate.log"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

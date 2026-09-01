@@ -30,7 +30,7 @@ function directive(id: string, status: "active" | "superseded" = "active") {
 }
 
 describe("store-built full checkpoint state", () => {
-  it("keeps parked and superseded fronts while dropping superseded directives", () => {
+  it("keeps parked and superseded fronts and retains superseded directives", () => {
     const bound = cursor();
     const empty = buildFullCheckpointState(bound, {
       directives: [],
@@ -56,8 +56,11 @@ describe("store-built full checkpoint state", () => {
       nextSafeActions: [{ text: "rerun tests" }],
       sideEffects: ["gh:pr-opened"],
     });
-    expect(populated.directives.map((item) => item.directiveId)).toEqual(["d1"]);
-    expect(populated.claims).toEqual([{ key: "version", status: "active", value: "7" }]);
+    expect(populated.directives.map((item) => item.directiveId)).toEqual(["d1", "d0"]);
+    expect(populated.claims).toEqual([
+      { key: "version", status: "active", value: "7" },
+      { key: "version", status: "superseded", value: "6" },
+    ]);
     expect(populated.taskFronts.parked).toEqual([{ id: "front-parked", title: "parked", status: "parked", goalClaimId: "c2", evidenceIds: [] }]);
     expect(populated.taskFronts.superseded).toEqual([{ id: "front-old", title: "old", status: "superseded", goalClaimId: "c4", evidenceIds: [] }]);
     expect(populated.errors).toEqual(["tool bash failed"]);

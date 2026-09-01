@@ -114,6 +114,12 @@ function toPiDecision(decision: SessionCompactionDecision): CompactionDecision {
 
 function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   const owner = claimPiContextOwner("pi-context-runtime");
+  const registeredTools: Array<{ name: string }> = [];
+  const hostRegisterTool = pi.registerTool.bind(pi);
+  pi.registerTool = ((tool: { name: string }) => {
+    registeredTools.push({ name: tool.name });
+    return hostRegisterTool(tool);
+  }) as typeof pi.registerTool;
   const userTurns = registerProductionUserTurnRuntime(pi as never);
   const identity = { create: createRuntimeCursor };
   registerContextHook({
@@ -128,7 +134,19 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         }
         await userTurns.ensure(ctx as never);
         const host = ctx && typeof ctx === "object"
-          ? ctx as PiRuntimeContext & { abort?: () => void; now?: number; model?: { contextWindow?: number; maxTokens?: number } }
+          ? ctx as PiRuntimeContext & {
+            abort?: () => void;
+            now?: number;
+            model?: { contextWindow?: number; maxTokens?: number; providerReservedTokens?: number };
+            getSystemPrompt?: () => string;
+            getContextUsage?: () => { tokens?: number | null; contextWindow?: number } | undefined;
+          }
+          : undefined;
+        const systemText = typeof host?.getSystemPrompt === "function" ? host.getSystemPrompt() : undefined;
+        const toolsJson = JSON.stringify({ tools: registeredTools });
+        const hostUsage = typeof host?.getContextUsage === "function" ? host.getContextUsage() : undefined;
+        const providerUsage = hostUsage && typeof hostUsage.tokens === "number"
+          ? { inputTokens: hostUsage.tokens }
           : undefined;
         return handler(event, {
           abort: () => {
@@ -143,6 +161,12 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
           now: typeof host?.now === "number" && Number.isFinite(host.now) ? host.now : 0,
           currentContextWindow: host?.model?.contextWindow,
           maxOutputTokens: host?.model?.maxTokens,
+          providerReservedTokens: typeof host?.model?.providerReservedTokens === "number"
+            ? host.model.providerReservedTokens
+            : 0,
+          ...(systemText === undefined ? {} : { systemText }),
+          toolsJson,
+          ...(providerUsage === undefined ? {} : { providerUsage }),
         });
       });
     },

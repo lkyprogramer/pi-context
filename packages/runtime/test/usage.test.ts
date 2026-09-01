@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { reconcileUsage, USAGE_PRICING_TABLE_VERSION } from "../src/telemetry/usage.js";
+import { estimateErrorBucket, reconcileUsage, USAGE_PRICING_TABLE_VERSION } from "../src/telemetry/usage.js";
 
 describe("capacity / cache / cost usage telemetry", () => {
   it("keeps serialized capacity independent of a cache hit billing split", () => {
@@ -51,5 +51,7 @@ describe("capacity / cache / cost usage telemetry", () => {
     expect(usage.uncachedInputTokens).toBe(900);
     expect(usage.cacheWriteTokens).toBe(200);
     expect(usage.estimatedCost).toBe(900 * 4 + 200 * 4 + 30 * 5);
+    expect(estimateErrorBucket(1200, 900)).toBe("gte30");
+    expect(estimateErrorBucket(100, 108)).toBe("lt15");
   });
 });

@@ -25,8 +25,8 @@ export function buildFullCheckpointState(
 ): FullCheckpointState & { cursor: RuntimeCursor } {
   return {
     cursor,
-    directives: state.directives.filter((item) => item.status === "active"),
-    claims: state.claims.filter((item) => item.status === "active"),
+    directives: state.directives.filter((item) => item.status === "active" || item.status === "superseded"),
+    claims: state.claims.filter((item) => item.status === "active" || item.status === "superseded"),
     taskFronts: copyFronts(state.taskFronts),
     errors: [...state.errors],
     validation: state.validation.map((item) => ({ id: item.id, status: item.status })),

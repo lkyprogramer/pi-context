@@ -18,6 +18,7 @@ export interface RouteInfo {
   systemTokens?: number;
   toolsTokens?: number;
   imageReserveTokens?: number;
+  reasoningTokens?: number;
 }
 
 export interface TokenPricer {
@@ -134,6 +135,7 @@ export function computeEffectiveInput(route: RouteInfo): number {
   if (route.imageReserveTokens !== undefined) {
     requireNonNegativeInteger(route.imageReserveTokens, "route.imageReserveTokens");
   }
+  if (route.reasoningTokens !== undefined) requireNonNegativeInteger(route.reasoningTokens, "route.reasoningTokens");
   return Math.max(
     0,
     route.contextWindow
@@ -141,7 +143,8 @@ export function computeEffectiveInput(route: RouteInfo): number {
       - route.providerReservedTokens
       - (route.systemTokens ?? 0)
       - (route.toolsTokens ?? 0)
-      - (route.imageReserveTokens ?? 0),
+      - (route.imageReserveTokens ?? 0)
+      - (route.reasoningTokens ?? 0),
   );
 }
 
@@ -149,10 +152,12 @@ export function reservesFromPayload(input: {
   systemText?: string;
   toolsJson?: string;
   imageBlocks?: number;
-}): Pick<RouteInfo, "systemTokens" | "toolsTokens" | "imageReserveTokens"> {
+  reasoningText?: string;
+}): Pick<RouteInfo, "systemTokens" | "toolsTokens" | "imageReserveTokens" | "reasoningTokens"> {
   if (!input || typeof input !== "object") failInput("input");
   if (input.systemText !== undefined && typeof input.systemText !== "string") failInput("systemText");
   if (input.toolsJson !== undefined && typeof input.toolsJson !== "string") failInput("toolsJson");
+  if (input.reasoningText !== undefined && typeof input.reasoningText !== "string") failInput("reasoningText");
   if (input.imageBlocks !== undefined && (!Number.isInteger(input.imageBlocks) || input.imageBlocks < 0)) {
     failInput("imageBlocks");
   }
@@ -160,6 +165,7 @@ export function reservesFromPayload(input: {
     systemTokens: input.systemText ? estimateTextTokens(input.systemText) : 0,
     toolsTokens: input.toolsJson ? estimateTextTokens(input.toolsJson) : 0,
     imageReserveTokens: (input.imageBlocks ?? 0) * 765,
+    reasoningTokens: input.reasoningText ? estimateTextTokens(input.reasoningText) : 0,
   };
 }
 
@@ -178,6 +184,7 @@ function snapshotRoutes(routes: CreateTokenPricerInput["routes"]): Readonly<Reco
       ...(route.systemTokens === undefined ? {} : { systemTokens: route.systemTokens }),
       ...(route.toolsTokens === undefined ? {} : { toolsTokens: route.toolsTokens }),
       ...(route.imageReserveTokens === undefined ? {} : { imageReserveTokens: route.imageReserveTokens }),
+      ...(route.reasoningTokens === undefined ? {} : { reasoningTokens: route.reasoningTokens }),
     };
   }
   return Object.freeze(next);

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B20",
+  "status": "done",
+  "currentHead": "74c39b86fcbac31c721546310022223caf6df2ac",
+  "allowedDiffSha256": "2d2f373bd729b2a0a3843b35775da0d264350819472f1404758ddc85f2d6f0de",
+  "sourceDigest": "fba2bb0a5044a197ee45dccca7c40b0fb2fec2bd873c19162dba5b402ab88318",
+  "red": {
+    "command": "B20-red",
+    "exitCode": 1,
+    "logSha256": "62c6ca9630f770f881ff0a95a038678263e6fe6217cd5a0aff2e61fd32b815ea"
+  },
+  "green": {
+    "command": "pnpm vitest run tests/acceptance/recursive-state.test.ts tests/fault/recursive-restart.test.ts",
+    "exitCode": 0,
+    "logSha256": "a3a1aa8df87db6e6cc6c09735ec29aca05e99beb5c5dc4d736c4f7cee0787d7f"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "0d9342ed17c65b14525f384aab6aa3494f8b8ee2f957d1d323a73e3c22b1dc13"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B20-green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "W2-full-gate.log"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

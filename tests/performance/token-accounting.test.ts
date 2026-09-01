@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createRuntimeCursor, createTokenPricer, estimateTextTokens } from "@pcr/core";
+import { computeEffectiveInput, createRuntimeCursor, createTokenPricer, estimateTextTokens, reservesFromPayload } from "@pcr/core";
 
 function cursor() {
   return createRuntimeCursor({
@@ -48,5 +48,21 @@ describe("token accounting", () => {
       maxOutputTokens: 16000,
       providerReservedTokens: 2000,
     })).toBe(110000);
+    const enlarged = reservesFromPayload({
+      systemText: "system",
+      toolsJson: JSON.stringify({ tools: [{ name: "a" }, { name: "b", schema: "x".repeat(400) }] }),
+      reasoningText: "think ".repeat(20),
+      imageBlocks: 1,
+    });
+    const shrunk = computeEffectiveInput({
+      modelKey: "openclaw/Qwen3.8-27B-WORK",
+      contextWindow: 128000,
+      maxOutputTokens: 16000,
+      providerReservedTokens: 2000,
+      ...enlarged,
+    });
+    expect(shrunk).toBeLessThan(110000);
+    expect(enlarged.toolsTokens).toBeGreaterThan(0);
+    expect(enlarged.reasoningTokens).toBeGreaterThan(0);
   });
 });

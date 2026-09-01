@@ -28,6 +28,27 @@ export interface UsageSample {
   outputPricePerToken?: number;
 }
 
+export type EstimateErrorBucket = "lt5" | "lt15" | "lt30" | "gte30";
+
+export function estimateErrorBucket(estimated: number, actual: number): EstimateErrorBucket {
+  if (!Number.isFinite(estimated) || !Number.isFinite(actual) || estimated < 0 || actual < 0) {
+    return "gte30";
+  }
+  const denom = Math.max(1, actual);
+  const ratio = Math.abs(estimated - actual) / denom;
+  if (ratio < 0.05) return "lt5";
+  if (ratio < 0.15) return "lt15";
+  if (ratio < 0.30) return "lt30";
+  return "gte30";
+}
+
+export function bindUsageToView(
+  usage: RequestUsage,
+  view: { viewId: string; outputHash: string },
+): RequestUsage & { viewId: string; outputHash: string } {
+  return { ...usage, viewId: view.viewId, outputHash: view.outputHash };
+}
+
 export function reconcileUsage(sample: UsageSample): RequestUsage {
   const provider = sample.provider ?? {};
   const cacheReadTokens = sample.cacheHit
@@ -36,7 +57,7 @@ export function reconcileUsage(sample: UsageSample): RequestUsage {
   const uncachedInputTokens = sample.cacheHit
     ? (provider.inputTokens ?? 0)
     : (provider.inputTokens ?? sample.serializedInputTokens);
-  const cacheWriteTokens = sample.cacheHit ? 0 : (provider.cacheWriteTokens ?? 0);
+  const cacheWriteTokens = provider.cacheWriteTokens ?? 0;
   const outputTokens = provider.outputTokens ?? 0;
   const inputPrice = sample.inputPricePerToken ?? 0;
   const cacheReadPrice = sample.cacheReadPricePerToken ?? 0;
