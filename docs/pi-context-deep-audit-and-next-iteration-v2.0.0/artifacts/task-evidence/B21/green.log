@@ -1,0 +1,13 @@
+CMD: pnpm vitest run packages/benchmark/test/scoring/probe.test.ts tests/live-gate/scorer-regression.test.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark/test/scoring/probe.test.ts (5 tests) 4ms
+ ✓ tests/live-gate/scorer-regression.test.ts (4 tests) 10ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  23:49:09
+   Duration  896ms (transform 492ms, setup 0ms, collect 1.08s, tests 14ms, environment 0ms, prepare 148ms)
+
+EXIT:0

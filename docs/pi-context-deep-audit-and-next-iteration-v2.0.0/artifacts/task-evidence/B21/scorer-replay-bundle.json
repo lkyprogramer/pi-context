@@ -1,0 +1,14 @@
+{
+  "kind": "hermetic-scorer-replay",
+  "taskId": "B21",
+  "cases": [
+    "tu-00",
+    "tu-01",
+    "tu-08",
+    "tu-09",
+    "tu-10",
+    "tu-11"
+  ],
+  "source": "artifacts/runs/pcr-vs-pi-native/w2-live-spec-smoke/report.json",
+  "claim": "probe-only scoreArm fails recorded wrong B0 probes even when summary contains version 7"
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B21",
+  "status": "done",
+  "currentHead": "1a9c4187e5cf93070e4925a53025e4e41b9bb718",
+  "allowedDiffSha256": "d166694964fd2e4cad04bf7b6584c98591fd268a05747ea6273ed320a82a04bf",
+  "sourceDigest": "384ebda3fd584ba362395dfc3c6e48c2db3d169e2b42ca1e469d9b2ffaae09d4",
+  "red": {
+    "command": "B21-red",
+    "exitCode": 1,
+    "logSha256": "123b8adafc2466538796c848ce49b60c03ec19e22af7522459be9ea3762cee29"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/benchmark/test/scoring/probe.test.ts tests/live-gate/scorer-regression.test.ts",
+    "exitCode": 0,
+    "logSha256": "f1c6e2e90c85d63ed3d4d07422fbcb5232e4b7ea05cb2b8a868afe12d8637a12"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "40056d864fbf17555493a9d97e3ab14f335cf373d4f422d7e52afdbfd90d9dbc"
+  },
+  "runBundleHashes": [
+    "7eea9c385319561ba6fa4e38b2f2bffdfe6923f9c431c30ded98b3366d57849a"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    },
+    {
+      "id": "scorer-replay-bundle",
+      "ok": true,
+      "evidence": "scorer-replay-bundle.json"
+    }
+  ],
+  "findingsClosed": [
+    "NF009"
+  ],
+  "dirty": false
+}

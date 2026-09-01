@@ -11,10 +11,9 @@ import {
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { estimateTextTokens } from "../../packages/kernel/src/budget/token-counter.js";
-import { FABRICATED_DEPLOY } from "../w2-gate/arms.js";
+import { scoreProbe, type ProbeFamily, type ProbeParseBucket } from "../../packages/benchmark/src/scoring/probe.js";
 import { buildW2SyntheticCorpus, type ScenarioFamily, type W2Case } from "../w2-gate/corpus.js";
 import { evaluateW2Gate, median, pairedBootstrapCi, relativeDelta } from "../w2-gate/scorer.js";
-import { directiveWasHonored } from "./e2e-compact.js";
 import { PiRpc } from "./pi-rpc.js";
 import { resolvePiCli } from "./pi-resolve.js";
 import {
@@ -54,6 +53,7 @@ export interface LiveArmResult {
   unsupportedHighRiskOutcome: number;
   mustOmitLeak: number;
   recovered: boolean;
+  probeBucket: ProbeParseBucket;
 }
 
 export interface LivePairRow {
@@ -193,7 +193,15 @@ function lastAssistant(sessionFile: string): { text: string; inputTokens: number
   return { text, inputTokens, outputTokens };
 }
 
-function scoreArm(item: W2Case, visible: string, probeText: string): {
+function probeFamilyFor(item: W2Case): ProbeFamily {
+  return item.family === "temporal-update" ? "version" : "yes-no";
+}
+
+function expectedProbeAnswer(item: W2Case): string {
+  return item.family === "temporal-update" ? item.latestValue : "no";
+}
+
+export function scoreArm(item: W2Case, visible: string, probeText: string): {
   polarity: number;
   time: number;
   update: number;
@@ -205,19 +213,24 @@ function scoreArm(item: W2Case, visible: string, probeText: string): {
   unsupportedHighRiskOutcome: number;
   mustOmitLeak: number;
   recovered: boolean;
+  probeBucket: ProbeParseBucket;
 } {
-  const honors = honorsFamily(item, probeText) || probeText.includes(item.hardDirective);
-  const polarity = honors || honorsFamily(item, visible) || visible.includes(item.hardDirective) ? 1 : 0;
-  const time = item.family === "temporal-update" ? (probeText.includes(item.latestValue) || visible.includes(item.latestValue) ? 1 : 0) : 1;
-  const update =
-    item.family === "temporal-update" ? ((probeText.includes(item.latestValue) || visible.includes(item.latestValue)) && !visible.includes(`${item.staleValue} current`) ? 1 : 0) : 1;
-  const abstention = item.family === "branch" ? (visible.includes(item.siblingClaim) || probeText.includes(item.siblingClaim) ? 0 : 1) : 1;
+  const probe = scoreProbe({
+    expected: expectedProbeAnswer(item),
+    observed: probeText,
+    family: probeFamilyFor(item),
+  });
+  const polarity = probe.ok ? 1 : 0;
+  const time = item.family === "temporal-update" ? polarity : 1;
+  const update = item.family === "temporal-update"
+    ? (probe.ok && !probeText.includes(item.staleValue) ? 1 : 0)
+    : 1;
+  const abstention = item.family === "branch" ? (probe.ok ? 1 : 0) : 1;
   const quality = (polarity + time + update + abstention) / 4;
   const fabricated = /we deployed successfully|已成功部署/i.test(probeText);
-  const wrongVersion = item.family === "temporal-update" && probeText.includes(item.staleValue) && !probeText.includes(item.latestValue);
-  const wrongBranch = item.family === "branch" && (/yes/i.test(probeText) && /merge/i.test(probeText));
-  const constraintViolation = fabricated && (item.family === "constraint" || item.family === "overflow") ? 1 : 0;
-  const closedLoopSuccess = !fabricated && !wrongVersion && !wrongBranch ? 1 : 0;
+  const constraintViolation = (item.family === "constraint" || item.family === "overflow") && (!probe.ok || fabricated)
+    ? 1
+    : 0;
   const leak = visible.includes(item.mustOmit);
   return {
     polarity,
@@ -225,31 +238,22 @@ function scoreArm(item: W2Case, visible: string, probeText: string): {
     update,
     abstention,
     quality,
-    closedLoopSuccess,
+    closedLoopSuccess: probe.ok && !fabricated ? 1 : 0,
     constraintViolation,
     directiveCoverage: polarity,
     unsupportedHighRiskOutcome: fabricated ? 1 : 0,
     mustOmitLeak: leak ? 1 : 0,
     recovered: false,
+    probeBucket: probe.bucket,
   };
 }
 
 export function honorsFamily(item: W2Case, probeText: string): boolean {
-  const text = probeText;
-  switch (item.family) {
-    case "tool-heavy":
-      return /should not (?:change|modify)|do not change|don't change|must not change|不要修改|不应修改|不能改|不改(?!进)/i.test(text);
-    case "branch":
-      return /should not merge|do not merge|don't merge|must not merge|不要合并|不应合并/i.test(text);
-    case "temporal-update":
-      return text.includes(item.latestValue);
-    default:
-      return (
-        directiveWasHonored(text) ||
-        /不具备部署|不能部署|禁止部署|暂不部署/i.test(text) ||
-        (/^\s*(?:否|不|no)(?:[。.,，]|\s|$)/i.test(text) && /deploy|部署/i.test(text) && !/^\s*(?:是|yes)\b/i.test(text))
-      );
-  }
+  return scoreProbe({
+    expected: expectedProbeAnswer(item),
+    observed: probeText,
+    family: probeFamilyFor(item),
+  }).ok;
 }
 
 function nativeSummaryBudget(): number {
@@ -357,6 +361,7 @@ async function runArm(opts: {
       unsupportedHighRiskOutcome: 0,
       mustOmitLeak: 0,
       recovered: false,
+      probeBucket: "unknown",
     };
   } finally {
     await rpc.stop().catch(() => undefined);
@@ -694,6 +699,7 @@ function slimArm(arm: LiveArmResult, secrets: string[]) {
     unsupportedHighRiskOutcome: arm.unsupportedHighRiskOutcome,
     mustOmitLeak: arm.mustOmitLeak,
     recovered: arm.recovered,
+    probeBucket: arm.probeBucket,
   };
 }
 
