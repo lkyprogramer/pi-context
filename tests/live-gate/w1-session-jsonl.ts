@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { W2Case } from "../w2-gate/corpus.js";
@@ -16,9 +16,11 @@ export function padDump(raw: string, minChars = PREFIX_PAD_CHARS): string {
   return `${raw}\n${line.repeat(n)}`;
 }
 
-function entryId(used: Set<string>): string {
+function entryId(used: Set<string>, seed?: number, salt = "id"): string {
   for (let i = 0; i < 32; i += 1) {
-    const id = randomUUID().replaceAll("-", "").slice(0, 8);
+    const id = seed === undefined
+      ? randomUUID().replaceAll("-", "").slice(0, 8)
+      : createHash("sha256").update(`w2-entry:${seed}:${salt}:${used.size}:${i}`, "utf8").digest("hex").slice(0, 8);
     if (!used.has(id)) {
       used.add(id);
       return id;
@@ -51,17 +53,20 @@ export function writeW1ShapedSession(opts: {
   cwd: string;
   item: W2Case;
   now?: number;
+  seed?: number;
 }): FrozenSession {
   const used = new Set<string>();
-  const sessionId = randomUUID();
+  const sessionId = opts.seed === undefined
+    ? randomUUID()
+    : createHash("sha256").update(`w2-session:${opts.item.id}:${opts.seed}`, "utf8").digest("hex").slice(0, 32);
   const ts = opts.now ?? Date.now();
   const iso = new Date(ts).toISOString();
-  const modelId = entryId(used);
-  const firstUserId = entryId(used);
-  const assistantId = entryId(used);
-  const toolResultId = entryId(used);
-  const retainedTailId = entryId(used);
-  const toolCallId = `call_${opts.item.id}`;
+  const modelId = entryId(used, opts.seed, "model");
+  const firstUserId = entryId(used, opts.seed, "user");
+  const assistantId = entryId(used, opts.seed, "assistant");
+  const toolResultId = entryId(used, opts.seed, "tool");
+  const retainedTailId = entryId(used, opts.seed, "tail");
+  const toolCallId = opts.seed === undefined ? `call_${opts.item.id}` : `call_${opts.item.id}_${opts.seed}`;
   const dump = padDump(opts.item.raw);
 
   const header = {

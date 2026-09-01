@@ -7,7 +7,8 @@ export type BundleVerifyErrorCode =
   | "PCR_BUNDLE_ABSOLUTE_PATH"
   | "PCR_BUNDLE_INPUT_INVALID"
   | "PCR_BUNDLE_RAW_MISSING"
-  | "PCR_BUNDLE_PREVIEW_ONLY";
+  | "PCR_BUNDLE_PREVIEW_ONLY"
+  | "PCR_BUNDLE_FAILED_SAMPLE_DELETED";
 
 export class BundleVerifyError extends TypeError {
   readonly code: BundleVerifyErrorCode;
@@ -117,6 +118,28 @@ export function verifyRawRunBundle(input: RawRunBundle): RawRunBundle {
   if (input.decision === undefined || input.decision === null) fail("PCR_BUNDLE_RAW_MISSING", { field: "decision" });
   walkPaths(input);
   return input;
+}
+
+export function scrubSecretsWithProvenance(text: string, secrets: readonly string[]): {
+  text: string;
+  provenance: ReadonlyArray<{ sha256: string; count: number }>;
+} {
+  if (typeof text !== "string") fail("PCR_BUNDLE_INPUT_INVALID", { field: "text" });
+  if (!Array.isArray(secrets)) fail("PCR_BUNDLE_INPUT_INVALID", { field: "secrets" });
+  let out = text;
+  const provenance: Array<{ sha256: string; count: number }> = [];
+  for (const secret of secrets) {
+    if (typeof secret !== "string" || secret.length === 0) continue;
+    const digest = createHash("sha256").update(secret, "utf8").digest("hex");
+    const token = `[redacted:sha256:${digest}]`;
+    let count = 0;
+    if (out.includes(secret)) {
+      count = out.split(secret).length - 1;
+      out = out.split(secret).join(token);
+    }
+    if (count > 0) provenance.push({ sha256: digest, count });
+  }
+  return { text: out, provenance: Object.freeze(provenance.map((row) => Object.freeze(row))) };
 }
 
 void GateEngineError;

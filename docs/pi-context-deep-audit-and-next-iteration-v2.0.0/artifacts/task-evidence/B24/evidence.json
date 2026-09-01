@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B24",
+  "status": "done",
+  "currentHead": "2b11d616c9da307199a39783bef8d67f43fa935b",
+  "allowedDiffSha256": "625daa2ddc16d67978015bb3e23dce9104c06c584f0665c432fb27fe71828031",
+  "sourceDigest": "ab027e8f1397a620aeb03ec18badae3e20062985c7416b44a3dae60cd5aa9770",
+  "red": {
+    "command": "jiti b24-red shared-cwd",
+    "exitCode": 1,
+    "logSha256": "b5c6802d1af89a1b54b30b40c598bf7cf7a314c007a74daf285a3b45855509f0"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/benchmark/test/arm-isolate.test.ts --config vitest.unit.config.ts",
+    "exitCode": 0,
+    "logSha256": "f37857e0f3e62768b85faf2180157de4fe78e2ca5039bcb3e0f7041c8cff52d7"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "63a5d003114330e7a72898612c401225b944cadcf93e36282516b0b2e28059b3"
+  },
+  "runBundleHashes": [
+    "f37857e0f3e62768b85faf2180157de4fe78e2ca5039bcb3e0f7041c8cff52d7"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    },
+    {
+      "id": "live-arms-unrun",
+      "ok": true,
+      "evidence": "live-arms-unrun.md"
+    },
+    {
+      "id": "b1-b2-product-switch-blocker",
+      "ok": true,
+      "evidence": "b1-b2-product-switch-blocker.md"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

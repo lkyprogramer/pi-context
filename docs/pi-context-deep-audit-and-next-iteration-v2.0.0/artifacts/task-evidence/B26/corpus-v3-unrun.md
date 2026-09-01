@@ -1,5 +1,5 @@
-# B26 A1-shaped locked corpus (unrun)
+# B26 A1-shaped locked corpus (real traces missing)
 
-`benchmarks/corpus-v3/**` is not populated from desensitized real traces. Existing `benchmarks/corpus-v2` remains templated families.
+Shipped: A1 bundle schema, split isolation, source-witness 100%, fail-closed `PCR_CORPUS_REAL_TRACES_MISSING`. `benchmarks/corpus-v3/real-traces/` is empty on purpose.
 
-NF021 stays open.
+`pnpm benchmark:corpus:v3:verify` exits 1. NF021 stays open. Templated clones are not a substitute.

@@ -5,7 +5,9 @@ export type CorpusErrorCode =
   | "PCR_CORPUS_LOCK_CONFLICT"
   | "PCR_CORPUS_TEMPLATE_DUPLICATE"
   | "PCR_CORPUS_WITNESS_MISSING"
-  | "PCR_CORPUS_SPLIT_LEAKAGE";
+  | "PCR_CORPUS_SPLIT_LEAKAGE"
+  | "PCR_CORPUS_REAL_TRACES_MISSING"
+  | "PCR_CORPUS_A1_SHAPE_INVALID";
 
 export class CorpusGovernorError extends TypeError {
   readonly code: CorpusErrorCode;
@@ -45,4 +47,12 @@ export function failWitnessMissing(details: Record<string, unknown> = {}): never
 
 export function failSplitLeakage(details: Record<string, unknown> = {}): never {
   throw new CorpusGovernorError("PCR_CORPUS_SPLIT_LEAKAGE", details);
+}
+
+export function failRealTracesMissing(details: Record<string, unknown> = {}): never {
+  throw new CorpusGovernorError("PCR_CORPUS_REAL_TRACES_MISSING", details);
+}
+
+export function failA1ShapeInvalid(details: Record<string, unknown> = {}): never {
+  throw new CorpusGovernorError("PCR_CORPUS_A1_SHAPE_INVALID", details);
 }

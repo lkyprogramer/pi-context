@@ -21,12 +21,23 @@ describe("live paired W2 fixtures", () => {
     const item = buildW2SyntheticCorpus().find((row) => row.id === "ct-00");
     if (!item) throw new Error("missing ct-00");
     const sessionFile = join(mkdtempSync(join(tmpdir(), "pcr-w2-jsonl-")), "session.jsonl");
-    const frozen = writeW1ShapedSession({ sessionFile, cwd: "/tmp/ws", item });
+    const frozen = writeW1ShapedSession({ sessionFile, cwd: "/tmp/ws", item, seed: 7 });
     const lines = readFileSync(sessionFile, "utf8").trim().split("\n").map((line) => JSON.parse(line) as { id?: string; type?: string });
     expect(lines[0]?.type).toBe("session");
     expect(frozen.expectedFirstKeptId).toBe(frozen.retainedTailId);
     expect(lines.at(-1)?.id).toBe(frozen.retainedTailId);
     expect(padDump("short").length).toBeGreaterThan(20_000);
+  });
+
+  it("binds the same seed to the same session and entry ids", () => {
+    const item = buildW2SyntheticCorpus().find((row) => row.id === "ct-00");
+    if (!item) throw new Error("missing ct-00");
+    const root = mkdtempSync(join(tmpdir(), "pcr-w2-seed-"));
+    const first = writeW1ShapedSession({ sessionFile: join(root, "a.jsonl"), cwd: "/tmp/ws-a", item, seed: 3 });
+    const second = writeW1ShapedSession({ sessionFile: join(root, "b.jsonl"), cwd: "/tmp/ws-b", item, seed: 3 });
+    expect(first.sessionId).toBe(second.sessionId);
+    expect(first.expectedFirstKeptId).toBe(second.expectedFirstKeptId);
+    expect(first.toolResultId).toBe(second.toolResultId);
   });
 
   it("scores paraphrased deploy refusals as honoring the constraint family", () => {

@@ -1,0 +1,10 @@
+{
+  "runId": "w2-v3-live",
+  "status": "unrun",
+  "reason": "PCR_LIVE_PROVIDER_UNAVAILABLE",
+  "publicationClaim": false,
+  "mixedPreFix300": false,
+  "arms": ["B0", "B1", "B2", "F0"],
+  "completedPairs": 0,
+  "replicates": 3
+}

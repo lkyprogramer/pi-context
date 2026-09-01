@@ -1,0 +1,9 @@
+ReplicatePolicyError: PCR_REPLICATE_LABEL_ONLY
+    at fail (/Users/luo/Documents/github/pi-context/packages/benchmark/src/runner/replicate-policy.ts:45:9)
+    at rejectLabelOnlySeed (/Users/luo/Documents/github/pi-context/packages/benchmark/src/runner/replicate-policy.ts:104:5)
+    at /tmp/b25-red.ts:2:42
+    at async Function.import (/Users/luo/Documents/github/pi-context/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/dist/jiti.cjs:1:187718)
+    at async file:///Users/luo/Documents/github/pi-context/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/lib/jiti-cli.mjs:31:1 {
+  code: 'PCR_REPLICATE_LABEL_ONLY',
+  details: { seed: 1, label: 's1' }
+}

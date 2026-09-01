@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B26",
+  "status": "done",
+  "currentHead": "2b11d616c9da307199a39783bef8d67f43fa935b",
+  "allowedDiffSha256": "1ee086931525d279b0acfe98c6bf832e402832982a592497f17ecba39540f6dd",
+  "sourceDigest": "c446f08280224216bad4af46be5642cb608a66a705d6b978f86173493b154578",
+  "red": {
+    "command": "pnpm benchmark:corpus:v3:verify",
+    "exitCode": 1,
+    "logSha256": "b1f786dc30a8b81302c2939d6de18477e303e5e96dc51cdf4b39408df15405b9"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/benchmark/test/corpus-v3.test.ts --config vitest.unit.config.ts",
+    "exitCode": 0,
+    "logSha256": "f37857e0f3e62768b85faf2180157de4fe78e2ca5039bcb3e0f7041c8cff52d7"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "63a5d003114330e7a72898612c401225b944cadcf93e36282516b0b2e28059b3"
+  },
+  "runBundleHashes": [
+    "f37857e0f3e62768b85faf2180157de4fe78e2ca5039bcb3e0f7041c8cff52d7"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    },
+    {
+      "id": "corpus-v3-unrun",
+      "ok": true,
+      "evidence": "corpus-v3-unrun.md"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

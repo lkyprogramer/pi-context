@@ -1,7 +1,21 @@
 import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { createGateEngine, sealRunBundle, verifyRawRunBundle, verifyRunBundle, type RunBundle } from "@pcr/benchmark";
+import {
+  assertFailedSampleRetained,
+  collectPerArmRawEvidence,
+  createGateEngine,
+  keepFailedArmEvidence,
+  scrubSecretsWithProvenance,
+  sealRunBundle,
+  verifyRawRunBundle,
+  verifyRunBundle,
+  writeArmArtifactDir,
+  type RunBundle,
+} from "@pcr/benchmark";
 
 const EMPTY_DIFF = createHash("sha256").update("").digest("hex");
 
@@ -107,6 +121,39 @@ describe("immutable run bundle", () => {
       rawReport: { gate: "w1-early-net-value" },
       decision: { decision: "keep-pi-native" },
     })).toThrowError(expect.objectContaining({ code: "PCR_BUNDLE_PREVIEW_ONLY" }));
+  });
+
+  it("scrubs secrets while keeping hash provenance and retains failed arm samples", () => {
+    const secret = "sk-live-w2-omit-ct-00";
+    const scrubbed = scrubSecretsWithProvenance(`token ${secret} in jsonl ${secret}`, [secret]);
+    expect(scrubbed.text).not.toContain(secret);
+    expect(scrubbed.text).toContain(`[redacted:sha256:${createHash("sha256").update(secret, "utf8").digest("hex")}]`);
+    expect(scrubbed.provenance).toEqual([{ sha256: createHash("sha256").update(secret, "utf8").digest("hex"), count: 2 }]);
+    const root = mkdtempSync(join(tmpdir(), "pcr-raw-arm-"));
+    const cwd = join(root, "ws");
+    mkdirSync(cwd, { recursive: true });
+    writeFileSync(join(cwd, "note.txt"), "workspace-bytes\n");
+    const sessionFile = join(root, "session.jsonl");
+    writeFileSync(sessionFile, `${"{\"type\":\"session\",\"id\":\"s\"}\n".repeat(30)}{"type":"compaction","firstKeptEntryId":"e1"}\n{"type":"usage","requestId":"req_1"}\n`);
+    const raw = collectPerArmRawEvidence({
+      arm: "B0",
+      failed: true,
+      sessionFile,
+      cwd,
+      stderr: "provider timeout",
+    });
+    expect(raw.retained).toBe(true);
+    expect(raw.sessionJsonl.length).toBeGreaterThan(400);
+    expect(keepFailedArmEvidence(raw).failed).toBe(true);
+    assertFailedSampleRetained(root);
+    expect(() => keepFailedArmEvidence({ ...raw, retained: false })).toThrowError(
+      expect.objectContaining({ code: "PCR_BUNDLE_FAILED_SAMPLE_DELETED" }),
+    );
+    const armDir = join(root, "arms", "B0");
+    writeArmArtifactDir(armDir, raw);
+    expect(existsSync(join(armDir, "FAILED"))).toBe(true);
+    expect(existsSync(join(armDir, "workspace.sha256"))).toBe(true);
+    expect(existsSync(join(armDir, "store.sha256"))).toBe(true);
   });
 });
 

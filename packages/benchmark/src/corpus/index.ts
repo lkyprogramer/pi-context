@@ -11,6 +11,16 @@ export {
   verifyLockedCorpus,
   type VerifyLockedCorpusInput,
 } from "./verify.js";
+export {
+  CORPUS_V3_ID,
+  a1SourceWitnessHash,
+  loadA1CorpusRoot,
+  lockA1Corpus,
+  verifyA1CorpusRoot,
+  verifyA1ShapedBundle,
+  type A1ShapedBundle,
+  type A1Split,
+} from "./a1.js";
 export type {
   CorpusCase,
   CorpusGovernor,

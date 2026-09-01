@@ -2,6 +2,7 @@ import { domainHash, type RuntimeCursor } from "@pcr/contracts";
 
 import type { CorpusManifest } from "../corpus/index.js";
 import { validateOracle, type RawTrace } from "../oracle/index.js";
+import { assertProductArmText } from "./isolate.js";
 import type { W1ArmCase, W1ArmCaseCatalog } from "./w1.js";
 
 export type W2ArmId = "B0" | "B1" | "B2";
@@ -276,6 +277,7 @@ export function createW2ArmRunner(input: CreateW2ArmRunnerInput): W2ArmRunner {
       if (arm === "B2" && /SIMULATED|\[PCR\]|string-marker/iu.test(shaped.shapedText)) {
         failInput("b2.simulated");
       }
+      assertProductArmText(shaped.shapedText);
       const compacted = arm === "B0"
         ? snapshotCompact(await native.compact({
           cursor,

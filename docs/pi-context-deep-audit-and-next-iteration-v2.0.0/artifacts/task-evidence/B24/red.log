@@ -1,0 +1,10 @@
+ArmIsolateError: PCR_ARM_ISOLATE_SHARED_CWD
+    at fail (/Users/luo/Documents/github/pi-context/packages/benchmark/src/arms/isolate.ts:101:9)
+    at assertIndependentWorkspaces (/Users/luo/Documents/github/pi-context/packages/benchmark/src/arms/isolate.ts:133:24)
+    at requireToolsSafe (/Users/luo/Documents/github/pi-context/packages/benchmark/src/arms/isolate.ts:143:3)
+    at /tmp/b24-red.ts:2:31
+    at async Function.import (/Users/luo/Documents/github/pi-context/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/dist/jiti.cjs:1:187718)
+    at async file:///Users/luo/Documents/github/pi-context/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/lib/jiti-cli.mjs:31:1 {
+  code: 'PCR_ARM_ISOLATE_SHARED_CWD',
+  details: { cwd: '/tmp/shared' }
+}

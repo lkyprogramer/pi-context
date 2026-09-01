@@ -75,13 +75,19 @@ function snapshotManifest(value: CorpusManifest | null): CorpusManifest | null {
     });
   }
   if (Object.keys(clusters).length === 0) failInput("manifest.clusters");
-  return freezeManifest({
+  const next: CorpusManifest = {
     benchmarkMajor: value.benchmarkMajor,
     trainHash: value.trainHash,
     devHash: value.devHash,
     lockedTestHash: value.lockedTestHash,
     clusters,
-  });
+  };
+  if (value.realTracesHash !== undefined) {
+    requireNonEmpty(value.realTracesHash, "manifest.realTracesHash");
+    if (!SHA256_PATTERN.test(value.realTracesHash)) failInput("manifest.realTracesHash");
+    next.realTracesHash = value.realTracesHash;
+  }
+  return freezeManifest(next);
 }
 
 function freezeManifest(manifest: CorpusManifest): CorpusManifest {
@@ -94,6 +100,7 @@ function freezeManifest(manifest: CorpusManifest): CorpusManifest {
     trainHash: manifest.trainHash,
     devHash: manifest.devHash,
     lockedTestHash: manifest.lockedTestHash,
+    ...(manifest.realTracesHash === undefined ? {} : { realTracesHash: manifest.realTracesHash }),
     clusters: Object.freeze(clusters),
   });
 }
@@ -103,6 +110,7 @@ function sameManifest(left: CorpusManifest, right: CorpusManifest): boolean {
   if (left.trainHash !== right.trainHash) return false;
   if (left.devHash !== right.devHash) return false;
   if (left.lockedTestHash !== right.lockedTestHash) return false;
+  if ((left.realTracesHash ?? null) !== (right.realTracesHash ?? null)) return false;
   const leftKeys = Object.keys(left.clusters);
   const rightKeys = Object.keys(right.clusters);
   if (leftKeys.length !== rightKeys.length) return false;

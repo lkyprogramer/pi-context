@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B27",
+  "status": "done",
+  "currentHead": "2b11d616c9da307199a39783bef8d67f43fa935b",
+  "allowedDiffSha256": "c5cade55c292f1c4c6f789b7aae79f72f26b10e42d56c3f52adbba4e2565b919",
+  "sourceDigest": "6b7ed52a6be337ba2741648060fe266d1134d23eb58106bdaa0ee8b972cd50af",
+  "red": {
+    "command": "python3 scripts/benchmark/verify_run_bundle.py preview",
+    "exitCode": 1,
+    "logSha256": "1b5109debffac42ad9749adb06959be0e51425c2cd2f8f904de4d7cd93f4d281"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/benchmark/test/bundle-verify.test.ts --config vitest.unit.config.ts",
+    "exitCode": 0,
+    "logSha256": "f37857e0f3e62768b85faf2180157de4fe78e2ca5039bcb3e0f7041c8cff52d7"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "63a5d003114330e7a72898612c401225b944cadcf93e36282516b0b2e28059b3"
+  },
+  "runBundleHashes": [
+    "f37857e0f3e62768b85faf2180157de4fe78e2ca5039bcb3e0f7041c8cff52d7"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    },
+    {
+      "id": "raw-bundle-unrun",
+      "ok": true,
+      "evidence": "raw-bundle-unrun.md"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

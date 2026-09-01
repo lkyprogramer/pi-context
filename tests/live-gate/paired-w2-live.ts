@@ -12,7 +12,25 @@ import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createRuntimeCursor } from "../../packages/core/src/identity/stable-identity.js";
 import { estimateTextTokens } from "../../packages/kernel/src/budget/token-counter.js";
+import {
+  assertProductArmText,
+  createIsolatedArmHomes,
+  piLaunchPlan,
+  type LiveFourArmId,
+} from "../../packages/benchmark/src/arms/isolate.js";
 import { scoreToolPairsFromSession } from "../../packages/benchmark/src/continuation/runner.js";
+import {
+  collectPerArmRawEvidence,
+  keepFailedArmEvidence,
+  workspaceManifestSha256,
+  writeArmArtifactDir,
+} from "../../packages/benchmark/src/report/raw-arm.js";
+import {
+  assertSerialArms,
+  bindReplicate,
+  latinSquareOrder,
+  type SeedMode,
+} from "../../packages/benchmark/src/runner/replicate-policy.js";
 import { scoreExactRecovery, type ExactRecoveryReport } from "../../packages/benchmark/src/scoring/integrity.js";
 import { scoreProbe, type ProbeFamily, type ProbeParseBucket } from "../../packages/benchmark/src/scoring/probe.js";
 import {
@@ -35,10 +53,11 @@ import {
 export type LiveProfile = "one" | "smoke" | "spec-smoke" | "gate";
 
 export interface LiveArmResult {
-  arm: "B0" | "B1";
+  arm: LiveFourArmId;
   ok: boolean;
   error?: string;
   fromExtension: boolean;
+  compactionCount: number;
   firstKeptEntryId: string | null;
   tokensBefore: number | null;
   summary: string;
@@ -72,10 +91,13 @@ export interface LivePairRow {
   id: string;
   family: ScenarioFamily;
   seed: number;
+  seedMode: SeedMode;
   sameCut: boolean;
   expectedFirstKeptId: string;
   b0: LiveArmResult;
   b1: LiveArmResult;
+  b2: LiveArmResult;
+  f0: LiveArmResult;
 }
 
 function nvmBin(): string {
@@ -427,42 +449,39 @@ function nativeSummaryBudget(): number {
   return Math.min(Math.floor(0.8 * LIVE_RESERVE_TOKENS), LIVE_RESERVE_TOKENS);
 }
 
+let armInFlight = 0;
+
 async function runArm(opts: {
-  arm: "B0" | "B1";
+  arm: LiveFourArmId;
   item: W2Case;
   sessionFile: string;
   cwd: string;
   agentDir: string;
   extensionPath: string;
 }): Promise<LiveArmResult> {
+  assertSerialArms(armInFlight + 1);
   const cliPath = resolvePiCli();
-  const args = [
-    "--no-extensions",
-    "--offline",
-    "--no-tools",
-    "--session-dir",
-    dirname(opts.sessionFile),
-    "--session",
-    opts.sessionFile,
-    "--provider",
-    LIVE_PROVIDER,
-    "--model",
-    LIVE_MODEL,
-  ];
-  if (opts.arm === "B1") args.splice(0, 0, "-e", opts.extensionPath);
+  const plan = piLaunchPlan(opts.arm, {
+    sessionFile: opts.sessionFile,
+    extensionPath: opts.extensionPath,
+    provider: LIVE_PROVIDER,
+    model: LIVE_MODEL,
+  });
   const rpc = new PiRpc({
     cliPath,
     cwd: opts.cwd,
-    args,
+    args: plan.args,
     env: {
       ...process.env,
       PATH: `${nvmBin()}:${process.env.PATH ?? ""}`,
       PI_OFFLINE: "1",
       PI_CODING_AGENT_DIR: opts.agentDir,
+      ...plan.env,
     },
   });
   const started = Date.now();
   try {
+    armInFlight += 1;
     await rpc.start();
     await rpc.request({ type: "set_auto_compaction", enabled: false }, 15_000);
     try {
@@ -475,12 +494,13 @@ async function runArm(opts: {
     if (messageCount < 3) {
       throw new Error(`session did not load (messageCount=${messageCount})`);
     }
-    const compact = await rpc.compact();
+    const compact = plan.compact ? await rpc.compact() : {};
     const compactLatencyMs = Date.now() - started;
     await rpc.promptAndWait(closedLoopProbe(opts.item));
     const compaction = inspectCompaction(opts.sessionFile);
     const probe = lastAssistant(opts.sessionFile);
     const visible = compaction.summary;
+    if (visible.length > 0) assertProductArmText(visible);
     const scored = scoreArm(opts.item, visible, probe.text);
     const summaryTokens = estimateTextTokens(visible);
     const budgetMismatch = opts.arm === "B0" && summaryTokens > nativeSummaryBudget() * 1.05;
@@ -502,8 +522,11 @@ async function runArm(opts: {
     const pairs = scoreToolPairsFromSession(sessionEntries);
     return {
       arm: opts.arm,
-      ok: Boolean(compaction.firstKeptEntryId || compact.firstKeptEntryId),
-      fromExtension: compaction.fromExtension,
+      ok: plan.compact
+        ? Boolean(compaction.firstKeptEntryId || (compact as { firstKeptEntryId?: string }).firstKeptEntryId)
+        : probe.text.trim().length > 0,
+      fromExtension: plan.compact ? compaction.fromExtension : false,
+      compactionCount: sessionEntries.filter((row) => (row as { type?: string }).type === "compaction").length,
       firstKeptEntryId: compaction.firstKeptEntryId ?? (typeof compact.firstKeptEntryId === "string" ? compact.firstKeptEntryId : null),
       tokensBefore: compaction.tokensBefore,
       summary: visible,
@@ -528,6 +551,7 @@ async function runArm(opts: {
       ok: false,
       error: error instanceof Error ? error.message : String(error),
       fromExtension: false,
+      compactionCount: 0,
       firstKeptEntryId: null,
       tokensBefore: null,
       summary: "",
@@ -557,39 +581,84 @@ async function runArm(opts: {
       toolPairViolation: 1,
     };
   } finally {
+    armInFlight = Math.max(0, armInFlight - 1);
     await rpc.stop().catch(() => undefined);
   }
 }
 
-async function runPair(item: W2Case, extensionPath: string): Promise<LivePairRow> {
-  const root = mkdtempSync(join(tmpdir(), `pcr-w2-live-${item.id}-`));
-  const cwd = join(root, "ws");
-  mkdirSync(cwd, { recursive: true });
+function persistArmHome(home: { arm: LiveFourArmId; cwd: string; sessionFile: string }, result: LiveArmResult, artifactDir: string): void {
+  mkdirSync(artifactDir, { recursive: true });
+  try {
+    const raw = collectPerArmRawEvidence({
+      arm: home.arm,
+      failed: !result.ok,
+      sessionFile: home.sessionFile,
+      cwd: home.cwd,
+      stderr: result.error ?? "",
+    });
+    keepFailedArmEvidence(raw);
+    writeArmArtifactDir(artifactDir, raw);
+  } catch (error) {
+    if (result.ok) throw error;
+    if (existsSync(home.sessionFile)) copyFileSync(home.sessionFile, join(artifactDir, "session.jsonl"));
+    writeFileSync(join(artifactDir, "workspace.sha256"), `${workspaceManifestSha256(home.cwd)}\n`);
+    writeFileSync(join(artifactDir, "store.sha256"), `${workspaceManifestSha256(home.cwd)}\n`);
+    writeFileSync(join(artifactDir, "FAILED"), "retained\n");
+    writeFileSync(join(artifactDir, "raw.json"), `${JSON.stringify({ arm: home.arm, failed: true, retained: true })}\n`);
+  }
+}
+
+async function runPair(item: W2Case, extensionPath: string, seed: number, artifactDir: string): Promise<LivePairRow> {
+  const root = mkdtempSync(join(tmpdir(), `pcr-w2-live-${item.id}-s${seed}-`));
+  const seedCwd = join(root, "seed-ws");
+  mkdirSync(seedCwd, { recursive: true });
   const seedFile = join(root, "seed.jsonl");
-  const frozen = writeW1ShapedSession({ sessionFile: seedFile, cwd, item });
-  const b0File = join(root, "b0", "session.jsonl");
-  const b1File = join(root, "b1", "session.jsonl");
-  mkdirSync(dirname(b0File), { recursive: true });
-  mkdirSync(dirname(b1File), { recursive: true });
-  copyFileSync(seedFile, b0File);
-  copyFileSync(seedFile, b1File);
-  const agentB0 = join(root, "agent-b0");
-  const agentB1 = join(root, "agent-b1");
-  copyModelsUnmodified(agentB0);
-  copyModelsUnmodified(agentB1);
-  const [b0, b1] = await Promise.all([
-    runArm({ arm: "B0", item, sessionFile: b0File, cwd, agentDir: agentB0, extensionPath }),
-    runArm({ arm: "B1", item, sessionFile: b1File, cwd, agentDir: agentB1, extensionPath }),
-  ]);
+  const frozen = writeW1ShapedSession({ sessionFile: seedFile, cwd: seedCwd, item, seed });
+  const homes = createIsolatedArmHomes({
+    root,
+    seedSessionFile: seedFile,
+    seedWorkspaceDir: seedCwd,
+    arms: ["B0", "B1", "B2", "F0"],
+  });
+  const bound = bindReplicate({
+    seed,
+    workspaceId: homes[0]!.cwd,
+    sessionId: frozen.sessionId,
+    providerSupportsSeed: false,
+  });
+  const order = latinSquareOrder(["B0", "B1", "B2", "F0"] as const, seed);
+  const byArm = {} as Record<LiveFourArmId, LiveArmResult>;
+  for (const arm of order) {
+    const home = homes.find((row) => row.arm === arm);
+    if (!home) throw new Error(`missing isolated home for ${arm}`);
+    copyModelsUnmodified(home.agentDir);
+    const result = await runArm({
+      arm,
+      item,
+      sessionFile: home.sessionFile,
+      cwd: home.cwd,
+      agentDir: home.agentDir,
+      extensionPath,
+    });
+    byArm[arm] = result;
+    persistArmHome(home, result, join(artifactDir, "arms", arm));
+  }
+  const b0 = byArm.B0;
+  const b1 = byArm.B1;
+  const b2 = byArm.B2;
+  const f0 = byArm.F0;
   rmSync(root, { recursive: true, force: true });
   return {
     id: item.id,
     family: item.family,
-    seed: 0,
+    seed,
+    seedMode: bound.seedMode,
     sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
     expectedFirstKeptId: frozen.expectedFirstKeptId,
     b0,
     b1,
+    b2,
+    f0,
   };
 }
 
@@ -626,7 +695,8 @@ export async function runLivePairedW2(opts: {
   for (let seed = 0; seed < replicates; seed += 1) {
     for (const item of cases) {
       process.stderr.write(`[w2-live] ${item.id} ${item.family} seed=${seed}\n`);
-      const row = await runPair(item, extensionPath);
+      const pairId = replicates === 1 ? item.id : `${item.id}#s${seed}`;
+      const row = await runPair(item, extensionPath, seed, join(outDir, "pairs", pairId));
       const labeled: LivePairRow = {
         ...row,
         id: replicates === 1 ? item.id : `${item.id}#s${seed}`,
@@ -637,19 +707,24 @@ export async function runLivePairedW2(opts: {
     }
   }
 
-  const completed = rows.filter((row) => row.b0.ok && row.b1.ok);
+  const completed = rows.filter((row) => row.b0.ok && row.b1.ok && row.b2.ok && row.f0.ok);
   const sameCut = completed.filter((row) => row.sameCut);
   const efficiencyRows = sameCut.filter((row) => !row.b0.budgetMismatch);
-  const infraExcluded = rows.filter((row) => !row.b0.ok || !row.b1.ok).map((row) => row.id);
+  const infraExcluded = rows.filter((row) => !row.b0.ok || !row.b1.ok || !row.b2.ok || !row.f0.ok).map((row) => row.id);
 
   const directiveCoverage = completed.every((row) => row.b1.directiveCoverage === 1) ? 1 : 0;
   const unsupported = completed.filter((row) => row.b1.unsupportedHighRiskOutcome > 0).length;
   const leaks = completed.filter((row) => row.b1.mustOmitLeak > 0).length;
   const nativeLeaks = completed.filter((row) => row.b0.mustOmitLeak > 0).length;
   const recovered = completed.length === 0 ? 0 : completed.filter((row) => row.b1.recovered).length / completed.length;
-  const toolPairViolation = completed.reduce((sum, row) => sum + row.b0.toolPairViolation + row.b1.toolPairViolation, 0);
+  const toolPairViolation = completed.reduce(
+    (sum, row) => sum + row.b0.toolPairViolation + row.b1.toolPairViolation + row.b2.toolPairViolation + row.f0.toolPairViolation,
+    0,
+  );
   const b1FromHook = completed.every((row) => row.b1.fromExtension);
+  const b2FromHook = completed.every((row) => row.b2.fromExtension);
   const b0Native = completed.every((row) => !row.b0.fromExtension);
+  const f0Ceiling = completed.every((row) => !row.f0.fromExtension && row.f0.compactionCount === 0);
   const sameCutRate = completed.length === 0 ? 0 : sameCut.length / completed.length;
   const hardGatePass =
     completed.length > 0 &&
@@ -660,7 +735,9 @@ export async function runLivePairedW2(opts: {
     recovered === 1 &&
     toolPairViolation === 0 &&
     b1FromHook &&
-    b0Native;
+    b2FromHook &&
+    b0Native &&
+    f0Ceiling;
 
   const quality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b1.quality));
   const polarity = pairedOrZero(completed.map((row) => row.b0.polarity), completed.map((row) => row.b1.polarity));
@@ -750,7 +827,7 @@ export async function runLivePairedW2(opts: {
     stage: profile === "gate" ? "w2" : "smoke",
     generatedAt: new Date().toISOString(),
     baselineArm: "B0",
-    candidateArms: ["B1"],
+    candidateArms: ["B1", "B2", "F0"],
     corpusClass: "synthetic-public-replayed-into-live-pi-session",
     publicationClaim,
     usedWalkthroughConstants: false,
@@ -791,7 +868,9 @@ export async function runLivePairedW2(opts: {
       nativeMustOmitLeak: nativeLeaks,
       exactEvidenceRecovery: recovered,
       b1FromHook,
+      b2FromHook,
       b0Native,
+      f0Ceiling,
       hardGatePass,
     },
     quality: {
@@ -818,10 +897,13 @@ export async function runLivePairedW2(opts: {
       id: row.id,
       family: row.family,
       seed: row.seed,
+      seedMode: row.seedMode,
       sameCut: row.sameCut,
       expectedFirstKeptId: row.expectedFirstKeptId,
       b0: slimArm(row.b0, [findSecret(row.id)]),
       b1: slimArm(row.b1, [findSecret(row.id)]),
+      b2: slimArm(row.b2, [findSecret(row.id)]),
+      f0: slimArm(row.f0, [findSecret(row.id)]),
     })),
   };
   const reportPath = join(outDir, "report.json");
@@ -837,6 +919,8 @@ export async function runLivePairedW2(opts: {
       `profile=${profile} completed=${completed.length}/${expectedPairs} sameCut=${sameCut.length}`,
       `B0 fromHook=false required; observed native=${String(b0Native)}`,
       `B1 fromHook=true required; observed pcr=${String(b1FromHook)}`,
+      `B2 fromHook=true required; observed pcr=${String(b2FromHook)}`,
+      `F0 fromHook=false full-context; observed ceiling=${String(f0Ceiling)}`,
       `maxTokens unmodified ${modelLimits.maxTokens}; keepRecentTokens=${LIVE_KEEP_RECENT_TOKENS} shared`,
       `tokenMedianRelativeDelta=${tokenMedianRelativeDelta.toFixed(4)} realizedNetMedian=${realizedNetMedian}`,
       sampleMeetsW2Gate ? "sample meets W2 100-pair floor" : "sample below W2 publication floor (100 pairs × 3 seeds)",
@@ -873,6 +957,7 @@ function slimArm(arm: LiveArmResult, secrets: string[]) {
     ok: arm.ok,
     error: arm.error,
     fromExtension: arm.fromExtension,
+    compactionCount: arm.compactionCount,
     firstKeptEntryId: arm.firstKeptEntryId,
     tokensBefore: arm.tokensBefore,
     summaryTokens: arm.summaryTokens,

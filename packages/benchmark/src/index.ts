@@ -17,6 +17,16 @@ export {
   type VerifyLockedCorpusInput,
 } from "./corpus/index.js";
 export {
+  CORPUS_V3_ID,
+  a1SourceWitnessHash,
+  loadA1CorpusRoot,
+  lockA1Corpus,
+  verifyA1CorpusRoot,
+  verifyA1ShapedBundle,
+  type A1ShapedBundle,
+  type A1Split,
+} from "./corpus/a1.js";
+export {
   OracleValidationError,
   validateOracle,
   type Oracle,
@@ -73,6 +83,37 @@ export {
   type W2SourceSpan,
   type W2TraceShaper,
 } from "./arms/w2.js";
+export {
+  ArmIsolateError,
+  LIVE_FOUR_ARMS,
+  LIVE_FOUR_IDENTITIES,
+  assertIndependentWorkspaces,
+  assertProductArmText,
+  createIsolatedArmHomes,
+  liveFourIdentity,
+  piLaunchPlan,
+  requireToolsSafe,
+  type ArmIsolateErrorCode,
+  type IsolatedArmHome,
+  type LiveFourArmId,
+  type LiveFourIdentity,
+} from "./arms/isolate.js";
+export {
+  DEFAULT_ARM_CONCURRENCY,
+  ReplicatePolicyError,
+  assertSerialArms,
+  assertSeparateCacheLanes,
+  bindReplicate,
+  latinSquareOrder,
+  partitionCacheLanes,
+  recordSchedule,
+  rejectLabelOnlySeed,
+  type BoundReplicate,
+  type CacheLane,
+  type QueueEvent,
+  type ReplicatePolicyErrorCode,
+  type SeedMode,
+} from "./runner/replicate-policy.js";
 export {
   ReaderCeilingError,
   createReaderCeiling,
@@ -181,12 +222,22 @@ export {
   BundleVerifyError,
   hashRunBundle,
   sealRunBundle,
+  scrubSecretsWithProvenance,
   verifyRawRunBundle,
   verifyRunBundle,
   type BundleVerifyErrorCode,
   type ImmutableRunBundle,
   type RawRunBundle,
 } from "./report/bundle.js";
+export {
+  assertFailedSampleRetained,
+  assembleRawRunBundle,
+  collectPerArmRawEvidence,
+  keepFailedArmEvidence,
+  workspaceManifestSha256,
+  writeArmArtifactDir,
+  type PerArmRawEvidence,
+} from "./report/raw-arm.js";
 export {
   W5LaneError,
   buildRecursiveLaneHistory,

@@ -1,5 +1,5 @@
-# B25 controlled replicate (unrun)
+# B25 controlled replicate (Provider seed unrun)
 
-Live paired W2 still loops `seed=0..n` as a label (`paired-w2-live.ts`). Seed is not injected into Provider sampling. Card requires runner rejection when seed only changes a label.
+Shipped: `bindReplicate` rejects label-only seeds; serial default; latin square; cold/hot cache partition; queue/rate-limit records. Live runner binds seed into session id + isolated workspace and reports `replicate-repeat` because OpenClaw sampling seed is unsupported.
 
-NF011/NF022 stay open.
+Not run: Provider-native sampling seed. NF011/NF022 stay open until a live serial 100×3 exists.

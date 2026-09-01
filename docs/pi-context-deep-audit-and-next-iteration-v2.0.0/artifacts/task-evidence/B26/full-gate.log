@@ -1,0 +1,124 @@
+
+> @ test:acceptance /Users/luo/Documents/github/pi-context
+> vitest run --config vitest.acceptance.config.ts
+
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:40260) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40258) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40259) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40252) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40256) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40255) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40257) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40253) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40254) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/recursive-state.test.ts (1 test) 409ms
+   ✓ recursive compaction state > keeps the original do-not-deploy directive across three compaction cycles  408ms
+(node:40270) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/session-registry.test.ts (10 tests) 737ms
+   ✓ production session registry acceptance > keeps a sibling production session after session-scoped shutdown  724ms
+ ✓ tests/acceptance/materialized-recall.test.ts (2 tests) 790ms
+   ✓ product materialized recall > injects recall-needed evidence and stays silent otherwise  402ms
+   ✓ product materialized recall > stays silent and omits lease warnings when recall is not needed  387ms
+ ✓ tests/acceptance/runtime-session-ownership.test.ts (3 tests) 811ms
+   ✓ runtime session ingress ownership > sends product tool_result through RuntimeSession.ingestToolResult  394ms
+   ✓ runtime session ingress ownership > sends product user input through RuntimeSession.ingestUserInput  415ms
+ ✓ tests/acceptance/tool-result-flow.test.ts (3 tests) 842ms
+   ✓ real Pi tool_result flow > persists raw tool bytes in CAS before the host-visible compact projection  350ms
+   ✓ real Pi tool_result flow > is reachable through the only packaged product extension entry  343ms
+ ✓ tests/acceptance/evidence-recovery.test.ts (1 test) 295ms
+ ✓ tests/acceptance/runtime-concurrency.test.ts (2 tests) 1074ms
+   ✓ runtime concurrency gate > runs production sqlite sessions across workspaces without cross-scope capture  1066ms
+(node:40272) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/context-budget.test.ts (4 tests) 1100ms
+   ✓ product context I_eff envelope > binds last-assistant cacheRead/cacheWrite from session entries onto request usage  338ms
+ ✓ tests/acceptance/product-runtime-path.test.ts (6 tests) 1279ms
+   ✓ product runtime SQLite/FTS/CAS path > admits tool_result into the same store that context_search and context_read use  377ms
+   ✓ product runtime SQLite/FTS/CAS path > hard-stops compact when a CAS pointer is missing on the extension entry  409ms
+ ✓ tests/acceptance/recursive-compaction.test.ts (1 test) 20ms
+ ✓ tests/acceptance/hermetic-models.test.ts (3 tests) 9ms
+ ✓ tests/acceptance/restart-branch-recovery.test.ts (1 test) 17ms
+ ✓ tests/acceptance/extension-one-root.test.ts (2 tests) 4ms
+(node:40276) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/default-profile.test.ts (1 test) 2ms
+(node:40274) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40277) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/compaction-fallback.test.ts (1 test) 2ms
+ ✓ tests/acceptance/w1-vertical.test.ts (1 test) 153ms
+ ✓ tests/acceptance/context-hook.test.ts (3 tests) 89ms
+ ✓ tests/acceptance/user-input-flow.test.ts (11 tests) 2100ms
+   ✓ exact user input flow on the patched Pi 0.84.4 AgentSession > is reachable through the only packaged product extension entry  574ms
+ ✓ tests/acceptance/retrieval-tools.test.ts (1 test) 138ms
+(node:40287) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/multi-session-registry.test.ts (2 tests) 6ms
+(node:40289) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/acceptance/scope-failure.test.ts (2 tests) 8ms
+ ✓ tests/acceptance/deterministic-mvp.test.ts (1 test) 55ms
+
+ Test Files  22 passed (22)
+      Tests  62 passed (62)
+   Start at  01:12:44
+   Duration  4.54s (transform 1.21s, setup 0ms, collect 21.47s, tests 9.94s, environment 2ms, prepare 1.81s)
+
+
+> @ test:integration /Users/luo/Documents/github/pi-context
+> vitest run --config vitest.integration.config.ts
+
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:40350) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/e2e/jiti-candidate-load.test.ts (1 test) 208ms
+ ✓ tests/e2e/operations.test.ts (6 tests) 170ms
+(node:40348) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40349) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40351) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/integration/checkpoint-pointer-recovery.test.ts (2 tests) 11ms
+ ✓ tests/integration/checkpoint-hard-gates.test.ts (4 tests) 13ms
+(node:40345) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40346) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/fault/compaction-ack-recovery.test.ts (2 tests) 200ms
+ ✓ tests/fault/recovery.test.ts (1 test) 208ms
+ ✓ tests/e2e/key-rotation-v2-boundary.test.ts (2 tests) 219ms
+ ✓ tests/integration/snapshot-consistency.test.ts (3 tests) 258ms
+ ✓ tests/fault/recursive-restart.test.ts (1 test) 251ms
+ ✓ tests/fault/overflow-lane.test.ts (1 test) 2ms
+(node:40364) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40363) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/e2e/pi-factory-entry.test.ts (2 tests) 4ms
+ ✓ tests/e2e/packed-install.test.ts (1 test) 7ms
+(node:40369) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/fault/runtime-concurrency.test.ts (1 test) 9ms
+
+ Test Files  13 passed (13)
+      Tests  27 passed (27)
+   Start at  01:12:49
+   Duration  1.85s (transform 1.09s, setup 0ms, collect 8.16s, tests 1.56s, environment 1ms, prepare 1.26s)
+

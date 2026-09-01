@@ -1,5 +1,5 @@
-# B27 raw provider/JSONL/store bundle (unrun)
+# B27 raw provider/JSONL/store bundle (live unrun)
 
-No post-fix live run wrote immutable per-arm request/response, session JSONL, store manifest, and workspace hashes on this HEAD. Gitignored `artifacts/runs/w2-live-native/**` is not a substitute.
+Shipped: per-arm raw collector, failed-sample retain, secret scrub with sha256 provenance, directory-aware `scripts/benchmark/verify_run_bundle.py`, offline `rescore_run.py`.
 
-NF012/NF030 stay open.
+No post-fix live run wrote immutable per-arm artifacts on this HEAD. NF012/NF030 stay open.

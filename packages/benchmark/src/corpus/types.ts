@@ -3,6 +3,7 @@ export interface CorpusManifest {
   trainHash: string;
   devHash: string;
   lockedTestHash: string;
+  realTracesHash?: string;
   clusters: Record<string, string[]>;
 }
 
