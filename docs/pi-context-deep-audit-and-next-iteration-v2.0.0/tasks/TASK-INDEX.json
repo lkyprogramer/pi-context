@@ -1,0 +1,881 @@
+[
+  {
+    "id": "B00",
+    "wave": "W0",
+    "title": "冻结当前源码、CI、报告与审计证据",
+    "dependsOn": [],
+    "allowedFiles": [
+      "audit-v2/**",
+      "evidence/**"
+    ],
+    "findingIds": [
+      "NF030"
+    ],
+    "goal": "建立不可变审计基线，固定附件 SHA、GitHub HEAD、Workflow Run、Live 报告和旧 Task 状态。",
+    "steps": [
+      "编写测试：任一 evidence 文件修改后 manifest 校验失败",
+      "生成 source/CI/report inventory",
+      "记录已执行与未执行验证边界"
+    ],
+    "commands": [
+      "python3 scripts/validate_artifacts.py",
+      "shasum -a 256 -c MANIFEST.sha256"
+    ],
+    "document": "tasks/B00.md"
+  },
+  {
+    "id": "B01",
+    "wave": "W0",
+    "title": "修复 W1 Gate 非确定性并恢复 Compatibility 全绿",
+    "dependsOn": [
+      "B00"
+    ],
+    "allowedFiles": [
+      "tests/w1-gate/**",
+      "packages/benchmark/src/economics/**",
+      ".github/workflows/compatibility.yml"
+    ],
+    "findingIds": [
+      "NF001"
+    ],
+    "goal": "把真实 wall-clock 性能从 Unit 判定中移出，使用注入 Clock/Recorded Sample，使 Node/OS 不改变纯逻辑决策。",
+    "steps": [
+      "RED：在两组不同延迟输入下 Unit 结果应相同",
+      "将 benchmark timing 与 pure decision 分离",
+      "Compatibility 重新跑 Node 22/24 macOS/Linux"
+    ],
+    "commands": [
+      "pnpm test:unit",
+      "pnpm w1:gate",
+      "gh run watch <compatibility-run>"
+    ],
+    "document": "tasks/B01.md"
+  },
+  {
+    "id": "B02",
+    "wave": "W0",
+    "title": "建立互斥测试 Lane 与语义命名",
+    "dependsOn": [
+      "B00"
+    ],
+    "allowedFiles": [
+      "vitest*.ts",
+      "package.json",
+      ".github/workflows/**",
+      "tests/meta/**"
+    ],
+    "findingIds": [
+      "NF020"
+    ],
+    "goal": "每个测试文件只归属一个 Lane：unit、contract、hermetic-integration、packed、live-smoke、publication。",
+    "steps": [
+      "RED：检测 glob overlap 并列出重复文件",
+      "移动 W1 economics/Live/E2E 出 unit",
+      "为每 Lane 设置 timeout/retry/network policy"
+    ],
+    "commands": [
+      "pnpm test:unit",
+      "pnpm test:integration",
+      "pnpm test:acceptance",
+      "pnpm test:packed"
+    ],
+    "document": "tasks/B02.md"
+  },
+  {
+    "id": "B03",
+    "wave": "W0",
+    "title": "强化 Task Evidence Schema 与 taskctl 验证",
+    "dependsOn": [
+      "B00"
+    ],
+    "allowedFiles": [
+      "docs/**/scripts/taskctl.py",
+      "schemas/task-evidence.schema.json",
+      "tests/ci/task-evidence*.test.ts"
+    ],
+    "findingIds": [
+      "NF002",
+      "NF030"
+    ],
+    "goal": "Done 必须验证日志 exitCode、currentHead、allowed file diff、source digest、run bundle hash、finding closure 和 acceptance assertions。",
+    "steps": [
+      "RED：伪造空 evidence.json 不得 Done",
+      "定义 task-evidence-v2 schema",
+      "增加 commit ancestry/current HEAD 和 artifact hash 校验"
+    ],
+    "commands": [
+      "python3 scripts/taskctl.py verify B00",
+      "pnpm vitest run tests/ci/task-evidence*.test.ts"
+    ],
+    "document": "tasks/B03.md"
+  },
+  {
+    "id": "B04",
+    "wave": "W0",
+    "title": "重新审定 A00–A50 状态并重开未满足任务",
+    "dependsOn": [
+      "B03"
+    ],
+    "allowedFiles": [
+      "docs/pi-context-current-state-audit-next-plan-v1.0.0/.task-state.json",
+      "findings/**",
+      "reports/**"
+    ],
+    "findingIds": [
+      "NF003"
+    ],
+    "goal": "将 declared done 与 acceptance truth 分离，按 verified/partial/not-met/pending 重新生成状态。",
+    "steps": [
+      "导入 compliance/previous-task-status.json",
+      "A43/A44/A45/A48 必须 reopen",
+      "任何 open P0 不允许父任务作为 Release dependency done"
+    ],
+    "commands": [
+      "python3 scripts/taskctl.py reconcile --matrix compliance/previous-task-status.json"
+    ],
+    "document": "tasks/B04.md"
+  },
+  {
+    "id": "B05",
+    "wave": "W0",
+    "title": "真实核验并配置 GitHub Branch Protection",
+    "dependsOn": [
+      "B01"
+    ],
+    "allowedFiles": [
+      ".github/workflows/**",
+      "scripts/ci/github-protection.mjs",
+      "docs/OPERATIONS.md"
+    ],
+    "findingIds": [
+      "NF025"
+    ],
+    "goal": "通过 GitHub API 读取/应用 ruleset 或 classic protection，要求 required-gate 和 compatibility-required。",
+    "steps": [
+      "RED：仓库无规则时脚本必须失败",
+      "区分 read-only verify 与 explicit apply",
+      "保存 API 响应摘要/规则 ID"
+    ],
+    "commands": [
+      "node scripts/ci/github-protection.mjs verify"
+    ],
+    "document": "tasks/B05.md"
+  },
+  {
+    "id": "B06",
+    "wave": "W0",
+    "title": "统一 Handoff、Compatibility、Install、Package Policy",
+    "dependsOn": [
+      "B01"
+    ],
+    "allowedFiles": [
+      "HANDOFF.md",
+      "docs/COMPATIBILITY.md",
+      "docs/INSTALL.md",
+      "docs/OPERATIONS.md",
+      "apps/pi-context-runtime/package.json"
+    ],
+    "findingIds": [
+      "NF026",
+      "NF028"
+    ],
+    "goal": "删除旧 HEAD/旧结果，明确 0.84.4 patched host、private/UNLICENSED 内部 tarball、当前 keep-native 状态。",
+    "steps": [
+      "文档契约测试解析版本/HEAD/claim policy",
+      "明确 npmPublish=false",
+      "不把 protection YAML 自检写成已应用"
+    ],
+    "commands": [
+      "pnpm vitest run tests/meta/docs-consistency.test.ts"
+    ],
+    "document": "tasks/B06.md"
+  },
+  {
+    "id": "B07",
+    "wave": "W0",
+    "title": "制定并实现不可变 Raw Run Bundle Policy",
+    "dependsOn": [
+      "B00",
+      "B03"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/report/**",
+      "scripts/benchmark/**",
+      "artifacts/runs/**"
+    ],
+    "findingIds": [
+      "NF012",
+      "NF030"
+    ],
+    "goal": "所有 Live/Publication Run 保存完整 JSONL、Store snapshot hash、workspace manifest、config/model/provider identity、raw report 与 decision。",
+    "steps": [
+      "RED：缺任一原始证据 bundle verify 失败",
+      "禁止仅保存 400 字符 preview",
+      "Raw Bundle 通过 artifact store 或 release bundle 保留"
+    ],
+    "commands": [
+      "pnpm benchmark:bundle:verify",
+      "python3 scripts/verify_run_bundle.py <bundle>"
+    ],
+    "document": "tasks/B07.md"
+  },
+  {
+    "id": "B08",
+    "wave": "W1",
+    "title": "所有 User/Tool Ingress 必须调用 RuntimeSession",
+    "dependsOn": [
+      "B03"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/pi-adapter/src/*hook*",
+      "tests/acceptance/product-runtime-path.test.ts"
+    ],
+    "findingIds": [
+      "NF004"
+    ],
+    "goal": "Service resolver 返回 RuntimeSession facade，user input 调 ingestUserInput，tool result 调 ingestToolResult，禁止直接 owner.service/observation。",
+    "steps": [
+      "RED：并发 ingress+compaction 必须按 RuntimeSession write chain 顺序",
+      "静态检查默认 Extension 不调用底层 Store/Service",
+      "保留 idempotency/abort 语义"
+    ],
+    "commands": [
+      "pnpm vitest run tests/acceptance/product-runtime-path.test.ts tests/acceptance/runtime-session-ownership.test.ts"
+    ],
+    "document": "tasks/B08.md"
+  },
+  {
+    "id": "B09",
+    "wave": "W1",
+    "title": "按 Session/Branch 保存 Lifecycle Cursor",
+    "dependsOn": [
+      "B08"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/extension.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "tests/acceptance/multi-session-registry.test.ts"
+    ],
+    "findingIds": [
+      "NF005"
+    ],
+    "goal": "移除 lastRecoveredCursor，使用 Map<workspace/session/leaf, cursor>，branch change 必须带 previous cursor。",
+    "steps": [
+      "RED：两个 session 交错 start/tree/shutdown 不得串线",
+      "不同 workspace 同时 background snapshot",
+      "不存在 single last cursor fallback"
+    ],
+    "commands": [
+      "pnpm vitest run tests/acceptance/multi-session-registry.test.ts"
+    ],
+    "document": "tasks/B09.md"
+  },
+  {
+    "id": "B10",
+    "wave": "W1",
+    "title": "实现 Session-scoped Shutdown 与资源引用计数",
+    "dependsOn": [
+      "B09"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/runtime/src/session-registry.ts",
+      "tests/acceptance/session-registry.test.ts"
+    ],
+    "findingIds": [
+      "NF005"
+    ],
+    "goal": "session_shutdown 只关闭对应 RuntimeSession；workspace 最后一个 session 关闭后才释放 DB/key/worker。",
+    "steps": [
+      "RED：关闭 A 不得使 B search/materialize 失败",
+      "重复 shutdown 幂等",
+      "Extension release 才 close-all"
+    ],
+    "commands": [
+      "pnpm vitest run tests/acceptance/session-registry.test.ts tests/acceptance/multi-session-registry.test.ts"
+    ],
+    "document": "tasks/B10.md"
+  },
+  {
+    "id": "B11",
+    "wave": "W1",
+    "title": "Context 与 Compaction 共用 Atomic RuntimeSnapshot",
+    "dependsOn": [
+      "B08"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/runtime-snapshot.ts",
+      "packages/storage-node/src/state-store.ts",
+      "apps/pi-context-runtime/src/composition-root.ts"
+    ],
+    "findingIds": [
+      "NF006"
+    ],
+    "goal": "用单个 snapshot transaction 返回 directives/claims/continuity/pointers/heads/source boundary，禁止 compaction 分散查询。",
+    "steps": [
+      "RED：并发 supersession/tool admission 时 snapshot 不得 torn",
+      "Materialize 与同 boundary compaction 记录相同 snapshotHash",
+      "SQLite transaction 支持 AbortSignal"
+    ],
+    "commands": [
+      "pnpm vitest run packages/runtime/test/runtime-snapshot*.test.ts tests/integration/snapshot-consistency.test.ts"
+    ],
+    "document": "tasks/B11.md"
+  },
+  {
+    "id": "B12",
+    "wave": "W1",
+    "title": "持久化 Compaction Stage/Ack/Failure Saga",
+    "dependsOn": [
+      "B11"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/compaction-journal.ts",
+      "packages/storage-node/src/**",
+      "apps/pi-context-runtime/src/extension.ts"
+    ],
+    "findingIds": [
+      "NF007"
+    ],
+    "goal": "Stage 写 SQLite journal；session_compact 按 outputHash/firstKept ack；失败/重启可 reconcile。",
+    "steps": [
+      "RED：stage 后进程退出再 ack 可恢复",
+      "错误 outputHash 拒绝",
+      "并发两 candidate 只有当前 generation 可提交"
+    ],
+    "commands": [
+      "pnpm vitest run tests/fault/compaction-ack-recovery.test.ts"
+    ],
+    "document": "tasks/B12.md"
+  },
+  {
+    "id": "B13",
+    "wave": "W1",
+    "title": "把 Hard Gate Verifier 接入产品 Compaction",
+    "dependsOn": [
+      "B11",
+      "B12"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/compaction-service.ts",
+      "packages/core/src/compaction/hard-gates.ts",
+      "apps/pi-context-runtime/src/composition-root.ts"
+    ],
+    "findingIds": [
+      "NF008"
+    ],
+    "goal": "在返回 PCR candidate 前真实验证 tool pair、retained tail、pointer、two-run hash、must-shrink；失败按 soft/hard 语义处理。",
+    "steps": [
+      "RED：orphan tool result、broken tail、hash drift 不得 fromHook=true",
+      "不得通过常量 toolPair=0",
+      "Verifier report 写入 compaction details"
+    ],
+    "commands": [
+      "pnpm vitest run tests/integration/checkpoint-hard-gates.test.ts tests/contract/pi-compaction-takeover.test.ts"
+    ],
+    "document": "tasks/B13.md"
+  },
+  {
+    "id": "B14",
+    "wave": "W1",
+    "title": "默认关闭 Background，删除 Fixture/Unbound Production Path",
+    "dependsOn": [
+      "B09"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/extension.ts",
+      "apps/pi-context-runtime/src/doctor.ts",
+      "packages/worker/**"
+    ],
+    "findingIds": [
+      "NF018",
+      "NF019"
+    ],
+    "goal": "除显式 semantic-beta profile 外不注册 agent_settled worker；所有 snapshot 字段来自当前 RuntimeSession。",
+    "steps": [
+      "RED：默认加载无 background candidate/write",
+      "搜索生产代码不出现 sys_runtime/tools_runtime/cfg_runtime/unbound cursor",
+      "Doctor 使用真实 capability probe"
+    ],
+    "commands": [
+      "pnpm vitest run tests/acceptance/default-profile.test.ts tests/security/scope-isolation.test.ts"
+    ],
+    "document": "tasks/B14.md"
+  },
+  {
+    "id": "B15",
+    "wave": "W1",
+    "title": "产品级多 Workspace/Session 并发与故障 Gate",
+    "dependsOn": [
+      "B08",
+      "B09",
+      "B10",
+      "B11",
+      "B12"
+    ],
+    "allowedFiles": [
+      "tests/acceptance/**",
+      "tests/fault/**"
+    ],
+    "findingIds": [
+      "NF004",
+      "NF005"
+    ],
+    "goal": "覆盖交错 ingress/materialize/compact/branch/shutdown/restart，证明无跨 scope 读取和死锁。",
+    "steps": [
+      "至少 4 workspace×4 session×2 branch 并发",
+      "随机 kill points",
+      "最终 Store heads 与 JSONL host commits 对齐"
+    ],
+    "commands": [
+      "pnpm vitest run tests/acceptance/runtime-concurrency.test.ts tests/fault/runtime-concurrency.test.ts"
+    ],
+    "document": "tasks/B15.md"
+  },
+  {
+    "id": "B16",
+    "wave": "W2",
+    "title": "接入完整 Serialized Envelope 与 I_eff",
+    "dependsOn": [
+      "B11"
+    ],
+    "allowedFiles": [
+      "packages/pi-adapter/src/context-hook.ts",
+      "packages/core/src/budget/**",
+      "apps/pi-context-runtime/src/composition-root.ts"
+    ],
+    "findingIds": [
+      "NF016"
+    ],
+    "goal": "从 Pi Host 获取/计算 system prompt、tool schema、output reserve、provider reserve、images、reasoning envelope，统一输入预算。",
+    "steps": [
+      "RED：tools schema 放大时 Materializer 必须减少历史预算",
+      "未知 route fail closed",
+      "实际 request usage 与估算误差分桶记录"
+    ],
+    "commands": [
+      "pnpm vitest run tests/performance/token-accounting.test.ts tests/acceptance/context-budget.test.ts"
+    ],
+    "document": "tasks/B16.md"
+  },
+  {
+    "id": "B17",
+    "wave": "W2",
+    "title": "把 Proactive Recall、Lease、Directory 接入 Materializer",
+    "dependsOn": [
+      "B11",
+      "B16"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/retrieval/**",
+      "packages/core/src/materialization/**",
+      "apps/pi-context-runtime/src/composition-root.ts"
+    ],
+    "findingIds": [
+      "NF017"
+    ],
+    "goal": "新顶层 user turn 构造轻量 query；高分缺口证据进入 volatile tail；purpose-bound lease 控制续租和释放。",
+    "steps": [
+      "RED：recall-needed 注入、recall-not-needed 静默",
+      "冲突证据保留时间/版本，不静默 latest-wins",
+      "同一 evidence 防抖"
+    ],
+    "commands": [
+      "pnpm vitest run packages/runtime/test/proactive-recall.test.ts tests/acceptance/materialized-recall.test.ts"
+    ],
+    "document": "tasks/B17.md"
+  },
+  {
+    "id": "B18",
+    "wave": "W2",
+    "title": "接入 Provider Usage/Prompt Cache/Cost Telemetry",
+    "dependsOn": [
+      "B16"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/usage.ts",
+      "packages/worker/src/telemetry/**",
+      "packages/pi-adapter/src/**"
+    ],
+    "findingIds": [
+      "NF016",
+      "NF023"
+    ],
+    "goal": "记录 input/output/cacheRead/cacheWrite/summary/recall/latency/failure cost，并按 Provider price table 版本化。",
+    "steps": [
+      "RED：cache token 不得被混作窗口节省",
+      "匿名/脱敏 telemetry",
+      "每个 request 与 viewId/outputHash 关联"
+    ],
+    "commands": [
+      "pnpm vitest run packages/runtime/test/usage.test.ts packages/worker/test/telemetry-economics.test.ts"
+    ],
+    "document": "tasks/B18.md"
+  },
+  {
+    "id": "B19",
+    "wave": "W2",
+    "title": "真实 Provider Cache Layout 与 Metadata Ablation",
+    "dependsOn": [
+      "B17",
+      "B18"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/performance/**",
+      "tests/live-gate/cache/**"
+    ],
+    "findingIds": [
+      "NF023"
+    ],
+    "goal": "在同一 Provider 上比较 full metadata/short ref/no heads/directory placement，报告 first-different、cache hit 与总成本。",
+    "steps": [
+      "至少 30 session clusters×多 turn",
+      "交替 arm 顺序",
+      "质量 Hard Gate 先于成本比较"
+    ],
+    "commands": [
+      "pnpm benchmark:performance-cache-live"
+    ],
+    "document": "tasks/B19.md"
+  },
+  {
+    "id": "B20",
+    "wave": "W2",
+    "title": "递归状态、外部副作用与 Restart Continuation",
+    "dependsOn": [
+      "B12",
+      "B13",
+      "B17"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/compaction/**",
+      "tests/live-gate/workspaces/**"
+    ],
+    "findingIds": [
+      "NF007"
+    ],
+    "goal": "三次以上 compaction 保留 active/superseded directives、task fronts、side-effect receipts 和 next safe action。",
+    "steps": [
+      "RED：旧禁止部署不能复活或消失",
+      "对话 branch 不假装回滚文件/DB",
+      "restart 后 exact read/pointer 仍可用"
+    ],
+    "commands": [
+      "pnpm vitest run tests/acceptance/recursive-state.test.ts tests/fault/recursive-restart.test.ts"
+    ],
+    "document": "tasks/B20.md"
+  },
+  {
+    "id": "B21",
+    "wave": "W3",
+    "title": "用 Probe-only Scorer 替换 Legacy scoreArm",
+    "dependsOn": [
+      "B17"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/benchmark/src/scoring/probe.ts"
+    ],
+    "findingIds": [
+      "NF009"
+    ],
+    "goal": "Summary 只参加 artifact integrity；Reader/Executor 只评分 probe/行为，tool-call/non-answer/读错文件都失败。",
+    "steps": [
+      "重放旧 tu-00/01/08/09/10/11 得到正确失败",
+      "yes/no/版本/路径/错误/拒答规范化",
+      "报告 unknown/unparseable 分桶"
+    ],
+    "commands": [
+      "pnpm vitest run packages/benchmark/test/scoring/probe*.test.ts tests/live-gate/scorer-regression.test.ts"
+    ],
+    "document": "tasks/B21.md"
+  },
+  {
+    "id": "B22",
+    "wave": "W3",
+    "title": "Live Runner 实测 Exact CAS Recovery 与 Cross-scope Denial",
+    "dependsOn": [
+      "B13",
+      "B21"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/benchmark/src/scoring/integrity.ts"
+    ],
+    "findingIds": [
+      "NF010"
+    ],
+    "goal": "对每个 PCR pointer 调 read，核对 bytes+sha256；再用错误 cursor 验证 scope denied。",
+    "steps": [
+      "RED：fromHook+no leak 不得算 recovery",
+      "zero pointer case 必须显式 N/A 或失败",
+      "报告 recovery denominator"
+    ],
+    "commands": [
+      "pnpm vitest run tests/live-gate/exact-recovery.live.ts"
+    ],
+    "document": "tasks/B22.md"
+  },
+  {
+    "id": "B23",
+    "wave": "W3",
+    "title": "启用真实 Tools 与 Tool-pair/Environment Scorer",
+    "dependsOn": [
+      "B13",
+      "B21"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/**",
+      "packages/benchmark/src/continuation/**"
+    ],
+    "findingIds": [
+      "NF008"
+    ],
+    "goal": "移除 --no-tools，在独立 workspace 让模型自己调用 read/edit/test；从 JSONL 解析 call/result pairing 和最终环境断言。",
+    "steps": [
+      "orphan/mismatched result 失败",
+      "禁止命令与 side effect mock",
+      "不允许预编程正确 tool call"
+    ],
+    "commands": [
+      "pnpm benchmark:closed-loop:live-smoke"
+    ],
+    "document": "tasks/B23.md"
+  },
+  {
+    "id": "B24",
+    "wave": "W3",
+    "title": "实现真实 B0/B1/B2/F0 Arm Runner",
+    "dependsOn": [
+      "B17",
+      "B22",
+      "B23"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/arms/**",
+      "tests/live-gate/**",
+      "scripts/benchmark/**"
+    ],
+    "findingIds": [
+      "NF013"
+    ],
+    "goal": "B0=Pi Native+同 A1 ingress；B1=PCR checkpoint+identity context；B2=PCR materializer+recall；F0=full context ceiling。",
+    "steps": [
+      "每 arm 独立 Pi home/workspace clone",
+      "same JSONL/store/cut/model/config",
+      "B1/B2 fromHook 与 context materializer identity 证明"
+    ],
+    "commands": [
+      "pnpm benchmark:w2:live-smoke"
+    ],
+    "document": "tasks/B24.md"
+  },
+  {
+    "id": "B25",
+    "wave": "W3",
+    "title": "定义受控 Replicate 与 Arm 调度策略",
+    "dependsOn": [
+      "B24"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/runner/**",
+      "docs/benchmark/**"
+    ],
+    "findingIds": [
+      "NF011",
+      "NF022"
+    ],
+    "goal": "Seed 必须进入可控随机源；Provider 不支持 seed 时用重复调用并报告 replicate，不伪称 seed。Arm 顺序随机/拉丁方，默认不并发。",
+    "steps": [
+      "RED：seed 只改 label 时 runner 拒绝",
+      "冷/热 cache lane 分开",
+      "记录队列与 rate-limit"
+    ],
+    "commands": [
+      "pnpm vitest run packages/benchmark/test/replicate-policy.test.ts"
+    ],
+    "document": "tasks/B25.md"
+  },
+  {
+    "id": "B26",
+    "wave": "W3",
+    "title": "构建真实 A1-shaped Locked Corpus 与 Cluster Split",
+    "dependsOn": [
+      "B24"
+    ],
+    "allowedFiles": [
+      "benchmarks/corpus-v3/**",
+      "packages/benchmark/src/corpus/**",
+      "scripts/benchmark/freeze-*"
+    ],
+    "findingIds": [
+      "NF013",
+      "NF021"
+    ],
+    "goal": "从脱敏真实开发轨迹构造完整 Pi JSONL、Runtime Store、Workspace、Oracle、hidden continuation，按 task lineage 聚类。",
+    "steps": [
+      "train/dev/locked/real-traces 分离",
+      "同模板不得跨 split",
+      "source-witness validity=100%"
+    ],
+    "commands": [
+      "pnpm benchmark:corpus:v3:verify"
+    ],
+    "document": "tasks/B26.md"
+  },
+  {
+    "id": "B27",
+    "wave": "W3",
+    "title": "保存完整 Raw Provider/JSONL/Store/Workspace Evidence",
+    "dependsOn": [
+      "B07",
+      "B24"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/report/**",
+      "scripts/benchmark/**"
+    ],
+    "findingIds": [
+      "NF012",
+      "NF030"
+    ],
+    "goal": "每 arm 保存 request/response usage、session JSONL、compaction entries、workspace hashes、store manifest、stderr、provider IDs。",
+    "steps": [
+      "失败样本不得删除",
+      "Secret scrub 不破坏 hash provenance",
+      "bundle 可离线重评分"
+    ],
+    "commands": [
+      "python3 scripts/verify_run_bundle.py artifacts/runs/<run>"
+    ],
+    "document": "tasks/B27.md"
+  },
+  {
+    "id": "B28",
+    "wave": "W3",
+    "title": "运行修复后权威 100×3 并独立复核",
+    "dependsOn": [
+      "B21",
+      "B22",
+      "B23",
+      "B24",
+      "B25",
+      "B26",
+      "B27"
+    ],
+    "allowedFiles": [
+      "artifacts/runs/w2-v3-live/**",
+      "reports/**"
+    ],
+    "findingIds": [
+      "NF012",
+      "NF027",
+      "NF029"
+    ],
+    "goal": "在最终代码 HEAD 上运行，不混合旧 300 对与新 smoke；由第二套 scorer 离线重算。",
+    "steps": [
+      "Hard Gate 全部真实可计算",
+      "Quality cluster CI 非劣",
+      "Efficiency 含 cache/latency/failure cost"
+    ],
+    "commands": [
+      "pnpm benchmark:w2:publication",
+      "python3 scripts/rescore_run.py <bundle>"
+    ],
+    "document": "tasks/B28.md"
+  },
+  {
+    "id": "B29",
+    "wave": "W4",
+    "title": "完成真实 Natural 200K Threshold Lane",
+    "dependsOn": [
+      "B16",
+      "B24",
+      "B27"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/w5-live-lanes.ts",
+      "artifacts/runs/w2-v3-live/natural-threshold/**"
+    ],
+    "findingIds": [
+      "NF014"
+    ],
+    "goal": "不手工 compact、不降低 keepRecent/reserve，记录每轮真实 usage，Native/PCR 每 arm 至少自动 threshold 一次。",
+    "steps": [
+      "动态增长直到 usage 超 183808 或明确 Provider 实际窗口不一致",
+      "大单 turn/tool-heavy 两类",
+      "trigger 前后 task continuation"
+    ],
+    "commands": [
+      "PCR_W5_LIVE_PROFILE=natural pnpm test:live:w5"
+    ],
+    "document": "tasks/B29.md"
+  },
+  {
+    "id": "B30",
+    "wave": "W4",
+    "title": "完成真实 Provider Overflow 与 Recursive Long-horizon Lane",
+    "dependsOn": [
+      "B20",
+      "B24",
+      "B27"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/w5-live-lanes.ts",
+      "artifacts/runs/w2-v3-live/{overflow,recursive}/**"
+    ],
+    "findingIds": [
+      "NF014"
+    ],
+    "goal": "真实捕获 Provider context overflow，证明 compact→retry progress；递归完成 ≥3 compactions、branch、restart、correction、recall-needed/not-needed。",
+    "steps": [
+      "禁止用手工 compact 冒充 overflow",
+      "每次 retry hash 改变且 effective input 严格下降",
+      "外部 side effect 不重放"
+    ],
+    "commands": [
+      "PCR_W5_LIVE_PROFILE=overflow pnpm test:live:w5",
+      "PCR_W5_LIVE_PROFILE=recursive pnpm test:live:w5"
+    ],
+    "document": "tasks/B30.md"
+  },
+  {
+    "id": "B31",
+    "wave": "W4",
+    "title": "统一 CI、Publication Gate 与 Release Claim Policy",
+    "dependsOn": [
+      "B01",
+      "B05",
+      "B06",
+      "B28",
+      "B29",
+      "B30"
+    ],
+    "allowedFiles": [
+      ".github/workflows/**",
+      "packages/benchmark/src/report/**",
+      "scripts/release/**",
+      "docs/**"
+    ],
+    "findingIds": [
+      "NF015",
+      "NF024",
+      "NF027",
+      "NF028"
+    ],
+    "goal": "Release 必须同时满足 Required+Compatibility、当前 HEAD、完整 Live Bundle、Hard/Quality/Efficiency、package policy；否则 keep-native/no publication。",
+    "steps": [
+      "Gate 输入类型区分 synthetic/component/live-publication",
+      "liveProvider=false 永不 publicationClaim=true",
+      "Semantic Beta 继续独立 default-off"
+    ],
+    "commands": [
+      "pnpm check:all",
+      "pnpm test:packed",
+      "pnpm benchmark:w2:publication",
+      "node scripts/release/verify.mjs"
+    ],
+    "document": "tasks/B31.md"
+  }
+]
