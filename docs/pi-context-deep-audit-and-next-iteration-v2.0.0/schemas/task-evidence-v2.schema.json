@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pcr-task-evidence-v2",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "taskId",
+    "status",
+    "currentHead",
+    "allowedDiffSha256",
+    "red",
+    "green",
+    "fullGate",
+    "runBundleHashes",
+    "acceptanceAssertions",
+    "findingsClosed",
+    "dirty"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "taskId": {
+      "pattern": "^B\\d{2}$"
+    },
+    "status": {
+      "const": "done"
+    },
+    "currentHead": {
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "allowedDiffSha256": {
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "red": {
+      "$ref": "#/$defs/run"
+    },
+    "green": {
+      "$ref": "#/$defs/run"
+    },
+    "fullGate": {
+      "$ref": "#/$defs/run"
+    },
+    "runBundleHashes": {
+      "type": "array",
+      "items": {
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "acceptanceAssertions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "ok",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ok": {
+            "const": true
+          },
+          "evidence": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "findingsClosed": {
+      "type": "array",
+      "items": {
+        "pattern": "^NF\\d{3}$"
+      }
+    },
+    "dirty": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "run": {
+      "type": "object",
+      "required": [
+        "command",
+        "exitCode",
+        "logSha256"
+      ],
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "exitCode": {
+          "type": "integer"
+        },
+        "logSha256": {
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

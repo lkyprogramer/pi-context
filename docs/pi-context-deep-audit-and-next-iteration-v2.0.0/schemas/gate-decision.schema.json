@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pcr-gate-decision-v2",
+  "type": "object",
+  "required": [
+    "runId",
+    "commit",
+    "decision",
+    "publicationClaim",
+    "runBundleSha256",
+    "hard",
+    "quality",
+    "efficiency"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "commit": {
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "decision": {
+      "enum": [
+        "adopt-pcr-compactor",
+        "keep-pi-native",
+        "repeat-after-infrastructure-fix",
+        "stop"
+      ]
+    },
+    "publicationClaim": {
+      "type": "boolean"
+    },
+    "runBundleSha256": {
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "hard": {
+      "type": "object"
+    },
+    "quality": {
+      "type": "object"
+    },
+    "efficiency": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

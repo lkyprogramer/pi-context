@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pcr-run-manifest-v2",
+  "type": "object",
+  "required": [
+    "runId",
+    "commit",
+    "dirty",
+    "sourceBundleSha256",
+    "corpus",
+    "pi",
+    "extensionTarballSha256",
+    "provider",
+    "environment",
+    "arms",
+    "replicatePolicy",
+    "startedAt",
+    "completedAt"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string"
+    },
+    "commit": {
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "dirty": {
+      "const": false
+    },
+    "sourceBundleSha256": {
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "corpus": {
+      "type": "object"
+    },
+    "pi": {
+      "type": "object"
+    },
+    "extensionTarballSha256": {
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "provider": {
+      "type": "object"
+    },
+    "environment": {
+      "type": "object"
+    },
+    "arms": {
+      "type": "array",
+      "minItems": 2
+    },
+    "replicatePolicy": {
+      "type": "string"
+    },
+    "startedAt": {
+      "type": "string"
+    },
+    "completedAt": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

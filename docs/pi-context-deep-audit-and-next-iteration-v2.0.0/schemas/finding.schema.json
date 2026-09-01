@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pcr-audit-finding-v2",
+  "type": "object",
+  "required": [
+    "id",
+    "severity",
+    "area",
+    "title",
+    "observation",
+    "status",
+    "remediationTasks"
+  ],
+  "properties": {
+    "id": {
+      "pattern": "^NF\\d{3}$"
+    },
+    "severity": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2"
+      ]
+    },
+    "area": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "observation": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "open",
+        "closed",
+        "waived"
+      ]
+    },
+    "remediationTasks": {
+      "type": "array",
+      "items": {
+        "pattern": "^B\\d{2}$"
+      }
+    }
+  },
+  "additionalProperties": false
+}

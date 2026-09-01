@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pcr-publication-report-v2",
+  "type": "object",
+  "required": [
+    "identity",
+    "sample",
+    "integrity",
+    "quality",
+    "efficiency",
+    "failures",
+    "decision",
+    "limitations"
+  ],
+  "properties": {
+    "identity": {
+      "type": "object"
+    },
+    "sample": {
+      "type": "object"
+    },
+    "integrity": {
+      "type": "object"
+    },
+    "quality": {
+      "type": "object"
+    },
+    "efficiency": {
+      "type": "object"
+    },
+    "failures": {
+      "type": "array"
+    },
+    "decision": {
+      "type": "object"
+    },
+    "limitations": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}
