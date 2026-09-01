@@ -1,0 +1,18 @@
+# Source: vitest.integration.config.ts
+# Lines: 1-15
+
+     1  import { defineConfig } from "vitest/config";
+     2  
+     3  export default defineConfig({
+     4    test: {
+     5      include: [
+     6        "tests/acceptance/**/*.test.ts",
+     7        "tests/live/**/*.test.ts",
+     8        "tests/integration/**/*.test.ts",
+     9      ],
+    10      exclude: [
+    11        "tests/acceptance/packed-install.test.ts",
+    12        "tests/live-gate/**",
+    13      ],
+    14    },
+    15  });

@@ -1,0 +1,11 @@
+{
+  "taskId": "A21",
+  "status": "done",
+  "commit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+  "redLog": "artifacts/task-evidence/A21/red.log",
+  "greenLog": "artifacts/task-evidence/A21/green.log",
+  "fullGateLog": "artifacts/task-evidence/A21/full-gate.log",
+  "sourceDigest": "ac3474909992f81730475151a2b9f86c48ea6ff2c1ba61e0f880d2d31ff85a12",
+  "runBundleHashes": [],
+  "findingsClosed": []
+}

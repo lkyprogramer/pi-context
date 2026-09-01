@@ -1,0 +1,13 @@
+## format
+file:///mnt/data/pi-context-latest-src/pi-context-main/scripts/ci/format-lint.mjs:6
+if (result.status !== 0) throw new Error(result.stderr);
+                               ^
+
+Error: fatal: not a git repository (or any of the parent directories): .git
+
+    at file:///mnt/data/pi-context-latest-src/pi-context-main/scripts/ci/format-lint.mjs:6:32
+    at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.16.0

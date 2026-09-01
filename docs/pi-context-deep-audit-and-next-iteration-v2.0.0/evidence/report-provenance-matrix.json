@@ -1,0 +1,79 @@
+[
+  {
+    "artifact": "LIVE-COMPARISON.md",
+    "dataHead": "a6281b3",
+    "currentHead": "6c5c5b5",
+    "provider": "real",
+    "arms": "B0/B1",
+    "rawIncluded": "no",
+    "scorer": "legacy weak",
+    "decision": "keep-pi-native",
+    "trust": "diagnostic"
+  },
+  {
+    "artifact": "pre-backfill 100x3 report",
+    "dataHead": "a6281b3",
+    "currentHead": "6c5c5b5",
+    "provider": "real",
+    "arms": "B0/B1",
+    "rawIncluded": "gitignored",
+    "scorer": "legacy weak",
+    "decision": "keep-pi-native",
+    "trust": "diagnostic only"
+  },
+  {
+    "artifact": "post-backfill spec-smoke",
+    "dataHead": "6afd5de+",
+    "currentHead": "6c5c5b5",
+    "provider": "real",
+    "arms": "B0/B1",
+    "rawIncluded": "not authoritative bundle",
+    "scorer": "legacy weak",
+    "decision": "smoke hard pass",
+    "trust": "smoke only"
+  },
+  {
+    "artifact": "deterministic-v3 gate",
+    "dataHead": "8855d45",
+    "currentHead": "6c5c5b5",
+    "provider": "false",
+    "arms": "synthetic B0/B1/B2",
+    "rawIncluded": "yes",
+    "scorer": "component",
+    "decision": "keep-pi-native",
+    "trust": "component"
+  },
+  {
+    "artifact": "natural-threshold.json",
+    "dataHead": "0e68bd0/6c5c5b5",
+    "currentHead": "6c5c5b5",
+    "provider": "real",
+    "arms": "B0/B1",
+    "rawIncluded": "summary JSON",
+    "scorer": "trigger observation",
+    "decision": "not triggered",
+    "trust": "valid negative attempt"
+  },
+  {
+    "artifact": "overflow.json",
+    "dataHead": "0e68bd0/6c5c5b5",
+    "currentHead": "6c5c5b5",
+    "provider": "real",
+    "arms": "single workflow",
+    "rawIncluded": "summary JSON",
+    "scorer": "overflow flag",
+    "decision": "not observed",
+    "trust": "valid negative attempt"
+  },
+  {
+    "artifact": "recursive.json",
+    "dataHead": "0e68bd0/6c5c5b5",
+    "currentHead": "6c5c5b5",
+    "provider": "real",
+    "arms": "single workflow",
+    "rawIncluded": "summary JSON",
+    "scorer": "phase history",
+    "decision": "1 compact only",
+    "trust": "valid negative attempt"
+  }
+]

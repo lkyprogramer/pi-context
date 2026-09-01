@@ -1,0 +1,29 @@
+{
+  "packageName": "pi-context-deep-audit-and-next-iteration-v2.0.0",
+  "version": "2.0.0",
+  "generatedAt": "2026-09-01",
+  "auditedRepository": "lkyprogramer/pi-context",
+  "auditedHead": "6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31",
+  "previousAuditHead": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+  "sourceArchive": "9907f69c-1ace-47b4-ad03-84b37cc77eb3.zip",
+  "sourceArchiveSha256": "ac3fd46a8dbdd03ac31e16e7184d263f572680b6a7c27b0cdf8e5d55a4b36155",
+  "compatibilityArtifactSha256": "8bc23f691192493d0e0385efcea33b80cb26e48237d81bf339d20e8aad8052d2",
+  "findingCount": 30,
+  "findingSeverity": {
+    "P0": 16,
+    "P1": 14
+  },
+  "taskCount": 32,
+  "previousTaskAuditCounts": {
+    "verified": 11,
+    "partial": 25,
+    "not-met": 10,
+    "verified-component": 4,
+    "pending": 1
+  },
+  "executionBoundary": {
+    "localStaticValidation": true,
+    "localFullTestSuite": false,
+    "githubActionsUsed": true
+  }
+}

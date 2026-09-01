@@ -1,0 +1,38 @@
+{
+  "head": "6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31",
+  "checkedAt": "2026-09-01",
+  "workflows": [
+    {
+      "name": "required",
+      "runId": 33478592667,
+      "conclusion": "success",
+      "meaning": "固定 Node 22 主 Required 流水线全绿"
+    },
+    {
+      "name": "compatibility",
+      "runId": 33478592798,
+      "conclusion": "failure",
+      "meaning": "Node/OS/Pi Matrix 仍红"
+    }
+  ],
+  "failingCell": {
+    "node": "24.18.1",
+    "lane": "min",
+    "os": "ubuntu-latest",
+    "failedFile": "tests/w1-gate/early-net-value.test.ts",
+    "expected": "proceed-to-w2",
+    "actual": "keep-recovery-only",
+    "passedFiles": 180,
+    "failedFiles": 1,
+    "skippedFiles": 1,
+    "passedTests": 818,
+    "failedTests": 1,
+    "skippedTests": 1
+  },
+  "rootCause": "W1 gate 在 unit lane 中使用真实 wall-clock/hook P95，并断言固定经济决策；不同 Node/OS 使结果非确定。",
+  "branchProtection": {
+    "rulesets": [],
+    "classicProtection": "integration returned 403; unverified"
+  },
+  "localExecutionBoundary": "附件无 node_modules，工作容器没有 pnpm；仅执行标准库静态校验，完整测试证据取自 GitHub Actions。"
+}

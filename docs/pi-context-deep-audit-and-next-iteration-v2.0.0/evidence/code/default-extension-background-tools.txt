@@ -1,0 +1,136 @@
+# Source: apps/pi-context-runtime/src/extension.ts
+# Lines: 263-395
+
+   263    registerBackgroundHook(pi as never, {
+   264      isHardPath: isHardBackgroundPath,
+   265      snapshot: backgroundSnapshot,
+   266      get worker() {
+   267        const memory = new Map<string, { id: string; key: string; phase: "preparing" | "prepared" | "stale" | "cancelled" | "failed"; reason?: string }>();
+   268        worker ??= new CandidateWorker({
+   269          store: {
+   270            async findCandidate(key) {
+   271              return memory.get(key);
+   272            },
+   273            async markPreparing(key) {
+   274              const rec = { id: `c_${key.slice(0, 16)}`, key, phase: "preparing" as const };
+   275              memory.set(key, rec);
+   276              return rec;
+   277            },
+   278            async markPrepared(prepared) {
+   279              const rec = { ...prepared, phase: "prepared" as const };
+   280              memory.set(prepared.key, rec);
+   281              const snap = backgroundSnapshot();
+   282              await userTurns.persistBackgroundCandidate({
+   283                workspaceId: snap.workspaceId,
+   284                sessionId: snap.sessionId,
+   285                leafId: snap.leafId === "header" ? null : snap.leafId,
+   286                lineageHash: snap.lineageHash,
+   287                modelKey: snap.modelKey,
+   288                sourceHead: domainHash("source-head", snap.sourceHead),
+   289                configFingerprint: domainHash("config", snap.configFingerprint),
+   290              }).catch(() => undefined);
+   291              return rec;
+   292            },
+   293            async markStale(id, reason) {
+   294              const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "stale" as const, reason };
+   295              const next = { ...rec, phase: "stale" as const, reason };
+   296              memory.set(next.key, next);
+   297              return next;
+   298            },
+   299            async markCancelled(id) {
+   300              const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "cancelled" as const };
+   301              const next = { ...rec, phase: "cancelled" as const };
+   302              memory.set(next.key, next);
+   303              return next;
+   304            },
+   305            async markFailed(id, reason) {
+   306              const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "failed" as const, reason };
+   307              const next = { ...rec, phase: "failed" as const, reason };
+   308              memory.set(next.key, next);
+   309              return next;
+   310            },
+   311          },
+   312          snapshotProvider: { current: backgroundSnapshot },
+   313          async prepare(snapshot, signal) {
+   314            if (signal.aborted) throw new Error("aborted");
+   315            return { id: `prep_${snapshot.leafId}`, key: candidateKey(snapshot) };
+   316          },
+   317        });
+   318        return worker;
+   319      },
+   320    });
+   321    const deferredEvidence = {
+   322      async admit() {
+   323        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   324      },
+   325      async search() {
+   326        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   327      },
+   328      async read() {
+   329        throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   330      },
+   331    };
+   332    registerRuntimeTools(pi, {
+   333      workspaceId: userTurns.lastWorkspaceId() ?? "unbound",
+   334      cursor: {
+   335        workspaceId: `ws_${"0".repeat(40)}`,
+   336        sessionId: "unbound",
+   337        leafId: null,
+   338        lineageHash: "0".repeat(64),
+   339        modelKey: "unbound",
+   340      },
+   341      evidence: deferredEvidence,
+   342      claimed: true,
+   343      resolve: (ctx) => userTurns.resolveTools(ctx),
+   344      commands: {
+   345        status: async (ctx) => {
+   346          try {
+   347            const bound = await userTurns.resolveTools(ctx);
+   348            return JSON.stringify({ ok: true, command: "context", workspaceId: bound.cursor.workspaceId, claimed: true });
+   349          } catch {
+   350            return JSON.stringify({ ok: false, command: "context", code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   351          }
+   352        },
+   353        doctor: async (ctx) => {
+   354          const workspaceId = (await userTurns.resolveTools(ctx).catch(() => undefined))?.cursor.workspaceId
+   355            ?? userTurns.lastWorkspaceId()
+   356            ?? ctx.workspaceId
+   357            ?? "unbound";
+   358          return JSON.stringify({
+   359            command: "context-doctor",
+   360            workspaceId,
+   361            ...(await runRuntimeDoctor(
+   362              fixtureEnvironment({
+   363                nodeVersion: process.versions.node,
+   364                piVersion: "0.84.4",
+   365                packages: [],
+   366                trusted: true,
+   367              }),
+   368              { conflictPolicy: "strict" },
+   369            )),
+   370          });
+   371        },
+   372        compact: async (ctx) => {
+   373          try {
+   374            const bound = await userTurns.resolveTools(ctx);
+   375            return JSON.stringify({ ok: true, command: "context-compact", workspaceId: bound.cursor.workspaceId });
+   376          } catch {
+   377            return JSON.stringify({ ok: false, command: "context-compact", code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   378          }
+   379        },
+   380      },
+   381    });
+   382    registerOperationsCommands(pi, {
+   383      get workspaceId() {
+   384        return userTurns.lastWorkspaceId() ?? "unbound";
+   385      },
+   386    });
+   387    return {
+   388      name: "pi-context-runtime",
+   389      hooks: {},
+   390      claimed: true,
+   391      async release() {
+   392        owner.release();
+   393        await userTurns.close();
+   394      },
+   395    };

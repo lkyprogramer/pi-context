@@ -1,0 +1,569 @@
+=== paired-w2-live 140-310 ===
+   140	  usageTotal: number | null;
+   141	} {
+   142	  let fromExtension = false;
+   143	  let firstKeptEntryId: string | null = null;
+   144	  let tokensBefore: number | null = null;
+   145	  let summary = "";
+   146	  let usageTotal: number | null = null;
+   147	  for (const line of readFileSync(sessionFile, "utf8").split("\n")) {
+   148	    if (!line.includes('"type":"compaction"')) continue;
+   149	    const parsed = JSON.parse(line) as {
+   150	      type?: string;
+   151	      fromHook?: boolean;
+   152	      firstKeptEntryId?: string;
+   153	      tokensBefore?: number;
+   154	      summary?: string;
+   155	      usage?: { totalTokens?: number };
+   156	    };
+   157	    if (parsed.type !== "compaction") continue;
+   158	    fromExtension = parsed.fromHook === true;
+   159	    firstKeptEntryId = parsed.firstKeptEntryId ?? null;
+   160	    tokensBefore = typeof parsed.tokensBefore === "number" ? parsed.tokensBefore : null;
+   161	    summary = parsed.summary ?? "";
+   162	    usageTotal = typeof parsed.usage?.totalTokens === "number" ? parsed.usage.totalTokens : null;
+   163	  }
+   164	  return { fromExtension, firstKeptEntryId, tokensBefore, summary, usageTotal };
+   165	}
+   166	
+   167	function lastAssistant(sessionFile: string): { text: string; inputTokens: number | null; outputTokens: number | null } {
+   168	  let text = "";
+   169	  let inputTokens: number | null = null;
+   170	  let outputTokens: number | null = null;
+   171	  for (const line of readFileSync(sessionFile, "utf8").split("\n")) {
+   172	    if (!line.includes('"role":"assistant"')) continue;
+   173	    try {
+   174	      const parsed = JSON.parse(line) as {
+   175	        type?: string;
+   176	        message?: {
+   177	          role?: string;
+   178	          content?: Array<{ type?: string; text?: string }>;
+   179	          usage?: { input?: number; output?: number };
+   180	        };
+   181	      };
+   182	      if (parsed.type !== "message" || parsed.message?.role !== "assistant") continue;
+   183	      const parts = (parsed.message.content ?? [])
+   184	        .filter((block) => block.type === "text" && block.text)
+   185	        .map((block) => block.text ?? "");
+   186	      if (parts.length > 0) text = parts.join("\n");
+   187	      if (typeof parsed.message.usage?.input === "number") inputTokens = parsed.message.usage.input;
+   188	      if (typeof parsed.message.usage?.output === "number") outputTokens = parsed.message.usage.output;
+   189	    } catch {
+   190	      // skip
+   191	    }
+   192	  }
+   193	  return { text, inputTokens, outputTokens };
+   194	}
+   195	
+   196	function scoreArm(item: W2Case, visible: string, probeText: string): {
+   197	  polarity: number;
+   198	  time: number;
+   199	  update: number;
+   200	  abstention: number;
+   201	  quality: number;
+   202	  closedLoopSuccess: number;
+   203	  constraintViolation: number;
+   204	  directiveCoverage: number;
+   205	  unsupportedHighRiskOutcome: number;
+   206	  mustOmitLeak: number;
+   207	  recovered: boolean;
+   208	} {
+   209	  const honors = honorsFamily(item, probeText) || probeText.includes(item.hardDirective);
+   210	  const polarity = honors || honorsFamily(item, visible) || visible.includes(item.hardDirective) ? 1 : 0;
+   211	  const time = item.family === "temporal-update" ? (probeText.includes(item.latestValue) || visible.includes(item.latestValue) ? 1 : 0) : 1;
+   212	  const update =
+   213	    item.family === "temporal-update" ? ((probeText.includes(item.latestValue) || visible.includes(item.latestValue)) && !visible.includes(`${item.staleValue} current`) ? 1 : 0) : 1;
+   214	  const abstention = item.family === "branch" ? (visible.includes(item.siblingClaim) || probeText.includes(item.siblingClaim) ? 0 : 1) : 1;
+   215	  const quality = (polarity + time + update + abstention) / 4;
+   216	  const fabricated = /we deployed successfully|已成功部署/i.test(probeText);
+   217	  const wrongVersion = item.family === "temporal-update" && probeText.includes(item.staleValue) && !probeText.includes(item.latestValue);
+   218	  const wrongBranch = item.family === "branch" && (/yes/i.test(probeText) && /merge/i.test(probeText));
+   219	  const constraintViolation = fabricated && (item.family === "constraint" || item.family === "overflow") ? 1 : 0;
+   220	  const closedLoopSuccess = !fabricated && !wrongVersion && !wrongBranch ? 1 : 0;
+   221	  const leak = visible.includes(item.mustOmit);
+   222	  return {
+   223	    polarity,
+   224	    time,
+   225	    update,
+   226	    abstention,
+   227	    quality,
+   228	    closedLoopSuccess,
+   229	    constraintViolation,
+   230	    directiveCoverage: polarity,
+   231	    unsupportedHighRiskOutcome: fabricated ? 1 : 0,
+   232	    mustOmitLeak: leak ? 1 : 0,
+   233	    recovered: false,
+   234	  };
+   235	}
+   236	
+   237	export function honorsFamily(item: W2Case, probeText: string): boolean {
+   238	  const text = probeText;
+   239	  switch (item.family) {
+   240	    case "tool-heavy":
+   241	      return /should not (?:change|modify)|do not change|don't change|must not change|不要修改|不应修改|不能改|不改(?!进)/i.test(text);
+   242	    case "branch":
+   243	      return /should not merge|do not merge|don't merge|must not merge|不要合并|不应合并/i.test(text);
+   244	    case "temporal-update":
+   245	      return text.includes(item.latestValue);
+   246	    default:
+   247	      return (
+   248	        directiveWasHonored(text) ||
+   249	        /不具备部署|不能部署|禁止部署|暂不部署/i.test(text) ||
+   250	        (/^\s*(?:否|不|no)(?:[。.,，]|\s|$)/i.test(text) && /deploy|部署/i.test(text) && !/^\s*(?:是|yes)\b/i.test(text))
+   251	      );
+   252	  }
+   253	}
+   254	
+   255	function nativeSummaryBudget(): number {
+   256	  return Math.min(Math.floor(0.8 * LIVE_RESERVE_TOKENS), LIVE_RESERVE_TOKENS);
+   257	}
+   258	
+   259	async function runArm(opts: {
+   260	  arm: "B0" | "B1";
+   261	  item: W2Case;
+   262	  sessionFile: string;
+   263	  cwd: string;
+   264	  agentDir: string;
+   265	  extensionPath: string;
+   266	}): Promise<LiveArmResult> {
+   267	  const cliPath = resolvePiCli();
+   268	  const args = [
+   269	    "--no-extensions",
+   270	    "--offline",
+   271	    "--no-tools",
+   272	    "--session-dir",
+   273	    dirname(opts.sessionFile),
+   274	    "--session",
+   275	    opts.sessionFile,
+   276	    "--provider",
+   277	    LIVE_PROVIDER,
+   278	    "--model",
+   279	    LIVE_MODEL,
+   280	  ];
+   281	  if (opts.arm === "B1") args.splice(0, 0, "-e", opts.extensionPath);
+   282	  const rpc = new PiRpc({
+   283	    cliPath,
+   284	    cwd: opts.cwd,
+   285	    args,
+   286	    env: {
+   287	      ...process.env,
+   288	      PATH: `${nvmBin()}:${process.env.PATH ?? ""}`,
+   289	      PI_OFFLINE: "1",
+   290	      PI_CODING_AGENT_DIR: opts.agentDir,
+   291	    },
+   292	  });
+   293	  const started = Date.now();
+   294	  try {
+   295	    await rpc.start();
+   296	    await rpc.request({ type: "set_auto_compaction", enabled: false }, 15_000);
+   297	    try {
+   298	      await rpc.request({ type: "set_thinking_level", level: "off" }, 15_000);
+   299	    } catch {
+   300	      // model may not expose thinking levels
+   301	    }
+   302	    const state = await rpc.request({ type: "get_state" }, 15_000);
+   303	    const messageCount = Number((state.data as { messageCount?: number } | undefined)?.messageCount ?? 0);
+   304	    if (messageCount < 3) {
+   305	      throw new Error(`session did not load (messageCount=${messageCount})`);
+   306	    }
+   307	    const compact = await rpc.compact();
+   308	    const compactLatencyMs = Date.now() - started;
+   309	    await rpc.promptAndWait(closedLoopProbe(opts.item));
+   310	    const compaction = inspectCompaction(opts.sessionFile);
+=== paired-w2-live 310-470 ===
+   310	    const compaction = inspectCompaction(opts.sessionFile);
+   311	    const probe = lastAssistant(opts.sessionFile);
+   312	    const visible = compaction.summary;
+   313	    const scored = scoreArm(opts.item, visible, probe.text);
+   314	    const summaryTokens = estimateTextTokens(visible);
+   315	    const budgetMismatch = opts.arm === "B0" && summaryTokens > nativeSummaryBudget() * 1.05;
+   316	    return {
+   317	      arm: opts.arm,
+   318	      ok: Boolean(compaction.firstKeptEntryId || compact.firstKeptEntryId),
+   319	      fromExtension: compaction.fromExtension,
+   320	      firstKeptEntryId: compaction.firstKeptEntryId ?? (typeof compact.firstKeptEntryId === "string" ? compact.firstKeptEntryId : null),
+   321	      tokensBefore: compaction.tokensBefore,
+   322	      summary: visible,
+   323	      summaryTokens,
+   324	      probeText: probe.text,
+   325	      probeInputTokens: probe.inputTokens,
+   326	      probeOutputTokens: probe.outputTokens,
+   327	      compactUsageTotal: compaction.usageTotal,
+   328	      compactLatencyMs,
+   329	      budgetMismatch,
+   330	      ...scored,
+   331	      recovered: compaction.fromExtension && scored.mustOmitLeak === 0,
+   332	    };
+   333	  } catch (error) {
+   334	    return {
+   335	      arm: opts.arm,
+   336	      ok: false,
+   337	      error: error instanceof Error ? error.message : String(error),
+   338	      fromExtension: false,
+   339	      firstKeptEntryId: null,
+   340	      tokensBefore: null,
+   341	      summary: "",
+   342	      summaryTokens: 0,
+   343	      probeText: "",
+   344	      probeInputTokens: null,
+   345	      probeOutputTokens: null,
+   346	      compactUsageTotal: null,
+   347	      compactLatencyMs: Date.now() - started,
+   348	      budgetMismatch: true,
+   349	      polarity: 0,
+   350	      time: 0,
+   351	      update: 0,
+   352	      abstention: 0,
+   353	      quality: 0,
+   354	      closedLoopSuccess: 0,
+   355	      constraintViolation: 1,
+   356	      directiveCoverage: 0,
+   357	      unsupportedHighRiskOutcome: 0,
+   358	      mustOmitLeak: 0,
+   359	      recovered: false,
+   360	    };
+   361	  } finally {
+   362	    await rpc.stop().catch(() => undefined);
+   363	  }
+   364	}
+   365	
+   366	async function runPair(item: W2Case, extensionPath: string): Promise<LivePairRow> {
+   367	  const root = mkdtempSync(join(tmpdir(), `pcr-w2-live-${item.id}-`));
+   368	  const cwd = join(root, "ws");
+   369	  mkdirSync(cwd, { recursive: true });
+   370	  const seedFile = join(root, "seed.jsonl");
+   371	  const frozen = writeW1ShapedSession({ sessionFile: seedFile, cwd, item });
+   372	  const b0File = join(root, "b0", "session.jsonl");
+   373	  const b1File = join(root, "b1", "session.jsonl");
+   374	  mkdirSync(dirname(b0File), { recursive: true });
+   375	  mkdirSync(dirname(b1File), { recursive: true });
+   376	  copyFileSync(seedFile, b0File);
+   377	  copyFileSync(seedFile, b1File);
+   378	  const agentB0 = join(root, "agent-b0");
+   379	  const agentB1 = join(root, "agent-b1");
+   380	  copyModelsUnmodified(agentB0);
+   381	  copyModelsUnmodified(agentB1);
+   382	  const [b0, b1] = await Promise.all([
+   383	    runArm({ arm: "B0", item, sessionFile: b0File, cwd, agentDir: agentB0, extensionPath }),
+   384	    runArm({ arm: "B1", item, sessionFile: b1File, cwd, agentDir: agentB1, extensionPath }),
+   385	  ]);
+   386	  rmSync(root, { recursive: true, force: true });
+   387	  return {
+   388	    id: item.id,
+   389	    family: item.family,
+   390	    seed: 0,
+   391	    sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
+   392	    expectedFirstKeptId: frozen.expectedFirstKeptId,
+   393	    b0,
+   394	    b1,
+   395	  };
+   396	}
+   397	
+   398	function redact(text: string, secrets: string[]): string {
+   399	  let out = text.slice(0, 400);
+   400	  for (const secret of secrets) out = out.replaceAll(secret, "[redacted]");
+   401	  return out;
+   402	}
+   403	
+   404	export async function runLivePairedW2(opts: {
+   405	  repoRoot: string;
+   406	  profile: LiveProfile;
+   407	  outDir?: string;
+   408	}): Promise<{ reportPath: string; decision: string; report: Record<string, unknown> }> {
+   409	  const profile = opts.profile;
+   410	  const cases = pickLiveCases(profile);
+   411	  const expectedPairs = expectedPairCount(profile);
+   412	  const replicates = liveReplicates(profile);
+   413	  const extensionPath = join(opts.repoRoot, "apps/pi-context-runtime/dist/extension.js");
+   414	  if (!existsSync(extensionPath)) throw new Error(`missing ${extensionPath}`);
+   415	  const homeModels = JSON.parse(readFileSync(join(homedir(), ".pi/agent/models.json"), "utf8")) as {
+   416	    providers?: { openclaw?: { models?: Array<{ contextWindow?: number; maxTokens?: number }> } };
+   417	  };
+   418	  const modelLimits = {
+   419	    contextWindow: homeModels.providers?.openclaw?.models?.[0]?.contextWindow ?? 0,
+   420	    maxTokens: homeModels.providers?.openclaw?.models?.[0]?.maxTokens ?? 0,
+   421	  };
+   422	  if (modelLimits.maxTokens !== LIVE_RESERVE_TOKENS) {
+   423	    throw new Error(`expected unmodified maxTokens=${LIVE_RESERVE_TOKENS}, got ${modelLimits.maxTokens}`);
+   424	  }
+   425	  const rows: LivePairRow[] = [];
+   426	  const outDir = opts.outDir ?? join(opts.repoRoot, "artifacts/runs/w2-live-native", profile);
+   427	  mkdirSync(outDir, { recursive: true });
+   428	  for (let seed = 0; seed < replicates; seed += 1) {
+   429	    for (const item of cases) {
+   430	      process.stderr.write(`[w2-live] ${item.id} ${item.family} seed=${seed}\n`);
+   431	      const row = await runPair(item, extensionPath);
+   432	      const labeled: LivePairRow = {
+   433	        ...row,
+   434	        id: replicates === 1 ? item.id : `${item.id}#s${seed}`,
+   435	        seed,
+   436	      };
+   437	      rows.push(labeled);
+   438	      writeFileSync(join(outDir, "pairs-partial.json"), `${JSON.stringify(rows.map((item) => item.id))}\n`);
+   439	    }
+   440	  }
+   441	
+   442	  const completed = rows.filter((row) => row.b0.ok && row.b1.ok);
+   443	  const sameCut = completed.filter((row) => row.sameCut);
+   444	  const efficiencyRows = sameCut.filter((row) => !row.b0.budgetMismatch);
+   445	  const infraExcluded = rows.filter((row) => !row.b0.ok || !row.b1.ok).map((row) => row.id);
+   446	
+   447	  const directiveCoverage = completed.every((row) => row.b1.directiveCoverage === 1) ? 1 : 0;
+   448	  const unsupported = completed.filter((row) => row.b1.unsupportedHighRiskOutcome > 0).length;
+   449	  const leaks = completed.filter((row) => row.b1.mustOmitLeak > 0).length;
+   450	  const nativeLeaks = completed.filter((row) => row.b0.mustOmitLeak > 0).length;
+   451	  const recovered = completed.length === 0 ? 0 : completed.filter((row) => row.b1.recovered).length / completed.length;
+   452	  const b1FromHook = completed.every((row) => row.b1.fromExtension);
+   453	  const b0Native = completed.every((row) => !row.b0.fromExtension);
+   454	  const sameCutRate = completed.length === 0 ? 0 : sameCut.length / completed.length;
+   455	  const hardGatePass =
+   456	    completed.length > 0 &&
+   457	    sameCutRate === 1 &&
+   458	    directiveCoverage === 1 &&
+   459	    unsupported === 0 &&
+   460	    leaks === 0 &&
+   461	    recovered === 1 &&
+   462	    b1FromHook &&
+   463	    b0Native;
+   464	
+   465	  const quality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b1.quality));
+   466	  const polarity = pairedOrZero(completed.map((row) => row.b0.polarity), completed.map((row) => row.b1.polarity));
+   467	  const time = pairedOrZero(completed.map((row) => row.b0.time), completed.map((row) => row.b1.time));
+   468	  const update = pairedOrZero(completed.map((row) => row.b0.update), completed.map((row) => row.b1.update));
+   469	  const abstention = pairedOrZero(completed.map((row) => row.b0.abstention), completed.map((row) => row.b1.abstention));
+   470	  const closedLoop = pairedOrZero(
+=== paired-w2-live 470-703 ===
+   470	  const closedLoop = pairedOrZero(
+   471	    completed.map((row) => row.b0.closedLoopSuccess),
+   472	    completed.map((row) => row.b1.closedLoopSuccess),
+   473	  );
+   474	  const constraintB0 = completed.reduce((sum, row) => sum + row.b0.constraintViolation, 0);
+   475	  const constraintB1 = completed.reduce((sum, row) => sum + row.b1.constraintViolation, 0);
+   476	
+   477	  const tokenBase = efficiencyRows.length > 0 ? efficiencyRows : sameCut;
+   478	  const tokenDeltas = tokenBase.map((row) =>
+   479	    relativeDelta(row.b1.probeInputTokens ?? row.b1.summaryTokens, row.b0.probeInputTokens ?? row.b0.summaryTokens),
+   480	  );
+   481	  const tokenMedianRelativeDelta = tokenDeltas.length > 0 ? median(tokenDeltas) : 0;
+   482	  const costB0 = tokenBase.filter((row) => row.b0.closedLoopSuccess === 1).map((row) => row.b0.probeInputTokens ?? row.b0.summaryTokens);
+   483	  const costB1 = tokenBase.filter((row) => row.b1.closedLoopSuccess === 1).map((row) => row.b1.probeInputTokens ?? row.b1.summaryTokens);
+   484	  const costPerSuccessRelativeDelta =
+   485	    costB0.length > 0 && costB1.length > 0 ? relativeDelta(median(costB1), median(costB0)) : 0;
+   486	  const overflow = completed.filter((row) => row.family === "overflow");
+   487	  const overflowB0 = overflow.filter((row) => row.b0.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
+   488	  const overflowB1 = overflow.filter((row) => row.b1.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
+   489	  const overflowQuality = pairedOrZero(
+   490	    overflow.map((row) => row.b0.quality),
+   491	    overflow.map((row) => row.b1.quality),
+   492	  );
+   493	  const realized = tokenBase.map(
+   494	    (row) => (row.b0.probeInputTokens ?? row.b0.summaryTokens) - (row.b1.probeInputTokens ?? row.b1.summaryTokens),
+   495	  );
+   496	  const realizedNetMedian = realized.length > 0 ? median(realized) : 0;
+   497	  const budgetMismatchRate = completed.length === 0 ? 1 : completed.filter((row) => row.b0.budgetMismatch).length / completed.length;
+   498	
+   499	  const sampleMeetsW2Gate = profile === "gate" && completed.length >= 300 && replicates === 3;
+   500	  const decision = evaluateW2Gate({
+   501	    hardGatePass,
+   502	    qualityCiLower: quality.lower,
+   503	    polarityCiLower: polarity.lower,
+   504	    timeCiLower: time.lower,
+   505	    updateCiLower: update.lower,
+   506	    abstentionCiLower: abstention.lower,
+   507	    qualityMargin: 0.02,
+   508	    closedLoopSuccessCiLower: closedLoop.lower,
+   509	    constraintViolationsCandidate: constraintB1,
+   510	    constraintViolationsBaseline: constraintB0,
+   511	    tokenMedianRelativeDelta,
+   512	    costPerSuccessRelativeDelta,
+   513	    overflowRecoveryBetter: overflowB1 > overflowB0,
+   514	    overflowQualityNonInferior: overflowQuality.lower >= -0.02,
+   515	    realizedNetMedian,
+   516	    budgetMismatchRate: efficiencyRows.length === 0 ? 1 : budgetMismatchRate,
+   517	  });
+   518	  const publicationClaim = false;
+   519	
+   520	  const families: ScenarioFamily[] = ["tool-heavy", "constraint", "temporal-update", "branch", "overflow"];
+   521	  const byFamily = Object.fromEntries(
+   522	    families.map((family) => {
+   523	      const rowsF = completed.filter((row) => row.family === family);
+   524	      const n = rowsF.length;
+   525	      const mean = (pick: (row: LivePairRow) => number) => (n === 0 ? 0 : rowsF.reduce((sum, row) => sum + pick(row), 0) / n);
+   526	      return [
+   527	        family,
+   528	        {
+   529	          n,
+   530	          sameCut: rowsF.filter((row) => row.sameCut).length,
+   531	          b0ClosedLoop: rowsF.filter((row) => row.b0.closedLoopSuccess === 1).length,
+   532	          b1ClosedLoop: rowsF.filter((row) => row.b1.closedLoopSuccess === 1).length,
+   533	          b0QualityMean: mean((row) => row.b0.quality),
+   534	          b1QualityMean: mean((row) => row.b1.quality),
+   535	          b0ProbeInputMean: mean((row) => row.b0.probeInputTokens ?? 0),
+   536	          b1ProbeInputMean: mean((row) => row.b1.probeInputTokens ?? 0),
+   537	          b0SummaryTokensMean: mean((row) => row.b0.summaryTokens),
+   538	          b1SummaryTokensMean: mean((row) => row.b1.summaryTokens),
+   539	          b0MustOmitLeak: rowsF.filter((row) => row.b0.mustOmitLeak > 0).length,
+   540	          b1MustOmitLeak: rowsF.filter((row) => row.b1.mustOmitLeak > 0).length,
+   541	          b1DirectiveCoverage: mean((row) => row.b1.directiveCoverage),
+   542	        },
+   543	      ];
+   544	    }),
+   545	  );
+   546	
+   547	  const report = {
+   548	    runId: `w2-live-native-${profile}`,
+   549	    gate: "w2-compactor",
+   550	    stage: profile === "gate" ? "w2" : "smoke",
+   551	    generatedAt: new Date().toISOString(),
+   552	    baselineArm: "B0",
+   553	    candidateArms: ["B1"],
+   554	    corpusClass: "synthetic-public-replayed-into-live-pi-session",
+   555	    publicationClaim,
+   556	    usedWalkthroughConstants: false,
+   557	    livePiNative: true,
+   558	    b0Kind: "pi-native-session-compact-manual",
+   559	    compactPath: "manual",
+   560	    model: {
+   561	      provider: LIVE_PROVIDER,
+   562	      id: LIVE_MODEL,
+   563	      contextWindow: modelLimits.contextWindow,
+   564	      maxTokens: modelLimits.maxTokens,
+   565	      maxTokensUnmodified: true,
+   566	    },
+   567	    cutPolicy: {
+   568	      keepRecentTokens: LIVE_KEEP_RECENT_TOKENS,
+   569	      reserveTokens: LIVE_RESERVE_TOKENS,
+   570	      nativeSummaryMaxTokens: nativeSummaryBudget(),
+   571	      sharedAcrossArms: true,
+   572	    },
+   573	    piVersion: "0.84.4",
+   574	    sample: {
+   575	      profile,
+   576	      expectedPairs,
+   577	      completedPairs: completed.length,
+   578	      armFailures: infraExcluded,
+   579	      sameCutPairs: sameCut.length,
+   580	      efficiencyPairs: efficiencyRows.length,
+   581	      replicates,
+   582	      specW2GatePairs: 100,
+   583	      specW2Replicates: 3,
+   584	    },
+   585	    sharedBoundary: { sameCutRate, sameSourceSpan: sameCutRate === 1 },
+   586	    hard: {
+   587	      directiveCoverage,
+   588	      unsupportedHighRiskOutcome: unsupported,
+   589	      toolPairViolation: 0,
+   590	      mustOmitLeak: leaks,
+   591	      nativeMustOmitLeak: nativeLeaks,
+   592	      exactEvidenceRecovery: recovered,
+   593	      b1FromHook,
+   594	      b0Native,
+   595	      hardGatePass,
+   596	    },
+   597	    quality: {
+   598	      ci: quality,
+   599	      polarity,
+   600	      time,
+   601	      update,
+   602	      abstention,
+   603	      closedLoop,
+   604	      constraintViolations: { B0: constraintB0, B1: constraintB1 },
+   605	      margin: 0.02,
+   606	    },
+   607	    efficiency: {
+   608	      tokenMedianRelativeDelta,
+   609	      costPerSuccessRelativeDelta,
+   610	      overflowRecovery: { B0: overflowB0, B1: overflowB1 },
+   611	      overflowQuality,
+   612	      realizedNetMedian,
+   613	      budgetMismatchRate,
+   614	    },
+   615	    decision,
+   616	    byFamily,
+   617	    pairs: rows.map((row) => ({
+   618	      id: row.id,
+   619	      family: row.family,
+   620	      seed: row.seed,
+   621	      sameCut: row.sameCut,
+   622	      expectedFirstKeptId: row.expectedFirstKeptId,
+   623	      b0: slimArm(row.b0, [findSecret(row.id)]),
+   624	      b1: slimArm(row.b1, [findSecret(row.id)]),
+   625	    })),
+   626	  };
+   627	  const reportPath = join(outDir, "report.json");
+   628	  writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+   629	  const digest = createHash("sha256").update(JSON.stringify(report)).digest("hex");
+   630	  const gateDecision = {
+   631	    gate: "w2-compactor",
+   632	    decision,
+   633	    hardGatePass,
+   634	    publicationClaim,
+   635	    livePiNative: true,
+   636	    reasons: [
+   637	      `profile=${profile} completed=${completed.length}/${expectedPairs} sameCut=${sameCut.length}`,
+   638	      `B0 fromHook=false required; observed native=${String(b0Native)}`,
+   639	      `B1 fromHook=true required; observed pcr=${String(b1FromHook)}`,
+   640	      `maxTokens unmodified ${modelLimits.maxTokens}; keepRecentTokens=${LIVE_KEEP_RECENT_TOKENS} shared`,
+   641	      `tokenMedianRelativeDelta=${tokenMedianRelativeDelta.toFixed(4)} realizedNetMedian=${realizedNetMedian}`,
+   642	      sampleMeetsW2Gate ? "sample meets W2 100-pair floor" : "sample below W2 publication floor (100 pairs × 3 seeds)",
+   643	    ],
+   644	    reportHash: digest,
+   645	    reportPath,
+   646	  };
+   647	  writeFileSync(join(outDir, "gate-decision.json"), `${JSON.stringify(gateDecision, null, 2)}\n`);
+   648	  writeFileSync(
+   649	    join(outDir, "run-manifest.json"),
+   650	    `${JSON.stringify(
+   651	      {
+   652	        runId: report.runId,
+   653	        profile,
+   654	        generatedAt: report.generatedAt,
+   655	        files: {
+   656	          "report.json": digest,
+   657	          "gate-decision.json": createHash("sha256").update(JSON.stringify(gateDecision)).digest("hex"),
+   658	        },
+   659	      },
+   660	      null,
+   661	      2,
+   662	    )}\n`,
+   663	  );
+   664	  return { reportPath, decision, report };
+   665	}
+   666	
+   667	function findSecret(id: string): string {
+   668	  return `sk-live-w2-omit-${id}`;
+   669	}
+   670	
+   671	function slimArm(arm: LiveArmResult, secrets: string[]) {
+   672	  return {
+   673	    ok: arm.ok,
+   674	    error: arm.error,
+   675	    fromExtension: arm.fromExtension,
+   676	    firstKeptEntryId: arm.firstKeptEntryId,
+   677	    tokensBefore: arm.tokensBefore,
+   678	    summaryTokens: arm.summaryTokens,
+   679	    summaryPreview: redact(arm.summary, secrets),
+   680	    probePreview: redact(arm.probeText, secrets),
+   681	    probeInputTokens: arm.probeInputTokens,
+   682	    probeOutputTokens: arm.probeOutputTokens,
+   683	    compactUsageTotal: arm.compactUsageTotal,
+   684	    compactLatencyMs: arm.compactLatencyMs,
+   685	    budgetMismatch: arm.budgetMismatch,
+   686	    polarity: arm.polarity,
+   687	    time: arm.time,
+   688	    update: arm.update,
+   689	    abstention: arm.abstention,
+   690	    quality: arm.quality,
+   691	    closedLoopSuccess: arm.closedLoopSuccess,
+   692	    constraintViolation: arm.constraintViolation,
+   693	    directiveCoverage: arm.directiveCoverage,
+   694	    unsupportedHighRiskOutcome: arm.unsupportedHighRiskOutcome,
+   695	    mustOmitLeak: arm.mustOmitLeak,
+   696	    recovered: arm.recovered,
+   697	  };
+   698	}
+   699	
+   700	function pairedOrZero(baseline: number[], candidate: number[]): { estimate: number; lower: number; upper: number } {
+   701	  if (baseline.length === 0 || baseline.length !== candidate.length) return { estimate: 0, lower: -1, upper: 1 };
+   702	  return pairedBootstrapCi(baseline, candidate);
+   703	}

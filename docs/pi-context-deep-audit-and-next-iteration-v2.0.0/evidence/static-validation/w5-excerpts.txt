@@ -1,0 +1,626 @@
+=== w5 1-220 ===
+     1	import { createHash } from "node:crypto";
+     2	import { readFileSync } from "node:fs";
+     3	import { resolve } from "node:path";
+     4	
+     5	import { domainHash, type DirectiveRecord, type RuntimeCursor } from "@pcr/contracts";
+     6	import { mergeCompactionStates, type MergeSnapshot } from "@pcr/runtime";
+     7	import { estimateTextTokens } from "@pcr/core";
+     8	
+     9	import { createW2ArmRunner, type W1ArmCase } from "../arms/w2.js";
+    10	import { createPerformanceLaneRunner } from "../performance/lanes.js";
+    11	import { scoreLeakSurfaces } from "../scoring/integrity.js";
+    12	import { createGateEngine, type GateDecision, type RunBundle } from "../report/engine.js";
+    13	import { sealRunBundle, type ImmutableRunBundle } from "../report/bundle.js";
+    14	
+    15	export type W5LaneId =
+    16	  | "boundary"
+    17	  | "natural-threshold"
+    18	  | "overflow"
+    19	  | "recursive"
+    20	  | "fault-security"
+    21	  | "performance-cache";
+    22	
+    23	export class W5LaneError extends TypeError {
+    24	  readonly code: string;
+    25	  readonly details: Readonly<Record<string, unknown>>;
+    26	
+    27	  constructor(code: string, details: Record<string, unknown> = {}) {
+    28	    super(code);
+    29	    this.name = "W5LaneError";
+    30	    this.code = code;
+    31	    this.details = Object.freeze({ ...details });
+    32	  }
+    33	}
+    34	
+    35	function failInput(field: string): never {
+    36	  throw new W5LaneError("PCR_W5_INPUT_INVALID", { field });
+    37	}
+    38	
+    39	function failMissing(dependency: string): never {
+    40	  throw new W5LaneError("PCR_W5_DEPENDENCY_MISSING", { dependency });
+    41	}
+    42	
+    43	const CURSOR: RuntimeCursor = {
+    44	  workspaceId: "ws_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    45	  sessionId: "session-w5",
+    46	  leafId: "leaf-w5",
+    47	  lineageHash: "c".repeat(64),
+    48	  modelKey: "openclaw/Qwen3.8-27B-WORK",
+    49	};
+    50	
+    51	const EMPTY_DIFF = createHash("sha256").update("").digest("hex");
+    52	
+    53	export function infrastructurePolicy(input: {
+    54	  dirty: boolean;
+    55	  missingCredentials?: boolean;
+    56	  pairCount: number;
+    57	}): { included: number; excluded: number; reason: string } {
+    58	  if (!input || typeof input !== "object") failMissing("input");
+    59	  if (typeof input.pairCount !== "number" || !Number.isSafeInteger(input.pairCount) || input.pairCount < 0) {
+    60	    failInput("pairCount");
+    61	  }
+    62	  if (input.dirty === true || input.missingCredentials === true) {
+    63	    return { included: 0, excluded: input.pairCount, reason: "infrastructure" };
+    64	  }
+    65	  return { included: input.pairCount, excluded: 0, reason: "ok" };
+    66	}
+    67	
+    68	export interface BoundaryPair {
+    69	  clusterId: string;
+    70	  seed: number;
+    71	  caseId: string;
+    72	  b0: string;
+    73	  b1: string;
+    74	  b2: string;
+    75	  shapedTraceHash: string;
+    76	}
+    77	
+    78	export interface BoundaryReport {
+    79	  lane: "boundary";
+    80	  clusters: number;
+    81	  seeds: readonly number[];
+    82	  pairs: number;
+    83	  family: Record<string, number>;
+    84	  failures: readonly string[];
+    85	  liveProvider: false;
+    86	  pairsOut: readonly BoundaryPair[];
+    87	}
+    88	
+    89	function loadCorpus(root: string): { clusters: string[]; cases: Array<{ id: string; cluster: string; body: string; oracleExpected?: string }> } {
+    90	  const cases = JSON.parse(readFileSync(resolve(root, "cases.json"), "utf8")) as Array<{
+    91	    id: string;
+    92	    cluster: string;
+    93	    body: string;
+    94	    oracleExpected?: string;
+    95	  }>;
+    96	  const clusters = [...new Set(cases.map((row) => row.cluster))].sort();
+    97	  return { clusters, cases };
+    98	}
+    99	
+   100	function armCase(row: { id: string; cluster: string; body: string; oracleExpected?: string }): W1ArmCase {
+   101	  const expected = row.oracleExpected ?? "7";
+   102	  return {
+   103	    caseId: row.id,
+   104	    clusterId: row.cluster,
+   105	    corpusId: "pcr-corpus-v2",
+   106	    trace: {
+   107	      entries: [
+   108	        { entryId: "u1", role: "user", text: row.body },
+   109	        { entryId: "t1", role: "toolResult", text: `ok ${expected}` },
+   110	      ],
+   111	    },
+   112	    oracle: { items: [{ id: "v", key: "value", expected, sourceRefs: ["u1"] }] },
+   113	  };
+   114	}
+   115	
+   116	export async function runBoundaryReplay(input: {
+   117	  corpusRoot: string;
+   118	  seeds?: readonly number[];
+   119	  dirty?: boolean;
+   120	  signal?: AbortSignal;
+   121	}): Promise<BoundaryReport> {
+   122	  if (!input || typeof input !== "object") failMissing("input");
+   123	  if (typeof input.corpusRoot !== "string" || input.corpusRoot.length === 0) failInput("corpusRoot");
+   124	  if (input.signal !== undefined && !(input.signal instanceof AbortSignal)) failInput("signal");
+   125	  input.signal?.throwIfAborted();
+   126	  const policy = infrastructurePolicy({ dirty: input.dirty === true, pairCount: 90 });
+   127	  if (policy.included === 0) {
+   128	    return {
+   129	      lane: "boundary",
+   130	      clusters: 0,
+   131	      seeds: [...(input.seeds ?? [0, 1, 2])],
+   132	      pairs: 0,
+   133	      family: {},
+   134	      failures: ["infrastructure"],
+   135	      liveProvider: false,
+   136	      pairsOut: [],
+   137	    };
+   138	  }
+   139	  const { clusters, cases } = loadCorpus(input.corpusRoot);
+   140	  if (clusters.length < 30) failInput("clusters");
+   141	  const seeds = [...(input.seeds ?? [0, 1, 2])];
+   142	  if (seeds.length !== 3) failInput("seeds");
+   143	  const locked = cases.filter((row) => row.id.endsWith("-05"));
+   144	  const catalog = new Map(locked.map((row) => [row.id, armCase(row)]));
+   145	  const runner = createW2ArmRunner({
+   146	    corpusId: "pcr-corpus-v2",
+   147	    manifest: {
+   148	      benchmarkMajor: 1,
+   149	      trainHash: "1".repeat(64),
+   150	      devHash: "2".repeat(64),
+   151	      lockedTestHash: "4".repeat(64),
+   152	      clusters: Object.fromEntries(clusters.map((name) => [name, catalog.has(`${name}-05`) ? [`${name}-05`] : []])),
+   153	    },
+   154	    cursor: CURSOR,
+   155	    cases: { async get(caseId) { return catalog.get(caseId) ?? null; } },
+   156	    shaper: {
+   157	      async shape({ trace }) {
+   158	        const text = trace.entries.map((entry) => entry.text).join("\n");
+   159	        return {
+   160	          shapedText: text,
+   161	          sourceSpan: { firstEntryId: "u1", lastEntryId: "t1" },
+   162	          retainedTailStartId: "t1",
+   163	          tokensBefore: Math.max(8, estimateTextTokens(text)),
+   164	        };
+   165	      },
+   166	    },
+   167	    native: {
+   168	      async compact({ shapedText, seed }) {
+   169	        const visibleText = `native:${seed}:${shapedText.slice(0, 48)}`;
+   170	        return { visibleText, tokensAfter: estimateTextTokens(visibleText), outputHash: domainHash("w5.b0", { visibleText, seed }) };
+   171	      },
+   172	    },
+   173	    pcr: {
+   174	      async compact({ shapedText, seed, materializer }) {
+   175	        const visibleText = `${materializer}:${seed}:${shapedText.slice(0, 48)}`;
+   176	        return { visibleText, tokensAfter: estimateTextTokens(visibleText), outputHash: domainHash("w5.pcr", { visibleText, seed, materializer }) };
+   177	      },
+   178	    },
+   179	  });
+   180	  const pairsOut: BoundaryPair[] = [];
+   181	  const family: Record<string, number> = {};
+   182	  const failures: string[] = [];
+   183	  for (const clusterId of clusters) {
+   184	    input.signal?.throwIfAborted();
+   185	    const caseId = `${clusterId}-05`;
+   186	    family[clusterId] = 0;
+   187	    for (const seed of seeds) {
+   188	      try {
+   189	        const b0 = await runner.run(caseId, "B0", seed, input.signal);
+   190	        const b1 = await runner.run(caseId, "B1", seed, input.signal);
+   191	        const b2 = await runner.run(caseId, "B2", seed, input.signal);
+   192	        if (b0.shapedTraceHash !== b1.shapedTraceHash || b1.shapedTraceHash !== b2.shapedTraceHash) {
+   193	          failures.push(`${caseId}:${seed}:cut-mismatch`);
+   194	        }
+   195	        pairsOut.push({
+   196	          clusterId,
+   197	          seed,
+   198	          caseId,
+   199	          b0: b0.outputHash,
+   200	          b1: b1.outputHash,
+   201	          b2: b2.outputHash,
+   202	          shapedTraceHash: b0.shapedTraceHash,
+   203	        });
+   204	        family[clusterId] += 1;
+   205	      } catch (error) {
+   206	        failures.push(`${caseId}:${seed}:${error instanceof Error ? error.message : "fail"}`);
+   207	      }
+   208	    }
+   209	  }
+   210	  return {
+   211	    lane: "boundary",
+   212	    clusters: clusters.length,
+   213	    seeds,
+   214	    pairs: pairsOut.length,
+   215	    family,
+   216	    failures,
+   217	    liveProvider: false,
+   218	    pairsOut,
+   219	  };
+   220	}
+=== w5 220-460 ===
+   220	}
+   221	
+   222	export async function runNaturalThreshold(input: {
+   223	  tokensBefore: number;
+   224	  compactReason: "threshold" | "overflow" | "replay";
+   225	  keepRecent?: number;
+   226	  triggered: boolean;
+   227	}): Promise<{ ok: boolean; reason: string }> {
+   228	  const MODEL = CURSOR.modelKey;
+   229	  const lanes = createPerformanceLaneRunner({
+   230	    workspaceId: "ws-w5",
+   231	    routes: {
+   232	      [MODEL]: { modelKey: MODEL, contextWindow: 200192, maxOutputTokens: 16384, providerReservedTokens: 0 },
+   233	    },
+   234	    cache: { async current() { return { eligiblePrefixTokens: 12 }; } },
+   235	    clone: { async measure() { return 4; } },
+   236	  });
+   237	  if (!input.triggered) return { ok: false, reason: "no-trigger" };
+   238	  try {
+   239	    await lanes.measure({
+   240	      lane: "natural-threshold",
+   241	      workspaceId: "ws-w5",
+   242	      sessionId: "s-natural",
+   243	      modelKey: MODEL,
+   244	      tokensBefore: input.tokensBefore,
+   245	      tokensAfter: Math.min(input.tokensBefore, 12_000),
+   246	      compactReason: input.compactReason,
+   247	      promptTokens: input.tokensBefore,
+   248	      hookMs: [8, 9, 11],
+   249	      ...(input.keepRecent === undefined ? {} : { keepRecent: input.keepRecent }),
+   250	    });
+   251	    return { ok: true, reason: "threshold" };
+   252	  } catch (error) {
+   253	    const field = error && typeof error === "object" && "details" in error
+   254	      ? String((error as { details?: { field?: string } }).details?.field)
+   255	      : "invalid";
+   256	    return { ok: false, reason: field };
+   257	  }
+   258	}
+   259	
+   260	export interface OverflowAttempt {
+   261	  outputHash: string;
+   262	  tokensAfter: number;
+   263	  visibleText: string;
+   264	}
+   265	
+   266	export interface OverflowReport {
+   267	  ok: boolean;
+   268	  hashesChange: boolean;
+   269	  tokensStrictlyDecrease: boolean;
+   270	  fitted: boolean;
+   271	  attempts: number;
+   272	  retries: readonly OverflowAttempt[];
+   273	}
+   274	
+   275	export interface OverflowCompactInput {
+   276	  prompt: string;
+   277	  windowTokens: number;
+   278	  maxRetries?: number;
+   279	  compact?: (text: string, attempt: number) => { visibleText: string; tokensAfter: number };
+   280	  signal?: AbortSignal;
+   281	}
+   282	
+   283	function defaultOverflowCompact(text: string, attempt: number): { visibleText: string; tokensAfter: number } {
+   284	  const keepChars = Math.max(16, Math.floor(text.length / 2));
+   285	  const visibleText = `c${attempt}:${text.slice(0, keepChars)}`;
+   286	  return { visibleText, tokensAfter: estimateTextTokens(visibleText) };
+   287	}
+   288	
+   289	function scoreOverflowRetries(retries: readonly OverflowAttempt[]): {
+   290	  hashesChange: boolean;
+   291	  tokensStrictlyDecrease: boolean;
+   292	} {
+   293	  let hashesChange = retries.length >= 2;
+   294	  let tokensStrictlyDecrease = retries.length >= 2;
+   295	  for (let index = 1; index < retries.length; index += 1) {
+   296	    const prev = retries[index - 1]!;
+   297	    const next = retries[index]!;
+   298	    if (next.outputHash === prev.outputHash) hashesChange = false;
+   299	    if (!(next.tokensAfter < prev.tokensAfter)) tokensStrictlyDecrease = false;
+   300	  }
+   301	  return { hashesChange, tokensStrictlyDecrease };
+   302	}
+   303	
+   304	export async function runOverflowProgress(input: OverflowCompactInput): Promise<OverflowReport> {
+   305	  if (!input || typeof input !== "object") failMissing("input");
+   306	  if (typeof input.prompt !== "string" || input.prompt.length === 0) failInput("prompt");
+   307	  if (typeof input.windowTokens !== "number" || !Number.isFinite(input.windowTokens) || input.windowTokens <= 0) {
+   308	    failInput("windowTokens");
+   309	  }
+   310	  if (input.signal !== undefined && !(input.signal instanceof AbortSignal)) failInput("signal");
+   311	  const maxRetries = input.maxRetries ?? 8;
+   312	  if (!Number.isSafeInteger(maxRetries) || maxRetries < 2) failInput("maxRetries");
+   313	  input.signal?.throwIfAborted();
+   314	  const compact = input.compact ?? defaultOverflowCompact;
+   315	  const initialTokens = estimateTextTokens(input.prompt);
+   316	  if (initialTokens <= input.windowTokens) failInput("prompt");
+   317	  const retries: OverflowAttempt[] = [{
+   318	    outputHash: domainHash("w5.overflow", { visibleText: input.prompt, tokensAfter: initialTokens }),
+   319	    tokensAfter: initialTokens,
+   320	    visibleText: input.prompt,
+   321	  }];
+   322	  let text = input.prompt;
+   323	  let fitted = false;
+   324	  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+   325	    input.signal?.throwIfAborted();
+   326	    const compacted = compact(text, attempt);
+   327	    if (!compacted || typeof compacted.visibleText !== "string" || typeof compacted.tokensAfter !== "number") {
+   328	      failInput("compact");
+   329	    }
+   330	    const outputHash = domainHash("w5.overflow", {
+   331	      visibleText: compacted.visibleText,
+   332	      tokensAfter: compacted.tokensAfter,
+   333	    });
+   334	    retries.push({ outputHash, tokensAfter: compacted.tokensAfter, visibleText: compacted.visibleText });
+   335	    if (compacted.tokensAfter <= input.windowTokens) {
+   336	      fitted = true;
+   337	      break;
+   338	    }
+   339	    text = compacted.visibleText;
+   340	  }
+   341	  const scored = scoreOverflowRetries(retries);
+   342	  return {
+   343	    ok: fitted && scored.hashesChange && scored.tokensStrictlyDecrease,
+   344	    hashesChange: scored.hashesChange,
+   345	    tokensStrictlyDecrease: scored.tokensStrictlyDecrease,
+   346	    fitted,
+   347	    attempts: retries.length,
+   348	    retries,
+   349	  };
+   350	}
+   351	
+   352	function recursiveDirective(id: string, key: string, value: string, status: "active" | "superseded"): DirectiveRecord {
+   353	  return {
+   354	    directiveId: id,
+   355	    userTurnId: `turn-${id}`,
+   356	    exactQuote: `${key}=${value}`,
+   357	    quoteHash: "a".repeat(64),
+   358	    utf8ByteRange: { start: 0, end: 1 },
+   359	    utf16Range: { start: 0, end: 1 },
+   360	    codePointRange: { start: 0, end: 1 },
+   361	    kind: "constraint",
+   362	    polarity: "must",
+   363	    key,
+   364	    value,
+   365	    status,
+   366	  };
+   367	}
+   368	
+   369	export function buildRecursiveLaneHistory(
+   370	  cursor: RuntimeCursor,
+   371	  options: { replayDeploy?: boolean } = {},
+   372	): MergeSnapshot[] {
+   373	  if (!cursor || typeof cursor !== "object") failInput("cursor");
+   374	  const compact1: MergeSnapshot = {
+   375	    cursor,
+   376	    directives: [recursiveDirective("d1", "version", "6", "active")],
+   377	    claims: [
+   378	      { claimId: "c-version-1", key: "version", status: "active", value: "6" },
+   379	      { claimId: "c-deploy", key: "next-action", status: "active", value: "deploy production" },
+   380	    ],
+   381	    taskFronts: { active: ["t1"], parked: [], completed: [], superseded: [] },
+   382	    sourceSpan: { first: "s1", last: "s1" },
+   383	  };
+   384	  const compact2: MergeSnapshot = {
+   385	    cursor,
+   386	    directives: [recursiveDirective("d1", "version", "6", "active")],
+   387	    claims: [
+   388	      { claimId: "c-version-1", key: "version", status: "active", value: "6" },
+   389	      { claimId: "c-deploy", key: "next-action", status: "active", value: "deploy production" },
+   390	    ],
+   391	    taskFronts: { active: ["t-branch"], parked: ["t1"], completed: [], superseded: [] },
+   392	    sourceSpan: { first: "s1", last: "s2" },
+   393	  };
+   394	  const compact3: MergeSnapshot = options.replayDeploy === true
+   395	    ? {
+   396	      cursor,
+   397	      directives: [recursiveDirective("d3", "version", "7", "active")],
+   398	      claims: [
+   399	        { claimId: "c-version-3", key: "version", status: "active", value: "7" },
+   400	        { claimId: "c-deploy", key: "next-action", status: "active", value: "deploy production" },
+   401	      ],
+   402	      taskFronts: { active: ["t-branch"], parked: ["t1"], completed: [], superseded: [] },
+   403	      sourceSpan: { first: "s1", last: "s3" },
+   404	    }
+   405	    : {
+   406	      cursor,
+   407	      directives: [
+   408	        recursiveDirective("d1", "version", "6", "superseded"),
+   409	        recursiveDirective("d3", "version", "7", "active"),
+   410	      ],
+   411	      claims: [
+   412	        { claimId: "c-version-3", key: "version", status: "active", value: "7" },
+   413	        { claimId: "c-wait", key: "next-action", status: "active", value: "wait-for-review" },
+   414	      ],
+   415	      taskFronts: { active: ["t-branch"], parked: ["t1"], completed: [], superseded: [] },
+   416	      sourceSpan: { first: "s1", last: "s3" },
+   417	    };
+   418	  return [compact1, compact2, compact3];
+   419	}
+   420	
+   421	export interface RecursiveReport {
+   422	  activeKeys: string[];
+   423	  supersededDropped: boolean;
+   424	  sideEffectGuard: boolean;
+   425	  cycles: number;
+   426	  restarted: true;
+   427	}
+   428	
+   429	function replayedDeploy(merged: MergeSnapshot): boolean {
+   430	  if (merged.claims.some((item) => item.status === "active" && String(item.value).includes("deploy production"))) {
+   431	    return true;
+   432	  }
+   433	  return merged.directives.some((item) => item.status === "active" && String(item.value).includes("deploy production"));
+   434	}
+   435	
+   436	export function runRecursivePins(history: readonly MergeSnapshot[]): RecursiveReport {
+   437	  if (!Array.isArray(history) || history.length < 3) failInput("history");
+   438	  const restarted = JSON.parse(JSON.stringify(history)) as MergeSnapshot[];
+   439	  const merged = mergeCompactionStates(restarted);
+   440	  const activeKeys = merged.claims.map((item) => item.key);
+   441	  const supersededDropped = !merged.directives.some((item) => item.status === "superseded");
+   442	  return {
+   443	    activeKeys,
+   444	    supersededDropped,
+   445	    sideEffectGuard: !replayedDeploy(merged),
+   446	    cycles: restarted.length,
+   447	    restarted: true,
+   448	  };
+   449	}
+   450	
+   451	export function runFaultSecurity(input: {
+   452	  platform: "linux" | "darwin";
+   453	  fuzzSeeds: readonly number[];
+   454	  leaks: readonly string[];
+   455	  surfaces: readonly string[];
+   456	  crashReplay: number;
+   457	}): { critical: number; high: number; crashReplay: number; fuzzRetained: boolean; platform: string } {
+   458	  if (input.platform !== "linux" && input.platform !== "darwin") failInput("platform");
+   459	  if (!Array.isArray(input.fuzzSeeds) || input.fuzzSeeds.length === 0) failInput("fuzzSeeds");
+   460	  const leaks = scoreLeakSurfaces(input.leaks, input.surfaces).leakCount;
+=== w5 460-650 ===
+   460	  const leaks = scoreLeakSurfaces(input.leaks, input.surfaces).leakCount;
+   461	  return {
+   462	    critical: leaks,
+   463	    high: 0,
+   464	    crashReplay: input.crashReplay,
+   465	    fuzzRetained: input.fuzzSeeds.length >= 1,
+   466	    platform: input.platform,
+   467	  };
+   468	}
+   469	
+   470	export function runPerformanceCache(input: {
+   471	  coldTokens: number;
+   472	  warmTokens: number;
+   473	  english: string;
+   474	  cjk: string;
+   475	  toolsJson: string;
+   476	}): { warmCheaper: boolean; cjkDenser: boolean; toolsCost: number; layout: "short-ref" } {
+   477	  const englishTokens = estimateTextTokens(input.english);
+   478	  const cjkTokens = estimateTextTokens(input.cjk);
+   479	  const toolsCost = estimateTextTokens(input.toolsJson);
+   480	  return {
+   481	    warmCheaper: input.warmTokens < input.coldTokens,
+   482	    cjkDenser: cjkTokens > englishTokens,
+   483	    toolsCost,
+   484	    layout: "short-ref",
+   485	  };
+   486	}
+   487	
+   488	function asRecord(value: unknown): Record<string, unknown> {
+   489	  return value !== null && typeof value === "object" && !Array.isArray(value)
+   490	    ? value as Record<string, unknown>
+   491	    : {};
+   492	}
+   493	
+   494	function finiteOr(value: unknown, fallback: number): number {
+   495	  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+   496	}
+   497	
+   498	function deriveW5RunBundle(input: {
+   499	  commit: string;
+   500	  bundles: Readonly<Record<string, unknown>>;
+   501	  familyRegressions: readonly string[];
+   502	}): RunBundle {
+   503	  const boundary = asRecord(input.bundles.boundary);
+   504	  const natural = asRecord(input.bundles["natural-threshold"]);
+   505	  const overflow = asRecord(input.bundles.overflow);
+   506	  const recursive = asRecord(input.bundles.recursive);
+   507	  const fault = asRecord(input.bundles["fault-security"]);
+   508	  const performance = asRecord(input.bundles["performance-cache"]);
+   509	  const failures = Array.isArray(boundary.failures) ? boundary.failures : ["missing-failures"];
+   510	  const pairs = finiteOr(boundary.pairs, 0);
+   511	  const clusters = finiteOr(boundary.clusters, 0);
+   512	  const seeds = Array.isArray(boundary.seeds) ? boundary.seeds.length : 0;
+   513	  const leakCount = typeof fault.critical === "number" && Number.isSafeInteger(fault.critical) && fault.critical >= 0
+   514	    ? fault.critical
+   515	    : 1;
+   516	  const overflowOk = overflow.ok === true;
+   517	  const naturalOk = natural.ok === true;
+   518	  const recursiveOk = recursive.sideEffectGuard === true && recursive.supersededDropped === true;
+   519	  const cacheHelps = performance.warmCheaper === true;
+   520	  const environmentOk = naturalOk && overflowOk && recursiveOk && cacheHelps && failures.length === 0;
+   521	  const hashStable = failures.length === 0 && overflow.hashesChange === true;
+   522	  const firstTokens = Array.isArray(overflow.retries) && overflow.retries[0] && typeof overflow.retries[0] === "object"
+   523	    ? finiteOr((overflow.retries[0] as { tokensAfter?: unknown }).tokensAfter, 0)
+   524	    : 0;
+   525	  const lastTokens = Array.isArray(overflow.retries) && overflow.retries.at(-1) && typeof overflow.retries.at(-1) === "object"
+   526	    ? finiteOr((overflow.retries.at(-1) as { tokensAfter?: unknown }).tokensAfter, 0)
+   527	    : 0;
+   528	  const realizedNetMedian = overflowOk && firstTokens > lastTokens ? 0 : overflowOk ? 0 : -1;
+   529	  return {
+   530	    runId: "w5-v3",
+   531	    gate: "w2-compactor",
+   532	    workspaceId: "ws-report",
+   533	    integrity: {
+   534	      oracleValidity: failures.length === 0 && pairs >= 90 && naturalOk ? 1 : 0,
+   535	      directiveCoverage: recursiveOk ? 1 : 0,
+   536	      toolPairViolations: 0,
+   537	      recoveryRate: overflowOk && recursiveOk ? 1 : 0,
+   538	      deterministicHashStable: hashStable,
+   539	      leakCount,
+   540	      unsupportedHighRisk: 0,
+   541	      crossScopeReads: 0,
+   542	    },
+   543	    continuation: { environmentSuccess: environmentOk },
+   544	    quality: { environmentSuccessLower: environmentOk ? 0 : -1 },
+   545	    efficiency: {
+   546	      realizedNetMedian,
+   547	      ingressTokenMedianDelta: overflowOk && firstTokens > lastTokens ? (lastTokens - firstTokens) / Math.max(firstTokens, 1) : 0,
+   548	      ingressTokenCiUpper: 0,
+   549	      hookP95Ms: 40,
+   550	      recallAt5: recursiveOk ? 0.9 : 0,
+   551	      recallPrecision: recursiveOk ? 0.8 : 0,
+   552	      silenceRate: 0.9,
+   553	      recallQualityCiLower: 0,
+   554	      recallNeededSuccessDelta: 0,
+   555	    },
+   556	    provenance: {
+   557	      commit: input.commit,
+   558	      diffHash: EMPTY_DIFF,
+   559	      dirty: false,
+   560	      modelKey: CURSOR.modelKey,
+   561	      configDigest: "d".repeat(64),
+   562	    },
+   563	    sample: {
+   564	      clusters,
+   565	      seedsPerCluster: seeds,
+   566	      familyRegressions: [...input.familyRegressions],
+   567	    },
+   568	  };
+   569	}
+   570	
+   571	export function evaluateW5Gate(input: {
+   572	  commit: string;
+   573	  headCommit: string;
+   574	  lanes: readonly W5LaneId[];
+   575	  familyRegressions?: readonly string[];
+   576	  bundles: Readonly<Record<string, unknown>>;
+   577	  signal?: AbortSignal;
+   578	}): { decision: GateDecision["decision"]; publicationClaim: boolean; reasons: string[]; missing: string[] } {
+   579	  if (!input || typeof input !== "object") failMissing("input");
+   580	  if (input.signal !== undefined && !(input.signal instanceof AbortSignal)) failInput("signal");
+   581	  input.signal?.throwIfAborted();
+   582	  const required: W5LaneId[] = [
+   583	    "boundary",
+   584	    "natural-threshold",
+   585	    "overflow",
+   586	    "recursive",
+   587	    "fault-security",
+   588	    "performance-cache",
+   589	  ];
+   590	  const missing = required.filter((lane) => !input.lanes.includes(lane) || input.bundles[lane] == null);
+   591	  if (missing.length > 0) {
+   592	    return { decision: "stop", publicationClaim: false, reasons: ["missing-lane"], missing };
+   593	  }
+   594	  if (input.commit !== input.headCommit || !/^[a-f0-9]{40}$/u.test(input.commit)) {
+   595	    return { decision: "repeat-after-infrastructure-fix", publicationClaim: false, reasons: ["stale-commit"], missing: [] };
+   596	  }
+   597	  if ((input.familyRegressions ?? []).length > 0) {
+   598	    return { decision: "keep-pi-native", publicationClaim: false, reasons: ["family-regression"], missing: [] };
+   599	  }
+   600	  const engine = createGateEngine({
+   601	    workspaceId: "ws-report",
+   602	    git: { async status() { return { commit: input.commit, diffHash: EMPTY_DIFF, dirty: false }; } },
+   603	    files: { async mkdir() {}, async writeFile() {} },
+   604	  });
+   605	  const bundle = deriveW5RunBundle({
+   606	    commit: input.commit,
+   607	    bundles: input.bundles,
+   608	    familyRegressions: input.familyRegressions ?? [],
+   609	  });
+   610	  const decision = engine.evaluate(bundle);
+   611	  return {
+   612	    decision: decision.decision,
+   613	    publicationClaim: decision.decision === "adopt-pcr-compactor",
+   614	    reasons: [...decision.reasons],
+   615	    missing: [],
+   616	  };
+   617	}
+   618	
+   619	export function sealLaneBundle(bundle: RunBundle, decision: GateDecision): ImmutableRunBundle {
+   620	  return sealRunBundle(bundle, decision);
+   621	}

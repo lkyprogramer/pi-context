@@ -1,0 +1,1041 @@
+===== apps/pi-context-runtime/src/extension.ts 110-330 =====
+   110	  };
+   111	  return { kind: "pcr", result };
+   112	}
+   113	
+   114	function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
+   115	  const owner = claimPiContextOwner("pi-context-runtime");
+   116	  const userTurns = registerProductionUserTurnRuntime(pi as never);
+   117	  const identity = { create: createRuntimeCursor };
+   118	  registerContextHook({
+   119	    on(hook, handler) {
+   120	      pi.on(hook, async (event, ctx) => {
+   121	        if (hook !== "context") return handler(event, ctx);
+   122	        let derived;
+   123	        try {
+   124	          derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+   125	        } catch {
+   126	          return { messages: event.messages };
+   127	        }
+   128	        await userTurns.ensure(ctx as never);
+   129	        const host = ctx && typeof ctx === "object"
+   130	          ? ctx as PiRuntimeContext & { abort?: () => void; now?: number; model?: { contextWindow?: number; maxTokens?: number } }
+   131	          : undefined;
+   132	        return handler(event, {
+   133	          abort: () => {
+   134	            if (typeof host?.abort === "function") host.abort();
+   135	          },
+   136	          signal: host?.signal,
+   137	          workspaceId: derived.workspaceId,
+   138	          sessionId: derived.sessionId,
+   139	          leafId: derived.leafId,
+   140	          lineageHash: derived.lineageHash,
+   141	          modelKey: derived.modelKey,
+   142	          now: typeof host?.now === "number" && Number.isFinite(host.now) ? host.now : 0,
+   143	          currentContextWindow: host?.model?.contextWindow,
+   144	          maxOutputTokens: host?.model?.maxTokens,
+   145	        });
+   146	      });
+   147	    },
+   148	  }, {
+   149	    open: (sessionCtx) => userTurns.openSession(sessionCtx),
+   150	  });
+   151	  let staged: StagedCompaction | null = null;
+   152	  registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
+   153	    async prepareCompaction(event, ctx) {
+   154	      try {
+   155	        const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+   156	        await userTurns.ensure(ctx as never);
+   157	        const session = await userTurns.openSession(derived);
+   158	        const compact = session.prepareCompaction;
+   159	        if (typeof compact !== "function") return { kind: "native-fallback" };
+   160	        const sourceMessages = [
+   161	          ...(Array.isArray(event.preparation.messagesToSummarize) ? event.preparation.messagesToSummarize : []),
+   162	          ...(Array.isArray(event.preparation.turnPrefixMessages) ? event.preparation.turnPrefixMessages : []),
+   163	        ];
+   164	        const tailTexts = collectCompactionSourceTexts(event.preparation.retainedTail);
+   165	        const decision = await compact.call(session, {
+   166	          operationId: "op_compact",
+   167	          cursor: sessionCursor(derived),
+   168	          reason: event.reason,
+   169	          now: Date.now(),
+   170	          tokensBefore: event.preparation.tokensBefore,
+   171	          firstKeptEntryId: event.preparation.firstKeptEntryId,
+   172	          messagesToSummarize: sourceMessages,
+   173	          retainedTailTokens: tailTexts.length === 0
+   174	            ? undefined
+   175	            : tailTexts.reduce((sum, text) => sum + estimateTextTokens(text), 0),
+   176	          signal: ctx.signal,
+   177	        });
+   178	        return toPiDecision(decision);
+   179	      } catch (error) {
+   180	        if (error && typeof error === "object" && "name" in error && error.name === "AbortError") throw error;
+   181	        return { kind: "native-fallback" };
+   182	      }
+   183	    },
+   184	    async stageCompaction(result) {
+   185	      staged = {
+   186	        candidate: {
+   187	          firstKeptEntryId: result.firstKeptEntryId,
+   188	          summary: result.summary,
+   189	          tokensBefore: result.tokensBefore,
+   190	          estimatedTokensAfter: result.estimatedTokensAfter,
+   191	          details: result.details,
+   192	        },
+   193	        result,
+   194	      };
+   195	    },
+   196	    async ackHostCompaction(entry) {
+   197	      ackHostCompaction(staged, entry, () => {
+   198	        staged = null;
+   199	      });
+   200	    },
+   201	    async failStagedCompaction() {
+   202	      failStagedCompaction(staged, () => {
+   203	        staged = null;
+   204	      });
+   205	    },
+   206	  });
+   207	  let lastRecoveredCursor: RuntimeCursor | undefined;
+   208	  registerSessionLifecycle(pi as never, {
+   209	    async openSession(ctx, reason, hasRawBlobs = true) {
+   210	      const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+   211	      lastRecoveredCursor = cursor;
+   212	      await userTurns.ensure(ctx as never);
+   213	      const report = await userTurns.recover({
+   214	        cursor,
+   215	        reason: toPcrSessionStartReason(reason),
+   216	        hasRawBlobs,
+   217	        signal: ctx.signal,
+   218	      });
+   219	      lastRecoveredCursor = report.cursor;
+   220	      return report.cursor;
+   221	    },
+   222	    async switchBranch(ctx, newLeafId) {
+   223	      const previous = lastRecoveredCursor;
+   224	      await userTurns.ensure(ctx as never);
+   225	      const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+   226	      if (previous) {
+   227	        await userTurns.branchChanged({ cursor, previousCursor: previous, newLeafId, signal: ctx.signal });
+   228	      }
+   229	      lastRecoveredCursor = cursor;
+   230	    },
+   231	    async closeSession(ctx) {
+   232	      const cursor = lastRecoveredCursor ?? sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+   233	      await userTurns.closeSession(cursor);
+   234	    },
+   235	    async invalidateRouteCandidates() {},
+   236	  });
+   237	  let worker: CandidateWorker | undefined;
+   238	  const backgroundSnapshot = (): CandidateSnapshot => {
+   239	    const cursor = lastRecoveredCursor ?? createRuntimeCursor({
+   240	      workspacePath: process.cwd(),
+   241	      sessionId: "unbound",
+   242	      leafId: null,
+   243	      lineageEntryIds: ["unbound"],
+   244	      modelKey: "unbound",
+   245	    });
+   246	    return {
+   247	      workspaceId: cursor.workspaceId,
+   248	      sessionId: cursor.sessionId,
+   249	      leafId: cursor.leafId ?? "header",
+   250	      lineageHash: cursor.lineageHash,
+   251	      sourceHead: "src_runtime",
+   252	      modelKey: cursor.modelKey,
+   253	      thinkingLevel: "off",
+   254	      contextWindow: 128000,
+   255	      systemPromptHash: "sys_runtime",
+   256	      activeToolSetHash: "tools_runtime",
+   257	      reducerRevisionSet: "red_runtime",
+   258	      extractorRevision: "ext_runtime",
+   259	      schemaVersion: "1",
+   260	      configFingerprint: "cfg_runtime",
+   261	    };
+   262	  };
+   263	  registerBackgroundHook(pi as never, {
+   264	    isHardPath: isHardBackgroundPath,
+   265	    snapshot: backgroundSnapshot,
+   266	    get worker() {
+   267	      const memory = new Map<string, { id: string; key: string; phase: "preparing" | "prepared" | "stale" | "cancelled" | "failed"; reason?: string }>();
+   268	      worker ??= new CandidateWorker({
+   269	        store: {
+   270	          async findCandidate(key) {
+   271	            return memory.get(key);
+   272	          },
+   273	          async markPreparing(key) {
+   274	            const rec = { id: `c_${key.slice(0, 16)}`, key, phase: "preparing" as const };
+   275	            memory.set(key, rec);
+   276	            return rec;
+   277	          },
+   278	          async markPrepared(prepared) {
+   279	            const rec = { ...prepared, phase: "prepared" as const };
+   280	            memory.set(prepared.key, rec);
+   281	            const snap = backgroundSnapshot();
+   282	            await userTurns.persistBackgroundCandidate({
+   283	              workspaceId: snap.workspaceId,
+   284	              sessionId: snap.sessionId,
+   285	              leafId: snap.leafId === "header" ? null : snap.leafId,
+   286	              lineageHash: snap.lineageHash,
+   287	              modelKey: snap.modelKey,
+   288	              sourceHead: domainHash("source-head", snap.sourceHead),
+   289	              configFingerprint: domainHash("config", snap.configFingerprint),
+   290	            }).catch(() => undefined);
+   291	            return rec;
+   292	          },
+   293	          async markStale(id, reason) {
+   294	            const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "stale" as const, reason };
+   295	            const next = { ...rec, phase: "stale" as const, reason };
+   296	            memory.set(next.key, next);
+   297	            return next;
+   298	          },
+   299	          async markCancelled(id) {
+   300	            const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "cancelled" as const };
+   301	            const next = { ...rec, phase: "cancelled" as const };
+   302	            memory.set(next.key, next);
+   303	            return next;
+   304	          },
+   305	          async markFailed(id, reason) {
+   306	            const rec = [...memory.values()].find((row) => row.id === id) ?? { id, key: id, phase: "failed" as const, reason };
+   307	            const next = { ...rec, phase: "failed" as const, reason };
+   308	            memory.set(next.key, next);
+   309	            return next;
+   310	          },
+   311	        },
+   312	        snapshotProvider: { current: backgroundSnapshot },
+   313	        async prepare(snapshot, signal) {
+   314	          if (signal.aborted) throw new Error("aborted");
+   315	          return { id: `prep_${snapshot.leafId}`, key: candidateKey(snapshot) };
+   316	        },
+   317	      });
+   318	      return worker;
+   319	    },
+   320	  });
+   321	  const deferredEvidence = {
+   322	    async admit() {
+   323	      throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   324	    },
+   325	    async search() {
+   326	      throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   327	    },
+   328	    async read() {
+   329	      throw Object.assign(new Error("PCR_RETRIEVAL_DEPENDENCY_MISSING"), { code: "PCR_RETRIEVAL_DEPENDENCY_MISSING" });
+   330	    },
+===== apps/pi-context-runtime/src/composition-root.ts 400-980 =====
+   400	    });
+   401	  }
+   402	  return [{ kind: "note", value: visibleText.length > 0 ? visibleText : "observation" }];
+   403	}
+   404	
+   405	/** Register the durable T12 ingress path on the same Pi extension entry that owns lifecycle hooks. */
+   406	export function registerProductionUserTurnRuntime(
+   407	  pi: ExtensionAPI,
+   408	  options: ProductionUserTurnRuntimeOptions = {},
+   409	): ProductionUserTurnRuntime {
+   410	  const identity = options.identity ?? { create: createRuntimeCursor };
+   411	  const clock = options.clock ?? { now: Date.now };
+   412	  const owners = new Map<string, Promise<WorkspaceUserTurnOwner>>();
+   413	
+   414	  const cursorFromContext = (ctx: ExtensionContext): RuntimeCursor => {
+   415	    const derived = derivePiSessionContext(ctx, identity);
+   416	    if (derived.sessionId === "unbound" || derived.modelKey === "unbound") {
+   417	      throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "sessionId" });
+   418	    }
+   419	    return Object.freeze({
+   420	      workspaceId: derived.workspaceId,
+   421	      sessionId: derived.sessionId,
+   422	      leafId: derived.leafId,
+   423	      lineageHash: derived.lineageHash,
+   424	      modelKey: derived.modelKey,
+   425	    });
+   426	  };
+   427	
+   428	  const ownerFor = async (cursor: RuntimeCursor, ctx: ExtensionContext): Promise<WorkspaceUserTurnOwner> => {
+   429	    const sessionDir = typeof ctx.sessionManager.getSessionDir === "function"
+   430	      ? ctx.sessionManager.getSessionDir()
+   431	      : undefined;
+   432	    const dataRoot = resolve(options.dataRoot?.(ctx)
+   433	      ?? join(typeof sessionDir === "string" && sessionDir.length > 0 ? sessionDir : ctx.cwd, ".context-runtime"));
+   434	    const existing = owners.get(cursor.workspaceId);
+   435	    if (existing) {
+   436	      const owner = await existing;
+   437	      if (owner.dataRoot !== dataRoot) {
+   438	        throw new ProductionCompositionError("PCR_PI_SESSION_SCOPE_CONFLICT", {
+   439	          expectedDataRoot: owner.dataRoot,
+   440	          actualDataRoot: dataRoot,
+   441	        });
+   442	      }
+   443	      owner.cursorsBySession.set(cursor.sessionId, cursor);
+   444	      return owner;
+   445	    }
+   446	    const opening = (async (): Promise<WorkspaceUserTurnOwner> => {
+   447	      const database = await openWorkspaceSqliteStore({
+   448	        dataRoot,
+   449	        workspaceId: cursor.workspaceId,
+   450	        busyTimeoutMs: options.busyTimeoutMs ?? 1_000,
+   451	        ...(ctx.signal === undefined ? {} : { signal: ctx.signal }),
+   452	      });
+   453	      let keys: LocalWorkspaceBlobKeyProvider | undefined;
+   454	      try {
+   455	        keys = openLocalWorkspaceBlobKeyProvider({
+   456	          dataRoot,
+   457	          workspaceId: cursor.workspaceId,
+   458	          ...(options.environment === undefined ? {} : { environment: options.environment }),
+   459	        });
+   460	        const blobs = createEncryptedBlobStore({
+   461	          dataRoot,
+   462	          workspaceId: cursor.workspaceId,
+   463	          maxBlobBytes: options.maxBlobBytes ?? 8 * 1024 * 1024,
+   464	          keys,
+   465	        });
+   466	        const ledger = await openWorkspaceUserTurnLedger({ database });
+   467	        const saga: DurableSagaJournal = await openWorkspaceSagaJournal({
+   468	          database,
+   469	          async verifyBlob(scope, ref) { await blobs.read(scope, ref, { start: 0, endExclusive: 0 }); },
+   470	        });
+   471	        const state = openWorkspaceStateStore({ database });
+   472	        const repository = openWorkspaceEvidenceRepository({ database });
+   473	        const fts = openWorkspaceEvidenceFtsIndex({ database });
+   474	        const candidates = await openWorkspaceCandidateRepository({ database });
+   475	        const services = new Map<string, UserTurnService>();
+   476	        const observations = new Map<string, ObservationService>();
+   477	        const evidences = new Map<string, EvidenceService>();
+   478	        const owner: WorkspaceUserTurnOwner = {
+   479	          dataRoot,
+   480	          database,
+   481	          keys,
+   482	          blobs,
+   483	          state,
+   484	          saga,
+   485	          ledger,
+   486	          cursorsBySession: new Map(),
+   487	          pointersByCursor: new Map(),
+   488	          sessions: new Map(),
+   489	          candidates,
+   490	          services,
+   491	          observations,
+   492	          evidences,
+   493	          evidence(candidate) {
+   494	            const key = cursorKey(candidate);
+   495	            let service = evidences.get(key);
+   496	            if (!service) {
+   497	              service = createEvidenceService({ cursor: candidate, repository, fts, blobs });
+   498	              evidences.set(key, service);
+   499	            }
+   500	            return service;
+   501	          },
+   502	          service(candidate) {
+   503	            const key = cursorKey(candidate);
+   504	            let service = services.get(key);
+   505	            if (!service) {
+   506	              const inner = createUserTurnService({ cursor: candidate, blobs, ledger });
+   507	              const resolver = createDirectiveResolver({
+   508	                cursor: candidate,
+   509	                store: {
+   510	                  put: (record) => owner.state.putDirective(record),
+   511	                  list: (scope) => owner.state.listDirectives(scope),
+   512	                },
+   513	              });
+   514	              const extractor = createDirectiveExtractor({ cursor: candidate });
+   515	              const segmenter = createClauseSegmenter({ cursor: candidate });
+   516	              service = {
+   517	                capture: async (input) => {
+   518	                  const receipt = await inner.capture(input);
+   519	                  if (input.sourceClass === "authenticated-user") {
+   520	                    const turn = {
+   521	                      userTurnId: `user_turn_${receipt.receiptId}`,
+   522	                      cursor: candidate,
+   523	                      rawTextHash: receipt.rawTextHash,
+   524	                      rawBlobId: receipt.rawBlobId,
+   525	                      utf8Bytes: receipt.utf8Bytes,
+   526	                      hostMessageId: receipt.operationId,
+   527	                      sourceClass: receipt.sourceClass,
+   528	                      capturedAt: receipt.capturedAt,
+   529	                    };
+   530	                    for (const candidateDirective of extractor.extract(turn, segmenter.segment({
+   531	                      text: input.rawText,
+   532	                      cursor: candidate,
+   533	                    }))) {
+   534	                      const stored = await resolver.apply(candidateDirective, input.signal);
+   535	                      if (stored.key) {
+   536	                        await owner.state.putClaim({
+   537	                          claimId: `cl_${stored.directiveId}`,
+   538	                          cursor: candidate,
+   539	                          key: stored.key,
+   540	                          polarity: stored.polarity,
+   541	                          status: stored.status,
+   542	                          value: stored.value,
+   543	                          authority: "inform",
+   544	                        });
+   545	                      }
+   546	                    }
+   547	                  }
+   548	                  return receipt;
+   549	                },
+   550	                abandon: (receiptId, reason) => inner.abandon(receiptId, reason),
+   551	                link: (receiptId, hostMessageId) => inner.link(receiptId, hostMessageId),
+   552	              };
+   553	              services.set(key, service);
+   554	            }
+   555	            return service;
+   556	          },
+   557	          observation(candidate) {
+   558	            const key = cursorKey(candidate);
+   559	            let service = observations.get(key);
+   560	            if (!service) {
+   561	              const inner = createObservationService({ cursor: candidate, blobs, saga });
+   562	              const reducers = createReducerRegistry({
+   563	                cursor: candidate,
+   564	                reducers: createProductionReducers(),
+   565	              });
+   566	              service = {
+   567	                async ingest(input: ToolObservation): Promise<ProjectedToolResult> {
+   568	                  const projected = await inner.ingest(input);
+   569	                  const text = observationText(input.content);
+   570	                  const reduced = await reducers.reduce({
+   571	                    observation: input,
+   572	                    text,
+   573	                    rawBlobId: projected.rawBlobId,
+   574	                    cursor: candidate,
+   575	                    ...(input.signal === undefined ? {} : { signal: input.signal }),
+   576	                  });
+   577	                  const admitted = await owner.evidence(candidate).admit({
+   578	                    cursor: candidate,
+   579	                    operationId: projected.operationId,
+   580	                    observationId: projected.observationId,
+   581	                    rawBlobId: projected.rawBlobId,
+   582	                    reducer: { id: reduced.reducer.id, revision: "1" },
+   583	                    sourceClass: input.sourceClass,
+   584	                    facts: evidenceFacts(reduced.facts, reduced.visibleText),
+   585	                    observedAt: input.capturedAt,
+   586	                    visibleText: reduced.visibleText,
+   587	                    ...(input.signal === undefined ? {} : { signal: input.signal }),
+   588	                  });
+   589	                  owner.pointersByCursor.set(key, admitted.map((record) => ({ ref: record.evidenceId, kind: record.kind })));
+   590	                  return Object.freeze({
+   591	                    ...projected,
+   592	                    evidenceIds: admitted.map((record) => record.evidenceId),
+   593	                    reducer: { id: reduced.reducer.id, revision: "1" },
+   594	                  });
+   595	                },
+   596	                acknowledge: (operationId, hostMessageId) => inner.acknowledge(operationId, hostMessageId),
+   597	              };
+   598	              observations.set(key, service);
+   599	            }
+   600	            return service;
+   601	          },
+   602	          async close() {
+   603	            services.clear();
+   604	            observations.clear();
+   605	            evidences.clear();
+   606	            try {
+   607	              await saga.close();
+   608	              await ledger.close();
+   609	              await database.close();
+   610	            } finally {
+   611	              keys!.close();
+   612	            }
+   613	          },
+   614	        };
+   615	        return owner;
+   616	      } catch (error) {
+   617	        keys?.close();
+   618	        await database.close().catch(() => undefined);
+   619	        throw error;
+   620	      }
+   621	    })();
+   622	    owners.set(cursor.workspaceId, opening);
+   623	    try {
+   624	      const owner = await opening;
+   625	      owner.cursorsBySession.set(cursor.sessionId, cursor);
+   626	      return owner;
+   627	    } catch (error) {
+   628	      if (owners.get(cursor.workspaceId) === opening) owners.delete(cursor.workspaceId);
+   629	      throw error;
+   630	    }
+   631	  };
+   632	
+   633	  function quoteMessages(records: Array<{ directiveId: string; exactQuote: string }>): HostMessage[] {
+   634	    return records.map((record) => ({
+   635	      hostMessageId: record.directiveId,
+   636	      role: "user" as const,
+   637	      timestamp: 0,
+   638	      sourceClass: "authenticated-user" as const,
+   639	      content: [{ type: "text" as const, text: record.exactQuote }],
+   640	    }));
+   641	  }
+   642	
+   643	  function continuityMessages(revision: { nextSafeActions: Array<{ text: string }>; revisionId: string }): HostMessage[] {
+   644	    if (revision.nextSafeActions.length === 0) return [];
+   645	    return [{
+   646	      hostMessageId: `cont_${revision.revisionId || "empty"}`,
+   647	      role: "custom" as const,
+   648	      timestamp: 0,
+   649	      sourceClass: "system" as const,
+   650	      content: [{ type: "text" as const, text: revision.nextSafeActions.map((item) => item.text).join("\n") }],
+   651	    }];
+   652	  }
+   653	
+   654	  function claimMessages(rows: Array<{ claimId: string; key: string; value: unknown }>): HostMessage[] {
+   655	    return rows.map((row) => ({
+   656	      hostMessageId: row.claimId,
+   657	      role: "custom" as const,
+   658	      timestamp: 0,
+   659	      sourceClass: "system" as const,
+   660	      content: [{ type: "text" as const, text: `${row.key}=${String(row.value)}` }],
+   661	    }));
+   662	  }
+   663	
+   664	  async function portsFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSessionPorts> {
+   665	    const userTurn = owner.service(cursor);
+   666	    const observation = owner.observation(cursor);
+   667	    const evidence = owner.evidence(cursor);
+   668	    const resolver = createDirectiveResolver({
+   669	      cursor,
+   670	      store: {
+   671	        put: (record) => owner.state.putDirective(record),
+   672	        list: (scope) => owner.state.listDirectives(scope),
+   673	      },
+   674	    });
+   675	    const model = ctx?.model;
+   676	    const contextWindow = typeof model?.contextWindow === "number" ? model.contextWindow : undefined;
+   677	    const maxOutputTokens = typeof model?.maxTokens === "number" ? model.maxTokens : undefined;
+   678	    if (contextWindow === undefined || maxOutputTokens === undefined) {
+   679	      // Route is calibrated on materialize from the request; register a fail-closed placeholder only when host limits exist.
+   680	    }
+   681	    const routeModel = cursor.modelKey;
+   682	    const routes = contextWindow !== undefined && maxOutputTokens !== undefined
+   683	      ? {
+   684	        [routeModel]: {
+   685	          modelKey: routeModel,
+   686	          contextWindow,
+   687	          maxOutputTokens,
+   688	          providerReservedTokens: 0,
+   689	        },
+   690	      }
+   691	      : {
+   692	        [routeModel]: {
+   693	          modelKey: routeModel,
+   694	          contextWindow: 1,
+   695	          maxOutputTokens: 0,
+   696	          providerReservedTokens: 0,
+   697	        },
+   698	      };
+   699	    const pricer = createTokenPricer({ cursor, routes });
+   700	    const cache = createCacheReceipt({
+   701	      cursor,
+   702	      store: {
+   703	        put: (receipt: CacheReceiptRecord) => owner.state.putCacheReceipt(receipt),
+   704	        head: async (scope) => (await owner.state.headCacheReceipt(scope)) as CacheReceiptRecord | null,
+   705	      },
+   706	    });
+   707	    const materializer = createMaterializer({
+   708	      cursor,
+   709	      pricer,
+   710	      planner: createSectionPlanner({ cursor, pricer }),
+   711	      cache,
+   712	    });
+   713	    const compaction = createCompactionService({
+   714	      cursor,
+   715	      assembler: createCompactionSnapshotAssembler({
+   716	        cursor,
+   717	        transaction: {
+   718	          async run(work) {
+   719	            return work();
+   720	          },
+   721	        },
+   722	        directives: {
+   723	          async active(scope, signal) {
+   724	            signal?.throwIfAborted();
+   725	            return resolver.active(scope, signal);
+   726	          },
+   727	        },
+   728	        continuity: {
+   729	          async current(scope) {
+   730	            return ((await owner.state.headContinuity(scope)) as ContinuityRevision | null)
+   731	              ?? emptyContinuityRevision(scope);
+   732	          },
+   733	        },
+   734	        claims: {
+   735	          async list(scope, signal) {
+   736	            signal?.throwIfAborted();
+   737	            const rows = await owner.state.listClaims(scope);
+   738	            return rows.filter((row) => row.status === "active") as CompactionClaim[];
+   739	          },
+   740	        },
+   741	        evidence: {
+   742	          async pointers(scope, signal) {
+   743	            signal?.throwIfAborted();
+   744	            const snapshot = await owner.state.readSnapshot(scope);
+   745	            return snapshot.pointers;
+   746	          },
+   747	        },
+   748	      }),
+   749	      renderer: createCheckpointRenderer({ cursor }),
+   750	      verifier: createCheckpointVerifier({
+   751	        cursor,
+   752	        pointers: createPointerCheck(owner.blobs),
+   753	      }),
+   754	    });
+   755	    const recovery = createRecoveryService({
+   756	      cursor,
+   757	      sessions: {
+   758	        async open() {
+   759	          return owner.sessions.get(cursorKey(cursor));
+   760	        },
+   761	        async close(sessionId) {
+   762	          const bound = owner.cursorsBySession.get(sessionId);
+   763	          if (!bound) return;
+   764	          owner.sessions.delete(cursorKey(bound));
+   765	        },
+   766	      },
+   767	      journal: {
+   768	        reconcile: (snapshot) => owner.saga.reconcile(snapshot),
+   769	      },
+   770	      candidates: {
+   771	        async invalidate(scope, reason, signal) {
+   772	          return owner.candidates.invalidateScope?.(scope, reason, signal) ?? 0;
+   773	        },
+   774	      },
+   775	    });
+   776	    return {
+   777	      userInput: { capture: (input) => userTurn.capture(input) },
+   778	      toolResult: { ingest: (input) => observation.ingest(input) },
+   779	      materialization: {
+   780	        async materialize(request) {
+   781	          const rows = await owner.state.readSnapshot(cursor);
+   782	          const continuity = (rows.continuity as ContinuityRevision | null) ?? emptyContinuityRevision(cursor);
+   783	          assembleRuntimeSnapshot({
+   784	            cursor,
+   785	            directives: rows.directives.filter((row) => row.status === "active"),
+   786	            claims: rows.claims.filter((row) => row.status === "active"),
+   787	            continuity,
+   788	            pointers: rows.pointers,
+   789	            sourceEntryIds: rows.sourceEntryIds,
+   790	            schemaVersion: rows.schemaVersion,
+   791	          });
+   792	          const imageBlocks = request.canonicalMessages.reduce((count, message) => (
+   793	            count + message.content.filter((block) => block.type === "image-ref").length
+   794	          ), 0);
+   795	          const reserves = reservesFromPayload({ imageBlocks });
+   796	          if (typeof request.currentContextWindow !== "number" || request.currentContextWindow <= 0) {
+   797	            throw Object.assign(new Error("PCR_BUDGET_ROUTE_UNKNOWN"), { code: "PCR_BUDGET_ROUTE_UNKNOWN" });
+   798	          }
+   799	          return materializer.materialize({
+   800	            cursor: request.cursor,
+   801	            canonicalMessages: request.canonicalMessages,
+   802	            currentContextWindow: request.currentContextWindow,
+   803	            maxOutputTokens: request.maxOutputTokens,
+   804	            reason: request.reason,
+   805	            now: request.now,
+   806	            signal: request.signal,
+   807	            ...reserves,
+   808	          }, {
+   809	            cursor,
+   810	            directives: quoteMessages(rows.directives.filter((row) => row.status === "active")),
+   811	            continuity: [
+   812	              ...continuityMessages(continuity),
+   813	              ...claimMessages(rows.claims.filter((row) => row.status === "active")),
+   814	            ],
+   815	          });
+   816	        },
+   817	      },
+   818	      compaction: {
+   819	        prepare: async (input) => {
+   820	          const active = await resolver.active(cursor, input.signal);
+   821	          if (active.length === 0) {
+   822	            const seen = new Set<string>();
+   823	            for (const rawText of collectCompactionSourceTexts(input.messagesToSummarize)) {
+   824	              const digest = domainHash("compact-backfill", rawText);
+   825	              if (seen.has(digest)) continue;
+   826	              seen.add(digest);
+   827	              await userTurn.capture({
+   828	                operationId: `op_backfill_${digest.slice(0, 24)}`,
+   829	                cursor,
+   830	                rawText,
+   831	                sourceClass: "authenticated-user",
+   832	                capturedAt: input.now,
+   833	                signal: input.signal,
+   834	              });
+   835	            }
+   836	          }
+   837	          return compaction.prepareCompaction(input);
+   838	        },
+   839	        async acknowledge() {},
+   840	      },
+   841	      retrieval: {
+   842	        search: (input) => evidence.search({ cursor: input.cursor, text: input.text, limit: input.limit, signal: input.signal }),
+   843	        read: (input) => evidence.read({ cursor: input.cursor, evidenceId: input.evidenceId, range: input.range, signal: input.signal }),
+   844	      },
+   845	      recovery: {
+   846	        recover: (input) => recovery.onSessionStart({
+   847	          cursor: input.cursor,
+   848	          reason: input.reason,
+   849	          hasRawBlobs: input.hasRawBlobs,
+   850	          ...(input.hostSnapshot === undefined ? {} : { hostSnapshot: input.hostSnapshot }),
+   851	          signal: input.signal,
+   852	        }),
+   853	        branchChanged: (input) => recovery.onBranchChange({
+   854	          cursor: input.cursor,
+   855	          previousCursor: input.previousCursor,
+   856	          newLeafId: input.newLeafId,
+   857	          signal: input.signal,
+   858	        }),
+   859	      },
+   860	    };
+   861	  }
+   862	
+   863	  async function sessionFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSession> {
+   864	    const key = cursorKey(cursor);
+   865	    const existing = owner.sessions.get(key);
+   866	    if (existing) return existing;
+   867	    const session = createRuntimeSession({
+   868	      scope: {
+   869	        workspaceId: cursor.workspaceId,
+   870	        sessionId: cursor.sessionId,
+   871	        leafId: cursor.leafId,
+   872	        lineageHash: cursor.lineageHash,
+   873	      },
+   874	      ports: await portsFor(owner, cursor, ctx),
+   875	    });
+   876	    owner.sessions.set(key, session);
+   877	    owner.cursorsBySession.set(cursor.sessionId, cursor);
+   878	    return session;
+   879	  }
+   880	
+   881	  async function ownerByWorkspace(workspaceId: string | undefined): Promise<WorkspaceUserTurnOwner | undefined> {
+   882	    if (workspaceId && owners.has(workspaceId)) return owners.get(workspaceId);
+   883	    if (owners.size === 1) return [...owners.values()][0];
+   884	    return undefined;
+   885	  }
+   886	
+   887	  const hook = registerUserInputHook(pi, {
+   888	    cursor: cursorFromContext,
+   889	    async service(cursor, ctx) {
+   890	      const owner = await ownerFor(cursor, ctx);
+   891	      await sessionFor(owner, cursor, ctx);
+   892	      return owner.service(cursor);
+   893	    },
+   894	    clock,
+   895	    async onHardFailure(error, phase, ctx) {
+   896	      await options.onHardFailure?.(error, phase, ctx);
+   897	    },
+   898	  });
+   899	  registerToolResultHook(pi, {
+   900	    cursor: cursorFromContext,
+   901	    async service(cursor, ctx) {
+   902	      const owner = await ownerFor(cursor, ctx);
+   903	      await sessionFor(owner, cursor, ctx);
+   904	      return owner.observation(cursor);
+   905	    },
+   906	    clock,
+   907	    async onHardFailure(error, phase, ctx) {
+   908	      await options.onHardFailure?.(error, phase, ctx);
+   909	    },
+   910	  });
+   911	
+   912	  const close = async (): Promise<void> => {
+   913	    const pending = [...owners.values()];
+   914	    owners.clear();
+   915	    const settled = await Promise.allSettled(pending.map(async (owner) => (await owner).close()));
+   916	    const rejected = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
+   917	    if (rejected) throw rejected.reason;
+   918	  };
+   919	  pi.on("session_shutdown", async () => close());
+   920	  return Object.freeze({
+   921	    hook,
+   922	    close,
+   923	    lastWorkspaceId() {
+   924	      if (owners.size !== 1) return undefined;
+   925	      return [...owners.keys()][0];
+   926	    },
+   927	    lastPointers() {
+   928	      const collected: Array<{ ref: string; kind: string }> = [];
+   929	      for (const pending of owners.values()) {
+   930	        void pending;
+   931	      }
+   932	      return collected;
+   933	    },
+   934	    async ensure(ctx: ExtensionContext) {
+   935	      const cursor = cursorFromContext(ctx);
+   936	      const owner = await ownerFor(cursor, ctx);
+   937	      await sessionFor(owner, cursor, ctx);
+   938	    },
+   939	    async openSession(ctx: PiSessionContext) {
+   940	      if (ctx.sessionId === "unbound" || ctx.modelKey === "unbound") {
+   941	        throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "sessionId" });
+   942	      }
+   943	      const opening = await ownerByWorkspace(ctx.workspaceId);
+   944	      if (!opening) {
+   945	        throw new ProductionCompositionError("PCR_PRODUCTION_DEPENDENCY_MISSING", { dependency: "workspaceOwner" });
+   946	      }
+   947	      const cursor: RuntimeCursor = {
+   948	        workspaceId: ctx.workspaceId,
+   949	        sessionId: ctx.sessionId,
+   950	        leafId: ctx.leafId,
+   951	        lineageHash: ctx.lineageHash,
+   952	        modelKey: ctx.modelKey,
+   953	      };
+   954	      return sessionFor(opening, cursor);
+   955	    },
+   956	    async recover(input: SessionStart) {
+   957	      const opening = await ownerByWorkspace(input.cursor.workspaceId);
+   958	      if (!opening) {
+   959	        throw new ProductionCompositionError("PCR_PRODUCTION_DEPENDENCY_MISSING", { dependency: "workspaceOwner" });
+   960	      }
+   961	      await sessionFor(opening, input.cursor);
+   962	      const recovery = createRecoveryService({
+   963	        cursor: input.cursor,
+   964	        sessions: {
+   965	          async open() { return opening.sessions.get(cursorKey(input.cursor)); },
+   966	          async close(sessionId) {
+   967	            const bound = opening.cursorsBySession.get(sessionId);
+   968	            if (!bound) return;
+   969	            opening.sessions.delete(cursorKey(bound));
+   970	          },
+   971	        },
+   972	        journal: { reconcile: (snapshot) => opening.saga.reconcile(snapshot) },
+   973	        candidates: {
+   974	          async invalidate(scope, reason, signal) {
+   975	            return opening.candidates.invalidateScope?.(scope, reason, signal) ?? 0;
+   976	          },
+   977	        },
+   978	      });
+   979	      return recovery.onSessionStart(input);
+   980	    },
+===== packages/runtime/src/runtime-session.ts 1-236 =====
+     1	import type { MaterializedView } from "@pcr/contracts";
+     2	
+     3	import type {
+     4	  BranchChangedEvent,
+     5	  CompactionAckInput,
+     6	  CompactionPrepareInput,
+     7	  ExactReadRequest,
+     8	  MaterializationRequest,
+     9	  ProjectedToolResult,
+    10	  RecoverRequest,
+    11	  RuntimeSession,
+    12	  RuntimeSessionPorts,
+    13	  RuntimeSessionScope,
+    14	  SearchRequest,
+    15	  SessionCompactionDecision,
+    16	  SessionExactPage,
+    17	  RecoverSessionReport,
+    18	  SessionSearchHit,
+    19	  ToolObservation,
+    20	  UserInputEvent,
+    21	  UserInputReceipt,
+    22	} from "./ports.js";
+    23	import { RuntimeSessionError } from "./ports.js";
+    24	
+    25	export interface RuntimeSessionDependencies {
+    26	  scope: RuntimeSessionScope;
+    27	  ports: RuntimeSessionPorts;
+    28	}
+    29	
+    30	function assertFunction(value: unknown, dependency: string): void {
+    31	  if (typeof value !== "function") {
+    32	    throw new RuntimeSessionError("PCR_RUNTIME_DEPENDENCY_MISSING", { dependency });
+    33	  }
+    34	}
+    35	
+    36	function validateScope(scope: RuntimeSessionScope): RuntimeSessionScope {
+    37	  if (
+    38	    !scope ||
+    39	    typeof scope.workspaceId !== "string" ||
+    40	    scope.workspaceId.length === 0 ||
+    41	    typeof scope.sessionId !== "string" ||
+    42	    scope.sessionId.length === 0 ||
+    43	    (scope.leafId !== null && (typeof scope.leafId !== "string" || scope.leafId.length === 0)) ||
+    44	    typeof scope.lineageHash !== "string" ||
+    45	    !/^[a-f0-9]{64}$/u.test(scope.lineageHash)
+    46	  ) {
+    47	    throw new RuntimeSessionError("PCR_RUNTIME_INPUT_INVALID", { field: "scope" });
+    48	  }
+    49	  return Object.freeze({ ...scope });
+    50	}
+    51	
+    52	function validateDependencies(input: RuntimeSessionDependencies): {
+    53	  scope: RuntimeSessionScope;
+    54	  ports: RuntimeSessionPorts;
+    55	} {
+    56	  if (!input || typeof input !== "object") {
+    57	    throw new RuntimeSessionError("PCR_RUNTIME_DEPENDENCY_MISSING", { dependency: "input" });
+    58	  }
+    59	  const scope = validateScope(input.scope);
+    60	  const ports = input.ports;
+    61	  if (!ports || typeof ports !== "object") {
+    62	    throw new RuntimeSessionError("PCR_RUNTIME_DEPENDENCY_MISSING", { dependency: "ports" });
+    63	  }
+    64	  assertFunction(ports.userInput?.capture, "ports.userInput.capture");
+    65	  assertFunction(ports.toolResult?.ingest, "ports.toolResult.ingest");
+    66	  assertFunction(ports.materialization?.materialize, "ports.materialization.materialize");
+    67	  return { scope, ports };
+    68	}
+    69	
+    70	function validateOperation(input: { operationId?: unknown; cursor?: unknown; signal?: AbortSignal }): void {
+    71	  if (!input || typeof input !== "object") {
+    72	    throw new RuntimeSessionError("PCR_RUNTIME_INPUT_INVALID", { field: "input" });
+    73	  }
+    74	  if (typeof input.operationId !== "string" || input.operationId.length === 0) {
+    75	    throw new RuntimeSessionError("PCR_RUNTIME_INPUT_INVALID", { field: "operationId" });
+    76	  }
+    77	  if (!input.cursor || typeof input.cursor !== "object") {
+    78	    throw new RuntimeSessionError("PCR_RUNTIME_INPUT_INVALID", { field: "cursor" });
+    79	  }
+    80	  input.signal?.throwIfAborted();
+    81	}
+    82	
+    83	export class RuntimeSessionApplicationService implements RuntimeSession {
+    84	  readonly scope: RuntimeSessionScope;
+    85	  #ports: RuntimeSessionPorts;
+    86	  #closed = false;
+    87	  #writeChain: Promise<void> = Promise.resolve();
+    88	  #reads = 0;
+    89	  #readIdle = Promise.resolve();
+    90	  #notifyReadsIdle: (() => void) | undefined;
+    91	
+    92	  constructor(input: RuntimeSessionDependencies) {
+    93	    const dependencies = validateDependencies(input);
+    94	    this.scope = dependencies.scope;
+    95	    this.#ports = dependencies.ports;
+    96	  }
+    97	
+    98	  async ingestUserInput(input: UserInputEvent): Promise<UserInputReceipt> {
+    99	    return this.#mutate(input, () => this.#ports.userInput.capture(input));
+   100	  }
+   101	
+   102	  async ingestToolResult(input: ToolObservation): Promise<ProjectedToolResult> {
+   103	    return this.#mutate(input, () => this.#ports.toolResult.ingest(input));
+   104	  }
+   105	
+   106	  async materialize(input: MaterializationRequest): Promise<MaterializedView> {
+   107	    return this.#mutate(input, () => this.#ports.materialization.materialize(input));
+   108	  }
+   109	
+   110	  async prepareCompaction(input: CompactionPrepareInput): Promise<SessionCompactionDecision> {
+   111	    return this.#mutate(input, () => {
+   112	      assertFunction(this.#ports.compaction?.prepare, "ports.compaction.prepare");
+   113	      return this.#ports.compaction!.prepare(input);
+   114	    });
+   115	  }
+   116	
+   117	  async acknowledgeCompaction(input: CompactionAckInput): Promise<void> {
+   118	    return this.#mutate(input, async () => {
+   119	      const acknowledge = this.#ports.compaction?.acknowledge;
+   120	      assertFunction(acknowledge ?? this.#ports.compaction?.prepare, "ports.compaction.acknowledge");
+   121	      if (typeof acknowledge === "function") await acknowledge(input);
+   122	    });
+   123	  }
+   124	
+   125	  async search(input: SearchRequest): Promise<SessionSearchHit[]> {
+   126	    return this.#read(input, () => {
+   127	      assertFunction(this.#ports.retrieval?.search, "ports.retrieval.search");
+   128	      return this.#ports.retrieval!.search(input);
+   129	    });
+   130	  }
+   131	
+   132	  async read(input: ExactReadRequest): Promise<SessionExactPage> {
+   133	    return this.#read(input, () => {
+   134	      assertFunction(this.#ports.retrieval?.read, "ports.retrieval.read");
+   135	      return this.#ports.retrieval!.read(input);
+   136	    });
+   137	  }
+   138	
+   139	  async branchChanged(event: BranchChangedEvent): Promise<void> {
+   140	    return this.#mutate(event, () => {
+   141	      assertFunction(this.#ports.recovery?.branchChanged, "ports.recovery.branchChanged");
+   142	      return this.#ports.recovery!.branchChanged(event);
+   143	    });
+   144	  }
+   145	
+   146	  async recover(reason: RecoverRequest): Promise<RecoverSessionReport> {
+   147	    return this.#mutate(reason, () => {
+   148	      assertFunction(this.#ports.recovery?.recover, "ports.recovery.recover");
+   149	      return this.#ports.recovery!.recover(reason);
+   150	    });
+   151	  }
+   152	
+   153	  async close(): Promise<void> {
+   154	    await this.#exclusive(async () => {
+   155	      this.#closed = true;
+   156	    });
+   157	  }
+   158	
+   159	  #assertOpen(): void {
+   160	    if (this.#closed) {
+   161	      throw new RuntimeSessionError("PCR_RUNTIME_SESSION_CLOSED");
+   162	    }
+   163	  }
+   164	
+   165	  #validate(input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal }): void {
+   166	    this.#assertOpen();
+   167	    validateOperation(input);
+   168	    const cursor = input.cursor;
+   169	    const mismatch =
+   170	      cursor.workspaceId !== this.scope.workspaceId ||
+   171	      cursor.sessionId !== this.scope.sessionId ||
+   172	      cursor.leafId !== this.scope.leafId ||
+   173	      cursor.lineageHash !== this.scope.lineageHash;
+   174	    if (mismatch) {
+   175	      throw new RuntimeSessionError("PCR_RUNTIME_SCOPE_MISMATCH", {
+   176	        expectedWorkspaceId: this.scope.workspaceId,
+   177	        expectedSessionId: this.scope.sessionId,
+   178	        expectedLeafId: this.scope.leafId,
+   179	        expectedLineageHash: this.scope.lineageHash,
+   180	      });
+   181	    }
+   182	  }
+   183	
+   184	  async #exclusive<T>(work: () => Promise<T>): Promise<T> {
+   185	    let release!: () => void;
+   186	    const previous = this.#writeChain;
+   187	    this.#writeChain = new Promise<void>((resolve) => {
+   188	      release = resolve;
+   189	    });
+   190	    await previous;
+   191	    while (this.#reads > 0) await this.#readIdle;
+   192	    try {
+   193	      return await work();
+   194	    } finally {
+   195	      release();
+   196	    }
+   197	  }
+   198	
+   199	  async #mutate<T>(
+   200	    input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal },
+   201	    work: () => Promise<T>,
+   202	  ): Promise<T> {
+   203	    return this.#exclusive(async () => {
+   204	      this.#validate(input);
+   205	      return work();
+   206	    });
+   207	  }
+   208	
+   209	  async #read<T>(
+   210	    input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal },
+   211	    work: () => Promise<T>,
+   212	  ): Promise<T> {
+   213	    await this.#writeChain;
+   214	    this.#validate(input);
+   215	    if (this.#reads === 0) {
+   216	      this.#readIdle = new Promise<void>((resolve) => {
+   217	        this.#notifyReadsIdle = resolve;
+   218	      });
+   219	    }
+   220	    this.#reads += 1;
+   221	    try {
+   222	      return await work();
+   223	    } finally {
+   224	      this.#reads -= 1;
+   225	      if (this.#reads === 0) {
+   226	        this.#notifyReadsIdle?.();
+   227	        this.#notifyReadsIdle = undefined;
+   228	        this.#readIdle = Promise.resolve();
+   229	      }
+   230	    }
+   231	  }
+   232	}
+   233	
+   234	export function createRuntimeSession(input: RuntimeSessionDependencies): RuntimeSessionApplicationService {
+   235	  return new RuntimeSessionApplicationService(input);
+   236	}

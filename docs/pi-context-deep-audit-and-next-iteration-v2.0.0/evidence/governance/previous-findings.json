@@ -1,0 +1,889 @@
+[
+  {
+    "id": "F101",
+    "severity": "P0",
+    "area": "ci",
+    "title": "当前 HEAD 远端 CI 为红",
+    "observation": "GitHub Actions run 33372538099 在 Unit tests 阶段失败；Ubuntu 13 files/22 tests、macOS 13 files/21 tests 失败，后续 Acceptance/Pi Contract/Public-import Scan 被跳过。",
+    "impact": "当前 commit 不满足最终验收“required CI 全绿”；任何 release-ready 或所有 Finding 已关闭的声明无效。",
+    "sources": [
+      "S25",
+      "S40",
+      "S39"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A00",
+      "A01",
+      "A02",
+      "A03",
+      "A04",
+      "A05"
+    ],
+    "verificationTasks": [
+      "A00",
+      "A01",
+      "A02",
+      "A03",
+      "A04",
+      "A05"
+    ]
+  },
+  {
+    "id": "F102",
+    "severity": "P0",
+    "area": "test-infra",
+    "title": "测试硬编码开发机 macOS 临时目录",
+    "observation": "多个 acceptance/live/task 测试固定写入 `/var/folders/.../implementer`，Linux 与 GitHub macOS runner 均 EACCES。",
+    "impact": "测试只在原开发机路径偶然成立，不能作为跨平台证据。",
+    "sources": [
+      "S26",
+      "S40"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A01",
+      "A04"
+    ],
+    "verificationTasks": [
+      "A01",
+      "A04"
+    ]
+  },
+  {
+    "id": "F103",
+    "severity": "P0",
+    "area": "test-infra",
+    "title": "Clean-install 测试依赖开发者 ~/.pi/agent/models.json",
+    "observation": "pack smoke 在 CI 无 models.json 时直接失败，没有 hermetic fixture 或明确的 live-only lane。",
+    "impact": "发布包验证与真实 provider 凭证耦合，默认 CI 无法执行。",
+    "sources": [
+      "S27",
+      "S40"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A02",
+      "A04"
+    ],
+    "verificationTasks": [
+      "A02",
+      "A04",
+      "A49"
+    ]
+  },
+  {
+    "id": "F104",
+    "severity": "P0",
+    "area": "test-infra",
+    "title": "跨进程存储测试依赖缺失的 jiti 与脆弱信号断言",
+    "observation": "CI 中 `node_modules/.bin/jiti` ENOENT，Blob test 超时，Saga test 期待 SIGKILL 但得到 null。",
+    "impact": "CAS/Saga 的最关键 durability/crash 证据没有在当前 HEAD 通过。",
+    "sources": [
+      "S40"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A03"
+    ],
+    "verificationTasks": [
+      "A03",
+      "A46"
+    ]
+  },
+  {
+    "id": "F105",
+    "severity": "P0",
+    "area": "runtime",
+    "title": "默认公开 Extension 未以 RuntimeSession 为唯一应用入口",
+    "observation": "目标要求 Pi Adapter 只能调用 RuntimeSession；当前默认 `bindClaimedRuntime` 仍分别手工创建 materializer、compaction、recovery、background、tools。显式 ProductionCompositionRoot 只注册 session lifecycle。",
+    "impact": "形成两套 composition path，模块存在但状态不一致；文档与产品入口不等价。",
+    "sources": [
+      "S02",
+      "S03",
+      "S31"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A08",
+      "A09"
+    ],
+    "verificationTasks": [
+      "A08",
+      "A09"
+    ]
+  },
+  {
+    "id": "F106",
+    "severity": "P0",
+    "area": "materialization",
+    "title": "Context Snapshot 不是 Store-backed active state",
+    "observation": "默认 Context Registry 将所有 canonical user messages 复制为 directives，continuity 为空，也不注入目录/recall。",
+    "impact": "旧用户文本被重复放入 hard-directives/history/active-turn；已 supersede 状态仍可常驻；真实 continuity/recall 不生效。",
+    "sources": [
+      "S02",
+      "S32",
+      "S33"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A11",
+      "A12",
+      "A26"
+    ],
+    "verificationTasks": [
+      "A11",
+      "A12",
+      "A26"
+    ]
+  },
+  {
+    "id": "F107",
+    "severity": "P0",
+    "area": "budget",
+    "title": "Token 计价忽略 Pi Envelope 的 summary/tool-call 等原始字段",
+    "observation": "Message codec 对 `compactionSummary.summary`、部分 Pi toolCall/opaque blocks 可能只保存在 raw envelope；TokenPricer 仅遍历 normalized `content`。",
+    "impact": "Materializer 的 tokenEstimate、reduction 和 Cache Receipt 可低估真实 provider payload，甚至在压力路径产生 overflow。",
+    "sources": [
+      "S04",
+      "S05",
+      "S33"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A24",
+      "A25"
+    ],
+    "verificationTasks": [
+      "A24",
+      "A25"
+    ]
+  },
+  {
+    "id": "F108",
+    "severity": "P0",
+    "area": "cache",
+    "title": "Cache Receipt 为单次 open 的内存数组",
+    "observation": "每次 context hook open 都新建 rows/pricer/materializer；provider cache read/write 没进入 receipt 与 Gate。",
+    "impact": "不能计算稳定前缀命中、first-different 长期变化或真实 cache 经济学。",
+    "sources": [
+      "S02",
+      "S33"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A13",
+      "A25",
+      "A27"
+    ],
+    "verificationTasks": [
+      "A13",
+      "A25",
+      "A27"
+    ]
+  },
+  {
+    "id": "F109",
+    "severity": "P0",
+    "area": "compaction",
+    "title": "产品 Checkpoint 仍由 transient preparation 拼装",
+    "observation": "Compaction 重新扫描 messagesToSummarize；continuity 使用 empty revision；claims 只从临时 directive 派生；transaction 只是直接执行 work。",
+    "impact": "不是同一 SQLite snapshot 的 directives/claims/continuity/evidence 状态，无法证明一致性或 restart continuity。",
+    "sources": [
+      "S02",
+      "S07",
+      "S32",
+      "S34"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A11",
+      "A12",
+      "A28"
+    ],
+    "verificationTasks": [
+      "A11",
+      "A12",
+      "A28"
+    ]
+  },
+  {
+    "id": "F110",
+    "severity": "P0",
+    "area": "compaction",
+    "title": "Pointer 与 Checkpoint Verifier 在产品路径形同虚设",
+    "observation": "默认 verifier 的 pointer port 是空实现；没有产品级 outcome attestation、retained-tail/tool-pair 和 two-run render 验证。",
+    "impact": "Hard Gate 的 pointer readable/scope、tool pair、hash stability 未被产品路径证明。",
+    "sources": [
+      "S02",
+      "S09",
+      "S34"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A29",
+      "A30"
+    ],
+    "verificationTasks": [
+      "A29",
+      "A30"
+    ]
+  },
+  {
+    "id": "F111",
+    "severity": "P0",
+    "area": "scope",
+    "title": "lastPointers 是全局最近值而非 cursor/snapshot 范围",
+    "observation": "User/tool runtime 将最后一次 admitted evidence pointers 保存到全局变量，Compaction 通过 `lastPointers()` 读取。",
+    "impact": "并发会话、分支或模型切换时可能把错误 Evidence 指针放入 checkpoint。",
+    "sources": [
+      "S03"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A10",
+      "A19",
+      "A23"
+    ],
+    "verificationTasks": [
+      "A10",
+      "A19",
+      "A23"
+    ]
+  },
+  {
+    "id": "F112",
+    "severity": "P0",
+    "area": "recovery",
+    "title": "Lifecycle/Recovery 仍含 no-op journal 和 unbound 降级",
+    "observation": "默认 recovery journal 永远 actions=[]；session close 空；身份推导失败时创建 unbound cursor。",
+    "impact": "restart/branch recovery 与隔离 fail-closed 要求未满足。",
+    "sources": [
+      "S02",
+      "S32",
+      "S39"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A15",
+      "A16",
+      "A23"
+    ],
+    "verificationTasks": [
+      "A15",
+      "A16",
+      "A23"
+    ]
+  },
+  {
+    "id": "F113",
+    "severity": "P1",
+    "area": "background",
+    "title": "Background Candidate 仍混合硬编码 snapshot 与内存状态",
+    "observation": "sourceHead/system/tools/reducer/config/contextWindow 为常量；主状态在 Map，仅额外写一个 prepared metadata。",
+    "impact": "不能作为 Semantic Beta 或 cache-aware prewarm 的发布证据。",
+    "sources": [
+      "S02",
+      "S39"
+    ],
+    "status": "open",
+    "implementationTasks": [],
+    "verificationTasks": [
+      "A47",
+      "A50"
+    ]
+  },
+  {
+    "id": "F114",
+    "severity": "P0",
+    "area": "evaluation",
+    "title": "Live closed-loop scorer 会把错误答案判成功",
+    "observation": "closedLoopSuccess 只排除“已部署成功”、显式 stale version 或 yes+merge；不要求回答 hard directive，也允许 visible summary 为 time/update 补分。",
+    "impact": "报告的 30/30 闭环结论失真。",
+    "sources": [
+      "S11",
+      "S16"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A35",
+      "A37"
+    ],
+    "verificationTasks": [
+      "A35",
+      "A37"
+    ]
+  },
+  {
+    "id": "F115",
+    "severity": "P0",
+    "area": "evaluation",
+    "title": "Exact recovery 永远 false，tool-pair 却固定为 0",
+    "observation": "scoreArm 固定 recovered=false；report 中 toolPairViolation=0 不是从真实消息解析得到。",
+    "impact": "Hard Gate 无法通过，同时 integrity 数字不具可审计性。",
+    "sources": [
+      "S11",
+      "S22",
+      "S36"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A38"
+    ],
+    "verificationTasks": [
+      "A38"
+    ]
+  },
+  {
+    "id": "F116",
+    "severity": "P0",
+    "area": "evaluation",
+    "title": "所谓 probe input 只读取 usage.input，忽略 cacheRead/cacheWrite",
+    "observation": "runner 不保存完整 Usage，也不序列化 payload 重新计数。",
+    "impact": "“下一轮 input”混合了 provider cache 状态与非缓存计费，不能同时代表容量和成本；+2.41%/−11.5 不是完整经济性。",
+    "sources": [
+      "S11",
+      "S36"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A25",
+      "A39"
+    ],
+    "verificationTasks": [
+      "A25",
+      "A39"
+    ]
+  },
+  {
+    "id": "F117",
+    "severity": "P0",
+    "area": "evaluation",
+    "title": "W2 Live 不符合文档要求的 A1-shaped B0/B1/B2",
+    "observation": "现有真实 Pi run 是 raw JSONL 的 B0/B1，加载旧 toolResult 时不会执行 PCR ingress；没有 B2/F0。",
+    "impact": "不能把 Secret 差异、Checkpoint 差异与完整 PCR Runtime 的收益归为一个结论。",
+    "sources": [
+      "S11",
+      "S13",
+      "S35"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A33",
+      "A34",
+      "A36"
+    ],
+    "verificationTasks": [
+      "A33",
+      "A34",
+      "A36"
+    ]
+  },
+  {
+    "id": "F118",
+    "severity": "P0",
+    "area": "evaluation",
+    "title": "新增 tests/live/w2-paired.test.ts 并非 live Pi 对照",
+    "observation": "B0 只是字符串前缀 `pi-native`，B2 只是追加 `[materialized]`；未启动 Pi、未调用模型、未使用真实 Native compact。",
+    "impact": "新 Benchmark 框架的单元测试不能替代用户要求的真实比较。",
+    "sources": [
+      "S17",
+      "S18"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A34"
+    ],
+    "verificationTasks": [
+      "A34"
+    ]
+  },
+  {
+    "id": "F119",
+    "severity": "P1",
+    "area": "evaluation",
+    "title": "Full-context ceiling 只是 expected 字符串包含率",
+    "observation": "Reader ceiling 不调用同一 Reader/Executor 模型，只检查 fullText/candidateText 是否包含 oracle 字符串。",
+    "impact": "无法区分“上下文可见但模型不会回答”和“压缩器丢失”。",
+    "sources": [
+      "S19",
+      "S35"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A36"
+    ],
+    "verificationTasks": [
+      "A36"
+    ]
+  },
+  {
+    "id": "F120",
+    "severity": "P0",
+    "area": "evaluation",
+    "title": "Closed-loop 测试使用预编程正确 Executor",
+    "observation": "测试 Executor 固定返回 write version=7，不读取 B0/B1/B2 上下文，也不调用 Agent。",
+    "impact": "环境断言框架是好的，但当前测试不能证明压缩后模型会选择正确动作。",
+    "sources": [
+      "S20",
+      "S21"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A37"
+    ],
+    "verificationTasks": [
+      "A37"
+    ]
+  },
+  {
+    "id": "F121",
+    "severity": "P0",
+    "area": "directives",
+    "title": "英文 temporal correction 被错误解析",
+    "observation": "`instead use version 7` 被 parser 解析为 key=`use`、value=`version`；live checkpoint 也显示该错误。",
+    "impact": "结构化 Claim 不正确；当前正确回答主要依赖 exact quote，而不是 temporal ledger。",
+    "sources": [
+      "S10",
+      "S16"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A17"
+    ],
+    "verificationTasks": [
+      "A17"
+    ]
+  },
+  {
+    "id": "F122",
+    "severity": "P1",
+    "area": "compaction",
+    "title": "递归 compaction 可能丢失旧 Checkpoint 中的 active directives",
+    "observation": "产品 compaction 只扫描 preparation.directives 与 role=user；旧 compactionSummary 不是 user，也没有从 DirectiveStore 读取。",
+    "impact": "多次 compaction 后长寿约束没有机制性保证。",
+    "sources": [
+      "S02",
+      "S34",
+      "S37"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A18",
+      "A22"
+    ],
+    "verificationTasks": [
+      "A18",
+      "A22",
+      "A45"
+    ]
+  },
+  {
+    "id": "F123",
+    "severity": "P0",
+    "area": "governance",
+    "title": "Branch 未保护且 required checks 未启用",
+    "observation": "main protection disabled；当前失败 CI 未阻止 HEAD 存在。",
+    "impact": "“required CI”在组织层不是 required，发布纪律依赖人工。",
+    "sources": [
+      "S25",
+      "S38",
+      "S39"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A05"
+    ],
+    "verificationTasks": [
+      "A05"
+    ]
+  },
+  {
+    "id": "F124",
+    "severity": "P1",
+    "area": "statistics",
+    "title": "30×1 实际只有 5 个模板 cluster",
+    "observation": "spec-smoke 选择每族 6 个参数化样本；报告沿用普通 pair bootstrap，没有 cluster-level independent unit。",
+    "impact": "有效独立样本极小，CI 过窄，不能支持稳定 superiority。",
+    "sources": [
+      "S11",
+      "S12",
+      "S36"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A32",
+      "A40"
+    ],
+    "verificationTasks": [
+      "A32",
+      "A40",
+      "A42"
+    ]
+  },
+  {
+    "id": "F125",
+    "severity": "P1",
+    "area": "evaluation",
+    "title": "Live run 是 manual 6.2K + keepRecent=2K",
+    "observation": "没有默认 20K tail、自然 200K threshold 或 provider overflow。",
+    "impact": "只证明 Hook 可接管一次手工压缩，不证明生产压力路径。",
+    "sources": [
+      "S13",
+      "S14",
+      "S37"
+    ],
+    "status": "open",
+    "implementationTasks": [],
+    "verificationTasks": [
+      "A43",
+      "A44"
+    ]
+  },
+  {
+    "id": "F126",
+    "severity": "P1",
+    "area": "evaluation",
+    "title": "缺少递归长程、branch、recall-needed 和 side-effect continuation",
+    "observation": "Runbook 要求至少 3 次 compaction、2 task fronts、correction、branch、recall-needed/not-needed；当前未运行。",
+    "impact": "最容易出现摘要沉积、旧约束丢失与 scope 泄漏的路径未覆盖。",
+    "sources": [
+      "S15",
+      "S37"
+    ],
+    "status": "open",
+    "implementationTasks": [],
+    "verificationTasks": [
+      "A45",
+      "A46"
+    ]
+  },
+  {
+    "id": "F127",
+    "severity": "P1",
+    "area": "economics",
+    "title": "realized_net 只是 prompt input 差",
+    "observation": "没有 summary cost、cache read/write、recall、latency、失败成本；报告自身 net=-11.5。",
+    "impact": "既不能证明节省，也不能证明总成本上升多少。",
+    "sources": [
+      "S11",
+      "S36"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A39"
+    ],
+    "verificationTasks": [
+      "A39"
+    ]
+  },
+  {
+    "id": "F128",
+    "severity": "P1",
+    "area": "economics",
+    "title": "cost/success 先按各臂成功独立过滤，破坏配对",
+    "observation": "若两臂成功集合不同，两个 median 来自不同 case；当前虚假 30/30 暂时掩盖此问题。",
+    "impact": "Gate 可能被 survivor bias 扭曲。",
+    "sources": [
+      "S11"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A39",
+      "A40"
+    ],
+    "verificationTasks": [
+      "A39",
+      "A40"
+    ]
+  },
+  {
+    "id": "F129",
+    "severity": "P1",
+    "area": "reproducibility",
+    "title": "Runner 删除临时 Session，只保留 400 字符 preview",
+    "observation": "每对结束 rmSync；报告没有完整 summary/probe JSONL、payload、usage/cache 明细。",
+    "impact": "无法独立重打分、复核 late leak 或重放 provider 请求。",
+    "sources": [
+      "S11",
+      "S16",
+      "S37"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A41"
+    ],
+    "verificationTasks": [
+      "A41"
+    ]
+  },
+  {
+    "id": "F130",
+    "severity": "P1",
+    "area": "provenance",
+    "title": "报告路径含开发机绝对路径，运行快照与当前 HEAD 不同",
+    "observation": "gate-decision 指向 `/Users/...`；live 快照提交早于当前 HEAD。",
+    "impact": "当前代码与报告证据绑定不完整。",
+    "sources": [
+      "S14",
+      "S15",
+      "S16"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A00",
+      "A41"
+    ],
+    "verificationTasks": [
+      "A00",
+      "A41"
+    ]
+  },
+  {
+    "id": "F131",
+    "severity": "P1",
+    "area": "package",
+    "title": "包元数据仍 private:true / UNLICENSED",
+    "observation": "计划要求 private:false 与 SPDX；当前改为 internal tarball policy，但文档/Release Contract 未统一。",
+    "impact": "不能按公开 npm package 宣称；许可证与分发边界不清。",
+    "sources": [
+      "S28",
+      "S38"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A06"
+    ],
+    "verificationTasks": [
+      "A06"
+    ]
+  },
+  {
+    "id": "F132",
+    "severity": "P1",
+    "area": "package",
+    "title": "仓库 committed dist 仍重导出 TS 源码",
+    "observation": "自包含 JS 只由 pack script临时编译/重写；repo 直接 `pi -e dist/extension.js` 仍依赖 monorepo TS。",
+    "impact": "开发入口与发布入口行为可能漂移，需明确只支持哪一条。",
+    "sources": [
+      "S27",
+      "S29"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A06"
+    ],
+    "verificationTasks": [
+      "A06",
+      "A49"
+    ]
+  },
+  {
+    "id": "F133",
+    "severity": "P1",
+    "area": "storage",
+    "title": "数据根按 session directory，而目标称 per-workspace/shared store",
+    "observation": "默认 dataRoot=`sessionManager.getSessionDir()/.context-runtime`；同 workspace 多 session 未必共享一个目录。",
+    "impact": "跨 session continuity/recall 与 workspace isolation 语义不清。",
+    "sources": [
+      "S03",
+      "S31"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A09",
+      "A23"
+    ],
+    "verificationTasks": [
+      "A09",
+      "A23"
+    ]
+  },
+  {
+    "id": "F134",
+    "severity": "P1",
+    "area": "governance",
+    "title": "F001–F038 全部 closed 与当前证据冲突",
+    "observation": "F001 关闭证据只列出 cursor/materializer/SQLite path；当前 default extension 仍未由 RuntimeSession 单一拥有。",
+    "impact": "findingctl 的 closed 不是最终验收，应按验证证据重新开启。",
+    "sources": [
+      "S01",
+      "S02",
+      "S31",
+      "S39"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A07"
+    ],
+    "verificationTasks": [
+      "A07"
+    ]
+  },
+  {
+    "id": "F135",
+    "severity": "P1",
+    "area": "gate",
+    "title": "新 Gate Engine 的 W2 adopt 条件过弱",
+    "observation": "Hard/Quality 后只要 realizedNetMedian>0 即 adopt；没有效率 CI、最小幅度、per-family、样本规模或 100×3 证明。",
+    "impact": "未来即使小幅噪声为正也可能错误 adopt。",
+    "sources": [
+      "S24",
+      "S36"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A40"
+    ],
+    "verificationTasks": [
+      "A40",
+      "A48"
+    ]
+  },
+  {
+    "id": "F136",
+    "severity": "P1",
+    "area": "gate",
+    "title": "Gate RunBundle 无法表达目标统计合同",
+    "observation": "只有一个 environmentSuccess boolean 和 lower bound；没有 cluster count、seed count、per-family safety、cache/cost decomposition。",
+    "impact": "规范性 Gate 与实现字段不一致。",
+    "sources": [
+      "S24",
+      "S36"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A40"
+    ],
+    "verificationTasks": [
+      "A40"
+    ]
+  },
+  {
+    "id": "F137",
+    "severity": "P1",
+    "area": "security",
+    "title": "must-omit 只检查 visible summary",
+    "observation": "未覆盖 probe、tool return、FTS snippet、checkpoint details、日志、bundle、编码/分片 secret。",
+    "impact": "0/30 只能称“summary 未复制该字面串”，不是系统零泄漏。",
+    "sources": [
+      "S11",
+      "S36"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A38"
+    ],
+    "verificationTasks": [
+      "A38",
+      "A46"
+    ]
+  },
+  {
+    "id": "F138",
+    "severity": "P2",
+    "area": "checkpoint",
+    "title": "模型可见 checkpoint 审计元数据过重",
+    "observation": "hash、完整 IDs、heads、pointer 可占比很高；temporal/branch 下一轮输入显著增大。",
+    "impact": "审计信息应优先放 Pi details/外部 store，模型只看任务必要的短句与短 ref。",
+    "sources": [
+      "S08",
+      "S14",
+      "S16"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A31"
+    ],
+    "verificationTasks": [
+      "A31",
+      "A47"
+    ]
+  },
+  {
+    "id": "F139",
+    "severity": "P1",
+    "area": "budget",
+    "title": "系统提示、tools schema、image 等未进入真实 I_eff 校准",
+    "observation": "默认 providerReservedTokens=0；TokenPricer只计 HostMessage blocks。",
+    "impact": "高工具量时容量估计偏乐观，也无法分析 prompt cache。",
+    "sources": [
+      "S02",
+      "S04",
+      "S33"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A14",
+      "A24",
+      "A25"
+    ],
+    "verificationTasks": [
+      "A14",
+      "A24",
+      "A25"
+    ]
+  },
+  {
+    "id": "F140",
+    "severity": "P1",
+    "area": "scope",
+    "title": "Tools/operations 通过 last owner/last cursor heuristic 解析",
+    "observation": "多个 workspace/session 时 resolveTools 可能选择唯一 owner 的 lastCursor；status 初始 cursor 为全零 unbound。",
+    "impact": "多会话并发下 scope 行为不确定。",
+    "sources": [
+      "S02",
+      "S03"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A10",
+      "A23"
+    ],
+    "verificationTasks": [
+      "A10",
+      "A23"
+    ]
+  },
+  {
+    "id": "F141",
+    "severity": "P2",
+    "area": "architecture",
+    "title": "v2 与 legacy kernel/storage/worker 并存",
+    "observation": "新 core/runtime/storage-node 之外仍保留旧 kernel/storage/worker 与旧 synthetic gates。",
+    "impact": "维护者和 AI Agent 容易改错路径，产生重复实现与测试漂移。",
+    "sources": [
+      "S01"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A09",
+      "A07"
+    ],
+    "verificationTasks": [
+      "A09",
+      "A07"
+    ]
+  },
+  {
+    "id": "F142",
+    "severity": "P2",
+    "area": "measurement",
+    "title": "summaryTokens 使用启发式估算，不是 route tokenizer",
+    "observation": "artifact token 与 provider capacity/cost 口径不同。",
+    "impact": "−71% 只能作为近似字符/token 压缩率。",
+    "sources": [
+      "S11",
+      "S14"
+    ],
+    "status": "open",
+    "implementationTasks": [
+      "A25",
+      "A39"
+    ],
+    "verificationTasks": [
+      "A25",
+      "A39"
+    ]
+  }
+]

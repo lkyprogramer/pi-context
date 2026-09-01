@@ -1,0 +1,11 @@
+﻿order,sha,subject,assessment
+1,7cdb0d6,"fix(w0): restore CI truth, hermetic tests, required checks",实质改善，但 branch protection 只做 YAML 自检，Compatibility 仍红
+2,35c48ba,fix(w1): route all Pi hooks through one production RuntimeSession,方向正确；Ingress 实际仍返回 owner.service/observation，绕开 RuntimeSession 写队列
+3,7d4bd2c,"fix(w2): correct temporal, retention, catalog, claims, recall, isolation",模块能力明显增强；Proactive recall/lease 尚未进入默认 Context 物化
+4,3ff173e,"fix(w3): price envelopes, unify usage, verify checkpoints",组件实现到位；产品没有提供真实 system/tools/cache usage，Hard Gate 未接入 Live
+5,63f3d42,fix(w4): lock corpus v2 and make evaluation v3 gates real,形成评测组件；B0/B1/B2/F0 与 Closed-loop 仍是 in-process/string stub
+6,a6281b3,fix(w5): run v3 lanes and emit keep-pi-native gate,结论保守正确；Gate 绑定 liveProvider=false 的合成 Lane
+7,6afd5de,fix(compact): backfill directives and reject empty-shell checkpoints,修复 13-token 空壳 Checkpoint 问题；只重跑了小样本
+8,2092fac,fix(live): triplicate W2 gate sample and score PCR recovery,样本表面变为 100×3；seed 仅标签，Recovery 仍是可见泄露代理
+9,0e68bd0,"test(live): add natural-threshold, overflow, recursive lanes",增加真实端点尝试；三条 Lane 均未满足验收
+10,6c5c5b5,"docs(eval): record live 200k, overflow, and recursive outcomes",报告诚实披露失败；HEAD/原始报告/修复后结果没有收敛成单一权威 Run

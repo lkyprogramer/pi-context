@@ -1,0 +1,106 @@
+# Source: packages/benchmark/src/lanes/w5.ts
+# Lines: 118-220
+
+   118    seeds?: readonly number[];
+   119    dirty?: boolean;
+   120    signal?: AbortSignal;
+   121  }): Promise<BoundaryReport> {
+   122    if (!input || typeof input !== "object") failMissing("input");
+   123    if (typeof input.corpusRoot !== "string" || input.corpusRoot.length === 0) failInput("corpusRoot");
+   124    if (input.signal !== undefined && !(input.signal instanceof AbortSignal)) failInput("signal");
+   125    input.signal?.throwIfAborted();
+   126    const policy = infrastructurePolicy({ dirty: input.dirty === true, pairCount: 90 });
+   127    if (policy.included === 0) {
+   128      return {
+   129        lane: "boundary",
+   130        clusters: 0,
+   131        seeds: [...(input.seeds ?? [0, 1, 2])],
+   132        pairs: 0,
+   133        family: {},
+   134        failures: ["infrastructure"],
+   135        liveProvider: false,
+   136        pairsOut: [],
+   137      };
+   138    }
+   139    const { clusters, cases } = loadCorpus(input.corpusRoot);
+   140    if (clusters.length < 30) failInput("clusters");
+   141    const seeds = [...(input.seeds ?? [0, 1, 2])];
+   142    if (seeds.length !== 3) failInput("seeds");
+   143    const locked = cases.filter((row) => row.id.endsWith("-05"));
+   144    const catalog = new Map(locked.map((row) => [row.id, armCase(row)]));
+   145    const runner = createW2ArmRunner({
+   146      corpusId: "pcr-corpus-v2",
+   147      manifest: {
+   148        benchmarkMajor: 1,
+   149        trainHash: "1".repeat(64),
+   150        devHash: "2".repeat(64),
+   151        lockedTestHash: "4".repeat(64),
+   152        clusters: Object.fromEntries(clusters.map((name) => [name, catalog.has(`${name}-05`) ? [`${name}-05`] : []])),
+   153      },
+   154      cursor: CURSOR,
+   155      cases: { async get(caseId) { return catalog.get(caseId) ?? null; } },
+   156      shaper: {
+   157        async shape({ trace }) {
+   158          const text = trace.entries.map((entry) => entry.text).join("\n");
+   159          return {
+   160            shapedText: text,
+   161            sourceSpan: { firstEntryId: "u1", lastEntryId: "t1" },
+   162            retainedTailStartId: "t1",
+   163            tokensBefore: Math.max(8, estimateTextTokens(text)),
+   164          };
+   165        },
+   166      },
+   167      native: {
+   168        async compact({ shapedText, seed }) {
+   169          const visibleText = `native:${seed}:${shapedText.slice(0, 48)}`;
+   170          return { visibleText, tokensAfter: estimateTextTokens(visibleText), outputHash: domainHash("w5.b0", { visibleText, seed }) };
+   171        },
+   172      },
+   173      pcr: {
+   174        async compact({ shapedText, seed, materializer }) {
+   175          const visibleText = `${materializer}:${seed}:${shapedText.slice(0, 48)}`;
+   176          return { visibleText, tokensAfter: estimateTextTokens(visibleText), outputHash: domainHash("w5.pcr", { visibleText, seed, materializer }) };
+   177        },
+   178      },
+   179    });
+   180    const pairsOut: BoundaryPair[] = [];
+   181    const family: Record<string, number> = {};
+   182    const failures: string[] = [];
+   183    for (const clusterId of clusters) {
+   184      input.signal?.throwIfAborted();
+   185      const caseId = `${clusterId}-05`;
+   186      family[clusterId] = 0;
+   187      for (const seed of seeds) {
+   188        try {
+   189          const b0 = await runner.run(caseId, "B0", seed, input.signal);
+   190          const b1 = await runner.run(caseId, "B1", seed, input.signal);
+   191          const b2 = await runner.run(caseId, "B2", seed, input.signal);
+   192          if (b0.shapedTraceHash !== b1.shapedTraceHash || b1.shapedTraceHash !== b2.shapedTraceHash) {
+   193            failures.push(`${caseId}:${seed}:cut-mismatch`);
+   194          }
+   195          pairsOut.push({
+   196            clusterId,
+   197            seed,
+   198            caseId,
+   199            b0: b0.outputHash,
+   200            b1: b1.outputHash,
+   201            b2: b2.outputHash,
+   202            shapedTraceHash: b0.shapedTraceHash,
+   203          });
+   204          family[clusterId] += 1;
+   205        } catch (error) {
+   206          failures.push(`${caseId}:${seed}:${error instanceof Error ? error.message : "fail"}`);
+   207        }
+   208      }
+   209    }
+   210    return {
+   211      lane: "boundary",
+   212      clusters: clusters.length,
+   213      seeds,
+   214      pairs: pairsOut.length,
+   215      family,
+   216      failures,
+   217      liveProvider: false,
+   218      pairsOut,
+   219    };
+   220  }

@@ -1,0 +1,157 @@
+# Source: packages/runtime/src/runtime-session.ts
+# Lines: 78-231
+
+    78      throw new RuntimeSessionError("PCR_RUNTIME_INPUT_INVALID", { field: "cursor" });
+    79    }
+    80    input.signal?.throwIfAborted();
+    81  }
+    82  
+    83  export class RuntimeSessionApplicationService implements RuntimeSession {
+    84    readonly scope: RuntimeSessionScope;
+    85    #ports: RuntimeSessionPorts;
+    86    #closed = false;
+    87    #writeChain: Promise<void> = Promise.resolve();
+    88    #reads = 0;
+    89    #readIdle = Promise.resolve();
+    90    #notifyReadsIdle: (() => void) | undefined;
+    91  
+    92    constructor(input: RuntimeSessionDependencies) {
+    93      const dependencies = validateDependencies(input);
+    94      this.scope = dependencies.scope;
+    95      this.#ports = dependencies.ports;
+    96    }
+    97  
+    98    async ingestUserInput(input: UserInputEvent): Promise<UserInputReceipt> {
+    99      return this.#mutate(input, () => this.#ports.userInput.capture(input));
+   100    }
+   101  
+   102    async ingestToolResult(input: ToolObservation): Promise<ProjectedToolResult> {
+   103      return this.#mutate(input, () => this.#ports.toolResult.ingest(input));
+   104    }
+   105  
+   106    async materialize(input: MaterializationRequest): Promise<MaterializedView> {
+   107      return this.#mutate(input, () => this.#ports.materialization.materialize(input));
+   108    }
+   109  
+   110    async prepareCompaction(input: CompactionPrepareInput): Promise<SessionCompactionDecision> {
+   111      return this.#mutate(input, () => {
+   112        assertFunction(this.#ports.compaction?.prepare, "ports.compaction.prepare");
+   113        return this.#ports.compaction!.prepare(input);
+   114      });
+   115    }
+   116  
+   117    async acknowledgeCompaction(input: CompactionAckInput): Promise<void> {
+   118      return this.#mutate(input, async () => {
+   119        const acknowledge = this.#ports.compaction?.acknowledge;
+   120        assertFunction(acknowledge ?? this.#ports.compaction?.prepare, "ports.compaction.acknowledge");
+   121        if (typeof acknowledge === "function") await acknowledge(input);
+   122      });
+   123    }
+   124  
+   125    async search(input: SearchRequest): Promise<SessionSearchHit[]> {
+   126      return this.#read(input, () => {
+   127        assertFunction(this.#ports.retrieval?.search, "ports.retrieval.search");
+   128        return this.#ports.retrieval!.search(input);
+   129      });
+   130    }
+   131  
+   132    async read(input: ExactReadRequest): Promise<SessionExactPage> {
+   133      return this.#read(input, () => {
+   134        assertFunction(this.#ports.retrieval?.read, "ports.retrieval.read");
+   135        return this.#ports.retrieval!.read(input);
+   136      });
+   137    }
+   138  
+   139    async branchChanged(event: BranchChangedEvent): Promise<void> {
+   140      return this.#mutate(event, () => {
+   141        assertFunction(this.#ports.recovery?.branchChanged, "ports.recovery.branchChanged");
+   142        return this.#ports.recovery!.branchChanged(event);
+   143      });
+   144    }
+   145  
+   146    async recover(reason: RecoverRequest): Promise<RecoverSessionReport> {
+   147      return this.#mutate(reason, () => {
+   148        assertFunction(this.#ports.recovery?.recover, "ports.recovery.recover");
+   149        return this.#ports.recovery!.recover(reason);
+   150      });
+   151    }
+   152  
+   153    async close(): Promise<void> {
+   154      await this.#exclusive(async () => {
+   155        this.#closed = true;
+   156      });
+   157    }
+   158  
+   159    #assertOpen(): void {
+   160      if (this.#closed) {
+   161        throw new RuntimeSessionError("PCR_RUNTIME_SESSION_CLOSED");
+   162      }
+   163    }
+   164  
+   165    #validate(input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal }): void {
+   166      this.#assertOpen();
+   167      validateOperation(input);
+   168      const cursor = input.cursor;
+   169      const mismatch =
+   170        cursor.workspaceId !== this.scope.workspaceId ||
+   171        cursor.sessionId !== this.scope.sessionId ||
+   172        cursor.leafId !== this.scope.leafId ||
+   173        cursor.lineageHash !== this.scope.lineageHash;
+   174      if (mismatch) {
+   175        throw new RuntimeSessionError("PCR_RUNTIME_SCOPE_MISMATCH", {
+   176          expectedWorkspaceId: this.scope.workspaceId,
+   177          expectedSessionId: this.scope.sessionId,
+   178          expectedLeafId: this.scope.leafId,
+   179          expectedLineageHash: this.scope.lineageHash,
+   180        });
+   181      }
+   182    }
+   183  
+   184    async #exclusive<T>(work: () => Promise<T>): Promise<T> {
+   185      let release!: () => void;
+   186      const previous = this.#writeChain;
+   187      this.#writeChain = new Promise<void>((resolve) => {
+   188        release = resolve;
+   189      });
+   190      await previous;
+   191      while (this.#reads > 0) await this.#readIdle;
+   192      try {
+   193        return await work();
+   194      } finally {
+   195        release();
+   196      }
+   197    }
+   198  
+   199    async #mutate<T>(
+   200      input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal },
+   201      work: () => Promise<T>,
+   202    ): Promise<T> {
+   203      return this.#exclusive(async () => {
+   204        this.#validate(input);
+   205        return work();
+   206      });
+   207    }
+   208  
+   209    async #read<T>(
+   210      input: { operationId: string; cursor: RuntimeSessionScope; signal?: AbortSignal },
+   211      work: () => Promise<T>,
+   212    ): Promise<T> {
+   213      await this.#writeChain;
+   214      this.#validate(input);
+   215      if (this.#reads === 0) {
+   216        this.#readIdle = new Promise<void>((resolve) => {
+   217          this.#notifyReadsIdle = resolve;
+   218        });
+   219      }
+   220      this.#reads += 1;
+   221      try {
+   222        return await work();
+   223      } finally {
+   224        this.#reads -= 1;
+   225        if (this.#reads === 0) {
+   226          this.#notifyReadsIdle?.();
+   227          this.#notifyReadsIdle = undefined;
+   228          this.#readIdle = Promise.resolve();
+   229        }
+   230      }
+   231    }

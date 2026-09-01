@@ -1,0 +1,15 @@
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark/test/corpus-v2.test.ts (5 tests)
+ ✓ packages/benchmark/test/trace-freeze.test.ts (2 tests)
+ ✓ packages/benchmark/test/arms-identity.test.ts (1 test)
+ ✓ packages/benchmark/test/scoring/probe.test.ts (3 tests)
+ ✓ packages/benchmark/test/reader-lane.test.ts (2 tests)
+ ✓ packages/benchmark/test/closed-loop.test.ts (2 tests)
+ ✓ packages/benchmark/test/scoring/leaks.test.ts (2 tests)
+ ✓ packages/benchmark/test/economics-pairing.test.ts (3 tests)
+ ✓ packages/benchmark/test/gate-v3.test.ts (3 tests)
+ ✓ packages/benchmark/test/bundle-verify.test.ts (2 tests)
+
+ Test Files  10 passed
+      Tests  25 passed

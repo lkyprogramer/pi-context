@@ -1,0 +1,49 @@
+# Source: scripts/ci/verify-protection.mjs
+# Lines: 1-46
+
+     1  #!/usr/bin/env node
+     2  import { readFileSync } from "node:fs";
+     3  import { join } from "node:path";
+     4  
+     5  const REQUIRED = [
+     6    "install-frozen",
+     7    "format-lint",
+     8    "package-boundaries",
+     9    "build",
+    10    "typecheck",
+    11    "unit",
+    12    "integration",
+    13    "oracle-validation",
+    14    "security-fast",
+    15    "pi-contract-0-84-4",
+    16    "packed-install-hermetic",
+    17    "product-vertical",
+    18    "recovery-crash",
+    19    "w1-locked",
+    20    "w2-boundary-smoke",
+    21    "run-bundle-verify",
+    22  ];
+    23  
+    24  export function requiredContextsFromWorkflow(workflowText) {
+    25    const names = [...workflowText.matchAll(/^  ([a-z0-9][a-z0-9-]*):/gm)].map((match) => match[1]);
+    26    return names.filter((name) => REQUIRED.includes(name));
+    27  }
+    28  
+    29  export function assertRequiredJobs(workflowText) {
+    30    const found = new Set(requiredContextsFromWorkflow(workflowText));
+    31    const missing = REQUIRED.filter((name) => !found.has(name));
+    32    if (missing.length > 0) {
+    33      const error = new Error(`missing required jobs: ${missing.join(",")}`);
+    34      error.code = "PCR_CI_REQUIRED_JOBS_MISSING";
+    35      error.details = { missing };
+    36      throw error;
+    37    }
+    38    return REQUIRED.slice();
+    39  }
+    40  
+    41  const workflowPath = join(new URL("../..", import.meta.url).pathname, ".github/workflows/required.yml");
+    42  if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("verify-protection.mjs")) {
+    43    const text = readFileSync(workflowPath, "utf8");
+    44    const jobs = assertRequiredJobs(text);
+    45    process.stdout.write(`${JSON.stringify({ ok: true, required: jobs }, null, 2)}\n`);
+    46  }

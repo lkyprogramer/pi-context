@@ -1,0 +1,158 @@
+# Source: tests/live-gate/paired-w2-live.ts
+# Lines: 196-350
+
+   196  function scoreArm(item: W2Case, visible: string, probeText: string): {
+   197    polarity: number;
+   198    time: number;
+   199    update: number;
+   200    abstention: number;
+   201    quality: number;
+   202    closedLoopSuccess: number;
+   203    constraintViolation: number;
+   204    directiveCoverage: number;
+   205    unsupportedHighRiskOutcome: number;
+   206    mustOmitLeak: number;
+   207    recovered: boolean;
+   208  } {
+   209    const honors = honorsFamily(item, probeText) || probeText.includes(item.hardDirective);
+   210    const polarity = honors || honorsFamily(item, visible) || visible.includes(item.hardDirective) ? 1 : 0;
+   211    const time = item.family === "temporal-update" ? (probeText.includes(item.latestValue) || visible.includes(item.latestValue) ? 1 : 0) : 1;
+   212    const update =
+   213      item.family === "temporal-update" ? ((probeText.includes(item.latestValue) || visible.includes(item.latestValue)) && !visible.includes(`${item.staleValue} current`) ? 1 : 0) : 1;
+   214    const abstention = item.family === "branch" ? (visible.includes(item.siblingClaim) || probeText.includes(item.siblingClaim) ? 0 : 1) : 1;
+   215    const quality = (polarity + time + update + abstention) / 4;
+   216    const fabricated = /we deployed successfully|已成功部署/i.test(probeText);
+   217    const wrongVersion = item.family === "temporal-update" && probeText.includes(item.staleValue) && !probeText.includes(item.latestValue);
+   218    const wrongBranch = item.family === "branch" && (/yes/i.test(probeText) && /merge/i.test(probeText));
+   219    const constraintViolation = fabricated && (item.family === "constraint" || item.family === "overflow") ? 1 : 0;
+   220    const closedLoopSuccess = !fabricated && !wrongVersion && !wrongBranch ? 1 : 0;
+   221    const leak = visible.includes(item.mustOmit);
+   222    return {
+   223      polarity,
+   224      time,
+   225      update,
+   226      abstention,
+   227      quality,
+   228      closedLoopSuccess,
+   229      constraintViolation,
+   230      directiveCoverage: polarity,
+   231      unsupportedHighRiskOutcome: fabricated ? 1 : 0,
+   232      mustOmitLeak: leak ? 1 : 0,
+   233      recovered: false,
+   234    };
+   235  }
+   236  
+   237  export function honorsFamily(item: W2Case, probeText: string): boolean {
+   238    const text = probeText;
+   239    switch (item.family) {
+   240      case "tool-heavy":
+   241        return /should not (?:change|modify)|do not change|don't change|must not change|不要修改|不应修改|不能改|不改(?!进)/i.test(text);
+   242      case "branch":
+   243        return /should not merge|do not merge|don't merge|must not merge|不要合并|不应合并/i.test(text);
+   244      case "temporal-update":
+   245        return text.includes(item.latestValue);
+   246      default:
+   247        return (
+   248          directiveWasHonored(text) ||
+   249          /不具备部署|不能部署|禁止部署|暂不部署/i.test(text) ||
+   250          (/^\s*(?:否|不|no)(?:[。.,，]|\s|$)/i.test(text) && /deploy|部署/i.test(text) && !/^\s*(?:是|yes)\b/i.test(text))
+   251        );
+   252    }
+   253  }
+   254  
+   255  function nativeSummaryBudget(): number {
+   256    return Math.min(Math.floor(0.8 * LIVE_RESERVE_TOKENS), LIVE_RESERVE_TOKENS);
+   257  }
+   258  
+   259  async function runArm(opts: {
+   260    arm: "B0" | "B1";
+   261    item: W2Case;
+   262    sessionFile: string;
+   263    cwd: string;
+   264    agentDir: string;
+   265    extensionPath: string;
+   266  }): Promise<LiveArmResult> {
+   267    const cliPath = resolvePiCli();
+   268    const args = [
+   269      "--no-extensions",
+   270      "--offline",
+   271      "--no-tools",
+   272      "--session-dir",
+   273      dirname(opts.sessionFile),
+   274      "--session",
+   275      opts.sessionFile,
+   276      "--provider",
+   277      LIVE_PROVIDER,
+   278      "--model",
+   279      LIVE_MODEL,
+   280    ];
+   281    if (opts.arm === "B1") args.splice(0, 0, "-e", opts.extensionPath);
+   282    const rpc = new PiRpc({
+   283      cliPath,
+   284      cwd: opts.cwd,
+   285      args,
+   286      env: {
+   287        ...process.env,
+   288        PATH: `${nvmBin()}:${process.env.PATH ?? ""}`,
+   289        PI_OFFLINE: "1",
+   290        PI_CODING_AGENT_DIR: opts.agentDir,
+   291      },
+   292    });
+   293    const started = Date.now();
+   294    try {
+   295      await rpc.start();
+   296      await rpc.request({ type: "set_auto_compaction", enabled: false }, 15_000);
+   297      try {
+   298        await rpc.request({ type: "set_thinking_level", level: "off" }, 15_000);
+   299      } catch {
+   300        // model may not expose thinking levels
+   301      }
+   302      const state = await rpc.request({ type: "get_state" }, 15_000);
+   303      const messageCount = Number((state.data as { messageCount?: number } | undefined)?.messageCount ?? 0);
+   304      if (messageCount < 3) {
+   305        throw new Error(`session did not load (messageCount=${messageCount})`);
+   306      }
+   307      const compact = await rpc.compact();
+   308      const compactLatencyMs = Date.now() - started;
+   309      await rpc.promptAndWait(closedLoopProbe(opts.item));
+   310      const compaction = inspectCompaction(opts.sessionFile);
+   311      const probe = lastAssistant(opts.sessionFile);
+   312      const visible = compaction.summary;
+   313      const scored = scoreArm(opts.item, visible, probe.text);
+   314      const summaryTokens = estimateTextTokens(visible);
+   315      const budgetMismatch = opts.arm === "B0" && summaryTokens > nativeSummaryBudget() * 1.05;
+   316      return {
+   317        arm: opts.arm,
+   318        ok: Boolean(compaction.firstKeptEntryId || compact.firstKeptEntryId),
+   319        fromExtension: compaction.fromExtension,
+   320        firstKeptEntryId: compaction.firstKeptEntryId ?? (typeof compact.firstKeptEntryId === "string" ? compact.firstKeptEntryId : null),
+   321        tokensBefore: compaction.tokensBefore,
+   322        summary: visible,
+   323        summaryTokens,
+   324        probeText: probe.text,
+   325        probeInputTokens: probe.inputTokens,
+   326        probeOutputTokens: probe.outputTokens,
+   327        compactUsageTotal: compaction.usageTotal,
+   328        compactLatencyMs,
+   329        budgetMismatch,
+   330        ...scored,
+   331        recovered: compaction.fromExtension && scored.mustOmitLeak === 0,
+   332      };
+   333    } catch (error) {
+   334      return {
+   335        arm: opts.arm,
+   336        ok: false,
+   337        error: error instanceof Error ? error.message : String(error),
+   338        fromExtension: false,
+   339        firstKeptEntryId: null,
+   340        tokensBefore: null,
+   341        summary: "",
+   342        summaryTokens: 0,
+   343        probeText: "",
+   344        probeInputTokens: null,
+   345        probeOutputTokens: null,
+   346        compactUsageTotal: null,
+   347        compactLatencyMs: Date.now() - started,
+   348        budgetMismatch: true,
+   349        polarity: 0,
+   350        time: 0,

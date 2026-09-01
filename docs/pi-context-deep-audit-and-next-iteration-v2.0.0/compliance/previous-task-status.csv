@@ -1,0 +1,52 @@
+﻿taskId,wave,title,declaredStatus,auditVerdict,reason,evidenceCommit,runBundleHashCount
+A00,W0,冻结当前证据与审计基线,done,verified,审计基线和文件均存在；但不是当前 HEAD 的重新冻结,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A01,W0,移除所有硬编码临时目录,done,partial,开发机绝对临时目录已移除；大量测试仍硬编码 /tmp 路径，未完全满足 OS temp fixture 约束,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A02,W0,建立 hermetic Pi 模型与凭证 Fixture,done,verified,Hermetic model fixture 已加入，Required/多数 Matrix 可运行,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A03,W0,修复跨进程 CAS/Saga 测试 Runner,done,verified,CAS/Saga 跨进程测试当前在 Required 与失败 Cell 中均通过,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A04,W0,拆分 Unit/Integration/Live/Pack 测试 Lane,done,partial,新增 unit/integration/acceptance/packed 配置；但 unit 仍包含 integration、E2E、performance、gate、release 文件,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A05,W0,启用 Branch Protection 与 Required Checks,done,not-met,Required Workflow 存在，但 GitHub Branch Protection 未被验证/应用；Compatibility Required 当前红,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A06,W0,统一 Release Metadata 与入口策略,done,partial,入口/pack 统一；包仍 private:true、UNLICENSED、npmPublish=false，只适合受控 tarball,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A07,W0,重开并重构 Finding Closure Gate,done,partial,旧 Finding 保持 open 是诚实的；Task evidence 仍可仅凭文件存在标 done,9a2084d8667fc459aa14c3bd6c486228f15a6bf6,0
+A08,W1,让默认 Extension 只使用 ProductionRuntimeCompositionRoot,done,not-met,默认 Extension 建立 RuntimeSession，但 User/Tool Ingress 直接返回 owner.service/observation，绕开唯一应用入口,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A09,W1,补全 RuntimeSession Ports 与状态机,done,verified,RuntimeSession Ports、Scope 和读写串行化在模块层实现并有单测,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A10,W1,实现 cursor-scoped Session/Tool Registry,done,partial,Cursor-scoped owner/session map 已有；默认生命周期仍使用全局 lastRecoveredCursor,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A11,W1,落地持久 Directive/Claim/Continuity Store,done,verified,持久 Directive/Claim/Continuity Store 与 restart/scope tests 已实现,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A12,W1,实现统一 Runtime Snapshot Transaction,done,partial,State readSnapshot 存在；Compaction assembler transaction 仍是 work() 空包装，未证明 Context/Checkpoint 同一快照,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A13,W1,持久化 View 与 Cache Receipt,done,verified,Cache Receipt 已持久到 State Store；但仍是估算布局而非 Provider cache usage,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A14,W1,接入真实 Route/System/Tools Budget Port,done,partial,Route budget 组件支持 reserves；产品仅传 imageBlocks，真实 system/tools/provider payload 未接入,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A15,W1,删除 unbound Scope 降级,done,partial,主 Cursor 路径拒绝 unbound；Background/Tools/Doctor 仍含 unbound 与 fixture 常量,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A16,W1,实现真实 Restart/Branch Recovery,done,partial,Restart/branch 与 Saga 模块测试存在；Compaction staged/ack 仍为进程内变量，产品 Ack Port 为空,638459bc239ffd46c4d1a75f8b828a7f096a41f0,0
+A17,W2,修复多语言 Temporal Assignment Parser,done,verified,中英文 temporal assignment 解析显著改善，并有专项测试,2eb7648a0abbd4600984ae81d9d97083f273837f,0
+A18,W2,Authenticated User Full-turn 保底与 Supersession,done,verified,Authenticated full-turn retention 与 supersession 在 Store/模块层落地,2eb7648a0abbd4600984ae81d9d97083f273837f,0
+A19,W2,构建 Snapshot-scoped Evidence Pointer Catalog,done,verified,Snapshot-scoped pointer catalog 和 pointer verifier 已实现,2eb7648a0abbd4600984ae81d9d97083f273837f,0
+A20,W2,实现 Tool Outcome Attestation 与 Claim Authority,done,verified,Outcome attestation/authority guard 有模块与安全测试,2eb7648a0abbd4600984ae81d9d97083f273837f,0
+A21,W2,实现 Proactive Recall 与 Purpose-bound Lease,done,partial,Proactive recall 与 lease 组件存在；默认 Materializer 没有注入 recall/directory/lease,2eb7648a0abbd4600984ae81d9d97083f273837f,0
+A22,W2,Recursive Compaction State Merge,done,verified-component,Recursive state merge 有纯模块测试；真实递归三轮 Live 未完成,2eb7648a0abbd4600984ae81d9d97083f273837f,0
+A23,W2,多 Workspace/Session/Branch 隔离 Gate,done,partial,Scope isolation/last-owner ambiguity 有安全测试；默认全局 lifecycle 状态仍有跨会话风险,2eb7648a0abbd4600984ae81d9d97083f273837f,0
+A24,W3,Envelope-aware Serialized Payload Token Pricing,done,partial,Envelope pricing 组件支持 blocks；产品未提供完整 system/tools schema/provider envelope,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A25,W3,统一 Capacity/Cache/Cost Usage Telemetry,done,partial,Usage/economics 类型与测试存在；真实 Provider cacheRead/cacheWrite 尚未进入产品报告,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A26,W3,修复 Directive/History/Active-turn 重复注入,done,verified,Directive/history/active-turn 去重有实现和测试,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A27,W3,稳定前缀 Cache Layout 与遥测,done,partial,稳定 section layout 与 receipt 组件存在；没有真实 Provider Cache Hit SLO/Gate,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A28,W3,完整 Store-built Checkpoint,done,partial,Checkpoint 支持持久状态；backfill 与分散查询仍未形成单事务权威快照,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A29,W3,真实 Pointer Verifier 与 CAS Recovery,done,verified-component,Pointer CAS read/scope verifier 在组件层通过；Legacy Live 的 exactRecovery 并未调用它,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A30,W3,Tool-pair/Retained-tail/Two-run Hash Verifier,done,partial,Hard-gates 模块存在；产品/Legacy Live 未接入，toolPairViolation 仍常量 0,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A31,W3,Checkpoint 模型视图压缩与 Metadata Ablation,done,verified-component,短引用/metadata ablation 组件存在；真实 Provider 下收益未验证,1196402be7db5fb29fd9d0858e464ce04336a1b3,0
+A32,W4,建立 v2 Source-witness Locked Corpus,done,partial,Corpus v2 有 180 Case 和 source-witness 校验；本质是模板化短文本，不是锁定真实轨迹,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A33,W4,生成真实 A1-shaped 冻结 Pi Trace,done,not-met,所谓 A1-shaped trace 仍由极短 in-process trace/string shaper 构造，未冻结真实 Pi JSONL+Store+Workspace,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A34,W4,实现真实 Pi B0/B1/B2 Runner,done,not-met,Legacy Runner 仅真 B0/B1；V3 B0/B1/B2 是字符串实现，没有真实 Pi B2,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A35,W4,Probe-only Scorer 与 Normalizer,done,verified-component,Probe-only scorer 组件正确方向；Legacy Live scoreArm 未使用它,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A36,W4,真实 F0/Isolated Reader Lane,done,not-met,F0/Reader 仍是字符串包含/组件 smoke，不是隔离 Reader 模型,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A37,W4,Tools-enabled Environment Closed-loop,done,not-met,Closed-loop Executor 仍为预编程或弱 probe；没有真实 Tools-enabled Workspace continuation,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A38,W4,整合真实 Integrity/Security Scorer,done,partial,Integrity scorer 组件能验证 CAS/tool pair；Legacy Live 报告未用，部分指标仍为常量/代理,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A39,W4,完整 Realized Net 与 Pair-preserving Cost,done,partial,Pair-preserving economics 组件存在；Live realized_net 仍主要是下一轮 input 差,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A40,W4,Cluster Statistics 与 Normative Gate v3,done,partial,Cluster bootstrap/Gate v3 组件存在；当前 Corpus cluster 独立性与 Live 接线不足,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A41,W4,不可变 Full Run Bundle 与复核工具,done,partial,Bundle sealing 组件存在；权威 100×3 raw report 被 gitignore，最终 HEAD 无完整不可变 Bundle,7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e,0
+A42,W5,运行 Boundary Replay 30 Cluster × 3 Seeds,done,partial,合成 30 cluster×3 和旧 Live 100 case×3 均跑过；真实独立 cluster/受控 seeds/B2/F0 不满足,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A43,W5,运行 Natural 200K Threshold Lane,done,not-met,真实端点 40 轮没有触发 183808 threshold；验收要求每 arm 至少一次真实 threshold,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A44,W5,运行 Provider Overflow Lane,done,not-met,没有观察到 Provider overflow/400；后续是手工 compact，不是 overflow recovery,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A45,W5,运行 Recursive Long-horizon Lane,done,not-met,只完成 compact-1；compact-2 报 Nothing to compact，branch/restart/compact-3 未执行,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A46,W5,运行 Fault/Security Matrix,done,partial,Fault/Security 单元/合成 Lane 存在；未与完整 Live Run 绑定，Gate artifact fault=0,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A47,W5,运行 Performance/Cache/Metadata Ablation,done,partial,性能/cache/metadata 为合成数字与模块消融；缺真实 Provider cache usage,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A48,W5,执行 W1/W2 Deterministic Release Gate,done,not-met,当前 Gate artifact liveProvider=false、绑定旧 commit 8855d45；不能作为 Release Gate,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A49,W5,完成 Hermetic Package/Release Matrix,done,partial,Hermetic pack 测试改善；Compatibility 红且 package policy 仍是私有未授权 tarball,f13dd359a86ad2d9a593f69011f4c82e96594539,0
+A50,W6,Semantic/Background Beta 独立 Gate,pending,pending,Semantic/Background Beta 未执行，维持 default-off 才是正确状态,,0

@@ -1,0 +1,84 @@
+# Source: packages/benchmark/src/scoring/probe.ts
+# Lines: 1-81
+
+     1  export type ProbeFamily = "version" | "yes-no" | "path" | "error" | "deploy";
+     2  
+     3  export type ProbeErrorCode = "PCR_PROBE_DEPENDENCY_MISSING" | "PCR_PROBE_INPUT_INVALID";
+     4  
+     5  export class ProbeScorerError extends TypeError {
+     6    readonly code: ProbeErrorCode;
+     7    readonly details: Readonly<Record<string, unknown>>;
+     8  
+     9    constructor(code: ProbeErrorCode, details: Record<string, unknown> = {}) {
+    10      super(code);
+    11      this.name = "ProbeScorerError";
+    12      this.code = code;
+    13      this.details = Object.freeze({ ...details });
+    14    }
+    15  }
+    16  
+    17  function failMissing(dependency: string): never {
+    18    throw new ProbeScorerError("PCR_PROBE_DEPENDENCY_MISSING", { dependency });
+    19  }
+    20  
+    21  function failInput(field: string): never {
+    22    throw new ProbeScorerError("PCR_PROBE_INPUT_INVALID", { field });
+    23  }
+    24  
+    25  export interface ProbeScore {
+    26    ok: boolean;
+    27    skipped: boolean;
+    28    normalized: string;
+    29    family: ProbeFamily;
+    30  }
+    31  
+    32  const SUMMARY_MARKERS = [/checkpoint v2/i, /compaction summary/i, /^summary:/i];
+    33  
+    34  export function normalizeProbeAnswer(text: string, family: ProbeFamily): string {
+    35    if (typeof text !== "string") failInput("text");
+    36    const trimmed = text.trim().replace(/\s+/gu, " ");
+    37    if (family === "version") {
+    38      const tainted = trimmed.match(/\b(\d+(?:\.\d+)*)-tu-\d+\b/iu);
+    39      if (tainted) return tainted[0].toLowerCase();
+    40      const match = trimmed.match(/\bversion\s+(\d+(?:\.\d+)*)\b/iu) ?? trimmed.match(/\b(\d+(?:\.\d+)*)\b/u);
+    41      return match?.[1] ?? trimmed.toLowerCase();
+    42    }
+    43    if (family === "yes-no") {
+    44      if (/^(yes|true|affirmative)\b/iu.test(trimmed)) return "yes";
+    45      if (/^(no|false|negative)\b/iu.test(trimmed)) return "no";
+    46    }
+    47    if (family === "deploy") {
+    48      if (/\bdo not deploy\b/iu.test(trimmed) || /\bmust not deploy\b/iu.test(trimmed)) return "must-not-deploy";
+    49      if (/\b(yes,? )?deploy\b/iu.test(trimmed) && !/\bnot\b/iu.test(trimmed)) return "deploy";
+    50    }
+    51    if (family === "path") return trimmed.replace(/\\/gu, "/");
+    52    return trimmed.toLowerCase();
+    53  }
+    54  
+    55  export function scoreProbe(input: {
+    56    expected: string;
+    57    observed: string;
+    58    family: ProbeFamily;
+    59  }): ProbeScore {
+    60    if (!input || typeof input !== "object") failMissing("input");
+    61    if (typeof input.expected !== "string" || input.expected.length === 0) failInput("expected");
+    62    if (typeof input.observed !== "string") failInput("observed");
+    63    if (typeof input.family !== "string") failInput("family");
+    64    if (SUMMARY_MARKERS.some((marker) => marker.test(input.observed))) {
+    65      return { ok: false, skipped: true, normalized: "", family: input.family };
+    66    }
+    67    const expected = normalizeProbeAnswer(input.expected, input.family);
+    68    const observed = normalizeProbeAnswer(input.observed, input.family);
+    69    if (input.family === "version" && /tu-\d+/iu.test(observed) && !/tu-\d+/iu.test(expected)) {
+    70      return { ok: false, skipped: false, normalized: observed, family: input.family };
+    71    }
+    72    const ok = input.family === "version" || input.family === "yes-no" || input.family === "deploy"
+    73      ? observed === expected
+    74      : observed === expected || observed.includes(expected);
+    75    return {
+    76      ok,
+    77      skipped: false,
+    78      normalized: observed,
+    79      family: input.family,
+    80    };
+    81  }

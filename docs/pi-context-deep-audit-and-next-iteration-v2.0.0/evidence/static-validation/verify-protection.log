@@ -1,0 +1,22 @@
+## verify-protection
+{
+  "ok": true,
+  "required": [
+    "install-frozen",
+    "format-lint",
+    "package-boundaries",
+    "build",
+    "typecheck",
+    "unit",
+    "integration",
+    "oracle-validation",
+    "security-fast",
+    "pi-contract-0-84-4",
+    "packed-install-hermetic",
+    "product-vertical",
+    "recovery-crash",
+    "w1-locked",
+    "w2-boundary-smoke",
+    "run-bundle-verify"
+  ]
+}

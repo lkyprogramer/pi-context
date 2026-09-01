@@ -1,0 +1,251 @@
+
+> @ test /home/runner/work/pi-context/pi-context
+> vitest run --config vitest.unit.config.ts
+
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90m/home/runner/work/pi-context/pi-context[39m
+
+ [32m✓[39m packages/storage-node/test/user-turn-store.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 2137[2mms[22m[39m
+   [33m[2m✓[22m[39m workspace user turn ledger[2m > [22mpersists exact UTF-8 bytes before linking the real host entry [33m 431[2mms[22m[39m
+   [33m[2m✓[22m[39m workspace user turn ledger[2m > [22mreplays capture and link idempotently and rejects payload or host conflicts [33m 721[2mms[22m[39m
+   [33m[2m✓[22m[39m workspace user turn ledger[2m > [22mserializes concurrent duplicate captures to one receipt [33m 471[2mms[22m[39m
+ [32m✓[39m tests/tasks/t13.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 1230[2mms[22m[39m
+   [33m[2m✓[22m[39m T13 Real Pi tool_result ingress[2m > [22mreplays equal results across two independent runs of the same event [33m 390[2mms[22m[39m
+ [32m✓[39m packages/storage-node/test/saga-store.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 4866[2mms[22m[39m
+   [33m[2m✓[22m[39m workspace SQLite Saga journal[2m > [22mupgrades an exact V1 database through the current schema without changing the V1 checksum [33m 343[2mms[22m[39m
+   [33m[2m✓[22m[39m workspace SQLite Saga journal[2m > [22mleaves no row when blob verification fails or cancellation wins before the transaction [33m 337[2mms[22m[39m
+   [33m[2m✓[22m[39m workspace SQLite Saga journal[2m > [22mrecovers a host-visible row after an abrupt process exit and replays without mutation [33m 2883[2mms[22m[39m
+ [32m✓[39m packages/storage-node/test/blob-store.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 4972[2mms[22m[39m
+   [33m[2m✓[22m[39m encrypted content-addressed blob store[2m > [22mfails closed for missing rotation keys and keeps deterministic references across a key change [33m 378[2mms[22m[39m
+   [33m[2m✓[22m[39m encrypted content-addressed blob store[2m > [22msettles concurrent same-content writes on one complete authenticated object [33m 583[2mms[22m[39m
+   [33m[2m✓[22m[39m encrypted content-addressed blob store[2m > [22mmakes the existing-object fast path durable across independent processes [33m 3062[2mms[22m[39m
+ [32m✓[39m tests/tasks/t07.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/tasks/t28.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 844[2mms[22m[39m
+   [33m[2m✓[22m[39m T28 Pi context hook vertical integration[2m > [22mproduct extension materializes without keep and does not swallow hook errors [33m 830[2mms[22m[39m
+ [32m✓[39m tests/tasks/t31.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1315[2mms[22m[39m
+   [33m[2m✓[22m[39m T31 Pi compaction takeover with Native fallback[2m > [22mproduct extension does not rewrite directives to must-not or hardcoded heads [33m 1289[2mms[22m[39m
+ [32m✓[39m tests/tasks/t08.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/tasks/t09.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 2507[2mms[22m[39m
+   [33m[2m✓[22m[39m T09 Per-workspace SQLite schema and migrations[2m > [22mrequires the full session, leaf, lineage and model cursor on read [33m 345[2mms[22m[39m
+   [33m[2m✓[22m[39m T09 Per-workspace SQLite schema and migrations[2m > [22misolates workspaces physically and does not disclose cross-workspace ids [33m 919[2mms[22m[39m
+ [32m✓[39m tests/tasks/t33.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m tests/tasks/t32.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 59[2mms[22m[39m
+ [32m✓[39m tests/tasks/t15.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 1001[2mms[22m[39m
+   [33m[2m✓[22m[39m T15 Evidence admission, FTS indexing and exact read[2m > [22mreplays duplicate admission with the same evidence ids [33m 413[2mms[22m[39m
+ [32m✓[39m tests/tasks/t30.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m tests/tasks/t29.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m tests/tasks/t43.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/tasks/t54.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/tasks/t21.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/tasks/t26.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/tasks/t38.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/w5-lanes.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m packages/worker/test/verifier.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m packages/pi-adapter/test/runtime-tools.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/tasks/t42.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/tasks/t18.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m tests/tasks/t41.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/tasks/t00.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 438[2mms[22m[39m
+ [32m✓[39m tests/tasks/t27.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 45[2mms[22m[39m
+ [32m✓[39m tests/tasks/t14.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/tasks/t19.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m tests/contract/pi-context-hook.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/tasks/t39.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32m✓[39m tests/tasks/t25.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/runtime-session.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/tasks/t20.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1016[2mms[22m[39m
+   [33m[2m✓[22m[39m T20 Storage-backed context_search and context_read[2m > [22mrejects malformed and unsafe queries [33m 318[2mms[22m[39m
+   [33m[2m✓[22m[39m T20 Storage-backed context_search and context_read[2m > [22mstops at the abort boundary before search [33m 343[2mms[22m[39m
+ [32m✓[39m tests/tasks/t37.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 727[2mms[22m[39m
+ [32m✓[39m packages/worker/test/semantic-proposal.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32m✓[39m tests/tasks/t03.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 103[2mms[22m[39m
+ [32m✓[39m tests/performance/cache-layout.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m packages/storage-node/test/sqlite-store.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 425[2mms[22m[39m
+ [32m✓[39m tests/tasks/t36.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/tasks/t01.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 275[2mms[22m[39m
+ [32m✓[39m tests/tasks/t50.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/tasks/t34.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/tasks/t35.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m tests/tasks/t49.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/compaction-full-state.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/tasks/t45.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m tests/tasks/t22.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/claim-ledger.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m packages/core/test/materialization/dedup.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/directive-capture.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/tasks/t04.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/active-suffix.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/claim-transitions.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m packages/worker/test/candidate-worker.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 61[2mms[22m[39m
+ [32m✓[39m tests/fault/recovery.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 269[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/corpus-v2.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m tests/tasks/t53.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/tasks/t23.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 740[2mms[22m[39m
+   [33m[2m✓[22m[39m T23 Deterministic W1 vertical acceptance gate[2m > [22mdeterministic_w1_vertical_acceptance_gate [33m 319[2mms[22m[39m
+ [32m✓[39m tests/tasks/t24.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/tasks/t48.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/tasks/t17.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/pointer-verify.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/release/deterministic-mvp-gate.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/tasks/t46.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/e2e/operations.test.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 1835[2mms[22m[39m
+   [33m[2m✓[22m[39m operations[2m > [22mrestores into a new empty directory and verifies every manifest hash [33m 460[2mms[22m[39m
+   [33m[2m✓[22m[39m operations[2m > [22mplans GC exactly and keeps referenced blobs [33m 517[2mms[22m[39m
+   [33m[2m✓[22m[39m operations[2m > [22mresumes key rotation after a crash using the dual key set [33m 373[2mms[22m[39m
+ [32m✓[39m tests/tasks/t10.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 136[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/materializer.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m tests/tasks/t16.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m tests/integration/checkpoint-pointer-recovery.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/proactive-recall.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/checkpoint-candidate.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/w2-gate/head-to-head.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 2556[2mms[22m[39m
+   [33m[2m✓[22m[39m W2 Compactor Head-to-head Gate[2m > [22mevaluates live PCR B1/B2 against synthetic B0 and writes a machine-readable report [33m 2550[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/continuity-ledger.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/e2e/key-rotation-v2-boundary.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 266[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/raw-input.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/tasks/t02.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32m✓[39m tests/tasks/t47.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m tests/tasks/t11.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/action-gate.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/tasks/t44.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m packages/core/test/materialization/cache.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/reducer-registry.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+ [32m✓[39m tests/tasks/t40.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/saga.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/release/semantic-beta-gate.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/state-store.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 616[2mms[22m[39m
+   [33m[2m✓[22m[39m persistent directive/claim/continuity store[2m > [22mrestarts with the same active heads, excludes superseded rows, and denies cross-scope reads [33m 615[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/runtime-snapshot.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 165[2mms[22m[39m
+ [32m✓[39m packages/core/test/compaction/checkpoint.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/economics-pairing.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/core/test/budget/envelope-pricing.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/host-checkpoint-render.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/contract/pi-tool-result-order.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 234[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/report.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/tasks/t05.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 107[2mms[22m[39m
+ [32m✓[39m tests/tasks/t51.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/compaction/snapshot.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m packages/worker/test/telemetry-economics.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m apps/pi-context-runtime/test/package-runtime.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/lease-lifecycle.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m packages/worker/test/generation-fencing.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [31m❯[39m tests/w1-gate/early-net-value.test.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 2753[2mms[22m[39m
+   [32m✓[39m W1 Early Net Value Gate[2m > [22mmeets the synthetic 60-boundary quotas[32m 4[2mms[22m[39m
+[31m   [31m×[31m W1 Early Net Value Gate[2m > [22mevaluates live PCR arms and writes a machine-readable report[39m[33m 2748[2mms[22m[39m
+[31m     → expected 'keep-recovery-only' to be 'proceed-to-w2' // Object.is equality[39m
+   [32m✓[39m W1 Early Net Value Gate[2m > [22mdoes not proceed to W2 from walkthrough constants alone[32m 1[2mms[22m[39m
+ [32m✓[39m packages/storage/test/blob-store.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m packages/core/test/budget/route-budget.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/fts-catalog.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/tasks/t12.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 211[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/exact-read.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/bundle-verify.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/raw-capture.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 116[2mms[22m[39m
+ [32m✓[39m packages/pi-adapter/test/message-conversion.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/gate-v3.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/arms-identity.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/closed-loop.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/evidence-admission.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/e2e/pi-factory-entry.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/token-budget.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/contract/pi-compaction-takeover.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/security/scope-isolation.test.ts [2m([22m[2m1 test[22m[2m)[22m[33m 478[2mms[22m[39m
+   [33m[2m✓[22m[39m scope isolation gate[2m > [22mdenies cross-read, pointer injection, and last-owner ambiguity [33m 477[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/compaction-merge.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m packages/core/test/materialization/materializer.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/literal-index.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/convergence.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/audit/current-baseline.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 181[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/shell-reducers.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/user-turn-retention.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/storage/test/sqlite-store.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 846[2mms[22m[39m
+   [33m[2m✓[22m[39m SqliteStore[2m > [22mdoes not let workspace A query workspace B [33m 598[2mms[22m[39m
+ [32m✓[39m packages/storage/test/saga-recovery.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 781[2mms[22m[39m
+   [33m[2m✓[22m[39m Saga recovery[2m > [22mretries when the crash happens before blob publish [33m 361[2mms[22m[39m
+ [32m✓[39m tests/security/authority.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/usage.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/contract/pi-capability-probe.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/contract/pi-session-lifecycle.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m tests/integration/checkpoint-hard-gates.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m tests/e2e/packed-install.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m packages/kernel/test/builtin-reducers.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m packages/core/test/directives/temporal.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/semantic/port.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/performance/token-accounting.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/compaction-ablation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/core/test/compaction/hard-gates.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/proactive-recall.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m packages/core/test/reducers/production.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m packages/core/test/continuity/reduce.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m apps/pi-context-runtime/test/owner.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/core/test/directives/segment.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m packages/contracts/test/types.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/core/test/directives/extract.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m tests/performance/lanes.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/reader-lane.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/meta/workspace-layout.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/evidence-catalog.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/performance/ablation.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/core/test/verifier/semantic.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m packages/pi-adapter/test/message-codec.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m packages/core/test/security/outcome.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/oracle.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/scoring/leaks.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m packages/contracts/test/canonical.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/trace-freeze.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [2m[90m↓[39m[22m tests/e2e/jiti-candidate-load.test.ts [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [32m✓[39m tests/ci/lane-selection.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/semantic/proposer.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/w5-boundary.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/scoring/probe.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/performance/economics.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m tests/security/authority-mutation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m tests/security/memory-poisoning.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32m✓[39m tests/release/package-artifact.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 2834[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mcontains one extension entry, runtime dependencies and no source-private imports [33m 721[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mverifies clean-home extract, uninstall/reinstall, and temporary pi -e entry [33m 677[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mkeeps the Node/OS matrix and does not hide unsupported Pi versions [33m 724[2mms[22m[39m
+   [33m[2m✓[22m[39m release package[2m > [22mships license/security docs and the gate-derived semantic default [33m 711[2mms[22m[39m
+ [32m✓[39m tests/contract/pi-input-correlation.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m tests/security/secret-leak.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m tests/fault/overflow-lane.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m packages/core/test/retrieval/proactive.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m packages/runtime/test/background/candidates.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/statistics.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/trace.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m packages/benchmark/test/scoring/integrity.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m packages/pi-adapter/test/compaction-result.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m tests/ci/protection.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/ci/finding-closure.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 76[2mms[22m[39m
+ [32m✓[39m tests/security/cursor-fuzz.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 54[2mms[22m[39m
+ [32m✓[39m tests/release/manifest-policy.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+ [32m✓[39m tests/security/recovery-fuzz.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [32m✓[39m tests/contract/pi-tool-call-gate.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/w1-gate/early-net-value.test.ts[2m > [22mW1 Early Net Value Gate[2m > [22mevaluates live PCR arms and writes a machine-readable report
+[31m[1mAssertionError[22m: expected 'keep-recovery-only' to be 'proceed-to-w2' // Object.is equality[39m
+
+Expected: [32m"proceed-to-w2"[39m
+Received: [31m"keep-recovery-only"[39m
+
+[36m [2m❯[22m tests/w1-gate/early-net-value.test.ts:[2m44:22[22m[39m
+    [90m 42| [39m    expect(Number(disk.economics && (disk.economics as { realizedNetMe…
+    [90m 43| [39m    expect(Number((disk.economics as { realizedNetCi: { lower: number …
+    [90m 44| [39m    [34mexpect[39m(decision)[33m.[39m[34mtoBe[39m([32m"proceed-to-w2"[39m)[33m;[39m
+    [90m   | [39m                     [31m^[39m
+    [90m 45| [39m    [34mexpect[39m(disk[33m.[39mpublicationClaim)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m 46| [39m    [34mexpect[39m(disk[33m.[39musedWalkthroughConstants)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m180 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (182)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m818 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (820)[39m
+[2m   Start at [22m 06:40:46
+[2m   Duration [22m 30.10s[2m (transform 2.03s, setup 0ms, collect 22.96s, tests 38.88s, environment 23ms, prepare 8.62s)[22m
+
+
+::error file=/home/runner/work/pi-context/pi-context/tests/w1-gate/early-net-value.test.ts,title=tests/w1-gate/early-net-value.test.ts > W1 Early Net Value Gate > evaluates live PCR arms and writes a machine-readable report,line=44,column=22::AssertionError: expected 'keep-recovery-only' to be 'proceed-to-w2' // Object.is equality%0A%0AExpected: "proceed-to-w2"%0AReceived: "keep-recovery-only"%0A%0A ❯ tests/w1-gate/early-net-value.test.ts:44:22%0A%0A
+ ELIFECYCLE  Test failed. See above for more details.

@@ -1,0 +1,352 @@
+[
+  {
+    "id": "NF001",
+    "severity": "P0",
+    "area": "CI",
+    "title": "Compatibility Required 仍为红",
+    "observation": "Node 24/min/Ubuntu 的 W1 Gate 在 unit suite 返回 keep-recovery-only；发布矩阵不成立。",
+    "status": "open",
+    "remediationTasks": [
+      "B01",
+      "B02",
+      "B31"
+    ]
+  },
+  {
+    "id": "NF002",
+    "severity": "P0",
+    "area": "Governance",
+    "title": "Task Evidence 只凭文件存在即可 Done",
+    "observation": "taskctl 不验证日志结果、当前 HEAD、sourceDigest、run bundle、finding closure 或任务验收。",
+    "status": "open",
+    "remediationTasks": [
+      "B03",
+      "B04"
+    ]
+  },
+  {
+    "id": "NF003",
+    "severity": "P0",
+    "area": "Governance",
+    "title": "A43/A44/A45 等 Done 与真实结果矛盾",
+    "observation": "自然阈值、Provider Overflow、三轮递归均失败，却仍标 Done 并声称 Finding closed。",
+    "status": "open",
+    "remediationTasks": [
+      "B04",
+      "B29",
+      "B30"
+    ]
+  },
+  {
+    "id": "NF004",
+    "severity": "P0",
+    "area": "Runtime",
+    "title": "User/Tool Ingress 绕过 RuntimeSession",
+    "observation": "默认 Extension 创建 RuntimeSession 后仍返回 owner.service/observation，破坏唯一应用入口与串行化。",
+    "status": "open",
+    "remediationTasks": [
+      "B08",
+      "B15"
+    ]
+  },
+  {
+    "id": "NF005",
+    "severity": "P0",
+    "area": "Runtime",
+    "title": "全局 lastRecoveredCursor 与 close-all 生命周期",
+    "observation": "多 Session/Workspace 共用全局生命周期游标；任一 session_shutdown 关闭全部 owners。",
+    "status": "open",
+    "remediationTasks": [
+      "B09",
+      "B10",
+      "B15"
+    ]
+  },
+  {
+    "id": "NF006",
+    "severity": "P0",
+    "area": "Compaction",
+    "title": "Context/Compaction 不共享权威事务 Snapshot",
+    "observation": "Materialize 用 readSnapshot，Compaction 的 transaction.run 只是 work()，并分散读取状态。",
+    "status": "open",
+    "remediationTasks": [
+      "B11"
+    ]
+  },
+  {
+    "id": "NF007",
+    "severity": "P0",
+    "area": "Compaction",
+    "title": "Compaction Stage/Ack 不持久",
+    "observation": "单个 staged 变量仅存进程内；RuntimeSession acknowledge port 在产品实现为空。",
+    "status": "open",
+    "remediationTasks": [
+      "B12",
+      "B20"
+    ]
+  },
+  {
+    "id": "NF008",
+    "severity": "P0",
+    "area": "Integrity",
+    "title": "产品与 Live 未接入 Hard Gate Verifier",
+    "observation": "tool-pair/retained-tail/two-run 模块存在，但 Live toolPairViolation 固定 0。",
+    "status": "open",
+    "remediationTasks": [
+      "B13",
+      "B23"
+    ]
+  },
+  {
+    "id": "NF009",
+    "severity": "P0",
+    "area": "Evaluation",
+    "title": "Legacy Live Scorer 被 Summary 污染且容忍非回答",
+    "observation": "质量允许 visible summary 替 Probe；closedLoop 只排少数显式错误。",
+    "status": "open",
+    "remediationTasks": [
+      "B21"
+    ]
+  },
+  {
+    "id": "NF010",
+    "severity": "P0",
+    "area": "Evaluation",
+    "title": "exactEvidenceRecovery 名称与实现不符",
+    "observation": "recovered 实际为 fromExtension 且未泄露 must-omit，没有 CAS exact read/hash/bytes 检查。",
+    "status": "open",
+    "remediationTasks": [
+      "B22"
+    ]
+  },
+  {
+    "id": "NF011",
+    "severity": "P0",
+    "area": "Evaluation",
+    "title": "100×3 的 Seed 只是标签",
+    "observation": "seed 未注入模型、Provider、Trace 或 Sampling；不能解释为独立重复。",
+    "status": "open",
+    "remediationTasks": [
+      "B25"
+    ]
+  },
+  {
+    "id": "NF012",
+    "severity": "P0",
+    "area": "Evidence",
+    "title": "修复后 100×3 权威 Run 缺失且 Raw Report 被 Gitignore",
+    "observation": "现有 300 对是 backfill 前；backfill 后只跑小样本，原始 300 对不可随仓库复核。",
+    "status": "open",
+    "remediationTasks": [
+      "B07",
+      "B27",
+      "B28"
+    ]
+  },
+  {
+    "id": "NF013",
+    "severity": "P0",
+    "area": "Evaluation",
+    "title": "真实 B2/F0/Tools-enabled Closed-loop 缺失",
+    "observation": "V3 B0/B1/B2 是字符串 Stub；F0 是包含率；Executor 未由模型选择真实工具。",
+    "status": "open",
+    "remediationTasks": [
+      "B24",
+      "B26"
+    ]
+  },
+  {
+    "id": "NF014",
+    "severity": "P0",
+    "area": "Live",
+    "title": "Natural Threshold、Provider Overflow、Recursive Lane 未过",
+    "observation": "0 threshold、overflowObserved=false、仅 compact-1。",
+    "status": "open",
+    "remediationTasks": [
+      "B29",
+      "B30"
+    ]
+  },
+  {
+    "id": "NF015",
+    "severity": "P0",
+    "area": "Release",
+    "title": "Gate v3 可以在无 Live Provider 证据时形成 adopt 条件",
+    "observation": "evaluateW5Gate 仅基于 lane bundle/decision；publicationClaim 未强制 liveProvider=true 与权威 run identity。",
+    "status": "open",
+    "remediationTasks": [
+      "B31"
+    ]
+  },
+  {
+    "id": "NF016",
+    "severity": "P0",
+    "area": "Economics",
+    "title": "产品 I_eff 没有完整 System/Tools/Provider/Cache 负载",
+    "observation": "组件支持 reserves，但产品只计算 imageBlocks；真实 cacheRead/write 未接入。",
+    "status": "open",
+    "remediationTasks": [
+      "B16",
+      "B18"
+    ]
+  },
+  {
+    "id": "NF017",
+    "severity": "P1",
+    "area": "Materialization",
+    "title": "Proactive Recall/Lease/Directory 未进入默认物化",
+    "observation": "组件和测试存在，Product RuntimeSnapshot 仅注入 directives/continuity/claims。",
+    "status": "open",
+    "remediationTasks": [
+      "B17"
+    ]
+  },
+  {
+    "id": "NF018",
+    "severity": "P1",
+    "area": "Background",
+    "title": "Default-off 声明与默认注册 Background Hook 冲突",
+    "observation": "背景 Candidate 使用 128000、sys_runtime、tools_runtime 等 Fixture 常量。",
+    "status": "open",
+    "remediationTasks": [
+      "B14"
+    ]
+  },
+  {
+    "id": "NF019",
+    "severity": "P1",
+    "area": "Runtime",
+    "title": "生产路径仍保留 unbound/static cursor 和 Doctor Fixture",
+    "observation": "工具注册、后台和 Operations fallback 含 unbound；Doctor 使用 fixtureEnvironment。",
+    "status": "open",
+    "remediationTasks": [
+      "B14"
+    ]
+  },
+  {
+    "id": "NF020",
+    "severity": "P1",
+    "area": "Testing",
+    "title": "Unit/Integration/Live/Pack Lane 仍重叠和误名",
+    "observation": "Unit 包含 integration/E2E/performance/release/gates；环境型 W1 测试导致 Matrix 漂移。",
+    "status": "open",
+    "remediationTasks": [
+      "B02"
+    ]
+  },
+  {
+    "id": "NF021",
+    "severity": "P1",
+    "area": "Corpus",
+    "title": "Corpus v2 是模板化短 Case，不是 Publication-grade 独立轨迹",
+    "observation": "180 条来自 family/variant 生成；没有完整 Workspace、Pi JSONL、Store Snapshot 和真实 task clusters。",
+    "status": "open",
+    "remediationTasks": [
+      "B26"
+    ]
+  },
+  {
+    "id": "NF022",
+    "severity": "P1",
+    "area": "Performance",
+    "title": "B0/B1 Promise.all 并发造成 Provider 争用",
+    "observation": "同一时间运行两臂，延迟差受排队/缓存/吞吐竞争影响。",
+    "status": "open",
+    "remediationTasks": [
+      "B25"
+    ]
+  },
+  {
+    "id": "NF023",
+    "severity": "P1",
+    "area": "Cache",
+    "title": "没有真实 Prompt Cache 经济学",
+    "observation": "报告只有下一轮 input 与估算 receipt，缺 cache hit/write/read、first-different 与价格映射。",
+    "status": "open",
+    "remediationTasks": [
+      "B18",
+      "B19"
+    ]
+  },
+  {
+    "id": "NF024",
+    "severity": "P1",
+    "area": "CI",
+    "title": "Required Workflow 未要求最终 Live Publication Lane",
+    "observation": "Required 运行合成/组件 W1/W2 smoke，不执行 post-fix 100×3、真实阈值、overflow、recursive。",
+    "status": "open",
+    "remediationTasks": [
+      "B31"
+    ]
+  },
+  {
+    "id": "NF025",
+    "severity": "P1",
+    "area": "CI",
+    "title": "Branch Protection 未被真实核验",
+    "observation": "verify-protection 只解析 YAML job 名；GitHub rulesets 为空，classic protection 未能读取。",
+    "status": "open",
+    "remediationTasks": [
+      "B05"
+    ]
+  },
+  {
+    "id": "NF026",
+    "severity": "P1",
+    "area": "Docs",
+    "title": "HANDOFF/COMPATIBILITY/OPERATIONS 与当前状态不一致",
+    "observation": "Handoff 仍指旧快照；Compatibility 版本口径漂移；Operations 把 YAML 校验写成 apply protection。",
+    "status": "open",
+    "remediationTasks": [
+      "B06"
+    ]
+  },
+  {
+    "id": "NF027",
+    "severity": "P1",
+    "area": "Release",
+    "title": "Deterministic Gate Artifact 绑定旧 Commit",
+    "observation": "gate-decision commit=8855d45，当前 HEAD=6c5c5b5，且 liveProvider=false。",
+    "status": "open",
+    "remediationTasks": [
+      "B28",
+      "B31"
+    ]
+  },
+  {
+    "id": "NF028",
+    "severity": "P1",
+    "area": "Packaging",
+    "title": "Package 仍 private:true/UNLICENSED",
+    "observation": "当前只能视为内部 tarball，不能写成常规开源/npm release ready。",
+    "status": "open",
+    "remediationTasks": [
+      "B06",
+      "B31"
+    ]
+  },
+  {
+    "id": "NF029",
+    "severity": "P1",
+    "area": "Reporting",
+    "title": "Live Report 混合修复前 300 对与修复后 30 对",
+    "observation": "报告 HEAD 为 a6281b3，附录补充 post-backfill 结果；缺单一最终 Run。",
+    "status": "open",
+    "remediationTasks": [
+      "B28"
+    ]
+  },
+  {
+    "id": "NF030",
+    "severity": "P1",
+    "area": "Evidence",
+    "title": "Run Provenance 与任务证据不可独立验证",
+    "observation": "task evidence runBundleHashes 为空；Live 缺容器、完整请求、raw JSONL、Provider request IDs、当前 HEAD 绑定。",
+    "status": "open",
+    "remediationTasks": [
+      "B03",
+      "B07",
+      "B27"
+    ]
+  }
+]

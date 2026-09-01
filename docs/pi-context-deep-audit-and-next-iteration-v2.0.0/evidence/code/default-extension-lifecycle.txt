@@ -1,0 +1,150 @@
+# Source: apps/pi-context-runtime/src/extension.ts
+# Lines: 114-260
+
+   114  function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
+   115    const owner = claimPiContextOwner("pi-context-runtime");
+   116    const userTurns = registerProductionUserTurnRuntime(pi as never);
+   117    const identity = { create: createRuntimeCursor };
+   118    registerContextHook({
+   119      on(hook, handler) {
+   120        pi.on(hook, async (event, ctx) => {
+   121          if (hook !== "context") return handler(event, ctx);
+   122          let derived;
+   123          try {
+   124            derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+   125          } catch {
+   126            return { messages: event.messages };
+   127          }
+   128          await userTurns.ensure(ctx as never);
+   129          const host = ctx && typeof ctx === "object"
+   130            ? ctx as PiRuntimeContext & { abort?: () => void; now?: number; model?: { contextWindow?: number; maxTokens?: number } }
+   131            : undefined;
+   132          return handler(event, {
+   133            abort: () => {
+   134              if (typeof host?.abort === "function") host.abort();
+   135            },
+   136            signal: host?.signal,
+   137            workspaceId: derived.workspaceId,
+   138            sessionId: derived.sessionId,
+   139            leafId: derived.leafId,
+   140            lineageHash: derived.lineageHash,
+   141            modelKey: derived.modelKey,
+   142            now: typeof host?.now === "number" && Number.isFinite(host.now) ? host.now : 0,
+   143            currentContextWindow: host?.model?.contextWindow,
+   144            maxOutputTokens: host?.model?.maxTokens,
+   145          });
+   146        });
+   147      },
+   148    }, {
+   149      open: (sessionCtx) => userTurns.openSession(sessionCtx),
+   150    });
+   151    let staged: StagedCompaction | null = null;
+   152    registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
+   153      async prepareCompaction(event, ctx) {
+   154        try {
+   155          const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+   156          await userTurns.ensure(ctx as never);
+   157          const session = await userTurns.openSession(derived);
+   158          const compact = session.prepareCompaction;
+   159          if (typeof compact !== "function") return { kind: "native-fallback" };
+   160          const sourceMessages = [
+   161            ...(Array.isArray(event.preparation.messagesToSummarize) ? event.preparation.messagesToSummarize : []),
+   162            ...(Array.isArray(event.preparation.turnPrefixMessages) ? event.preparation.turnPrefixMessages : []),
+   163          ];
+   164          const tailTexts = collectCompactionSourceTexts(event.preparation.retainedTail);
+   165          const decision = await compact.call(session, {
+   166            operationId: "op_compact",
+   167            cursor: sessionCursor(derived),
+   168            reason: event.reason,
+   169            now: Date.now(),
+   170            tokensBefore: event.preparation.tokensBefore,
+   171            firstKeptEntryId: event.preparation.firstKeptEntryId,
+   172            messagesToSummarize: sourceMessages,
+   173            retainedTailTokens: tailTexts.length === 0
+   174              ? undefined
+   175              : tailTexts.reduce((sum, text) => sum + estimateTextTokens(text), 0),
+   176            signal: ctx.signal,
+   177          });
+   178          return toPiDecision(decision);
+   179        } catch (error) {
+   180          if (error && typeof error === "object" && "name" in error && error.name === "AbortError") throw error;
+   181          return { kind: "native-fallback" };
+   182        }
+   183      },
+   184      async stageCompaction(result) {
+   185        staged = {
+   186          candidate: {
+   187            firstKeptEntryId: result.firstKeptEntryId,
+   188            summary: result.summary,
+   189            tokensBefore: result.tokensBefore,
+   190            estimatedTokensAfter: result.estimatedTokensAfter,
+   191            details: result.details,
+   192          },
+   193          result,
+   194        };
+   195      },
+   196      async ackHostCompaction(entry) {
+   197        ackHostCompaction(staged, entry, () => {
+   198          staged = null;
+   199        });
+   200      },
+   201      async failStagedCompaction() {
+   202        failStagedCompaction(staged, () => {
+   203          staged = null;
+   204        });
+   205      },
+   206    });
+   207    let lastRecoveredCursor: RuntimeCursor | undefined;
+   208    registerSessionLifecycle(pi as never, {
+   209      async openSession(ctx, reason, hasRawBlobs = true) {
+   210        const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+   211        lastRecoveredCursor = cursor;
+   212        await userTurns.ensure(ctx as never);
+   213        const report = await userTurns.recover({
+   214          cursor,
+   215          reason: toPcrSessionStartReason(reason),
+   216          hasRawBlobs,
+   217          signal: ctx.signal,
+   218        });
+   219        lastRecoveredCursor = report.cursor;
+   220        return report.cursor;
+   221      },
+   222      async switchBranch(ctx, newLeafId) {
+   223        const previous = lastRecoveredCursor;
+   224        await userTurns.ensure(ctx as never);
+   225        const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+   226        if (previous) {
+   227          await userTurns.branchChanged({ cursor, previousCursor: previous, newLeafId, signal: ctx.signal });
+   228        }
+   229        lastRecoveredCursor = cursor;
+   230      },
+   231      async closeSession(ctx) {
+   232        const cursor = lastRecoveredCursor ?? sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
+   233        await userTurns.closeSession(cursor);
+   234      },
+   235      async invalidateRouteCandidates() {},
+   236    });
+   237    let worker: CandidateWorker | undefined;
+   238    const backgroundSnapshot = (): CandidateSnapshot => {
+   239      const cursor = lastRecoveredCursor ?? createRuntimeCursor({
+   240        workspacePath: process.cwd(),
+   241        sessionId: "unbound",
+   242        leafId: null,
+   243        lineageEntryIds: ["unbound"],
+   244        modelKey: "unbound",
+   245      });
+   246      return {
+   247        workspaceId: cursor.workspaceId,
+   248        sessionId: cursor.sessionId,
+   249        leafId: cursor.leafId ?? "header",
+   250        lineageHash: cursor.lineageHash,
+   251        sourceHead: "src_runtime",
+   252        modelKey: cursor.modelKey,
+   253        thinkingLevel: "off",
+   254        contextWindow: 128000,
+   255        systemPromptHash: "sys_runtime",
+   256        activeToolSetHash: "tools_runtime",
+   257        reducerRevisionSet: "red_runtime",
+   258        extractorRevision: "ext_runtime",
+   259        schemaVersion: "1",
+   260        configFingerprint: "cfg_runtime",

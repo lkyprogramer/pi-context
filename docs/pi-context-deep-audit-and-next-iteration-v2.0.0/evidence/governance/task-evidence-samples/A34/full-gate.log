@@ -1,0 +1,4 @@
+typecheck: PASS
+unit: Test Files 180 passed / Tests 810 passed
+integration: Test Files 22 passed / Tests 49 passed
+benchmark:corpus:verify: PASS 30 clusters

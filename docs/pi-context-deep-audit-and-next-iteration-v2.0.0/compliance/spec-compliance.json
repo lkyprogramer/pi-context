@@ -1,0 +1,242 @@
+[
+  {
+    "id": "S01",
+    "requirement": "单一 RuntimeSession/Context Owner",
+    "status": "not-met",
+    "evidence": "composition-root.ts:887-905",
+    "finding": "NF004",
+    "note": "Ingress 直接返回底层 service，绕过 RuntimeSession 写队列"
+  },
+  {
+    "id": "S02",
+    "requirement": "真实 workspace/session/leaf/model Cursor",
+    "status": "aligned",
+    "evidence": "composition-root.ts: derivePiSessionContext",
+    "finding": "",
+    "note": "真实派生并做 scope 校验"
+  },
+  {
+    "id": "S03",
+    "requirement": "Tool Result → encrypted CAS → reducer → evidence/FTS",
+    "status": "aligned",
+    "evidence": "composition-root.ts:500-600",
+    "finding": "",
+    "note": "产品纵向链路已接通"
+  },
+  {
+    "id": "S04",
+    "requirement": "Authenticated user raw full-turn retention",
+    "status": "aligned",
+    "evidence": "user-turn retention/store tests",
+    "finding": "",
+    "note": "作为结构抽取漏检的事实兜底"
+  },
+  {
+    "id": "S05",
+    "requirement": "持久 Directive/Claim/Continuity",
+    "status": "aligned",
+    "evidence": "state-store tests",
+    "finding": "",
+    "note": "模块与重启测试存在"
+  },
+  {
+    "id": "S06",
+    "requirement": "Context 与 Compaction 使用同一事务 Snapshot",
+    "status": "partial",
+    "evidence": "composition-root.ts:717-745,781-815",
+    "finding": "NF006",
+    "note": "Materialize readSnapshot；Compaction 分散读且 transaction 是空包装"
+  },
+  {
+    "id": "S07",
+    "requirement": "Request materializer 注入 directive/continuity/claim/directory/recall/lease",
+    "status": "partial",
+    "evidence": "composition-root.ts:799-815",
+    "finding": "NF017",
+    "note": "仅 directives+continuity+claims；directory/recall/lease 缺失"
+  },
+  {
+    "id": "S08",
+    "requirement": "I_eff 包含 system/tools/output/provider/image",
+    "status": "partial",
+    "evidence": "composition-root.ts:792-807",
+    "finding": "NF016",
+    "note": "产品只从 imageBlocks 推 reserve"
+  },
+  {
+    "id": "S09",
+    "requirement": "Cache Receipt 与真实 Provider cache usage",
+    "status": "partial",
+    "evidence": "cache receipt + no provider usage wiring",
+    "finding": "NF023",
+    "note": "当前主要为估算 section receipt"
+  },
+  {
+    "id": "S10",
+    "requirement": "Store-built verified Checkpoint",
+    "status": "partial",
+    "evidence": "composition-root.ts:713-754,818-840",
+    "finding": "NF006",
+    "note": "状态已持久化，但 backfill/查询非同事务"
+  },
+  {
+    "id": "S11",
+    "requirement": "Pointer 可读且 scope 正确",
+    "status": "aligned-component",
+    "evidence": "pointer verifier tests",
+    "finding": "NF010",
+    "note": "组件正确；Legacy Live exactRecovery 未使用"
+  },
+  {
+    "id": "S12",
+    "requirement": "Tool-pair/retained-tail/two-run hash Hard Gate",
+    "status": "partial",
+    "evidence": "hard-gates.ts vs live report constant",
+    "finding": "NF008",
+    "note": "模块存在，产品/Live 未接入"
+  },
+  {
+    "id": "S13",
+    "requirement": "Compaction stage/ack/failure durable",
+    "status": "not-met",
+    "evidence": "extension.ts:151-205, ports acknowledge empty",
+    "finding": "NF007",
+    "note": "单进程 staged 变量，重启丢失"
+  },
+  {
+    "id": "S14",
+    "requirement": "Restart/branch 多会话隔离",
+    "status": "partial",
+    "evidence": "extension.ts:207-235",
+    "finding": "NF005",
+    "note": "全局 lastRecoveredCursor"
+  },
+  {
+    "id": "S15",
+    "requirement": "Semantic/background 默认关闭",
+    "status": "not-met",
+    "evidence": "extension.ts:237-320",
+    "finding": "NF018",
+    "note": "默认注册 background hook，且用 fixture hashes"
+  },
+  {
+    "id": "S16",
+    "requirement": "无 unbound/fixture 生产降级",
+    "status": "partial",
+    "evidence": "extension.ts:239-260,332-384",
+    "finding": "NF019",
+    "note": "工具与后台仍含 unbound/fixture"
+  },
+  {
+    "id": "S17",
+    "requirement": "真实 Pi B0/B1/B2/F0",
+    "status": "not-met",
+    "evidence": "w5.ts:168-176; live runner only B0/B1",
+    "finding": "NF013",
+    "note": "B2/F0 仍非真实"
+  },
+  {
+    "id": "S18",
+    "requirement": "Probe-only Reader/Executor 评分",
+    "status": "not-met",
+    "evidence": "paired-w2-live.ts:209-233",
+    "finding": "NF009",
+    "note": "Summary 可替 Probe 得分，非回答可过"
+  },
+  {
+    "id": "S19",
+    "requirement": "Exact CAS Recovery=100%",
+    "status": "not-met",
+    "evidence": "paired-w2-live.ts:331",
+    "finding": "NF010",
+    "note": "当前 recovered=fromExtension && no visible leak"
+  },
+  {
+    "id": "S20",
+    "requirement": "真实 Tool Pair 评分",
+    "status": "not-met",
+    "evidence": "paired-w2-live.ts:589",
+    "finding": "NF008",
+    "note": "常量 0，且 Pi --no-tools"
+  },
+  {
+    "id": "S21",
+    "requirement": "受控 3 Replicate/Seed",
+    "status": "not-met",
+    "evidence": "paired-w2-live.ts loop labels only",
+    "finding": "NF011",
+    "note": "seed 不进入模型或 trace，不能视为独立随机重复"
+  },
+  {
+    "id": "S22",
+    "requirement": "30 independent clusters × 3 seeds",
+    "status": "partial",
+    "evidence": "corpus-v2 templates",
+    "finding": "NF021",
+    "note": "30 family labels下模板化短 Case，不是独立真实 task cluster"
+  },
+  {
+    "id": "S23",
+    "requirement": "Natural Threshold 自动触发",
+    "status": "not-met",
+    "evidence": "natural-threshold.json",
+    "finding": "NF014",
+    "note": "0 compactions"
+  },
+  {
+    "id": "S24",
+    "requirement": "真实 Provider Overflow Recovery",
+    "status": "not-met",
+    "evidence": "overflow.json",
+    "finding": "NF014",
+    "note": "overflowObserved=false"
+  },
+  {
+    "id": "S25",
+    "requirement": "Recursive ≥3 compactions + branch/restart/recall",
+    "status": "not-met",
+    "evidence": "recursive.json",
+    "finding": "NF014",
+    "note": "仅 compact-1"
+  },
+  {
+    "id": "S26",
+    "requirement": "Required + Compatibility 全绿",
+    "status": "not-met",
+    "evidence": "GitHub runs 33478592667/33478592798",
+    "finding": "NF001",
+    "note": "Required success；Compatibility failure"
+  },
+  {
+    "id": "S27",
+    "requirement": "GitHub Branch Protection Required Checks",
+    "status": "unverified",
+    "evidence": "verify-protection only parses YAML",
+    "finding": "NF025",
+    "note": "Rulesets 为空；classic endpoint无权限核验"
+  },
+  {
+    "id": "S28",
+    "requirement": "不可变权威 Run Bundle",
+    "status": "not-met",
+    "evidence": "raw 100×3 gitignored; gate stale commit",
+    "finding": "NF012",
+    "note": "无法独立复算修复后最终结论"
+  },
+  {
+    "id": "S29",
+    "requirement": "发布声明仅由 Live Hard+Quality+Efficiency Gate",
+    "status": "partial",
+    "evidence": "current publicationClaim=false; v3 gate can adopt synthetic",
+    "finding": "NF015",
+    "note": "当前人工结论保守，但 Gate 类型约束不够"
+  },
+  {
+    "id": "S30",
+    "requirement": "文档、Handoff、Compatibility 与当前状态一致",
+    "status": "not-met",
+    "evidence": "HANDOFF/COMPATIBILITY/OPERATIONS",
+    "finding": "NF026",
+    "note": "仍描述旧 HEAD、旧结果和不准确 protection 操作"
+  }
+]

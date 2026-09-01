@@ -1,0 +1,104 @@
+[
+  {
+    "path": "apps/pi-context-runtime/src/composition-root.ts",
+    "lines": "887-905",
+    "severity": "P0",
+    "issue": "Ingress bypasses RuntimeSession"
+  },
+  {
+    "path": "apps/pi-context-runtime/src/composition-root.ts",
+    "lines": "717-745",
+    "severity": "P0",
+    "issue": "Compaction snapshot transaction is non-atomic"
+  },
+  {
+    "path": "apps/pi-context-runtime/src/composition-root.ts",
+    "lines": "781-815",
+    "severity": "P1",
+    "issue": "Materializer omits directory/recall/lease and full reserves"
+  },
+  {
+    "path": "apps/pi-context-runtime/src/composition-root.ts",
+    "lines": "818-840",
+    "severity": "P0",
+    "issue": "Compaction acknowledge port is empty"
+  },
+  {
+    "path": "apps/pi-context-runtime/src/extension.ts",
+    "lines": "151-205",
+    "severity": "P0",
+    "issue": "Staged compaction is in-memory only"
+  },
+  {
+    "path": "apps/pi-context-runtime/src/extension.ts",
+    "lines": "207-235",
+    "severity": "P0",
+    "issue": "Global lifecycle cursor"
+  },
+  {
+    "path": "apps/pi-context-runtime/src/extension.ts",
+    "lines": "237-320",
+    "severity": "P1",
+    "issue": "Background default-on with fixture snapshot"
+  },
+  {
+    "path": "apps/pi-context-runtime/src/extension.ts",
+    "lines": "332-384",
+    "severity": "P1",
+    "issue": "Unbound/static tools and doctor fixture"
+  },
+  {
+    "path": "tests/live-gate/paired-w2-live.ts",
+    "lines": "196-233",
+    "severity": "P0",
+    "issue": "Summary-contaminated weak scorer"
+  },
+  {
+    "path": "tests/live-gate/paired-w2-live.ts",
+    "lines": "331",
+    "severity": "P0",
+    "issue": "Recovery proxy, not CAS exact read"
+  },
+  {
+    "path": "tests/live-gate/paired-w2-live.ts",
+    "lines": "382-390,428-435",
+    "severity": "P0",
+    "issue": "Concurrent arms and label-only seed"
+  },
+  {
+    "path": "tests/live-gate/paired-w2-live.ts",
+    "lines": "586-592",
+    "severity": "P0",
+    "issue": "toolPairViolation constant 0"
+  },
+  {
+    "path": "packages/benchmark/src/lanes/w5.ts",
+    "lines": "168-176",
+    "severity": "P0",
+    "issue": "B0/B1/B2 are string stubs"
+  },
+  {
+    "path": "packages/benchmark/src/lanes/w5.ts",
+    "lines": "536,613",
+    "severity": "P0",
+    "issue": "Constant integrity and synthetic publication risk"
+  },
+  {
+    "path": "vitest.unit.config.ts",
+    "lines": "6-22",
+    "severity": "P1",
+    "issue": "Unit lane includes integration/E2E/performance/gates"
+  },
+  {
+    "path": "scripts/ci/verify-protection.mjs",
+    "lines": "24-45",
+    "severity": "P1",
+    "issue": "Only parses workflow YAML; no GitHub protection check"
+  },
+  {
+    "path": "docs/pi-context-current-state-audit-next-plan-v1.0.0/scripts/taskctl.py",
+    "lines": "25-29",
+    "severity": "P0",
+    "issue": "Done checks only evidence file existence"
+  }
+]

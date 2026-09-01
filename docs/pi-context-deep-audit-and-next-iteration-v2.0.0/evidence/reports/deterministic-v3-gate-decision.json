@@ -1,0 +1,15 @@
+{
+  "decision": "keep-pi-native",
+  "publicationClaim": false,
+  "reasons": [
+    "insufficient-net"
+  ],
+  "missing": [],
+  "liveProvider": false,
+  "commit": "8855d45a9307d4f7b51a7e041e6659568d3da840",
+  "boundHashes": {
+    "boundary": 90,
+    "overflow": true,
+    "fault": 0
+  }
+}

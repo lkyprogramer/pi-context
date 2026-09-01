@@ -1,0 +1,35 @@
+# Source: vitest.unit.config.ts
+# Lines: 1-32
+
+     1  import { defineConfig } from "vitest/config";
+     2  
+     3  export default defineConfig({
+     4    test: {
+     5      testTimeout: 15_000,
+     6      include: [
+     7        "packages/*/test/**/*.test.ts",
+     8        "apps/*/test/**/*.test.ts",
+     9        "tests/audit/**/*.test.ts",
+    10        "tests/meta/**/*.test.ts",
+    11        "tests/ci/**/*.test.ts",
+    12        "tests/contract/**/*.test.ts",
+    13        "tests/security/**/*.test.ts",
+    14        "tests/fault/**/*.test.ts",
+    15        "tests/performance/**/*.test.ts",
+    16        "tests/integration/**/*.test.ts",
+    17        "tests/w1-gate/**/*.test.ts",
+    18        "tests/w2-gate/**/*.test.ts",
+    19        "tests/release/**/*.test.ts",
+    20        "tests/tasks/**/*.test.ts",
+    21        "tests/e2e/**/*.test.ts",
+    22      ],
+    23      exclude: [
+    24        "tests/release/clean-install.test.ts",
+    25        "tests/tasks/t06.test.ts",
+    26        "tests/tasks/t52.test.ts",
+    27        "tests/live-gate/**",
+    28        "tests/live/**",
+    29        "tests/acceptance/**",
+    30      ],
+    31    },
+    32  });

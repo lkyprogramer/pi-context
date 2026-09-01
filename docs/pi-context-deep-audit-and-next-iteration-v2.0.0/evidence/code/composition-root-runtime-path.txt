@@ -1,0 +1,260 @@
+# Source: apps/pi-context-runtime/src/composition-root.ts
+# Lines: 664-920
+
+   664    async function portsFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSessionPorts> {
+   665      const userTurn = owner.service(cursor);
+   666      const observation = owner.observation(cursor);
+   667      const evidence = owner.evidence(cursor);
+   668      const resolver = createDirectiveResolver({
+   669        cursor,
+   670        store: {
+   671          put: (record) => owner.state.putDirective(record),
+   672          list: (scope) => owner.state.listDirectives(scope),
+   673        },
+   674      });
+   675      const model = ctx?.model;
+   676      const contextWindow = typeof model?.contextWindow === "number" ? model.contextWindow : undefined;
+   677      const maxOutputTokens = typeof model?.maxTokens === "number" ? model.maxTokens : undefined;
+   678      if (contextWindow === undefined || maxOutputTokens === undefined) {
+   679        // Route is calibrated on materialize from the request; register a fail-closed placeholder only when host limits exist.
+   680      }
+   681      const routeModel = cursor.modelKey;
+   682      const routes = contextWindow !== undefined && maxOutputTokens !== undefined
+   683        ? {
+   684          [routeModel]: {
+   685            modelKey: routeModel,
+   686            contextWindow,
+   687            maxOutputTokens,
+   688            providerReservedTokens: 0,
+   689          },
+   690        }
+   691        : {
+   692          [routeModel]: {
+   693            modelKey: routeModel,
+   694            contextWindow: 1,
+   695            maxOutputTokens: 0,
+   696            providerReservedTokens: 0,
+   697          },
+   698        };
+   699      const pricer = createTokenPricer({ cursor, routes });
+   700      const cache = createCacheReceipt({
+   701        cursor,
+   702        store: {
+   703          put: (receipt: CacheReceiptRecord) => owner.state.putCacheReceipt(receipt),
+   704          head: async (scope) => (await owner.state.headCacheReceipt(scope)) as CacheReceiptRecord | null,
+   705        },
+   706      });
+   707      const materializer = createMaterializer({
+   708        cursor,
+   709        pricer,
+   710        planner: createSectionPlanner({ cursor, pricer }),
+   711        cache,
+   712      });
+   713      const compaction = createCompactionService({
+   714        cursor,
+   715        assembler: createCompactionSnapshotAssembler({
+   716          cursor,
+   717          transaction: {
+   718            async run(work) {
+   719              return work();
+   720            },
+   721          },
+   722          directives: {
+   723            async active(scope, signal) {
+   724              signal?.throwIfAborted();
+   725              return resolver.active(scope, signal);
+   726            },
+   727          },
+   728          continuity: {
+   729            async current(scope) {
+   730              return ((await owner.state.headContinuity(scope)) as ContinuityRevision | null)
+   731                ?? emptyContinuityRevision(scope);
+   732            },
+   733          },
+   734          claims: {
+   735            async list(scope, signal) {
+   736              signal?.throwIfAborted();
+   737              const rows = await owner.state.listClaims(scope);
+   738              return rows.filter((row) => row.status === "active") as CompactionClaim[];
+   739            },
+   740          },
+   741          evidence: {
+   742            async pointers(scope, signal) {
+   743              signal?.throwIfAborted();
+   744              const snapshot = await owner.state.readSnapshot(scope);
+   745              return snapshot.pointers;
+   746            },
+   747          },
+   748        }),
+   749        renderer: createCheckpointRenderer({ cursor }),
+   750        verifier: createCheckpointVerifier({
+   751          cursor,
+   752          pointers: createPointerCheck(owner.blobs),
+   753        }),
+   754      });
+   755      const recovery = createRecoveryService({
+   756        cursor,
+   757        sessions: {
+   758          async open() {
+   759            return owner.sessions.get(cursorKey(cursor));
+   760          },
+   761          async close(sessionId) {
+   762            const bound = owner.cursorsBySession.get(sessionId);
+   763            if (!bound) return;
+   764            owner.sessions.delete(cursorKey(bound));
+   765          },
+   766        },
+   767        journal: {
+   768          reconcile: (snapshot) => owner.saga.reconcile(snapshot),
+   769        },
+   770        candidates: {
+   771          async invalidate(scope, reason, signal) {
+   772            return owner.candidates.invalidateScope?.(scope, reason, signal) ?? 0;
+   773          },
+   774        },
+   775      });
+   776      return {
+   777        userInput: { capture: (input) => userTurn.capture(input) },
+   778        toolResult: { ingest: (input) => observation.ingest(input) },
+   779        materialization: {
+   780          async materialize(request) {
+   781            const rows = await owner.state.readSnapshot(cursor);
+   782            const continuity = (rows.continuity as ContinuityRevision | null) ?? emptyContinuityRevision(cursor);
+   783            assembleRuntimeSnapshot({
+   784              cursor,
+   785              directives: rows.directives.filter((row) => row.status === "active"),
+   786              claims: rows.claims.filter((row) => row.status === "active"),
+   787              continuity,
+   788              pointers: rows.pointers,
+   789              sourceEntryIds: rows.sourceEntryIds,
+   790              schemaVersion: rows.schemaVersion,
+   791            });
+   792            const imageBlocks = request.canonicalMessages.reduce((count, message) => (
+   793              count + message.content.filter((block) => block.type === "image-ref").length
+   794            ), 0);
+   795            const reserves = reservesFromPayload({ imageBlocks });
+   796            if (typeof request.currentContextWindow !== "number" || request.currentContextWindow <= 0) {
+   797              throw Object.assign(new Error("PCR_BUDGET_ROUTE_UNKNOWN"), { code: "PCR_BUDGET_ROUTE_UNKNOWN" });
+   798            }
+   799            return materializer.materialize({
+   800              cursor: request.cursor,
+   801              canonicalMessages: request.canonicalMessages,
+   802              currentContextWindow: request.currentContextWindow,
+   803              maxOutputTokens: request.maxOutputTokens,
+   804              reason: request.reason,
+   805              now: request.now,
+   806              signal: request.signal,
+   807              ...reserves,
+   808            }, {
+   809              cursor,
+   810              directives: quoteMessages(rows.directives.filter((row) => row.status === "active")),
+   811              continuity: [
+   812                ...continuityMessages(continuity),
+   813                ...claimMessages(rows.claims.filter((row) => row.status === "active")),
+   814              ],
+   815            });
+   816          },
+   817        },
+   818        compaction: {
+   819          prepare: async (input) => {
+   820            const active = await resolver.active(cursor, input.signal);
+   821            if (active.length === 0) {
+   822              const seen = new Set<string>();
+   823              for (const rawText of collectCompactionSourceTexts(input.messagesToSummarize)) {
+   824                const digest = domainHash("compact-backfill", rawText);
+   825                if (seen.has(digest)) continue;
+   826                seen.add(digest);
+   827                await userTurn.capture({
+   828                  operationId: `op_backfill_${digest.slice(0, 24)}`,
+   829                  cursor,
+   830                  rawText,
+   831                  sourceClass: "authenticated-user",
+   832                  capturedAt: input.now,
+   833                  signal: input.signal,
+   834                });
+   835              }
+   836            }
+   837            return compaction.prepareCompaction(input);
+   838          },
+   839          async acknowledge() {},
+   840        },
+   841        retrieval: {
+   842          search: (input) => evidence.search({ cursor: input.cursor, text: input.text, limit: input.limit, signal: input.signal }),
+   843          read: (input) => evidence.read({ cursor: input.cursor, evidenceId: input.evidenceId, range: input.range, signal: input.signal }),
+   844        },
+   845        recovery: {
+   846          recover: (input) => recovery.onSessionStart({
+   847            cursor: input.cursor,
+   848            reason: input.reason,
+   849            hasRawBlobs: input.hasRawBlobs,
+   850            ...(input.hostSnapshot === undefined ? {} : { hostSnapshot: input.hostSnapshot }),
+   851            signal: input.signal,
+   852          }),
+   853          branchChanged: (input) => recovery.onBranchChange({
+   854            cursor: input.cursor,
+   855            previousCursor: input.previousCursor,
+   856            newLeafId: input.newLeafId,
+   857            signal: input.signal,
+   858          }),
+   859        },
+   860      };
+   861    }
+   862  
+   863    async function sessionFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSession> {
+   864      const key = cursorKey(cursor);
+   865      const existing = owner.sessions.get(key);
+   866      if (existing) return existing;
+   867      const session = createRuntimeSession({
+   868        scope: {
+   869          workspaceId: cursor.workspaceId,
+   870          sessionId: cursor.sessionId,
+   871          leafId: cursor.leafId,
+   872          lineageHash: cursor.lineageHash,
+   873        },
+   874        ports: await portsFor(owner, cursor, ctx),
+   875      });
+   876      owner.sessions.set(key, session);
+   877      owner.cursorsBySession.set(cursor.sessionId, cursor);
+   878      return session;
+   879    }
+   880  
+   881    async function ownerByWorkspace(workspaceId: string | undefined): Promise<WorkspaceUserTurnOwner | undefined> {
+   882      if (workspaceId && owners.has(workspaceId)) return owners.get(workspaceId);
+   883      if (owners.size === 1) return [...owners.values()][0];
+   884      return undefined;
+   885    }
+   886  
+   887    const hook = registerUserInputHook(pi, {
+   888      cursor: cursorFromContext,
+   889      async service(cursor, ctx) {
+   890        const owner = await ownerFor(cursor, ctx);
+   891        await sessionFor(owner, cursor, ctx);
+   892        return owner.service(cursor);
+   893      },
+   894      clock,
+   895      async onHardFailure(error, phase, ctx) {
+   896        await options.onHardFailure?.(error, phase, ctx);
+   897      },
+   898    });
+   899    registerToolResultHook(pi, {
+   900      cursor: cursorFromContext,
+   901      async service(cursor, ctx) {
+   902        const owner = await ownerFor(cursor, ctx);
+   903        await sessionFor(owner, cursor, ctx);
+   904        return owner.observation(cursor);
+   905      },
+   906      clock,
+   907      async onHardFailure(error, phase, ctx) {
+   908        await options.onHardFailure?.(error, phase, ctx);
+   909      },
+   910    });
+   911  
+   912    const close = async (): Promise<void> => {
+   913      const pending = [...owners.values()];
+   914      owners.clear();
+   915      const settled = await Promise.allSettled(pending.map(async (owner) => (await owner).close()));
+   916      const rejected = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
+   917      if (rejected) throw rejected.reason;
+   918    };
+   919    pi.on("session_shutdown", async () => close());
+   920    return Object.freeze({

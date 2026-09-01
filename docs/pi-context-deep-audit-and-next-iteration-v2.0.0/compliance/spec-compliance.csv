@@ -1,0 +1,31 @@
+﻿id,requirement,status,evidence,finding,note
+S01,单一 RuntimeSession/Context Owner,not-met,composition-root.ts:887-905,NF004,Ingress 直接返回底层 service，绕过 RuntimeSession 写队列
+S02,真实 workspace/session/leaf/model Cursor,aligned,composition-root.ts: derivePiSessionContext,,真实派生并做 scope 校验
+S03,Tool Result → encrypted CAS → reducer → evidence/FTS,aligned,composition-root.ts:500-600,,产品纵向链路已接通
+S04,Authenticated user raw full-turn retention,aligned,user-turn retention/store tests,,作为结构抽取漏检的事实兜底
+S05,持久 Directive/Claim/Continuity,aligned,state-store tests,,模块与重启测试存在
+S06,Context 与 Compaction 使用同一事务 Snapshot,partial,"composition-root.ts:717-745,781-815",NF006,Materialize readSnapshot；Compaction 分散读且 transaction 是空包装
+S07,Request materializer 注入 directive/continuity/claim/directory/recall/lease,partial,composition-root.ts:799-815,NF017,仅 directives+continuity+claims；directory/recall/lease 缺失
+S08,I_eff 包含 system/tools/output/provider/image,partial,composition-root.ts:792-807,NF016,产品只从 imageBlocks 推 reserve
+S09,Cache Receipt 与真实 Provider cache usage,partial,cache receipt + no provider usage wiring,NF023,当前主要为估算 section receipt
+S10,Store-built verified Checkpoint,partial,"composition-root.ts:713-754,818-840",NF006,状态已持久化，但 backfill/查询非同事务
+S11,Pointer 可读且 scope 正确,aligned-component,pointer verifier tests,NF010,组件正确；Legacy Live exactRecovery 未使用
+S12,Tool-pair/retained-tail/two-run hash Hard Gate,partial,hard-gates.ts vs live report constant,NF008,模块存在，产品/Live 未接入
+S13,Compaction stage/ack/failure durable,not-met,"extension.ts:151-205, ports acknowledge empty",NF007,单进程 staged 变量，重启丢失
+S14,Restart/branch 多会话隔离,partial,extension.ts:207-235,NF005,全局 lastRecoveredCursor
+S15,Semantic/background 默认关闭,not-met,extension.ts:237-320,NF018,默认注册 background hook，且用 fixture hashes
+S16,无 unbound/fixture 生产降级,partial,"extension.ts:239-260,332-384",NF019,工具与后台仍含 unbound/fixture
+S17,真实 Pi B0/B1/B2/F0,not-met,w5.ts:168-176; live runner only B0/B1,NF013,B2/F0 仍非真实
+S18,Probe-only Reader/Executor 评分,not-met,paired-w2-live.ts:209-233,NF009,Summary 可替 Probe 得分，非回答可过
+S19,Exact CAS Recovery=100%,not-met,paired-w2-live.ts:331,NF010,当前 recovered=fromExtension && no visible leak
+S20,真实 Tool Pair 评分,not-met,paired-w2-live.ts:589,NF008,常量 0，且 Pi --no-tools
+S21,受控 3 Replicate/Seed,not-met,paired-w2-live.ts loop labels only,NF011,seed 不进入模型或 trace，不能视为独立随机重复
+S22,30 independent clusters × 3 seeds,partial,corpus-v2 templates,NF021,30 family labels下模板化短 Case，不是独立真实 task cluster
+S23,Natural Threshold 自动触发,not-met,natural-threshold.json,NF014,0 compactions
+S24,真实 Provider Overflow Recovery,not-met,overflow.json,NF014,overflowObserved=false
+S25,Recursive ≥3 compactions + branch/restart/recall,not-met,recursive.json,NF014,仅 compact-1
+S26,Required + Compatibility 全绿,not-met,GitHub runs 33478592667/33478592798,NF001,Required success；Compatibility failure
+S27,GitHub Branch Protection Required Checks,unverified,verify-protection only parses YAML,NF025,Rulesets 为空；classic endpoint无权限核验
+S28,不可变权威 Run Bundle,not-met,raw 100×3 gitignored; gate stale commit,NF012,无法独立复算修复后最终结论
+S29,发布声明仅由 Live Hard+Quality+Efficiency Gate,partial,current publicationClaim=false; v3 gate can adopt synthetic,NF015,当前人工结论保守，但 Gate 类型约束不够
+S30,文档、Handoff、Compatibility 与当前状态一致,not-met,HANDOFF/COMPATIBILITY/OPERATIONS,NF026,仍描述旧 HEAD、旧结果和不准确 protection 操作

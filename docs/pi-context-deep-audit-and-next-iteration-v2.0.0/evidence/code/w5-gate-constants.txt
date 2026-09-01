@@ -1,0 +1,125 @@
+# Source: packages/benchmark/src/lanes/w5.ts
+# Lines: 500-621
+
+   500    bundles: Readonly<Record<string, unknown>>;
+   501    familyRegressions: readonly string[];
+   502  }): RunBundle {
+   503    const boundary = asRecord(input.bundles.boundary);
+   504    const natural = asRecord(input.bundles["natural-threshold"]);
+   505    const overflow = asRecord(input.bundles.overflow);
+   506    const recursive = asRecord(input.bundles.recursive);
+   507    const fault = asRecord(input.bundles["fault-security"]);
+   508    const performance = asRecord(input.bundles["performance-cache"]);
+   509    const failures = Array.isArray(boundary.failures) ? boundary.failures : ["missing-failures"];
+   510    const pairs = finiteOr(boundary.pairs, 0);
+   511    const clusters = finiteOr(boundary.clusters, 0);
+   512    const seeds = Array.isArray(boundary.seeds) ? boundary.seeds.length : 0;
+   513    const leakCount = typeof fault.critical === "number" && Number.isSafeInteger(fault.critical) && fault.critical >= 0
+   514      ? fault.critical
+   515      : 1;
+   516    const overflowOk = overflow.ok === true;
+   517    const naturalOk = natural.ok === true;
+   518    const recursiveOk = recursive.sideEffectGuard === true && recursive.supersededDropped === true;
+   519    const cacheHelps = performance.warmCheaper === true;
+   520    const environmentOk = naturalOk && overflowOk && recursiveOk && cacheHelps && failures.length === 0;
+   521    const hashStable = failures.length === 0 && overflow.hashesChange === true;
+   522    const firstTokens = Array.isArray(overflow.retries) && overflow.retries[0] && typeof overflow.retries[0] === "object"
+   523      ? finiteOr((overflow.retries[0] as { tokensAfter?: unknown }).tokensAfter, 0)
+   524      : 0;
+   525    const lastTokens = Array.isArray(overflow.retries) && overflow.retries.at(-1) && typeof overflow.retries.at(-1) === "object"
+   526      ? finiteOr((overflow.retries.at(-1) as { tokensAfter?: unknown }).tokensAfter, 0)
+   527      : 0;
+   528    const realizedNetMedian = overflowOk && firstTokens > lastTokens ? 0 : overflowOk ? 0 : -1;
+   529    return {
+   530      runId: "w5-v3",
+   531      gate: "w2-compactor",
+   532      workspaceId: "ws-report",
+   533      integrity: {
+   534        oracleValidity: failures.length === 0 && pairs >= 90 && naturalOk ? 1 : 0,
+   535        directiveCoverage: recursiveOk ? 1 : 0,
+   536        toolPairViolations: 0,
+   537        recoveryRate: overflowOk && recursiveOk ? 1 : 0,
+   538        deterministicHashStable: hashStable,
+   539        leakCount,
+   540        unsupportedHighRisk: 0,
+   541        crossScopeReads: 0,
+   542      },
+   543      continuation: { environmentSuccess: environmentOk },
+   544      quality: { environmentSuccessLower: environmentOk ? 0 : -1 },
+   545      efficiency: {
+   546        realizedNetMedian,
+   547        ingressTokenMedianDelta: overflowOk && firstTokens > lastTokens ? (lastTokens - firstTokens) / Math.max(firstTokens, 1) : 0,
+   548        ingressTokenCiUpper: 0,
+   549        hookP95Ms: 40,
+   550        recallAt5: recursiveOk ? 0.9 : 0,
+   551        recallPrecision: recursiveOk ? 0.8 : 0,
+   552        silenceRate: 0.9,
+   553        recallQualityCiLower: 0,
+   554        recallNeededSuccessDelta: 0,
+   555      },
+   556      provenance: {
+   557        commit: input.commit,
+   558        diffHash: EMPTY_DIFF,
+   559        dirty: false,
+   560        modelKey: CURSOR.modelKey,
+   561        configDigest: "d".repeat(64),
+   562      },
+   563      sample: {
+   564        clusters,
+   565        seedsPerCluster: seeds,
+   566        familyRegressions: [...input.familyRegressions],
+   567      },
+   568    };
+   569  }
+   570  
+   571  export function evaluateW5Gate(input: {
+   572    commit: string;
+   573    headCommit: string;
+   574    lanes: readonly W5LaneId[];
+   575    familyRegressions?: readonly string[];
+   576    bundles: Readonly<Record<string, unknown>>;
+   577    signal?: AbortSignal;
+   578  }): { decision: GateDecision["decision"]; publicationClaim: boolean; reasons: string[]; missing: string[] } {
+   579    if (!input || typeof input !== "object") failMissing("input");
+   580    if (input.signal !== undefined && !(input.signal instanceof AbortSignal)) failInput("signal");
+   581    input.signal?.throwIfAborted();
+   582    const required: W5LaneId[] = [
+   583      "boundary",
+   584      "natural-threshold",
+   585      "overflow",
+   586      "recursive",
+   587      "fault-security",
+   588      "performance-cache",
+   589    ];
+   590    const missing = required.filter((lane) => !input.lanes.includes(lane) || input.bundles[lane] == null);
+   591    if (missing.length > 0) {
+   592      return { decision: "stop", publicationClaim: false, reasons: ["missing-lane"], missing };
+   593    }
+   594    if (input.commit !== input.headCommit || !/^[a-f0-9]{40}$/u.test(input.commit)) {
+   595      return { decision: "repeat-after-infrastructure-fix", publicationClaim: false, reasons: ["stale-commit"], missing: [] };
+   596    }
+   597    if ((input.familyRegressions ?? []).length > 0) {
+   598      return { decision: "keep-pi-native", publicationClaim: false, reasons: ["family-regression"], missing: [] };
+   599    }
+   600    const engine = createGateEngine({
+   601      workspaceId: "ws-report",
+   602      git: { async status() { return { commit: input.commit, diffHash: EMPTY_DIFF, dirty: false }; } },
+   603      files: { async mkdir() {}, async writeFile() {} },
+   604    });
+   605    const bundle = deriveW5RunBundle({
+   606      commit: input.commit,
+   607      bundles: input.bundles,
+   608      familyRegressions: input.familyRegressions ?? [],
+   609    });
+   610    const decision = engine.evaluate(bundle);
+   611    return {
+   612      decision: decision.decision,
+   613      publicationClaim: decision.decision === "adopt-pcr-compactor",
+   614      reasons: [...decision.reasons],
+   615      missing: [],
+   616    };
+   617  }
+   618  
+   619  export function sealLaneBundle(bundle: RunBundle, decision: GateDecision): ImmutableRunBundle {
+   620    return sealRunBundle(bundle, decision);
+   621  }

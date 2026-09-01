@@ -1,0 +1,18 @@
+﻿path,lines,severity,issue
+apps/pi-context-runtime/src/composition-root.ts,887-905,P0,Ingress bypasses RuntimeSession
+apps/pi-context-runtime/src/composition-root.ts,717-745,P0,Compaction snapshot transaction is non-atomic
+apps/pi-context-runtime/src/composition-root.ts,781-815,P1,Materializer omits directory/recall/lease and full reserves
+apps/pi-context-runtime/src/composition-root.ts,818-840,P0,Compaction acknowledge port is empty
+apps/pi-context-runtime/src/extension.ts,151-205,P0,Staged compaction is in-memory only
+apps/pi-context-runtime/src/extension.ts,207-235,P0,Global lifecycle cursor
+apps/pi-context-runtime/src/extension.ts,237-320,P1,Background default-on with fixture snapshot
+apps/pi-context-runtime/src/extension.ts,332-384,P1,Unbound/static tools and doctor fixture
+tests/live-gate/paired-w2-live.ts,196-233,P0,Summary-contaminated weak scorer
+tests/live-gate/paired-w2-live.ts,331,P0,"Recovery proxy, not CAS exact read"
+tests/live-gate/paired-w2-live.ts,"382-390,428-435",P0,Concurrent arms and label-only seed
+tests/live-gate/paired-w2-live.ts,586-592,P0,toolPairViolation constant 0
+packages/benchmark/src/lanes/w5.ts,168-176,P0,B0/B1/B2 are string stubs
+packages/benchmark/src/lanes/w5.ts,"536,613",P0,Constant integrity and synthetic publication risk
+vitest.unit.config.ts,6-22,P1,Unit lane includes integration/E2E/performance/gates
+scripts/ci/verify-protection.mjs,24-45,P1,Only parses workflow YAML; no GitHub protection check
+docs/pi-context-current-state-audit-next-plan-v1.0.0/scripts/taskctl.py,25-29,P0,Done checks only evidence file existence

@@ -1,0 +1,2 @@
+FAIL  packages/runtime/test/runtime-snapshot.test.ts > runtime snapshot transaction
+AssertionError: snapshotHash not stable; branch change did not typed-fail.

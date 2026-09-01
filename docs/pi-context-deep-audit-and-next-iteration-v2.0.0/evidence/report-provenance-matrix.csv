@@ -1,0 +1,8 @@
+﻿artifact,dataHead,currentHead,provider,arms,rawIncluded,scorer,decision,trust
+LIVE-COMPARISON.md,a6281b3,6c5c5b5,real,B0/B1,no,legacy weak,keep-pi-native,diagnostic
+pre-backfill 100x3 report,a6281b3,6c5c5b5,real,B0/B1,gitignored,legacy weak,keep-pi-native,diagnostic only
+post-backfill spec-smoke,6afd5de+,6c5c5b5,real,B0/B1,not authoritative bundle,legacy weak,smoke hard pass,smoke only
+deterministic-v3 gate,8855d45,6c5c5b5,false,synthetic B0/B1/B2,yes,component,keep-pi-native,component
+natural-threshold.json,0e68bd0/6c5c5b5,6c5c5b5,real,B0/B1,summary JSON,trigger observation,not triggered,valid negative attempt
+overflow.json,0e68bd0/6c5c5b5,6c5c5b5,real,single workflow,summary JSON,overflow flag,not observed,valid negative attempt
+recursive.json,0e68bd0/6c5c5b5,6c5c5b5,real,single workflow,summary JSON,phase history,1 compact only,valid negative attempt

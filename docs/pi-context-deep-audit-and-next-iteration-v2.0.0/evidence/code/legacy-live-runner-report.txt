@@ -1,0 +1,254 @@
+# Source: tests/live-gate/paired-w2-live.ts
+# Lines: 360-610
+
+   360      };
+   361    } finally {
+   362      await rpc.stop().catch(() => undefined);
+   363    }
+   364  }
+   365  
+   366  async function runPair(item: W2Case, extensionPath: string): Promise<LivePairRow> {
+   367    const root = mkdtempSync(join(tmpdir(), `pcr-w2-live-${item.id}-`));
+   368    const cwd = join(root, "ws");
+   369    mkdirSync(cwd, { recursive: true });
+   370    const seedFile = join(root, "seed.jsonl");
+   371    const frozen = writeW1ShapedSession({ sessionFile: seedFile, cwd, item });
+   372    const b0File = join(root, "b0", "session.jsonl");
+   373    const b1File = join(root, "b1", "session.jsonl");
+   374    mkdirSync(dirname(b0File), { recursive: true });
+   375    mkdirSync(dirname(b1File), { recursive: true });
+   376    copyFileSync(seedFile, b0File);
+   377    copyFileSync(seedFile, b1File);
+   378    const agentB0 = join(root, "agent-b0");
+   379    const agentB1 = join(root, "agent-b1");
+   380    copyModelsUnmodified(agentB0);
+   381    copyModelsUnmodified(agentB1);
+   382    const [b0, b1] = await Promise.all([
+   383      runArm({ arm: "B0", item, sessionFile: b0File, cwd, agentDir: agentB0, extensionPath }),
+   384      runArm({ arm: "B1", item, sessionFile: b1File, cwd, agentDir: agentB1, extensionPath }),
+   385    ]);
+   386    rmSync(root, { recursive: true, force: true });
+   387    return {
+   388      id: item.id,
+   389      family: item.family,
+   390      seed: 0,
+   391      sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
+   392      expectedFirstKeptId: frozen.expectedFirstKeptId,
+   393      b0,
+   394      b1,
+   395    };
+   396  }
+   397  
+   398  function redact(text: string, secrets: string[]): string {
+   399    let out = text.slice(0, 400);
+   400    for (const secret of secrets) out = out.replaceAll(secret, "[redacted]");
+   401    return out;
+   402  }
+   403  
+   404  export async function runLivePairedW2(opts: {
+   405    repoRoot: string;
+   406    profile: LiveProfile;
+   407    outDir?: string;
+   408  }): Promise<{ reportPath: string; decision: string; report: Record<string, unknown> }> {
+   409    const profile = opts.profile;
+   410    const cases = pickLiveCases(profile);
+   411    const expectedPairs = expectedPairCount(profile);
+   412    const replicates = liveReplicates(profile);
+   413    const extensionPath = join(opts.repoRoot, "apps/pi-context-runtime/dist/extension.js");
+   414    if (!existsSync(extensionPath)) throw new Error(`missing ${extensionPath}`);
+   415    const homeModels = JSON.parse(readFileSync(join(homedir(), ".pi/agent/models.json"), "utf8")) as {
+   416      providers?: { openclaw?: { models?: Array<{ contextWindow?: number; maxTokens?: number }> } };
+   417    };
+   418    const modelLimits = {
+   419      contextWindow: homeModels.providers?.openclaw?.models?.[0]?.contextWindow ?? 0,
+   420      maxTokens: homeModels.providers?.openclaw?.models?.[0]?.maxTokens ?? 0,
+   421    };
+   422    if (modelLimits.maxTokens !== LIVE_RESERVE_TOKENS) {
+   423      throw new Error(`expected unmodified maxTokens=${LIVE_RESERVE_TOKENS}, got ${modelLimits.maxTokens}`);
+   424    }
+   425    const rows: LivePairRow[] = [];
+   426    const outDir = opts.outDir ?? join(opts.repoRoot, "artifacts/runs/w2-live-native", profile);
+   427    mkdirSync(outDir, { recursive: true });
+   428    for (let seed = 0; seed < replicates; seed += 1) {
+   429      for (const item of cases) {
+   430        process.stderr.write(`[w2-live] ${item.id} ${item.family} seed=${seed}\n`);
+   431        const row = await runPair(item, extensionPath);
+   432        const labeled: LivePairRow = {
+   433          ...row,
+   434          id: replicates === 1 ? item.id : `${item.id}#s${seed}`,
+   435          seed,
+   436        };
+   437        rows.push(labeled);
+   438        writeFileSync(join(outDir, "pairs-partial.json"), `${JSON.stringify(rows.map((item) => item.id))}\n`);
+   439      }
+   440    }
+   441  
+   442    const completed = rows.filter((row) => row.b0.ok && row.b1.ok);
+   443    const sameCut = completed.filter((row) => row.sameCut);
+   444    const efficiencyRows = sameCut.filter((row) => !row.b0.budgetMismatch);
+   445    const infraExcluded = rows.filter((row) => !row.b0.ok || !row.b1.ok).map((row) => row.id);
+   446  
+   447    const directiveCoverage = completed.every((row) => row.b1.directiveCoverage === 1) ? 1 : 0;
+   448    const unsupported = completed.filter((row) => row.b1.unsupportedHighRiskOutcome > 0).length;
+   449    const leaks = completed.filter((row) => row.b1.mustOmitLeak > 0).length;
+   450    const nativeLeaks = completed.filter((row) => row.b0.mustOmitLeak > 0).length;
+   451    const recovered = completed.length === 0 ? 0 : completed.filter((row) => row.b1.recovered).length / completed.length;
+   452    const b1FromHook = completed.every((row) => row.b1.fromExtension);
+   453    const b0Native = completed.every((row) => !row.b0.fromExtension);
+   454    const sameCutRate = completed.length === 0 ? 0 : sameCut.length / completed.length;
+   455    const hardGatePass =
+   456      completed.length > 0 &&
+   457      sameCutRate === 1 &&
+   458      directiveCoverage === 1 &&
+   459      unsupported === 0 &&
+   460      leaks === 0 &&
+   461      recovered === 1 &&
+   462      b1FromHook &&
+   463      b0Native;
+   464  
+   465    const quality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b1.quality));
+   466    const polarity = pairedOrZero(completed.map((row) => row.b0.polarity), completed.map((row) => row.b1.polarity));
+   467    const time = pairedOrZero(completed.map((row) => row.b0.time), completed.map((row) => row.b1.time));
+   468    const update = pairedOrZero(completed.map((row) => row.b0.update), completed.map((row) => row.b1.update));
+   469    const abstention = pairedOrZero(completed.map((row) => row.b0.abstention), completed.map((row) => row.b1.abstention));
+   470    const closedLoop = pairedOrZero(
+   471      completed.map((row) => row.b0.closedLoopSuccess),
+   472      completed.map((row) => row.b1.closedLoopSuccess),
+   473    );
+   474    const constraintB0 = completed.reduce((sum, row) => sum + row.b0.constraintViolation, 0);
+   475    const constraintB1 = completed.reduce((sum, row) => sum + row.b1.constraintViolation, 0);
+   476  
+   477    const tokenBase = efficiencyRows.length > 0 ? efficiencyRows : sameCut;
+   478    const tokenDeltas = tokenBase.map((row) =>
+   479      relativeDelta(row.b1.probeInputTokens ?? row.b1.summaryTokens, row.b0.probeInputTokens ?? row.b0.summaryTokens),
+   480    );
+   481    const tokenMedianRelativeDelta = tokenDeltas.length > 0 ? median(tokenDeltas) : 0;
+   482    const costB0 = tokenBase.filter((row) => row.b0.closedLoopSuccess === 1).map((row) => row.b0.probeInputTokens ?? row.b0.summaryTokens);
+   483    const costB1 = tokenBase.filter((row) => row.b1.closedLoopSuccess === 1).map((row) => row.b1.probeInputTokens ?? row.b1.summaryTokens);
+   484    const costPerSuccessRelativeDelta =
+   485      costB0.length > 0 && costB1.length > 0 ? relativeDelta(median(costB1), median(costB0)) : 0;
+   486    const overflow = completed.filter((row) => row.family === "overflow");
+   487    const overflowB0 = overflow.filter((row) => row.b0.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
+   488    const overflowB1 = overflow.filter((row) => row.b1.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
+   489    const overflowQuality = pairedOrZero(
+   490      overflow.map((row) => row.b0.quality),
+   491      overflow.map((row) => row.b1.quality),
+   492    );
+   493    const realized = tokenBase.map(
+   494      (row) => (row.b0.probeInputTokens ?? row.b0.summaryTokens) - (row.b1.probeInputTokens ?? row.b1.summaryTokens),
+   495    );
+   496    const realizedNetMedian = realized.length > 0 ? median(realized) : 0;
+   497    const budgetMismatchRate = completed.length === 0 ? 1 : completed.filter((row) => row.b0.budgetMismatch).length / completed.length;
+   498  
+   499    const sampleMeetsW2Gate = profile === "gate" && completed.length >= 300 && replicates === 3;
+   500    const decision = evaluateW2Gate({
+   501      hardGatePass,
+   502      qualityCiLower: quality.lower,
+   503      polarityCiLower: polarity.lower,
+   504      timeCiLower: time.lower,
+   505      updateCiLower: update.lower,
+   506      abstentionCiLower: abstention.lower,
+   507      qualityMargin: 0.02,
+   508      closedLoopSuccessCiLower: closedLoop.lower,
+   509      constraintViolationsCandidate: constraintB1,
+   510      constraintViolationsBaseline: constraintB0,
+   511      tokenMedianRelativeDelta,
+   512      costPerSuccessRelativeDelta,
+   513      overflowRecoveryBetter: overflowB1 > overflowB0,
+   514      overflowQualityNonInferior: overflowQuality.lower >= -0.02,
+   515      realizedNetMedian,
+   516      budgetMismatchRate: efficiencyRows.length === 0 ? 1 : budgetMismatchRate,
+   517    });
+   518    const publicationClaim = false;
+   519  
+   520    const families: ScenarioFamily[] = ["tool-heavy", "constraint", "temporal-update", "branch", "overflow"];
+   521    const byFamily = Object.fromEntries(
+   522      families.map((family) => {
+   523        const rowsF = completed.filter((row) => row.family === family);
+   524        const n = rowsF.length;
+   525        const mean = (pick: (row: LivePairRow) => number) => (n === 0 ? 0 : rowsF.reduce((sum, row) => sum + pick(row), 0) / n);
+   526        return [
+   527          family,
+   528          {
+   529            n,
+   530            sameCut: rowsF.filter((row) => row.sameCut).length,
+   531            b0ClosedLoop: rowsF.filter((row) => row.b0.closedLoopSuccess === 1).length,
+   532            b1ClosedLoop: rowsF.filter((row) => row.b1.closedLoopSuccess === 1).length,
+   533            b0QualityMean: mean((row) => row.b0.quality),
+   534            b1QualityMean: mean((row) => row.b1.quality),
+   535            b0ProbeInputMean: mean((row) => row.b0.probeInputTokens ?? 0),
+   536            b1ProbeInputMean: mean((row) => row.b1.probeInputTokens ?? 0),
+   537            b0SummaryTokensMean: mean((row) => row.b0.summaryTokens),
+   538            b1SummaryTokensMean: mean((row) => row.b1.summaryTokens),
+   539            b0MustOmitLeak: rowsF.filter((row) => row.b0.mustOmitLeak > 0).length,
+   540            b1MustOmitLeak: rowsF.filter((row) => row.b1.mustOmitLeak > 0).length,
+   541            b1DirectiveCoverage: mean((row) => row.b1.directiveCoverage),
+   542          },
+   543        ];
+   544      }),
+   545    );
+   546  
+   547    const report = {
+   548      runId: `w2-live-native-${profile}`,
+   549      gate: "w2-compactor",
+   550      stage: profile === "gate" ? "w2" : "smoke",
+   551      generatedAt: new Date().toISOString(),
+   552      baselineArm: "B0",
+   553      candidateArms: ["B1"],
+   554      corpusClass: "synthetic-public-replayed-into-live-pi-session",
+   555      publicationClaim,
+   556      usedWalkthroughConstants: false,
+   557      livePiNative: true,
+   558      b0Kind: "pi-native-session-compact-manual",
+   559      compactPath: "manual",
+   560      model: {
+   561        provider: LIVE_PROVIDER,
+   562        id: LIVE_MODEL,
+   563        contextWindow: modelLimits.contextWindow,
+   564        maxTokens: modelLimits.maxTokens,
+   565        maxTokensUnmodified: true,
+   566      },
+   567      cutPolicy: {
+   568        keepRecentTokens: LIVE_KEEP_RECENT_TOKENS,
+   569        reserveTokens: LIVE_RESERVE_TOKENS,
+   570        nativeSummaryMaxTokens: nativeSummaryBudget(),
+   571        sharedAcrossArms: true,
+   572      },
+   573      piVersion: "0.84.4",
+   574      sample: {
+   575        profile,
+   576        expectedPairs,
+   577        completedPairs: completed.length,
+   578        armFailures: infraExcluded,
+   579        sameCutPairs: sameCut.length,
+   580        efficiencyPairs: efficiencyRows.length,
+   581        replicates,
+   582        specW2GatePairs: 100,
+   583        specW2Replicates: 3,
+   584      },
+   585      sharedBoundary: { sameCutRate, sameSourceSpan: sameCutRate === 1 },
+   586      hard: {
+   587        directiveCoverage,
+   588        unsupportedHighRiskOutcome: unsupported,
+   589        toolPairViolation: 0,
+   590        mustOmitLeak: leaks,
+   591        nativeMustOmitLeak: nativeLeaks,
+   592        exactEvidenceRecovery: recovered,
+   593        b1FromHook,
+   594        b0Native,
+   595        hardGatePass,
+   596      },
+   597      quality: {
+   598        ci: quality,
+   599        polarity,
+   600        time,
+   601        update,
+   602        abstention,
+   603        closedLoop,
+   604        constraintViolations: { B0: constraintB0, B1: constraintB1 },
+   605        margin: 0.02,
+   606      },
+   607      efficiency: {
+   608        tokenMedianRelativeDelta,
+   609        costPerSuccessRelativeDelta,
+   610        overflowRecovery: { B0: overflowB0, B1: overflowB1 },

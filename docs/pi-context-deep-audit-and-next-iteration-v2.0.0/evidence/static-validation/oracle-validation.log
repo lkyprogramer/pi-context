@@ -1,0 +1,6 @@
+## oracle
+{
+  "ok": true,
+  "lockPath": "tests/w1-gate/corpus.lock.json",
+  "fileDigest": "ed95161732bd6610b6412d02e677cb21d3d25c6e66d1428ee554fc6413859b16"
+}

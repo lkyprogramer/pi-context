@@ -1,0 +1,215 @@
+name: required
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  install-frozen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+  format-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+  package-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:boundaries
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run tests/release/package-artifact.test.ts
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:unit
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:integration
+  oracle-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: node scripts/ci/oracle-validation.mjs
+  security-fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm security:suite
+  pi-contract-0-84-4:
+    name: pi-contract-0.84.4
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts tests/compat/matrix.test.ts
+  packed-install-hermetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:packed
+  product-vertical:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run tests/acceptance/product-runtime-path.test.ts tests/acceptance/w1-vertical.test.ts
+  recovery-crash:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run tests/acceptance/restart-branch-recovery.test.ts packages/storage-node/test/saga-store.test.ts
+  w1-locked:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run tests/w1-gate/early-net-value.test.ts
+  w2-boundary-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm vitest run tests/w2-gate/head-to-head.test.ts
+  run-bundle-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/ci/verify-protection.mjs
+      - run: pnpm vitest run tests/acceptance/packed-install.test.ts
+  required-gate:
+    if: always()
+    needs:
+      - install-frozen
+      - format-lint
+      - package-boundaries
+      - build
+      - typecheck
+      - unit
+      - integration
+      - oracle-validation
+      - security-fast
+      - pi-contract-0-84-4
+      - packed-install-hermetic
+      - product-vertical
+      - recovery-crash
+      - w1-locked
+      - w2-boundary-smoke
+      - run-bundle-verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every non-advisory cell
+        run: |
+          python3 - <<'PY'
+          import os
+          names = [
+            "install-frozen","format-lint","package-boundaries","build","typecheck","unit",
+            "integration","oracle-validation","security-fast","pi-contract-0-84-4",
+            "packed-install-hermetic","product-vertical","recovery-crash","w1-locked",
+            "w2-boundary-smoke","run-bundle-verify",
+          ]
+          # GitHub exposes needs result via the job; this aggregator fails if any needed job failed.
+          print("required-gate ok")
+          PY
+          test "${{ needs.install-frozen.result }}" = "success"
+          test "${{ needs.format-lint.result }}" = "success"
+          test "${{ needs.package-boundaries.result }}" = "success"
+          test "${{ needs.build.result }}" = "success"
+          test "${{ needs.typecheck.result }}" = "success"
+          test "${{ needs.unit.result }}" = "success"
+          test "${{ needs.integration.result }}" = "success"
+          test "${{ needs.oracle-validation.result }}" = "success"
+          test "${{ needs.security-fast.result }}" = "success"
+          test "${{ needs.pi-contract-0-84-4.result }}" = "success"
+          test "${{ needs.packed-install-hermetic.result }}" = "success"
+          test "${{ needs.product-vertical.result }}" = "success"
+          test "${{ needs.recovery-crash.result }}" = "success"
+          test "${{ needs.w1-locked.result }}" = "success"
+          test "${{ needs.w2-boundary-smoke.result }}" = "success"
+          test "${{ needs.run-bundle-verify.result }}" = "success"

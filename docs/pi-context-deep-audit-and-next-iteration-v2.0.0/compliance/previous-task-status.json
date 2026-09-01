@@ -1,0 +1,512 @@
+[
+  {
+    "taskId": "A00",
+    "wave": "W0",
+    "title": "冻结当前证据与审计基线",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "审计基线和文件均存在；但不是当前 HEAD 的重新冻结",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A01",
+    "wave": "W0",
+    "title": "移除所有硬编码临时目录",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "开发机绝对临时目录已移除；大量测试仍硬编码 /tmp 路径，未完全满足 OS temp fixture 约束",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A02",
+    "wave": "W0",
+    "title": "建立 hermetic Pi 模型与凭证 Fixture",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "Hermetic model fixture 已加入，Required/多数 Matrix 可运行",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A03",
+    "wave": "W0",
+    "title": "修复跨进程 CAS/Saga 测试 Runner",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "CAS/Saga 跨进程测试当前在 Required 与失败 Cell 中均通过",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A04",
+    "wave": "W0",
+    "title": "拆分 Unit/Integration/Live/Pack 测试 Lane",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "新增 unit/integration/acceptance/packed 配置；但 unit 仍包含 integration、E2E、performance、gate、release 文件",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A05",
+    "wave": "W0",
+    "title": "启用 Branch Protection 与 Required Checks",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "Required Workflow 存在，但 GitHub Branch Protection 未被验证/应用；Compatibility Required 当前红",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A06",
+    "wave": "W0",
+    "title": "统一 Release Metadata 与入口策略",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "入口/pack 统一；包仍 private:true、UNLICENSED、npmPublish=false，只适合受控 tarball",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A07",
+    "wave": "W0",
+    "title": "重开并重构 Finding Closure Gate",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "旧 Finding 保持 open 是诚实的；Task evidence 仍可仅凭文件存在标 done",
+    "evidenceCommit": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A08",
+    "wave": "W1",
+    "title": "让默认 Extension 只使用 ProductionRuntimeCompositionRoot",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "默认 Extension 建立 RuntimeSession，但 User/Tool Ingress 直接返回 owner.service/observation，绕开唯一应用入口",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A09",
+    "wave": "W1",
+    "title": "补全 RuntimeSession Ports 与状态机",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "RuntimeSession Ports、Scope 和读写串行化在模块层实现并有单测",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A10",
+    "wave": "W1",
+    "title": "实现 cursor-scoped Session/Tool Registry",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Cursor-scoped owner/session map 已有；默认生命周期仍使用全局 lastRecoveredCursor",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A11",
+    "wave": "W1",
+    "title": "落地持久 Directive/Claim/Continuity Store",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "持久 Directive/Claim/Continuity Store 与 restart/scope tests 已实现",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A12",
+    "wave": "W1",
+    "title": "实现统一 Runtime Snapshot Transaction",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "State readSnapshot 存在；Compaction assembler transaction 仍是 work() 空包装，未证明 Context/Checkpoint 同一快照",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A13",
+    "wave": "W1",
+    "title": "持久化 View 与 Cache Receipt",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "Cache Receipt 已持久到 State Store；但仍是估算布局而非 Provider cache usage",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A14",
+    "wave": "W1",
+    "title": "接入真实 Route/System/Tools Budget Port",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Route budget 组件支持 reserves；产品仅传 imageBlocks，真实 system/tools/provider payload 未接入",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A15",
+    "wave": "W1",
+    "title": "删除 unbound Scope 降级",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "主 Cursor 路径拒绝 unbound；Background/Tools/Doctor 仍含 unbound 与 fixture 常量",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A16",
+    "wave": "W1",
+    "title": "实现真实 Restart/Branch Recovery",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Restart/branch 与 Saga 模块测试存在；Compaction staged/ack 仍为进程内变量，产品 Ack Port 为空",
+    "evidenceCommit": "638459bc239ffd46c4d1a75f8b828a7f096a41f0",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A17",
+    "wave": "W2",
+    "title": "修复多语言 Temporal Assignment Parser",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "中英文 temporal assignment 解析显著改善，并有专项测试",
+    "evidenceCommit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A18",
+    "wave": "W2",
+    "title": "Authenticated User Full-turn 保底与 Supersession",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "Authenticated full-turn retention 与 supersession 在 Store/模块层落地",
+    "evidenceCommit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A19",
+    "wave": "W2",
+    "title": "构建 Snapshot-scoped Evidence Pointer Catalog",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "Snapshot-scoped pointer catalog 和 pointer verifier 已实现",
+    "evidenceCommit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A20",
+    "wave": "W2",
+    "title": "实现 Tool Outcome Attestation 与 Claim Authority",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "Outcome attestation/authority guard 有模块与安全测试",
+    "evidenceCommit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A21",
+    "wave": "W2",
+    "title": "实现 Proactive Recall 与 Purpose-bound Lease",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Proactive recall 与 lease 组件存在；默认 Materializer 没有注入 recall/directory/lease",
+    "evidenceCommit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A22",
+    "wave": "W2",
+    "title": "Recursive Compaction State Merge",
+    "declaredStatus": "done",
+    "auditVerdict": "verified-component",
+    "reason": "Recursive state merge 有纯模块测试；真实递归三轮 Live 未完成",
+    "evidenceCommit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A23",
+    "wave": "W2",
+    "title": "多 Workspace/Session/Branch 隔离 Gate",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Scope isolation/last-owner ambiguity 有安全测试；默认全局 lifecycle 状态仍有跨会话风险",
+    "evidenceCommit": "2eb7648a0abbd4600984ae81d9d97083f273837f",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A24",
+    "wave": "W3",
+    "title": "Envelope-aware Serialized Payload Token Pricing",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Envelope pricing 组件支持 blocks；产品未提供完整 system/tools schema/provider envelope",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A25",
+    "wave": "W3",
+    "title": "统一 Capacity/Cache/Cost Usage Telemetry",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Usage/economics 类型与测试存在；真实 Provider cacheRead/cacheWrite 尚未进入产品报告",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A26",
+    "wave": "W3",
+    "title": "修复 Directive/History/Active-turn 重复注入",
+    "declaredStatus": "done",
+    "auditVerdict": "verified",
+    "reason": "Directive/history/active-turn 去重有实现和测试",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A27",
+    "wave": "W3",
+    "title": "稳定前缀 Cache Layout 与遥测",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "稳定 section layout 与 receipt 组件存在；没有真实 Provider Cache Hit SLO/Gate",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A28",
+    "wave": "W3",
+    "title": "完整 Store-built Checkpoint",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Checkpoint 支持持久状态；backfill 与分散查询仍未形成单事务权威快照",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A29",
+    "wave": "W3",
+    "title": "真实 Pointer Verifier 与 CAS Recovery",
+    "declaredStatus": "done",
+    "auditVerdict": "verified-component",
+    "reason": "Pointer CAS read/scope verifier 在组件层通过；Legacy Live 的 exactRecovery 并未调用它",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A30",
+    "wave": "W3",
+    "title": "Tool-pair/Retained-tail/Two-run Hash Verifier",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Hard-gates 模块存在；产品/Legacy Live 未接入，toolPairViolation 仍常量 0",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A31",
+    "wave": "W3",
+    "title": "Checkpoint 模型视图压缩与 Metadata Ablation",
+    "declaredStatus": "done",
+    "auditVerdict": "verified-component",
+    "reason": "短引用/metadata ablation 组件存在；真实 Provider 下收益未验证",
+    "evidenceCommit": "1196402be7db5fb29fd9d0858e464ce04336a1b3",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A32",
+    "wave": "W4",
+    "title": "建立 v2 Source-witness Locked Corpus",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Corpus v2 有 180 Case 和 source-witness 校验；本质是模板化短文本，不是锁定真实轨迹",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A33",
+    "wave": "W4",
+    "title": "生成真实 A1-shaped 冻结 Pi Trace",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "所谓 A1-shaped trace 仍由极短 in-process trace/string shaper 构造，未冻结真实 Pi JSONL+Store+Workspace",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A34",
+    "wave": "W4",
+    "title": "实现真实 Pi B0/B1/B2 Runner",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "Legacy Runner 仅真 B0/B1；V3 B0/B1/B2 是字符串实现，没有真实 Pi B2",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A35",
+    "wave": "W4",
+    "title": "Probe-only Scorer 与 Normalizer",
+    "declaredStatus": "done",
+    "auditVerdict": "verified-component",
+    "reason": "Probe-only scorer 组件正确方向；Legacy Live scoreArm 未使用它",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A36",
+    "wave": "W4",
+    "title": "真实 F0/Isolated Reader Lane",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "F0/Reader 仍是字符串包含/组件 smoke，不是隔离 Reader 模型",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A37",
+    "wave": "W4",
+    "title": "Tools-enabled Environment Closed-loop",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "Closed-loop Executor 仍为预编程或弱 probe；没有真实 Tools-enabled Workspace continuation",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A38",
+    "wave": "W4",
+    "title": "整合真实 Integrity/Security Scorer",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Integrity scorer 组件能验证 CAS/tool pair；Legacy Live 报告未用，部分指标仍为常量/代理",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A39",
+    "wave": "W4",
+    "title": "完整 Realized Net 与 Pair-preserving Cost",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Pair-preserving economics 组件存在；Live realized_net 仍主要是下一轮 input 差",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A40",
+    "wave": "W4",
+    "title": "Cluster Statistics 与 Normative Gate v3",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Cluster bootstrap/Gate v3 组件存在；当前 Corpus cluster 独立性与 Live 接线不足",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A41",
+    "wave": "W4",
+    "title": "不可变 Full Run Bundle 与复核工具",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Bundle sealing 组件存在；权威 100×3 raw report 被 gitignore，最终 HEAD 无完整不可变 Bundle",
+    "evidenceCommit": "7f985f7632a4d15dd9ab7b445fb994f2c0ce8c3e",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A42",
+    "wave": "W5",
+    "title": "运行 Boundary Replay 30 Cluster × 3 Seeds",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "合成 30 cluster×3 和旧 Live 100 case×3 均跑过；真实独立 cluster/受控 seeds/B2/F0 不满足",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A43",
+    "wave": "W5",
+    "title": "运行 Natural 200K Threshold Lane",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "真实端点 40 轮没有触发 183808 threshold；验收要求每 arm 至少一次真实 threshold",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A44",
+    "wave": "W5",
+    "title": "运行 Provider Overflow Lane",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "没有观察到 Provider overflow/400；后续是手工 compact，不是 overflow recovery",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A45",
+    "wave": "W5",
+    "title": "运行 Recursive Long-horizon Lane",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "只完成 compact-1；compact-2 报 Nothing to compact，branch/restart/compact-3 未执行",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A46",
+    "wave": "W5",
+    "title": "运行 Fault/Security Matrix",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Fault/Security 单元/合成 Lane 存在；未与完整 Live Run 绑定，Gate artifact fault=0",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A47",
+    "wave": "W5",
+    "title": "运行 Performance/Cache/Metadata Ablation",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "性能/cache/metadata 为合成数字与模块消融；缺真实 Provider cache usage",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A48",
+    "wave": "W5",
+    "title": "执行 W1/W2 Deterministic Release Gate",
+    "declaredStatus": "done",
+    "auditVerdict": "not-met",
+    "reason": "当前 Gate artifact liveProvider=false、绑定旧 commit 8855d45；不能作为 Release Gate",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A49",
+    "wave": "W5",
+    "title": "完成 Hermetic Package/Release Matrix",
+    "declaredStatus": "done",
+    "auditVerdict": "partial",
+    "reason": "Hermetic pack 测试改善；Compatibility 红且 package policy 仍是私有未授权 tarball",
+    "evidenceCommit": "f13dd359a86ad2d9a593f69011f4c82e96594539",
+    "runBundleHashCount": 0
+  },
+  {
+    "taskId": "A50",
+    "wave": "W6",
+    "title": "Semantic/Background Beta 独立 Gate",
+    "declaredStatus": "pending",
+    "auditVerdict": "pending",
+    "reason": "Semantic/Background Beta 未执行，维持 default-off 才是正确状态",
+    "evidenceCommit": "",
+    "runBundleHashCount": 0
+  }
+]
