@@ -1,0 +1,12 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/w1-gate/early-net-value.test.ts (4 tests) 2579ms
+   ✓ W1 Early Net Value Gate > keeps the recorded decision when measured delay would flip ingress  1563ms
+   ✓ W1 Early Net Value Gate > evaluates synthetic PCR arms and writes a machine-readable report  1012ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  17:59:02
+   Duration  3.48s (transform 394ms, setup 0ms, collect 586ms, tests 2.58s, environment 0ms, prepare 50ms)
+

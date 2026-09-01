@@ -1,8 +1,11 @@
 import { defineConfig } from "vitest/config";
+import { LANES } from "./tests/meta/lane-globs.ts";
 
 export default defineConfig({
   test: {
-    include: ["tests/acceptance/**/*.test.ts"],
-    exclude: ["tests/acceptance/packed-install.test.ts"],
+    testTimeout: LANES["product-acceptance"].testTimeout,
+    retry: LANES["product-acceptance"].retry,
+    include: LANES["product-acceptance"].include,
+    exclude: LANES["product-acceptance"].exclude,
   },
 });

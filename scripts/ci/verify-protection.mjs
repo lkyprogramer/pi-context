@@ -9,6 +9,8 @@ const REQUIRED = [
   "build",
   "typecheck",
   "unit",
+  "contract",
+  "acceptance",
   "integration",
   "oracle-validation",
   "security-fast",

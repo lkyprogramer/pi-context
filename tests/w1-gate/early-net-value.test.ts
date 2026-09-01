@@ -2,8 +2,9 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { hookP95ForDecision } from "@pcr/benchmark";
 import { buildSyntheticCorpus, corpusQuota } from "./corpus.js";
-import { runW1EarlyNetValueGate } from "./run.js";
+import { RECORDED_W1_HOOK_P95_MS, runW1EarlyNetValueGate } from "./run.js";
 import { evaluateW1Gate } from "./scorer.js";
 
 describe("W1 Early Net Value Gate", () => {
@@ -19,10 +20,27 @@ describe("W1 Early Net Value Gate", () => {
     expect(quota.malicious).toBeGreaterThanOrEqual(15);
   });
 
-  it("evaluates live PCR arms and writes a machine-readable report", async () => {
+  it("keeps the recorded decision when measured delay would flip ingress", async () => {
+    const measuredFastDir = mkdtempSync(join(tmpdir(), "pcr-w1-mf-"));
+    const measuredSlowDir = mkdtempSync(join(tmpdir(), "pcr-w1-ms-"));
+    const recordedSlowDir = mkdtempSync(join(tmpdir(), "pcr-w1-rs-"));
+    const measuredFast = await runW1EarlyNetValueGate(measuredFastDir, { extraDelayMs: 0, hookP95Source: "measured" });
+    const measuredSlow = await runW1EarlyNetValueGate(measuredSlowDir, { extraDelayMs: 250, hookP95Source: "measured" });
+    const recordedSlow = await runW1EarlyNetValueGate(recordedSlowDir, { extraDelayMs: 250, hookP95Source: "recorded" });
+    expect(measuredFast.decision).not.toBe(measuredSlow.decision);
+    expect(recordedSlow.decision).toBe(measuredFast.decision);
+    expect(hookP95ForDecision({ recordedMs: RECORDED_W1_HOOK_P95_MS, measuredMs: 12, source: "recorded" })).toBe(
+      hookP95ForDecision({ recordedMs: RECORDED_W1_HOOK_P95_MS, measuredMs: 200, source: "recorded" }),
+    );
+    expect(hookP95ForDecision({ recordedMs: RECORDED_W1_HOOK_P95_MS, measuredMs: 12, source: "measured" })).not.toBe(
+      hookP95ForDecision({ recordedMs: RECORDED_W1_HOOK_P95_MS, measuredMs: 200, source: "measured" }),
+    );
+  });
+
+  it("evaluates synthetic PCR arms and writes a machine-readable report", async () => {
     const outDir = mkdtempSync(join(tmpdir(), "pcr-w1-gate-"));
-    await runW1EarlyNetValueGate(outDir);
-    const { report, reportPath, decision } = await runW1EarlyNetValueGate(outDir);
+    await runW1EarlyNetValueGate(outDir, { hookP95Source: "recorded" });
+    const { report, reportPath, decision } = await runW1EarlyNetValueGate(outDir, { hookP95Source: "recorded" });
     expect(existsSync(reportPath)).toBe(true);
     const disk = JSON.parse(readFileSync(reportPath, "utf8")) as typeof report;
     expect(disk.corpusClass).toBe("synthetic-public");

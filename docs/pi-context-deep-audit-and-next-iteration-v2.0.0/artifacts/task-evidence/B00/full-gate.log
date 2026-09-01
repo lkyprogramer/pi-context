@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "files": 12
+}
+evidence/ci/compat-ubuntu-node24-min-cell.json: OK
+evidence/ci/compat-ubuntu-node24-min-unit.log: OK
+evidence/ci/compatibility-failure-summary.md: OK
+evidence/ci/current-workflow-state.json: OK
+evidence/governance/previous-task-status.json: OK
+evidence/pack-build-info.json: OK
+evidence/reports/LIVE-COMPARISON.md: OK
+evidence/reports/deterministic-v3-gate-decision.json: OK
+evidence/reports/natural-threshold.json: OK
+evidence/reports/overflow.json: OK
+evidence/reports/recursive.json: OK
+evidence/source-inventory.json: OK

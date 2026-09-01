@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { verifyRawRunBundle, type RawRunBundle } from "./bundle.js";
+
 export type GateName = "w1-early-net-value" | "w2-compactor" | "semantic-beta";
 
 export type GateDecisionKind =
@@ -59,6 +61,7 @@ export interface RunBundle {
   efficiency: EfficiencySlice;
   provenance: RunProvenance;
   sample?: GateSampleProfile;
+  rawArtifacts?: RawRunBundle;
   signal?: AbortSignal;
 }
 
@@ -331,6 +334,10 @@ export function createGateEngine(input: CreateGateEngineInput): GateEngine {
       const dir = `${root}/${decision.reportSha256}`;
       sample.signal?.throwIfAborted();
       await files.mkdir(dir);
+      if (sample.rawArtifacts) {
+        verifyRawRunBundle(sample.rawArtifacts);
+        await files.writeFile(`${dir}/raw.json`, Buffer.from(canonicalJson(sample.rawArtifacts), "utf8"));
+      }
       const payload = Buffer.from(canonicalJson({ bundle: snapshotBundle(bundle), decision }), "utf8");
       await files.writeFile(`${dir}/bundle.json`, payload);
       await files.writeFile(`${dir}/decision.json`, Buffer.from(canonicalJson(decision), "utf8"));

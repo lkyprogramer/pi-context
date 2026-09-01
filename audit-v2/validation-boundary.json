@@ -1,0 +1,15 @@
+{
+  "executed": [
+    "pack-static-validation",
+    "github-workflow-artifact-fetch",
+    "source-head-match"
+  ],
+  "notExecuted": [
+    "local-full-vitest-on-audit-container",
+    "post-fix-100x3",
+    "natural-200k-threshold",
+    "provider-overflow",
+    "recursive-three-cycle",
+    "github-classic-branch-protection-admin-read"
+  ]
+}

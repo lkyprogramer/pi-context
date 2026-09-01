@@ -1,0 +1,16 @@
+{
+  "name": "pcr-raw-run-bundle-v1",
+  "previewLimitBytes": 400,
+  "required": [
+    "sessionJsonl",
+    "storeSnapshotSha256",
+    "workspaceManifestSha256",
+    "configIdentity",
+    "modelIdentity",
+    "providerIdentity",
+    "rawReport",
+    "decision"
+  ],
+  "retention": "immutable-artifact-store-or-release-bundle",
+  "gitIgnoreIsNotProof": true
+}

@@ -1,0 +1,15 @@
+
+> @ benchmark:bundle:verify /Users/luo/Documents/github/pi-context
+> node scripts/benchmark/run-vitest.mjs packages/benchmark/test/bundle-verify.test.ts && python3 scripts/benchmark/verify_run_bundle.py artifacts/runs/immutable-policy/example/bundle.json
+
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark/test/bundle-verify.test.ts (3 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  17:42:31
+   Duration  818ms (transform 322ms, setup 0ms, collect 499ms, tests 3ms, environment 0ms, prepare 55ms)
+
+ok

@@ -1,0 +1,36 @@
+{
+  "sourceArchive": "9907f69c-1ace-47b4-ad03-84b37cc77eb3.zip",
+  "sourceArchiveSha256": "ac3fd46a8dbdd03ac31e16e7184d263f572680b6a7c27b0cdf8e5d55a4b36155",
+  "githubHead": "6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31",
+  "previousAuditHead": "9a2084d8667fc459aa14c3bd6c486228f15a6bf6",
+  "fileCount": 2476,
+  "directoryCount": 403,
+  "extensionCounts": {
+    ".md": 575,
+    ".ts": 523,
+    ".json": 501,
+    ".log": 373,
+    ".txt": 317,
+    ".sha256": 59,
+    ".mjs": 41,
+    ".mmd": 34,
+    ".py": 20,
+    ".yaml": 7,
+    ".yml": 6,
+    "<none>": 6,
+    ".csv": 5,
+    ".jsonl": 3,
+    ".mts": 2,
+    ".sql": 2,
+    ".js": 1,
+    ".patch": 1
+  },
+  "keyPaths": {
+    "runtimeEntry": "apps/pi-context-runtime/src/extension.ts",
+    "compositionRoot": "apps/pi-context-runtime/src/composition-root.ts",
+    "runtimeSession": "packages/runtime/src/runtime-session.ts",
+    "legacyLiveRunner": "tests/live-gate/paired-w2-live.ts",
+    "v3Benchmark": "packages/benchmark/src/lanes/w5.ts",
+    "liveReport": "artifacts/runs/w5-live/LIVE-COMPARISON.md"
+  }
+}

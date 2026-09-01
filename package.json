@@ -7,10 +7,13 @@
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run --config vitest.unit.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:contract": "vitest run --config vitest.contract.config.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:acceptance": "vitest run --config vitest.acceptance.config.ts",
     "test:packed": "vitest run --config vitest.packed.config.ts",
     "test:live": "vitest run --workspace vitest.live-paired-w2.workspace.ts",
+    "test:live-smoke": "vitest run --config vitest.live-smoke.config.ts",
+    "test:publication": "vitest run --config vitest.publication.config.ts",
     "format:check": "node scripts/ci/format-lint.mjs",
     "oracle:validate": "node scripts/ci/oracle-validation.mjs",
     "check:all": "pnpm check:boundaries && pnpm typecheck && pnpm test:unit",
@@ -32,7 +35,7 @@
     "benchmark:closed-loop:smoke": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/closed-loop.test.ts",
     "benchmark:integrity:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/scoring/leaks.test.ts packages/benchmark/test/scoring/integrity.test.ts",
     "benchmark:economics:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/economics-pairing.test.ts",
-    "benchmark:bundle:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/bundle-verify.test.ts",
+    "benchmark:bundle:verify": "node scripts/benchmark/run-vitest.mjs packages/benchmark/test/bundle-verify.test.ts && python3 scripts/benchmark/verify_run_bundle.py artifacts/runs/immutable-policy/example/bundle.json",
     "benchmark:w2:boundary": "node scripts/gates/deterministic-v3.mjs",
     "benchmark:w2:natural-threshold": "node scripts/gates/deterministic-v3.mjs",
     "benchmark:w2:overflow": "node scripts/gates/deterministic-v3.mjs",
@@ -40,7 +43,7 @@
     "benchmark:fault-security": "node scripts/gates/deterministic-v3.mjs",
     "benchmark:performance-cache": "node scripts/gates/deterministic-v3.mjs",
     "gate:deterministic-v3": "node scripts/gates/deterministic-v3.mjs",
-    "release:verify": "pnpm vitest run tests/release/package-artifact.test.ts --config vitest.unit.config.ts"
+    "release:verify": "pnpm vitest run tests/release/package-artifact.test.ts --config vitest.publication.config.ts"
   },
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "0.84.4",

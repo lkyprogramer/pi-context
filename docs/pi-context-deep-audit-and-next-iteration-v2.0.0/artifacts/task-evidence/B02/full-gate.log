@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/ci/lane-selection.test.ts (2 tests) 2ms
+ ✓ tests/meta/lane-ownership.test.ts (2 tests) 13ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  17:59:06
+   Duration  350ms (transform 33ms, setup 0ms, collect 45ms, tests 15ms, environment 0ms, prepare 113ms)
+

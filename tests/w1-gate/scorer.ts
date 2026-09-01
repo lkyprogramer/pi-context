@@ -52,33 +52,14 @@ export function pairedBootstrapCi(
   };
 }
 
-export interface W1GateInput {
-  integrityPass: boolean;
-  qualityCiLower: number;
-  qualityMargin: number;
-  ingressTokenMedianDelta: number;
-  ingressTokenCiUpper: number;
-  hookP95Ms: number;
-  recallAt5: number;
-  recallPrecision: number;
-  silenceRate: number;
-  recallQualityCiLower: number;
-  recallQualityMargin: number;
-  recallNeededSuccessDelta: number;
-  realizedNetMedian: number;
-}
+import {
+  evaluateW1Economics,
+  type W1Decision,
+  type W1EconomicsInput,
+} from "@pcr/benchmark";
 
-export function evaluateW1Gate(input: W1GateInput): "proceed-to-w2" | "keep-reducers-only" | "keep-recovery-only" | "stop" {
-  if (!input.integrityPass || input.qualityCiLower < -input.qualityMargin) return "stop";
-  const ingress =
-    input.ingressTokenMedianDelta <= -0.2 && input.ingressTokenCiUpper <= -0.1 && input.hookP95Ms <= 75;
-  const recall =
-    input.recallAt5 >= 0.9 &&
-    input.recallPrecision >= 0.75 &&
-    input.silenceRate >= 0.9 &&
-    input.recallQualityCiLower >= -input.recallQualityMargin &&
-    input.recallNeededSuccessDelta > 0;
-  if (ingress && recall && input.realizedNetMedian > 0) return "proceed-to-w2";
-  if (ingress) return "keep-reducers-only";
-  return input.realizedNetMedian >= 0 ? "keep-recovery-only" : "stop";
+export type W1GateInput = W1EconomicsInput;
+
+export function evaluateW1Gate(input: W1GateInput): W1Decision {
+  return evaluateW1Economics(input);
 }

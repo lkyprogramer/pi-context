@@ -1,0 +1,17 @@
+{
+  "sessionJsonl": "{\"type\":\"message\",\"role\":\"user\",\"text\":\"keep-native-policy-fixture\"}\n{\"type\":\"message\",\"role\":\"assistant\",\"text\":\"acknowledged-keep-pi-native-and-publicationClaim-false\"}\n{\"type\":\"compaction\",\"firstKeptEntryId\":\"e1\",\"outputHash\":\"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\"}\n{\"type\":\"probe\",\"id\":\"p0\",\"answer\":\"version-7\"}\n{\"type\":\"usage\",\"input\":128,\"output\":16,\"cacheRead\":0,\"cacheWrite\":0,\"providerRequestId\":\"req-immutable-policy-example-0001\"}\n{\"type\":\"store\",\"snapshot\":\"workspace-manifest-and-cas-generation-must-be-hashed-in-full-not-preview\"}\n",
+  "storeSnapshotSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "workspaceManifestSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "configIdentity": "pi-host-0.84.4/pcr-extension-internal-tarball",
+  "modelIdentity": "openclaw/Qwen3.8-27B-WORK",
+  "providerIdentity": "openclaw",
+  "rawReport": {
+    "gate": "w1-early-net-value",
+    "publicationClaim": false,
+    "decision": "keep-pi-native"
+  },
+  "decision": {
+    "decision": "keep-pi-native",
+    "publicationClaim": false
+  }
+}

@@ -1,17 +1,11 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-
-function includes(configPath: string): string[] {
-  const text = readFileSync(configPath, "utf8");
-  const includeBlock = text.split("exclude:")[0] ?? text;
-  return [...includeBlock.matchAll(/"([^"]+\.test\.ts)"/g)].map((match) => match[1]);
-}
+import { LANES } from "../meta/lane-globs.js";
 
 describe("test lane selection", () => {
   it("keeps unit, integration, packed includes disjoint", () => {
-    const unit = new Set(includes("vitest.unit.config.ts"));
-    const integration = new Set(includes("vitest.integration.config.ts"));
-    const packed = new Set(includes("vitest.packed.config.ts"));
+    const unit = new Set(LANES.unit.include);
+    const integration = new Set(LANES["hermetic-integration"].include);
+    const packed = new Set(LANES["packed-install"].include);
     for (const file of packed) {
       expect(unit.has(file)).toBe(false);
     }
@@ -19,10 +13,9 @@ describe("test lane selection", () => {
     expect(integration.has("tests/acceptance/packed-install.test.ts")).toBe(false);
   });
 
-  it("does not put live-gate files in unit or packed", () => {
-    const unit = readFileSync("vitest.unit.config.ts", "utf8");
-    const packed = readFileSync("vitest.packed.config.ts", "utf8");
-    expect(unit).toContain("tests/live-gate/**");
-    expect(packed).not.toContain("tests/live-gate");
+  it("does not put live-gate files in unit or packed includes", () => {
+    expect(LANES.unit.include.some((pattern) => pattern.includes("live-gate"))).toBe(false);
+    expect(LANES["packed-install"].include.some((pattern) => pattern.includes("live-gate"))).toBe(false);
+    expect(LANES.unit.exclude.some((pattern) => pattern.includes("live-gate"))).toBe(true);
   });
 });

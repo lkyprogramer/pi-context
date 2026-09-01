@@ -63,6 +63,26 @@ jobs:
       - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:unit
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:contract
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:acceptance
   integration:
     runs-on: ubuntu-latest
     steps:
@@ -172,6 +192,8 @@ jobs:
       - build
       - typecheck
       - unit
+      - contract
+      - acceptance
       - integration
       - oracle-validation
       - security-fast
@@ -190,7 +212,7 @@ jobs:
           import os
           names = [
             "install-frozen","format-lint","package-boundaries","build","typecheck","unit",
-            "integration","oracle-validation","security-fast","pi-contract-0-84-4",
+            "contract","acceptance","integration","oracle-validation","security-fast","pi-contract-0-84-4",
             "packed-install-hermetic","product-vertical","recovery-crash","w1-locked",
             "w2-boundary-smoke","run-bundle-verify",
           ]
@@ -203,6 +225,8 @@ jobs:
           test "${{ needs.build.result }}" = "success"
           test "${{ needs.typecheck.result }}" = "success"
           test "${{ needs.unit.result }}" = "success"
+          test "${{ needs.contract.result }}" = "success"
+          test "${{ needs.acceptance.result }}" = "success"
           test "${{ needs.integration.result }}" = "success"
           test "${{ needs.oracle-validation.result }}" = "success"
           test "${{ needs.security-fast.result }}" = "success"

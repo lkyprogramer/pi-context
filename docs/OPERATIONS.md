@@ -10,6 +10,8 @@ Required job ids:
 - build
 - typecheck
 - unit
+- contract
+- acceptance
 - integration
 - oracle-validation
 - security-fast
@@ -21,10 +23,21 @@ Required job ids:
 - w2-boundary-smoke
 - run-bundle-verify
 
-Advisory/nightly workflows (`compatibility.yml`, `nightly.yml`, `live-benchmark.yml`) must not be merge-required.
+The aggregator job is `required-gate`. Compatibility's aggregator is `compatibility-required`.
 
-Branch protection should enable those required contexts on `main`. Apply with repository admin rights:
+`node scripts/ci/verify-protection.mjs` only checks that those job ids exist in `required.yml`. It does **not** read or apply GitHub Branch Protection.
+
+Read-only API verify (fails closed when `required-gate` / `compatibility-required` are not configured):
 
 ```bash
-node scripts/ci/verify-protection.mjs
+node scripts/ci/github-protection.mjs verify
 ```
+
+`apply` is **not implemented** in W0. It requires repository admin credentials and a later explicit task. Do not treat a YAML job-name parse or a throwing `--apply` stub as Branch Protection being enabled. NF025 stays open until a real API read shows those two contexts.
+
+Current product claim policy:
+
+- `default_compactor`: pi-native
+- `publicationClaim`: false
+- `npmPublish`: false
+- distribution: internal `npm-pack` tarball (`private` / `UNLICENSED`)

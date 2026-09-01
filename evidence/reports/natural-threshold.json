@@ -1,0 +1,580 @@
+{
+  "lane": "natural-threshold",
+  "liveProvider": true,
+  "keepRecentTokens": 20000,
+  "reserveTokens": 16384,
+  "contextWindow": 200192,
+  "triggerThreshold": 183808,
+  "native": {
+    "turns": [
+      {
+        "turn": 0,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 1,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 2,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 3,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 4,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 5,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 6,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 7,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 8,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 9,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 10,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 11,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 12,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 13,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 14,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 15,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 16,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 17,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 18,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 19,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 20,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 21,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 22,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 23,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 24,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 25,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 26,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 27,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 28,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 29,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 30,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 31,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 32,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 33,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 34,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 35,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 36,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 37,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 38,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 39,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      }
+    ],
+    "compactions": []
+  },
+  "pcr": {
+    "turns": [
+      {
+        "turn": 0,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 1,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 2,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 3,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 4,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 5,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 6,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 7,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 8,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 9,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 10,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 11,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 12,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 13,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 14,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 15,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 16,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 17,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 18,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 19,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 20,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 21,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 22,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 23,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 24,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 25,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 26,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 27,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 28,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 29,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 30,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 31,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 32,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 33,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 34,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 35,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 36,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 37,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 38,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      },
+      {
+        "turn": 39,
+        "ok": true,
+        "compactCount": 0,
+        "tokensBefore": null,
+        "reason": null
+      }
+    ],
+    "compactions": []
+  },
+  "triggered": false,
+  "reasonThreshold": false
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B05",
+  "status": "done",
+  "currentHead": "4057a98fa45ac41ace6733eefcb1f4951f241ece",
+  "allowedDiffSha256": "ff6aa09b35b23c2f66ac47b797b8d325c9c56b522d1315fc24ad7135af5525d9",
+  "sourceDigest": "b135a28e604e6ff57323644633c59923cdceb7ec4fa20fb68f579634cbc9c5ab",
+  "red": {
+    "command": "B05-red",
+    "exitCode": 1,
+    "logSha256": "931e1683099aae1958ef256451901e740068e6de50ae6823225aeebd236649c7"
+  },
+  "green": {
+    "command": "B05-green",
+    "exitCode": 0,
+    "logSha256": "b863b7260a8f1e8a1757105e013178178e20ddc45d05b44481acc1f3ef5a9de2"
+  },
+  "fullGate": {
+    "command": "B05-fullGate",
+    "exitCode": 0,
+    "logSha256": "b863b7260a8f1e8a1757105e013178178e20ddc45d05b44481acc1f3ef5a9de2"
+  },
+  "runBundleHashes": [],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "B05-green.log"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

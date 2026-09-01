@@ -122,6 +122,13 @@ export {
   type PairedEconomicsSample,
 } from "./economics/pairing.js";
 export {
+  evaluateW1Economics,
+  hookP95ForDecision,
+  type HookP95Source,
+  type W1Decision,
+  type W1EconomicsInput,
+} from "./economics/w1-decision.js";
+export {
   ClusterStatisticsError,
   createClusterStatistics,
   type BinaryPair,
@@ -174,9 +181,11 @@ export {
   BundleVerifyError,
   hashRunBundle,
   sealRunBundle,
+  verifyRawRunBundle,
   verifyRunBundle,
   type BundleVerifyErrorCode,
   type ImmutableRunBundle,
+  type RawRunBundle,
 } from "./report/bundle.js";
 export {
   W5LaneError,

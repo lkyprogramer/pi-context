@@ -39,7 +39,7 @@ jobs:
       - name: Typecheck
         run: node scripts/ci/run-gate.mjs --name typecheck --log artifacts/ci/typecheck.log -- pnpm typecheck
       - name: Unit tests
-        run: node scripts/ci/run-gate.mjs --name unit --log artifacts/ci/unit.log -- pnpm test
+        run: node scripts/ci/run-gate.mjs --name unit --log artifacts/ci/unit.log -- pnpm test:unit
       - name: Acceptance tests
         run: node scripts/ci/run-gate.mjs --name acceptance --log artifacts/ci/acceptance.log -- pnpm vitest run tests/acceptance --passWithNoTests
       - name: Pi compatibility contract

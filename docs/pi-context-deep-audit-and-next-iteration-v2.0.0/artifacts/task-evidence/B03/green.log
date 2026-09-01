@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/ci/task-evidence.test.ts (2 tests) 604ms
+   ✓ task evidence v2 > rejects an empty-shell evidence.json as done  602ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  17:42:27
+   Duration  986ms (transform 23ms, setup 0ms, collect 20ms, tests 604ms, environment 0ms, prepare 59ms)
+

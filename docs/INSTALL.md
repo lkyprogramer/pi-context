@@ -1,6 +1,6 @@
 # Install
 
-Pi Context Runtime `0.1.0-alpha.1` is distributed as a **local npm-pack tarball** for `pi install`. It is `private` / `UNLICENSED`: do not `npm publish`.
+Pi Context Runtime `0.1.0-alpha.1` is distributed as a **local npm-pack tarball** for `pi install`. It is `private` / `UNLICENSED`: do not `npm publish`. `pcrRelease.npmPublish` is `false`. The default compactor remains Pi Native; `publicationClaim` is false until a same-HEAD live run passes Hard, Quality, and Efficiency together.
 
 ## Requirements
 

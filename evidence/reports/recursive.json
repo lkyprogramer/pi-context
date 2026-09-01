@@ -1,0 +1,25 @@
+{
+  "lane": "recursive-long-horizon",
+  "liveProvider": true,
+  "history": [
+    {
+      "phase": "compact-1",
+      "ok": true,
+      "compactCount": 1
+    },
+    {
+      "phase": "temporal-update",
+      "ok": true
+    },
+    {
+      "phase": "rpc",
+      "ok": false,
+      "error": "Nothing to compact (session too small)"
+    }
+  ],
+  "compactCount": 1,
+  "threeCompacts": false,
+  "branched": false,
+  "restarted": false,
+  "sideEffectGuard": true
+}

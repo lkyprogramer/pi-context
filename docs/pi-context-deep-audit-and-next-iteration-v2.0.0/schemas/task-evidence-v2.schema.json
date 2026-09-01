@@ -8,6 +8,7 @@
     "status",
     "currentHead",
     "allowedDiffSha256",
+    "sourceDigest",
     "red",
     "green",
     "fullGate",
@@ -30,6 +31,9 @@
       "pattern": "^[a-f0-9]{40}$"
     },
     "allowedDiffSha256": {
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceDigest": {
       "pattern": "^[a-f0-9]{64}$"
     },
     "red": {

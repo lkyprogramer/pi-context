@@ -1,0 +1,18 @@
+compdef:153: _comps: assignment to invalid subscript range
+{
+  "ok": false,
+  "owner": "lkyprogramer",
+  "repo": "pi-context",
+  "branch": "main",
+  "rulesetCount": 0,
+  "classicStatus": 403,
+  "contexts": [],
+  "missing": [
+    "required-gate",
+    "compatibility-required"
+  ],
+  "required": [
+    "required-gate",
+    "compatibility-required"
+  ]
+}

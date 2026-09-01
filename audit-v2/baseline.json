@@ -1,0 +1,25 @@
+{
+  "auditedHead": "6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31",
+  "sourceArchiveSha256": "ac3fd46a8dbdd03ac31e16e7184d263f572680b6a7c27b0cdf8e5d55a4b36155",
+  "zipSha256": "b14350a2df0164e2bc05add806750f28c8e499a205187e6e1641a9b2d7ab16da",
+  "requiredRunId": "33478592667",
+  "compatibilityRunId": "33478592798",
+  "packRelative": "docs/pi-context-deep-audit-and-next-iteration-v2.0.0",
+  "publicationClaim": false,
+  "releaseReady": false,
+  "defaultCompactor": "pi-native",
+  "copied": {
+    "ci/compat-ubuntu-node24-min-cell.json": "9d82e8255fa4dd35150a860ea62d0a5f0ad93d1ecff83e645e2cb1094567c854",
+    "ci/compat-ubuntu-node24-min-unit.log": "c54e6dc66a58cac8d36a258297d4ad0c634cf1ce5e9ab22627cdc3ff95886d54",
+    "ci/compatibility-failure-summary.md": "768f641281f2e4c70d1118ad819c5dc60b41edcc4b7c62ac0eb5d23fd9034238",
+    "ci/current-workflow-state.json": "2717cb52036924c05609c4ade2b654e7fc3a96e428dfa93768934685aadd2366",
+    "source-inventory.json": "8b46c6b61409190d40dcd8dba95d6b198d9f40e85d6111f0a24aab77c957f9a7",
+    "reports/LIVE-COMPARISON.md": "28ce0391f5af7967540c18eb2c1c25dca11e29b90a42054d658cfc65a432c2be",
+    "reports/deterministic-v3-gate-decision.json": "c763d45ce98e49409d451288f920940a69fb568722ca19e4a589b3a61e5d3873",
+    "reports/natural-threshold.json": "23aad2d258e26a5d9b38633f59260ad3a1d1a92aa3513ae605a53a580f9c271b",
+    "reports/overflow.json": "d8933262df4f38bc98dc0093f0db7bc39d05ef76b337a46b5c939ffaf9fc2e4f",
+    "reports/recursive.json": "400f6c0b52d4d8702ef1432bf1d42a775384ced7b1d21e94fa8f3a68ea73ffa6",
+    "governance/previous-task-status.json": "3d9dff9593abf4448076b57821155e30568867c5daed9c8fb2644dcf33d7c799",
+    "pack-build-info.json": "46845a399ec1911f0ce11a1234a145152b0c10b5954324369deaccbf8d0afc23"
+  }
+}

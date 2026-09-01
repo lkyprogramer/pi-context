@@ -1,15 +1,11 @@
 import { defineConfig } from "vitest/config";
+import { LANES } from "./tests/meta/lane-globs.ts";
 
 export default defineConfig({
   test: {
-    include: [
-      "tests/acceptance/**/*.test.ts",
-      "tests/live/**/*.test.ts",
-      "tests/integration/**/*.test.ts",
-    ],
-    exclude: [
-      "tests/acceptance/packed-install.test.ts",
-      "tests/live-gate/**",
-    ],
+    testTimeout: LANES["hermetic-integration"].testTimeout,
+    retry: LANES["hermetic-integration"].retry,
+    include: LANES["hermetic-integration"].include,
+    exclude: LANES["hermetic-integration"].exclude,
   },
 });

@@ -1,0 +1,6 @@
+{
+  "source": "artifacts/runs/w1-synthetic/report.json",
+  "hookP95Ms": 33.45799554999991,
+  "node": "22.19.0",
+  "note": "Frozen Node 22 sample. Unit and compatibility decisions must inject this value instead of wall-clock hook P95."
+}

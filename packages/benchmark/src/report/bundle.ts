@@ -5,7 +5,9 @@ import { GateEngineError, type GateDecision, type RunBundle } from "./engine.js"
 export type BundleVerifyErrorCode =
   | "PCR_BUNDLE_TAMPERED"
   | "PCR_BUNDLE_ABSOLUTE_PATH"
-  | "PCR_BUNDLE_INPUT_INVALID";
+  | "PCR_BUNDLE_INPUT_INVALID"
+  | "PCR_BUNDLE_RAW_MISSING"
+  | "PCR_BUNDLE_PREVIEW_ONLY";
 
 export class BundleVerifyError extends TypeError {
   readonly code: BundleVerifyErrorCode;
@@ -77,6 +79,44 @@ function walkPaths(value: unknown): void {
     return;
   }
   for (const item of Object.values(value as Record<string, unknown>)) walkPaths(item);
+}
+
+const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
+const PREVIEW_LIMIT = 400;
+
+export interface RawRunBundle {
+  sessionJsonl: string;
+  storeSnapshotSha256: string;
+  workspaceManifestSha256: string;
+  configIdentity: string;
+  modelIdentity: string;
+  providerIdentity: string;
+  rawReport: unknown;
+  decision: unknown;
+}
+
+export function verifyRawRunBundle(input: RawRunBundle): RawRunBundle {
+  if (!input || typeof input !== "object") fail("PCR_BUNDLE_INPUT_INVALID");
+  if (typeof input.sessionJsonl !== "string" || input.sessionJsonl.length === 0) {
+    fail("PCR_BUNDLE_RAW_MISSING", { field: "sessionJsonl" });
+  }
+  if (input.sessionJsonl.length <= PREVIEW_LIMIT) {
+    fail("PCR_BUNDLE_PREVIEW_ONLY", { field: "sessionJsonl", bytes: input.sessionJsonl.length });
+  }
+  for (const field of ["storeSnapshotSha256", "workspaceManifestSha256"] as const) {
+    if (typeof input[field] !== "string" || !SHA256_PATTERN.test(input[field])) {
+      fail("PCR_BUNDLE_RAW_MISSING", { field });
+    }
+  }
+  for (const field of ["configIdentity", "modelIdentity", "providerIdentity"] as const) {
+    if (typeof input[field] !== "string" || input[field].length === 0) {
+      fail("PCR_BUNDLE_RAW_MISSING", { field });
+    }
+  }
+  if (input.rawReport === undefined || input.rawReport === null) fail("PCR_BUNDLE_RAW_MISSING", { field: "rawReport" });
+  if (input.decision === undefined || input.decision === null) fail("PCR_BUNDLE_RAW_MISSING", { field: "decision" });
+  walkPaths(input);
+  return input;
 }
 
 void GateEngineError;

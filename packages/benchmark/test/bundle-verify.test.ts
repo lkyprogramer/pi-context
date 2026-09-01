@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
-import { createGateEngine, sealRunBundle, verifyRunBundle, type RunBundle } from "@pcr/benchmark";
+import { createGateEngine, sealRunBundle, verifyRawRunBundle, verifyRunBundle, type RunBundle } from "@pcr/benchmark";
 
 const EMPTY_DIFF = createHash("sha256").update("").digest("hex");
 
@@ -74,4 +74,39 @@ describe("immutable run bundle", () => {
     expect(verified.decision.decision).toBe(first.decision);
     expect(verified.decision.reportSha256).toBe(first.reportSha256);
   });
+
+  it("rejects preview-only raw artifacts on writeImmutableBundle", async () => {
+    const engine = createGateEngine({
+      workspaceId: "ws-report",
+      git: { async status() { return { commit: "c".repeat(40), diffHash: EMPTY_DIFF, dirty: false }; } },
+      files: { async mkdir() {}, async writeFile() {} },
+    });
+    await expect(engine.writeImmutableBundle({
+      ...sample(),
+      rawArtifacts: {
+        sessionJsonl: "preview-only",
+        storeSnapshotSha256: "a".repeat(64),
+        workspaceManifestSha256: "b".repeat(64),
+        configIdentity: "cfg",
+        modelIdentity: "openclaw/Qwen3.8-27B-WORK",
+        providerIdentity: "openclaw",
+        rawReport: { gate: "w1-early-net-value" },
+        decision: { decision: "keep-pi-native" },
+      },
+    }, "out")).rejects.toThrowError(expect.objectContaining({ code: "PCR_BUNDLE_PREVIEW_ONLY" }));
+  });
+
+  it("rejects a preview-only raw bundle", () => {
+    expect(() => verifyRawRunBundle({
+      sessionJsonl: "preview-only",
+      storeSnapshotSha256: "a".repeat(64),
+      workspaceManifestSha256: "b".repeat(64),
+      configIdentity: "cfg",
+      modelIdentity: "openclaw/Qwen3.8-27B-WORK",
+      providerIdentity: "openclaw",
+      rawReport: { gate: "w1-early-net-value" },
+      decision: { decision: "keep-pi-native" },
+    })).toThrowError(expect.objectContaining({ code: "PCR_BUNDLE_PREVIEW_ONLY" }));
+  });
 });
+

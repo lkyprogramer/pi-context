@@ -1,20 +1,40 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { EncryptedBlobStore } from "../../packages/storage/src/blob-store.js";
 import { TestKeyProvider } from "../../packages/storage/src/key-provider.js";
 import { denyCrossWorkspace, runA0, runW1Arm } from "./arms.js";
 import { assertLockedCorpus, buildSyntheticCorpus, corpusQuota } from "./corpus.js";
 import { computeRealizedNet } from "@pcr/core";
+import { hookP95ForDecision } from "@pcr/benchmark";
 import { evaluateW1Gate, median, pairedBootstrapCi, percentile, relativeDelta } from "./scorer.js";
 
-export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthetic"): Promise<{
+const recordedTiming = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "recorded-timing.json"), "utf8"),
+) as { hookP95Ms: number };
+
+export const RECORDED_W1_HOOK_P95_MS = recordedTiming.hookP95Ms;
+
+export interface W1GateRunOptions {
+  extraDelayMs?: number;
+  hookP95Source?: "recorded" | "measured";
+  recordedHookP95Ms?: number;
+}
+
+export async function runW1EarlyNetValueGate(
+  outDir = "artifacts/runs/w1-synthetic",
+  options: W1GateRunOptions = {},
+): Promise<{
   reportPath: string;
   decision: string;
   report: Record<string, unknown>;
 }> {
+  const extraDelayMs = options.extraDelayMs ?? 0;
+  const hookP95Source = options.hookP95Source ?? "recorded";
+  const recordedHookP95Ms = options.recordedHookP95Ms ?? RECORDED_W1_HOOK_P95_MS;
   const cases = buildSyntheticCorpus();
   assertLockedCorpus(cases);
   const quotas = corpusQuota(cases);
@@ -49,8 +69,13 @@ export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthet
     tokenDeltas.map(() => 0),
     tokenDeltas,
   );
-  const hookTimes = rows.map((row) => row.a1.hookMs).sort((a, b) => a - b);
-  const hookP95 = percentile(hookTimes, 0.95);
+  const hookTimes = rows.map((row) => row.a1.hookMs + extraDelayMs).sort((a, b) => a - b);
+  const measuredHookP95 = percentile(hookTimes, 0.95);
+  const hookP95 = hookP95ForDecision({
+    recordedMs: recordedHookP95Ms,
+    measuredMs: measuredHookP95,
+    source: hookP95Source,
+  });
 
   const needed = rows.filter((row) => row.family === "recall-needed");
   const unneeded = rows.filter((row) => row.family === "recall-not-needed");
@@ -116,6 +141,8 @@ export async function runW1EarlyNetValueGate(outDir = "artifacts/runs/w1-synthet
       toolHeavyMedianRelativeDelta: median(tokenDeltas),
       ci: ingress,
       hookP95Ms: hookP95,
+      measuredHookP95Ms: measuredHookP95,
+      hookP95Source,
     },
     recall: {
       recallAt5,
