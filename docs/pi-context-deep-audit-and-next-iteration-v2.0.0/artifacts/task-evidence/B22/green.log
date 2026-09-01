@@ -1,0 +1,14 @@
+CMD: pnpm exec vitest run tests/live-gate/exact-recovery.live.test.ts --config vitest.live-smoke.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:34831) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ tests/live-gate/exact-recovery.live.test.ts (5 tests) 200ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  00:41:15
+   Duration  1.16s (transform 447ms, setup 0ms, collect 650ms, tests 200ms, environment 0ms, prepare 60ms)
+
+EXIT:0

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B22",
+  "status": "done",
+  "currentHead": "5c7c6a4ee0a32d48e4fbd808096532bf60a9a545",
+  "allowedDiffSha256": "8fa11361eda903045e4d9785eecbf2f498f763d8539e5239b4991fb5f0dc30b7",
+  "sourceDigest": "04c391d7c1cdb48ac7aaf5ade9229224c80a5a31d2e446ce60846b37d0266bb3",
+  "red": {
+    "command": "B22-red",
+    "exitCode": 1,
+    "logSha256": "2b96325021e287ac78dab22876193eccd11f06f570cce1d918a23fe025251d6c"
+  },
+  "green": {
+    "command": "pnpm exec vitest run tests/live-gate/exact-recovery.live.test.ts --config vitest.live-smoke.config.ts",
+    "exitCode": 0,
+    "logSha256": "f2a0460b029212c52a9d0c5ec6d3ae35ac85e265c370cd157fa54ca2c06182ff"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "b2e2dbc18026624ffce835623714e0100fcba2fd0d263340418f7c520bf8716f"
+  },
+  "runBundleHashes": [
+    "f2a0460b029212c52a9d0c5ec6d3ae35ac85e265c370cd157fa54ca2c06182ff"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "cas-live-unrun",
+      "ok": true,
+      "evidence": "cas-live-unrun.md"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

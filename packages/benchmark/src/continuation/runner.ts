@@ -89,6 +89,61 @@ function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
 }
 
+export interface ToolPairScore {
+  toolPairViolations: number;
+  calls: number;
+  results: number;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+export function scoreToolPairsFromSession(entries: readonly unknown[]): ToolPairScore {
+  if (!Array.isArray(entries)) {
+    throw new ContinuationError("PCR_CONTINUATION_INPUT_INVALID", { field: "entries" });
+  }
+  const calls: Array<{ id: string; name: string }> = [];
+  const results: Array<{ id: string; name: string }> = [];
+  for (const entry of entries) {
+    const row = asRecord(entry);
+    if (!row) continue;
+    const message = asRecord(row.message) ?? (row.type === "message" ? null : row);
+    const payload = message ?? row;
+    const role = typeof payload.role === "string" ? payload.role : "";
+    if (role === "assistant" && Array.isArray(payload.content)) {
+      for (const block of payload.content) {
+        const item = asRecord(block);
+        if (!item) continue;
+        const type = typeof item.type === "string" ? item.type : "";
+        if (type !== "toolCall" && type !== "tool_call") continue;
+        const id = typeof item.id === "string" ? item.id : typeof item.toolCallId === "string" ? item.toolCallId : "";
+        const name = typeof item.name === "string" ? item.name : typeof item.toolName === "string" ? item.toolName : "";
+        if (id.length === 0 || name.length === 0) continue;
+        calls.push({ id, name });
+      }
+    }
+    if (role === "toolResult" || role === "tool-result") {
+      const id = typeof payload.toolCallId === "string" ? payload.toolCallId : "";
+      const name = typeof payload.toolName === "string" ? payload.toolName : "";
+      if (id.length === 0) continue;
+      results.push({ id, name: name.length > 0 ? name : "*" });
+    }
+  }
+  const resultById = new Map(results.map((row) => [row.id, row]));
+  let toolPairViolations = 0;
+  const seen = new Set<string>();
+  for (const call of calls) {
+    const result = resultById.get(call.id);
+    if (!result || (result.name !== "*" && result.name !== call.name)) toolPairViolations += 1;
+    seen.add(call.id);
+  }
+  for (const result of results) {
+    if (!seen.has(result.id)) toolPairViolations += 1;
+  }
+  return { toolPairViolations, calls: calls.length, results: results.length };
+}
+
 export function createContinuationRunner(input: CreateContinuationRunnerInput): ContinuationRunner {
   if (!input || typeof input !== "object") failMissing("input");
   if (typeof input.corpusId !== "string" || input.corpusId.length === 0) failMissing("corpusId");

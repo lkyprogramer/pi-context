@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B23",
+  "status": "done",
+  "currentHead": "5c7c6a4ee0a32d48e4fbd808096532bf60a9a545",
+  "allowedDiffSha256": "41ce4c93570b82ca78cbebf8617af3746cc7516c3231f66fc1b2ef0d0058f6a1",
+  "sourceDigest": "49db101a609ba928ac8932d80fd720e18f738dd9f37e84ba2200c852def79e1c",
+  "red": {
+    "command": "B23-red",
+    "exitCode": 1,
+    "logSha256": "e47d2bc48faec5821152408170a6b6bfaf081acdf8393ce6601c5514abd315a2"
+  },
+  "green": {
+    "command": "pnpm exec vitest run tests/live-gate/tool-pair-scorer.test.ts --config vitest.live-smoke.config.ts",
+    "exitCode": 0,
+    "logSha256": "e9ff23df072dafcec43e0b56f17578537bd3984619a1731d36acfc113bb44d2d"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "b2e2dbc18026624ffce835623714e0100fcba2fd0d263340418f7c520bf8716f"
+  },
+  "runBundleHashes": [
+    "e9ff23df072dafcec43e0b56f17578537bd3984619a1731d36acfc113bb44d2d"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "tools-live-unrun",
+      "ok": true,
+      "evidence": "tools-live-unrun.md"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

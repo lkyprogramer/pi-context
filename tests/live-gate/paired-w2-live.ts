@@ -10,8 +10,15 @@ import {
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { createRuntimeCursor } from "../../packages/core/src/identity/stable-identity.js";
 import { estimateTextTokens } from "../../packages/kernel/src/budget/token-counter.js";
+import { scoreToolPairsFromSession } from "../../packages/benchmark/src/continuation/runner.js";
+import { scoreExactRecovery, type ExactRecoveryReport } from "../../packages/benchmark/src/scoring/integrity.js";
 import { scoreProbe, type ProbeFamily, type ProbeParseBucket } from "../../packages/benchmark/src/scoring/probe.js";
+import {
+  createEncryptedBlobStore,
+  openLocalWorkspaceBlobKeyProvider,
+} from "../../packages/storage-node/src/index.js";
 import { buildW2SyntheticCorpus, type ScenarioFamily, type W2Case } from "../w2-gate/corpus.js";
 import { evaluateW2Gate, median, pairedBootstrapCi, relativeDelta } from "../w2-gate/scorer.js";
 import { PiRpc } from "./pi-rpc.js";
@@ -54,6 +61,11 @@ export interface LiveArmResult {
   mustOmitLeak: number;
   recovered: boolean;
   probeBucket: ProbeParseBucket;
+  recoveryStatus: "ok" | "n/a" | "failed";
+  recoveryDenominator: number;
+  recoveryCount: number;
+  crossScopeDenied: boolean;
+  toolPairViolation: number;
 }
 
 export interface LivePairRow {
@@ -138,12 +150,14 @@ function inspectCompaction(sessionFile: string): {
   tokensBefore: number | null;
   summary: string;
   usageTotal: number | null;
+  pointerRefs: string[];
 } {
   let fromExtension = false;
   let firstKeptEntryId: string | null = null;
   let tokensBefore: number | null = null;
   let summary = "";
   let usageTotal: number | null = null;
+  const pointerRefs: string[] = [];
   for (const line of readFileSync(sessionFile, "utf8").split("\n")) {
     if (!line.includes('"type":"compaction"')) continue;
     const parsed = JSON.parse(line) as {
@@ -153,6 +167,10 @@ function inspectCompaction(sessionFile: string): {
       tokensBefore?: number;
       summary?: string;
       usage?: { totalTokens?: number };
+      details?: {
+        pointers?: Array<{ ref?: string }>;
+        reducerRevisions?: string[];
+      };
     };
     if (parsed.type !== "compaction") continue;
     fromExtension = parsed.fromHook === true;
@@ -160,8 +178,157 @@ function inspectCompaction(sessionFile: string): {
     tokensBefore = typeof parsed.tokensBefore === "number" ? parsed.tokensBefore : null;
     summary = parsed.summary ?? "";
     usageTotal = typeof parsed.usage?.totalTokens === "number" ? parsed.usage.totalTokens : null;
+    for (const pointer of parsed.details?.pointers ?? []) {
+      if (typeof pointer?.ref === "string" && pointer.ref.startsWith("blob_")) pointerRefs.push(pointer.ref);
+    }
+    for (const revision of parsed.details?.reducerRevisions ?? []) {
+      const match = /^pointer:[^:]+:(blob_[a-f0-9]{64})$/u.exec(revision);
+      if (match?.[1]) pointerRefs.push(match[1]);
+    }
   }
-  return { fromExtension, firstKeptEntryId, tokensBefore, summary, usageTotal };
+  return { fromExtension, firstKeptEntryId, tokensBefore, summary, usageTotal, pointerRefs: [...new Set(pointerRefs)] };
+}
+
+function toolResultBytes(sessionFile: string): Buffer {
+  let text = "";
+  for (const line of readFileSync(sessionFile, "utf8").split("\n")) {
+    if (!line.includes('"role":"toolResult"') && !line.includes('"role":"tool-result"')) continue;
+    if (text.length > 0) continue;
+    try {
+      const parsed = JSON.parse(line) as { type?: string; message?: { role?: string; content?: unknown } };
+      const message = parsed.type === "message" ? parsed.message : parsed as { role?: string; content?: unknown };
+      if (message?.role !== "toolResult" && message?.role !== "tool-result") continue;
+      if (typeof message.content === "string") {
+        text = message.content;
+        continue;
+      }
+      if (Array.isArray(message.content)) {
+        text = message.content
+          .filter((block) => block && typeof block === "object" && "text" in block)
+          .map((block) => String((block as { text?: unknown }).text ?? ""))
+          .join("");
+      }
+    } catch {
+      // skip malformed
+    }
+  }
+  return Buffer.from(text, "utf8");
+}
+
+export function liveSessionCursor(sessionFile: string, cwd: string): ReturnType<typeof createRuntimeCursor> {
+  const rows = readFileSync(sessionFile, "utf8").split("\n").flatMap((line) => {
+    if (!line.trim()) return [];
+    try {
+      return [JSON.parse(line) as { type?: string; id?: string; parentId?: string | null }];
+    } catch {
+      return [];
+    }
+  });
+  const header = rows.find((row) => row.type === "session");
+  const sessionId = typeof header?.id === "string" && header.id.length > 0 ? header.id : "unknown-session";
+  const byId = new Map(rows.filter((row) => typeof row.id === "string" && row.type !== "session").map((row) => [row.id!, row]));
+  const compaction = [...rows].reverse().find((row) => row.type === "compaction");
+  const inspected = inspectCompaction(sessionFile);
+  const leafId = inspected.firstKeptEntryId
+    ?? (typeof compaction?.parentId === "string" ? compaction.parentId : null)
+    ?? [...byId.keys()].at(-1)
+    ?? null;
+  const lineageEntryIds: string[] = [];
+  let current = leafId ? byId.get(leafId) : undefined;
+  while (current?.id) {
+    lineageEntryIds.push(current.id);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  lineageEntryIds.reverse();
+  return createRuntimeCursor({
+    workspacePath: cwd,
+    sessionId,
+    leafId,
+    lineageEntryIds: lineageEntryIds.length > 0 ? lineageEntryIds : [sessionId],
+    modelKey: LIVE_MODEL,
+  });
+}
+
+export async function recoverExactLiveArm(input: {
+  sessionFile: string;
+  cwd: string;
+  fromExtension: boolean;
+  mustOmitLeak: boolean;
+  pointerRefs: readonly string[];
+}): Promise<ExactRecoveryReport> {
+  const dump = toolResultBytes(input.sessionFile);
+  const dumpHash = createHash("sha256").update(dump).digest("hex");
+  const cursor = liveSessionCursor(input.sessionFile, input.cwd);
+  const sessionDir = dirname(input.sessionFile);
+  const dataRoot = [join(sessionDir, ".context-runtime"), join(input.cwd, ".context-runtime")].find((path) => existsSync(path));
+  const pointers = input.pointerRefs.map((blobId) => ({
+    blobId,
+    expectedSha256: dumpHash,
+    expectedBytes: dump.byteLength,
+  }));
+  const emptyBlobs = {
+    async read(): Promise<Uint8Array> {
+      throw Object.assign(new Error("PCR_BLOB_NOT_FOUND"), { code: "PCR_BLOB_NOT_FOUND" });
+    },
+  };
+  if (!dataRoot || pointers.length === 0) {
+    return scoreExactRecovery({
+      blobs: emptyBlobs,
+      workspaceId: cursor.workspaceId,
+      sessionId: cursor.sessionId,
+      wrongWorkspaceId: `ws_${"f".repeat(40)}`,
+      wrongSessionId: "foreign-session",
+      pointers,
+      fromExtension: input.fromExtension,
+      mustOmitLeak: input.mustOmitLeak,
+    });
+  }
+  let keys: ReturnType<typeof openLocalWorkspaceBlobKeyProvider>;
+  try {
+    keys = openLocalWorkspaceBlobKeyProvider({ dataRoot, workspaceId: cursor.workspaceId });
+  } catch (error) {
+    return scoreExactRecovery({
+      blobs: emptyBlobs,
+      workspaceId: cursor.workspaceId,
+      sessionId: cursor.sessionId,
+      wrongWorkspaceId: `ws_${"f".repeat(40)}`,
+      wrongSessionId: "foreign-session",
+      pointers,
+      fromExtension: input.fromExtension,
+      mustOmitLeak: input.mustOmitLeak,
+    });
+  }
+  try {
+    const blobs = createEncryptedBlobStore({
+      dataRoot,
+      workspaceId: cursor.workspaceId,
+      maxBlobBytes: 8 * 1024 * 1024,
+      keys,
+    });
+    return scoreExactRecovery({
+      blobs: {
+        async read(scope, blobId) {
+          const deny = scope.workspaceId !== cursor.workspaceId || scope.sessionId !== cursor.sessionId;
+          return blobs.read({
+            workspaceId: cursor.workspaceId,
+            sessionId: deny ? "foreign-session" : cursor.sessionId,
+            leafId: deny ? null : cursor.leafId,
+            lineageHash: deny ? "a".repeat(64) : cursor.lineageHash,
+            modelKey: cursor.modelKey,
+          }, blobId as `blob_${string}`);
+        },
+      },
+      workspaceId: cursor.workspaceId,
+      sessionId: cursor.sessionId,
+      wrongWorkspaceId: `ws_${"0".repeat(40)}`,
+      wrongSessionId: "foreign-session",
+      pointers,
+      fromExtension: input.fromExtension,
+      mustOmitLeak: input.mustOmitLeak,
+    });
+  } finally {
+    keys.close();
+  }
 }
 
 function lastAssistant(sessionFile: string): { text: string; inputTokens: number | null; outputTokens: number | null } {
@@ -317,6 +484,22 @@ async function runArm(opts: {
     const scored = scoreArm(opts.item, visible, probe.text);
     const summaryTokens = estimateTextTokens(visible);
     const budgetMismatch = opts.arm === "B0" && summaryTokens > nativeSummaryBudget() * 1.05;
+    const recovery = await recoverExactLiveArm({
+      sessionFile: opts.sessionFile,
+      cwd: opts.cwd,
+      fromExtension: compaction.fromExtension,
+      mustOmitLeak: scored.mustOmitLeak === 1,
+      pointerRefs: compaction.pointerRefs,
+    });
+    const sessionEntries = readFileSync(opts.sessionFile, "utf8").split("\n").flatMap((line) => {
+      if (!line.trim()) return [];
+      try {
+        return [JSON.parse(line)];
+      } catch {
+        return [];
+      }
+    });
+    const pairs = scoreToolPairsFromSession(sessionEntries);
     return {
       arm: opts.arm,
       ok: Boolean(compaction.firstKeptEntryId || compact.firstKeptEntryId),
@@ -332,7 +515,12 @@ async function runArm(opts: {
       compactLatencyMs,
       budgetMismatch,
       ...scored,
-      recovered: compaction.fromExtension && scored.mustOmitLeak === 0,
+      recovered: recovery.recovered,
+      recoveryStatus: recovery.status,
+      recoveryDenominator: recovery.denominator,
+      recoveryCount: recovery.recoveredCount,
+      crossScopeDenied: recovery.crossScopeDenied,
+      toolPairViolation: pairs.toolPairViolations,
     };
   } catch (error) {
     return {
@@ -362,6 +550,11 @@ async function runArm(opts: {
       mustOmitLeak: 0,
       recovered: false,
       probeBucket: "unknown",
+      recoveryStatus: "failed",
+      recoveryDenominator: 0,
+      recoveryCount: 0,
+      crossScopeDenied: false,
+      toolPairViolation: 1,
     };
   } finally {
     await rpc.stop().catch(() => undefined);
@@ -454,6 +647,7 @@ export async function runLivePairedW2(opts: {
   const leaks = completed.filter((row) => row.b1.mustOmitLeak > 0).length;
   const nativeLeaks = completed.filter((row) => row.b0.mustOmitLeak > 0).length;
   const recovered = completed.length === 0 ? 0 : completed.filter((row) => row.b1.recovered).length / completed.length;
+  const toolPairViolation = completed.reduce((sum, row) => sum + row.b0.toolPairViolation + row.b1.toolPairViolation, 0);
   const b1FromHook = completed.every((row) => row.b1.fromExtension);
   const b0Native = completed.every((row) => !row.b0.fromExtension);
   const sameCutRate = completed.length === 0 ? 0 : sameCut.length / completed.length;
@@ -464,6 +658,7 @@ export async function runLivePairedW2(opts: {
     unsupported === 0 &&
     leaks === 0 &&
     recovered === 1 &&
+    toolPairViolation === 0 &&
     b1FromHook &&
     b0Native;
 
@@ -591,7 +786,7 @@ export async function runLivePairedW2(opts: {
     hard: {
       directiveCoverage,
       unsupportedHighRiskOutcome: unsupported,
-      toolPairViolation: 0,
+      toolPairViolation,
       mustOmitLeak: leaks,
       nativeMustOmitLeak: nativeLeaks,
       exactEvidenceRecovery: recovered,
@@ -700,6 +895,11 @@ function slimArm(arm: LiveArmResult, secrets: string[]) {
     mustOmitLeak: arm.mustOmitLeak,
     recovered: arm.recovered,
     probeBucket: arm.probeBucket,
+    recoveryStatus: arm.recoveryStatus,
+    recoveryDenominator: arm.recoveryDenominator,
+    recoveryCount: arm.recoveryCount,
+    crossScopeDenied: arm.crossScopeDenied,
+    toolPairViolation: arm.toolPairViolation,
   };
 }
 

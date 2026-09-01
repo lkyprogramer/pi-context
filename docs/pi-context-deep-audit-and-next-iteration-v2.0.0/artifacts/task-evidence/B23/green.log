@@ -1,0 +1,12 @@
+CMD: pnpm exec vitest run tests/live-gate/tool-pair-scorer.test.ts --config vitest.live-smoke.config.ts
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/live-gate/tool-pair-scorer.test.ts (1 test) 2ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  00:41:16
+   Duration  348ms (transform 30ms, setup 0ms, collect 32ms, tests 2ms, environment 0ms, prepare 87ms)
+
+EXIT:0

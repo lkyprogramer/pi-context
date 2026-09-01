@@ -106,6 +106,127 @@ function requireNonEmpty(value: unknown, field: string): asserts value is string
   if (typeof value !== "string" || value.length === 0) failInput(field);
 }
 
+const SCOPE_DENIED = new Set([
+  "PCR_RETRIEVAL_SCOPE_DENIED",
+  "PCR_INTEGRITY_SCOPE_MISMATCH",
+  "PCR_BLOB_WORKSPACE_MISMATCH",
+  "PCR_BLOB_SCOPE_MISMATCH",
+  "PCR_POINTER_SCOPE_MISMATCH",
+]);
+
+function errorCode(error: unknown): string | undefined {
+  if (error && typeof error === "object" && "code" in error && typeof error.code === "string") return error.code;
+  return undefined;
+}
+
+export type ExactRecoveryStatus = "ok" | "n/a" | "failed";
+
+export interface ExactRecoveryPointer {
+  blobId: string;
+  expectedSha256: string;
+  expectedBytes: number;
+}
+
+export interface ExactRecoveryReport {
+  recovered: boolean;
+  status: ExactRecoveryStatus;
+  recoveredCount: number;
+  denominator: number;
+  crossScopeDenied: boolean;
+  reasons: readonly string[];
+}
+
+export async function scoreExactRecovery(input: {
+  blobs: IntegrityBlobStore;
+  workspaceId: string;
+  sessionId: string;
+  wrongWorkspaceId: string;
+  wrongSessionId: string;
+  pointers: readonly ExactRecoveryPointer[];
+  fromExtension?: boolean;
+  mustOmitLeak?: boolean;
+  signal?: AbortSignal;
+}): Promise<ExactRecoveryReport> {
+  if (!input || typeof input !== "object") failMissing("input");
+  if (!input.blobs || typeof input.blobs.read !== "function") failMissing("blobs");
+  requireNonEmpty(input.workspaceId, "workspaceId");
+  requireNonEmpty(input.sessionId, "sessionId");
+  requireNonEmpty(input.wrongWorkspaceId, "wrongWorkspaceId");
+  requireNonEmpty(input.wrongSessionId, "wrongSessionId");
+  if (!Array.isArray(input.pointers)) failInput("pointers");
+  if (input.signal !== undefined && !(input.signal instanceof AbortSignal)) failInput("signal");
+  input.signal?.throwIfAborted();
+  const reasons: string[] = [];
+  if (input.fromExtension === true && input.pointers.length === 0 && input.mustOmitLeak !== true) {
+    reasons.push("fromExtension-without-cas-read");
+  }
+  if (input.pointers.length === 0) {
+    return Object.freeze({
+      recovered: false,
+      status: "n/a" as const,
+      recoveredCount: 0,
+      denominator: 0,
+      crossScopeDenied: false,
+      reasons: Object.freeze([...reasons, "zero-pointer"]),
+    });
+  }
+  let recoveredCount = 0;
+  let deniedCount = 0;
+  let inScopeReads = 0;
+  for (const pointer of input.pointers) {
+    if (!pointer || typeof pointer !== "object") failInput("pointers[]");
+    requireNonEmpty(pointer.blobId, "pointers.blobId");
+    requireNonEmpty(pointer.expectedSha256, "pointers.expectedSha256");
+    if (!SHA256_PATTERN.test(pointer.expectedSha256)) failInput("pointers.expectedSha256");
+    if (!Number.isSafeInteger(pointer.expectedBytes) || pointer.expectedBytes < 0) {
+      failInput("pointers.expectedBytes");
+    }
+    input.signal?.throwIfAborted();
+    let bytes: Uint8Array;
+    try {
+      bytes = await input.blobs.read(
+        { workspaceId: input.workspaceId, sessionId: input.sessionId },
+        pointer.blobId,
+      );
+    } catch (error) {
+      reasons.push(`read-failed:${errorCode(error) ?? "unknown"}`);
+      continue;
+    }
+    inScopeReads += 1;
+    const digest = sha256(bytes);
+    const hashOk = digest === pointer.expectedSha256;
+    const lengthOk = bytes.byteLength === pointer.expectedBytes;
+    if (hashOk && lengthOk) recoveredCount += 1;
+    else reasons.push(`mismatch:${pointer.blobId}`);
+    try {
+      const leaked = await input.blobs.read(
+        { workspaceId: input.wrongWorkspaceId, sessionId: input.wrongSessionId },
+        pointer.blobId,
+      );
+      if (leaked) reasons.push(`cross-scope-allowed:${pointer.blobId}`);
+    } catch (error) {
+      const code = errorCode(error);
+      if (code && (SCOPE_DENIED.has(code) || code.includes("SCOPE") || code.includes("MISMATCH"))) {
+        deniedCount += 1;
+      } else {
+        reasons.push(`cross-scope-wrong-error:${code ?? "unknown"}`);
+      }
+    }
+  }
+  const crossScopeDenied = inScopeReads > 0 && deniedCount === inScopeReads;
+  const casOk = recoveredCount === input.pointers.length && crossScopeDenied;
+  const recovered = casOk && input.mustOmitLeak !== true;
+  if (input.mustOmitLeak === true) reasons.push("must-omit-leak");
+  return Object.freeze({
+    recovered,
+    status: recovered ? "ok" : "failed",
+    recoveredCount,
+    denominator: input.pointers.length,
+    crossScopeDenied,
+    reasons: Object.freeze(reasons),
+  });
+}
+
 export function createIntegrityScorer(input: { blobs: IntegrityBlobStore }): IntegrityScorer {
   if (!input || typeof input !== "object") failMissing("input");
   if (!input.blobs || typeof input.blobs.read !== "function") failMissing("blobs");
