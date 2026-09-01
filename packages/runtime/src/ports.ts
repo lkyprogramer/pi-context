@@ -87,6 +87,8 @@ export interface CompactionPrepareInput extends CancellableRuntimeOperation {
   now: number;
   tokensBefore: number;
   firstKeptEntryId: string;
+  messagesToSummarize?: unknown[];
+  retainedTailTokens?: number;
 }
 
 export type SessionCompactionDecision =

@@ -13,8 +13,8 @@ import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/
 import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
 import { registerSessionLifecycle, toPcrSessionStartReason } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { domainHash, type HostCheckpointDetails, type RuntimeCursor } from "../../../packages/contracts/src/index.js";
-import { createRuntimeCursor } from "../../../packages/core/src/identity/stable-identity.js";
-import { type SessionCompactionDecision } from "../../../packages/runtime/src/index.js";
+import { createRuntimeCursor, estimateTextTokens } from "../../../packages/core/src/index.js";
+import { collectCompactionSourceTexts, type SessionCompactionDecision } from "../../../packages/runtime/src/index.js";
 import { candidateKey, CandidateWorker, type CandidateSnapshot } from "../../../packages/worker/src/candidate-worker.js";
 import { registerOperationsCommands } from "./commands/operations.js";
 import { fixtureEnvironment, runRuntimeDoctor } from "./doctor.js";
@@ -157,6 +157,11 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         const session = await userTurns.openSession(derived);
         const compact = session.prepareCompaction;
         if (typeof compact !== "function") return { kind: "native-fallback" };
+        const sourceMessages = [
+          ...(Array.isArray(event.preparation.messagesToSummarize) ? event.preparation.messagesToSummarize : []),
+          ...(Array.isArray(event.preparation.turnPrefixMessages) ? event.preparation.turnPrefixMessages : []),
+        ];
+        const tailTexts = collectCompactionSourceTexts(event.preparation.retainedTail);
         const decision = await compact.call(session, {
           operationId: "op_compact",
           cursor: sessionCursor(derived),
@@ -164,6 +169,10 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
           now: Date.now(),
           tokensBefore: event.preparation.tokensBefore,
           firstKeptEntryId: event.preparation.firstKeptEntryId,
+          messagesToSummarize: sourceMessages,
+          retainedTailTokens: tailTexts.length === 0
+            ? undefined
+            : tailTexts.reduce((sum, text) => sum + estimateTextTokens(text), 0),
           signal: ctx.signal,
         });
         return toPiDecision(decision);

@@ -14,6 +14,7 @@ import {
   createClauseSegmenter,
   createDirectiveExtractor,
   createRuntimeCursor,
+  emptyContinuityRevision,
   type ContinuityRevision,
   type ContinuityStore,
 } from "@pcr/core";
@@ -295,6 +296,37 @@ describe("T31 Pi compaction takeover with Native fallback", () => {
     expect(result?.compaction?.details.claimHead).not.toBe("ch_runtime");
     expect(result?.compaction?.details.continuityHead).not.toBe("cth_runtime");
     expect(result?.compaction?.summary.includes("must-not/active")).toBe(false);
+    expect(result?.compaction?.summary.includes("do not deploy production")).toBe(true);
+    expect(result?.compaction?.summary.includes("改为 version 7")).toBe(true);
     await ext.release?.();
+  });
+
+  it("falls back when source texts are constrained but the snapshot has no directives", async () => {
+    const bound = cursor();
+    const service = createCompactionService({
+      cursor: bound,
+      assembler: createCompactionSnapshotAssembler({
+        cursor: bound,
+        transaction: { async run(work) { return work(); } },
+        directives: { async active() { return []; } },
+        continuity: { async current() { return emptyContinuityRevision(bound); } },
+        claims: { async list() { return []; } },
+        evidence: { async pointers() { return []; } },
+      }),
+      renderer: createCheckpointRenderer({ cursor: bound }),
+      verifier: createCheckpointVerifier({
+        cursor: bound,
+        pointers: { async verify() {} },
+      }),
+    });
+    await expect(service.prepareCompaction({
+      operationId: "op_empty_shell",
+      cursor: bound,
+      reason: "threshold",
+      now: 31,
+      tokensBefore: 8000,
+      firstKeptEntryId: "entry_tail",
+      messagesToSummarize: [{ role: "user", content: "do not deploy production" }],
+    })).resolves.toEqual({ kind: "native-fallback" });
   });
 });

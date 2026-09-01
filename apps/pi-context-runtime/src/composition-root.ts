@@ -26,6 +26,7 @@ import {
 } from "../../../packages/pi-adapter/src/index.js";
 import {
   assembleRuntimeSnapshot,
+  collectCompactionSourceTexts,
   createCompactionService,
   createCompactionSnapshotAssembler,
   createEvidenceService,
@@ -650,6 +651,16 @@ export function registerProductionUserTurnRuntime(
     }];
   }
 
+  function claimMessages(rows: Array<{ claimId: string; key: string; value: unknown }>): HostMessage[] {
+    return rows.map((row) => ({
+      hostMessageId: row.claimId,
+      role: "custom" as const,
+      timestamp: 0,
+      sourceClass: "system" as const,
+      content: [{ type: "text" as const, text: `${row.key}=${String(row.value)}` }],
+    }));
+  }
+
   async function portsFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSessionPorts> {
     const userTurn = owner.service(cursor);
     const observation = owner.observation(cursor);
@@ -797,12 +808,34 @@ export function registerProductionUserTurnRuntime(
           }, {
             cursor,
             directives: quoteMessages(rows.directives.filter((row) => row.status === "active")),
-            continuity: continuityMessages(continuity),
+            continuity: [
+              ...continuityMessages(continuity),
+              ...claimMessages(rows.claims.filter((row) => row.status === "active")),
+            ],
           });
         },
       },
       compaction: {
-        prepare: (input) => compaction.prepareCompaction(input),
+        prepare: async (input) => {
+          const active = await resolver.active(cursor, input.signal);
+          if (active.length === 0) {
+            const seen = new Set<string>();
+            for (const rawText of collectCompactionSourceTexts(input.messagesToSummarize)) {
+              const digest = domainHash("compact-backfill", rawText);
+              if (seen.has(digest)) continue;
+              seen.add(digest);
+              await userTurn.capture({
+                operationId: `op_backfill_${digest.slice(0, 24)}`,
+                cursor,
+                rawText,
+                sourceClass: "authenticated-user",
+                capturedAt: input.now,
+                signal: input.signal,
+              });
+            }
+          }
+          return compaction.prepareCompaction(input);
+        },
         async acknowledge() {},
       },
       retrieval: {

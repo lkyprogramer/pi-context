@@ -14,6 +14,7 @@ export interface CompactionPreparation {
   firstKeptEntryId: string;
   retainedTail?: unknown[];
   messagesToSummarize?: unknown[];
+  turnPrefixMessages?: unknown[];
   branchScope?: string;
   head?: string;
   directives?: Array<{ directiveId: string; quote: string }>;

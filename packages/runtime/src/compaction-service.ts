@@ -14,7 +14,40 @@ export interface CompactionPrepareRequest {
   now: number;
   tokensBefore: number;
   firstKeptEntryId: string;
+  messagesToSummarize?: unknown[];
+  retainedTailTokens?: number;
   signal?: AbortSignal;
+}
+
+export function collectCompactionSourceTexts(messages: unknown): string[] {
+  if (!Array.isArray(messages)) return [];
+  const texts: string[] = [];
+  for (const item of messages) {
+    if (typeof item === "string" && item.trim().length > 0) {
+      texts.push(item);
+      continue;
+    }
+    if (!item || typeof item !== "object") continue;
+    const record = item as { text?: unknown; content?: unknown };
+    if (typeof record.text === "string" && record.text.trim().length > 0) texts.push(record.text);
+    if (typeof record.content === "string" && record.content.trim().length > 0) texts.push(record.content);
+    if (Array.isArray(record.content)) {
+      for (const block of record.content) {
+        if (typeof block === "string" && block.trim().length > 0) texts.push(block);
+        else if (block && typeof block === "object" && typeof (block as { text?: unknown }).text === "string") {
+          const text = (block as { text: string }).text;
+          if (text.trim().length > 0) texts.push(text);
+        }
+      }
+    }
+  }
+  return texts;
+}
+
+export function sourceTextsLookConstrained(texts: readonly string[]): boolean {
+  return texts.some((text) => (
+    /不要|(?:\bdo not\b|\bdon't\b|\bnever\b)|改为|\binstead\b|\bmust\b|必须/iu.test(text)
+  ));
 }
 
 export interface CompactionReadyResult {
@@ -233,8 +266,16 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
         heads: checkpoint.heads as Record<string, string>,
         continuity: checkpoint.continuity as { revisionId: string; contentHash?: string },
       });
+      const sourceTexts = collectCompactionSourceTexts(request.messagesToSummarize);
+      if (snapshot.directives.length === 0 && sourceTextsLookConstrained(sourceTexts)) {
+        return { kind: "native-fallback" };
+      }
       const estimatedTokensAfter = estimateTextTokens(view.summary);
-      if (!(estimatedTokensAfter < request.tokensBefore)) return { kind: "native-fallback" };
+      const retainedTailTokens = request.retainedTailTokens ?? 0;
+      if (typeof retainedTailTokens !== "number" || !Number.isFinite(retainedTailTokens) || retainedTailTokens < 0) {
+        failInput("request.retainedTailTokens");
+      }
+      if (!(estimatedTokensAfter + retainedTailTokens < request.tokensBefore)) return { kind: "native-fallback" };
       return {
         kind: "pcr",
         result: {

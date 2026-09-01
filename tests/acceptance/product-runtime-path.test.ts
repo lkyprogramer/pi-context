@@ -283,6 +283,8 @@ describe("product runtime SQLite/FTS/CAS path", () => {
       expect(compaction).toBeDefined();
       expect(compaction?.details.directiveHead).not.toBe("dh_runtime");
       expect(compaction?.summary.includes("must-not/active")).toBe(false);
+      expect(compaction?.summary.includes("do not deploy production")).toBe(true);
+      expect(compaction?.summary.includes("改为 version 7")).toBe(true);
     } finally {
       await (session as unknown as { dispose?: () => void }).dispose?.();
     }
