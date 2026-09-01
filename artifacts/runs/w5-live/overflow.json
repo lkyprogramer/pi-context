@@ -1,0 +1,206 @@
+{
+  "lane": "provider-overflow",
+  "liveProvider": true,
+  "autoCompact": false,
+  "attempts": [
+    {
+      "phase": "grow",
+      "ok": true,
+      "grown": [
+        {
+          "turn": 0,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 1,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 2,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 3,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 4,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 5,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 6,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 7,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 8,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 9,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 10,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 11,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 12,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 13,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 14,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 15,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 16,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 17,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 18,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 19,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 20,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 21,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 22,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 23,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        },
+        {
+          "turn": 24,
+          "ok": true,
+          "compactCount": 0,
+          "tokensBefore": null,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "phase": "overflow-prompt",
+      "ok": true
+    },
+    {
+      "phase": "compact",
+      "ok": true,
+      "compactHash": "96d6c8d87375bb738f44f4a6a2e730231437c44fbca29813715181ef205ee78e",
+      "tokensBefore": 36320
+    },
+    {
+      "phase": "retry",
+      "ok": true,
+      "compactHash": "9d0e70ee594c4a40a00c54c09c88a432314253591816210a442aaccb8bfa220e"
+    }
+  ],
+  "overflowObserved": false,
+  "compactThenRetry": true,
+  "hashesChange": true
+}
