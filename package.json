@@ -12,6 +12,7 @@
     "test:acceptance": "vitest run --config vitest.acceptance.config.ts",
     "test:packed": "vitest run --config vitest.packed.config.ts",
     "test:live": "vitest run --workspace vitest.live-paired-w2.workspace.ts",
+    "test:live:w5": "vitest run --workspace vitest.live-w5-lanes.workspace.ts",
     "test:live-smoke": "vitest run --config vitest.live-smoke.config.ts",
     "test:publication": "vitest run --config vitest.publication.config.ts",
     "format:check": "node scripts/ci/format-lint.mjs",

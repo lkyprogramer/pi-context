@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/live-gate/w5-lane-policy.test.ts (2 tests) 2ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  01:58:12
+   Duration  315ms (transform 58ms, setup 0ms, collect 65ms, tests 2ms, environment 0ms, prepare 54ms)
+

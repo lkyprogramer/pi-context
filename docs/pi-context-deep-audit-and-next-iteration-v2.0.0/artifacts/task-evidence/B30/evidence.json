@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B30",
+  "status": "done",
+  "currentHead": "af9422ab3d99439598d77ceebb088f667ff18e47",
+  "allowedDiffSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "sourceDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "red": {
+    "command": "jiti b30-red hand-compact-as-overflow",
+    "exitCode": 1,
+    "logSha256": "c4fb1d8d287391480a7993490181eeec6126c0c200238ad3785c3ddaa8ceb208"
+  },
+  "green": {
+    "command": "pnpm vitest run tests/live-gate/w5-lane-policy.test.ts --config vitest.live-smoke.config.ts",
+    "exitCode": 0,
+    "logSha256": "fb16c9a992d63db0503d3debee0194161591f8c47f22ecd2be7a7a05627eb6e7"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "2916223f72024dc9ce744baab70cfcdc3412d40886f5a9c1c1d14dffb023e4bf"
+  },
+  "runBundleHashes": [
+    "fb16c9a992d63db0503d3debee0194161591f8c47f22ecd2be7a7a05627eb6e7"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    },
+    {
+      "id": "overflow-recursive-unrun",
+      "ok": true,
+      "evidence": "overflow-recursive-unrun.md"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

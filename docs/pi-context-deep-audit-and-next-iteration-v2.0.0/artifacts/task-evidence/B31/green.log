@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ packages/benchmark/test/gate-v3.test.ts (4 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  02:06:44
+   Duration  748ms (transform 326ms, setup 0ms, collect 476ms, tests 3ms, environment 0ms, prepare 43ms)
+

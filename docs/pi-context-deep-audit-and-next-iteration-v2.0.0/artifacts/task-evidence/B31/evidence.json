@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "taskId": "B31",
+  "status": "done",
+  "currentHead": "af9422ab3d99439598d77ceebb088f667ff18e47",
+  "allowedDiffSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "sourceDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "red": {
+    "command": "node scripts/release/verify.mjs",
+    "exitCode": 1,
+    "logSha256": "26dad7584e4f825a6215cd6edb13e11cc8073f6340d965ceb5b92aee56d64dde"
+  },
+  "green": {
+    "command": "pnpm vitest run packages/benchmark/test/gate-v3.test.ts --config vitest.unit.config.ts",
+    "exitCode": 0,
+    "logSha256": "c0ea3c41ba32d4ce45c1a142ac6c066eed96fcf53c69ef983520d5da3dd3346d"
+  },
+  "fullGate": {
+    "command": "pnpm test:acceptance && pnpm test:integration",
+    "exitCode": 0,
+    "logSha256": "2916223f72024dc9ce744baab70cfcdc3412d40886f5a9c1c1d14dffb023e4bf"
+  },
+  "runBundleHashes": [
+    "c0ea3c41ba32d4ce45c1a142ac6c066eed96fcf53c69ef983520d5da3dd3346d"
+  ],
+  "acceptanceAssertions": [
+    {
+      "id": "local-green",
+      "ok": true,
+      "evidence": "green.log"
+    },
+    {
+      "id": "wave-full-gate",
+      "ok": true,
+      "evidence": "full-gate.log"
+    },
+    {
+      "id": "publication-fail-closed",
+      "ok": true,
+      "evidence": "publication-fail-closed.md"
+    }
+  ],
+  "findingsClosed": [],
+  "dirty": false
+}

@@ -1,0 +1,8 @@
+W5LiveError: PCR_W5_OVERFLOW_HAND_COMPACT
+    at assertOverflowPolicy (/Users/luo/Documents/github/pi-context/tests/live-gate/w5-live-lanes.ts:85:48)
+    at /var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-4096e6133a63/implementer/b30-red.ts:2:39
+    at async Function.import (/Users/luo/Documents/github/pi-context/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/dist/jiti.cjs:1:187718)
+    at async file:///Users/luo/Documents/github/pi-context/node_modules/.pnpm/jiti@2.7.0/node_modules/jiti/lib/jiti-cli.mjs:31:1 {
+  code: 'PCR_W5_OVERFLOW_HAND_COMPACT',
+  details: {}
+}

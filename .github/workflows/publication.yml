@@ -1,0 +1,15 @@
+name: publication
+on:
+  workflow_dispatch:
+jobs:
+  publication-claim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.19.0"
+      - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/release/verify.mjs

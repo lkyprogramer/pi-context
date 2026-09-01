@@ -51,6 +51,8 @@ export interface GateSampleProfile {
   familyRegressions: readonly string[];
 }
 
+export type PublicationClass = "synthetic" | "component" | "live-publication";
+
 export interface RunBundle {
   runId: string;
   gate: GateName;
@@ -62,6 +64,8 @@ export interface RunBundle {
   provenance: RunProvenance;
   sample?: GateSampleProfile;
   rawArtifacts?: RawRunBundle;
+  liveProvider?: boolean;
+  publicationClass?: PublicationClass;
   signal?: AbortSignal;
 }
 
@@ -166,6 +170,8 @@ function snapshotBundle(bundle: RunBundle): Omit<RunBundle, "signal"> {
     ...(bundle.sample
       ? { sample: { clusters: bundle.sample.clusters, seedsPerCluster: bundle.sample.seedsPerCluster, familyRegressions: [...bundle.sample.familyRegressions] } }
       : {}),
+    ...(bundle.liveProvider === undefined ? {} : { liveProvider: bundle.liveProvider }),
+    ...(bundle.publicationClass === undefined ? {} : { publicationClass: bundle.publicationClass }),
   };
 }
 
@@ -210,6 +216,12 @@ function parseBundle(bundle: RunBundle): RunBundle {
     requireCount(bundle.sample.clusters, "sample.clusters");
     requireCount(bundle.sample.seedsPerCluster, "sample.seedsPerCluster");
     if (!Array.isArray(bundle.sample.familyRegressions)) failInput("sample.familyRegressions");
+  }
+  if (bundle.liveProvider !== undefined && typeof bundle.liveProvider !== "boolean") failInput("liveProvider");
+  if (bundle.publicationClass !== undefined) {
+    if (bundle.publicationClass !== "synthetic" && bundle.publicationClass !== "component" && bundle.publicationClass !== "live-publication") {
+      failInput("publicationClass");
+    }
   }
   return bundle;
 }
@@ -272,6 +284,9 @@ function decide(bundle: RunBundle): { decision: GateDecisionKind; hardGatePass: 
     }
     if (!(bundle.efficiency.realizedNetMedian >= 1)) {
       return { decision: "keep-pi-native", hardGatePass: true, reasons: ["insufficient-net"] };
+    }
+    if (bundle.liveProvider !== true || bundle.publicationClass !== "live-publication") {
+      return { decision: "keep-pi-native", hardGatePass: true, reasons: ["live-provider-required"] };
     }
     return { decision: "adopt-pcr-compactor", hardGatePass: true, reasons: ["adopt-pcr-compactor"] };
   }

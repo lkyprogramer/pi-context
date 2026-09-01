@@ -71,6 +71,24 @@ describe("gate v3 sample and family rules", () => {
     })).reasons).toContain("sample-profile");
   });
 
+  it("never adopts a synthetic or component bundle as publication", () => {
+    const passing = bundle({
+      sample: { clusters: 30, seedsPerCluster: 3, familyRegressions: [] },
+    });
+    expect(engine().evaluate(passing).decision).toBe("keep-pi-native");
+    expect(engine().evaluate(passing).reasons).toContain("live-provider-required");
+    expect(engine().evaluate({
+      ...passing,
+      liveProvider: true,
+      publicationClass: "live-publication",
+    }).decision).toBe("adopt-pcr-compactor");
+    expect(engine().evaluate({
+      ...passing,
+      liveProvider: false,
+      publicationClass: "live-publication",
+    }).reasons).toContain("live-provider-required");
+  });
+
   it("blocks adopt when a family regresses", () => {
     const decision = engine().evaluate(bundle({
       sample: { clusters: 30, seedsPerCluster: 3, familyRegressions: ["temporal"] },

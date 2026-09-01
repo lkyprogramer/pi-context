@@ -214,6 +214,7 @@ export {
   type GateName,
   type GitSnapshot,
   type IntegritySlice,
+  type PublicationClass,
   type RunBundle,
   type RunProvenance,
   type GateSampleProfile,
