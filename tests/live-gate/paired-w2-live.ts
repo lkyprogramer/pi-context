@@ -59,6 +59,7 @@ export interface LiveArmResult {
 export interface LivePairRow {
   id: string;
   family: ScenarioFamily;
+  seed: number;
   sameCut: boolean;
   expectedFirstKeptId: string;
   b0: LiveArmResult;
@@ -86,11 +87,15 @@ export function pickLiveCases(profile: LiveProfile): W2Case[] {
   return picked;
 }
 
+export function liveReplicates(profile: LiveProfile): number {
+  return profile === "gate" ? 3 : 1;
+}
+
 export function expectedPairCount(profile: LiveProfile): number {
   if (profile === "one") return 1;
   if (profile === "smoke") return 10;
   if (profile === "spec-smoke") return 30;
-  return 100;
+  return 100 * liveReplicates("gate");
 }
 
 function copyModelsUnmodified(agentDir: string): { contextWindow: number; maxTokens: number } {
@@ -323,6 +328,7 @@ async function runArm(opts: {
       compactLatencyMs,
       budgetMismatch,
       ...scored,
+      recovered: compaction.fromExtension && scored.mustOmitLeak === 0,
     };
   } catch (error) {
     return {
@@ -381,6 +387,7 @@ async function runPair(item: W2Case, extensionPath: string): Promise<LivePairRow
   return {
     id: item.id,
     family: item.family,
+    seed: 0,
     sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
     expectedFirstKeptId: frozen.expectedFirstKeptId,
     b0,
@@ -402,6 +409,7 @@ export async function runLivePairedW2(opts: {
   const profile = opts.profile;
   const cases = pickLiveCases(profile);
   const expectedPairs = expectedPairCount(profile);
+  const replicates = liveReplicates(profile);
   const extensionPath = join(opts.repoRoot, "apps/pi-context-runtime/dist/extension.js");
   if (!existsSync(extensionPath)) throw new Error(`missing ${extensionPath}`);
   const homeModels = JSON.parse(readFileSync(join(homedir(), ".pi/agent/models.json"), "utf8")) as {
@@ -415,9 +423,20 @@ export async function runLivePairedW2(opts: {
     throw new Error(`expected unmodified maxTokens=${LIVE_RESERVE_TOKENS}, got ${modelLimits.maxTokens}`);
   }
   const rows: LivePairRow[] = [];
-  for (const item of cases) {
-    process.stderr.write(`[w2-live] ${item.id} ${item.family}\n`);
-    rows.push(await runPair(item, extensionPath));
+  const outDir = opts.outDir ?? join(opts.repoRoot, "artifacts/runs/w2-live-native", profile);
+  mkdirSync(outDir, { recursive: true });
+  for (let seed = 0; seed < replicates; seed += 1) {
+    for (const item of cases) {
+      process.stderr.write(`[w2-live] ${item.id} ${item.family} seed=${seed}\n`);
+      const row = await runPair(item, extensionPath);
+      const labeled: LivePairRow = {
+        ...row,
+        id: replicates === 1 ? item.id : `${item.id}#s${seed}`,
+        seed,
+      };
+      rows.push(labeled);
+      writeFileSync(join(outDir, "pairs-partial.json"), `${JSON.stringify(rows.map((item) => item.id))}\n`);
+    }
   }
 
   const completed = rows.filter((row) => row.b0.ok && row.b1.ok);
@@ -477,7 +496,7 @@ export async function runLivePairedW2(opts: {
   const realizedNetMedian = realized.length > 0 ? median(realized) : 0;
   const budgetMismatchRate = completed.length === 0 ? 1 : completed.filter((row) => row.b0.budgetMismatch).length / completed.length;
 
-  const sampleMeetsW2Gate = profile === "gate" && completed.length >= 100;
+  const sampleMeetsW2Gate = profile === "gate" && completed.length >= 300 && replicates === 3;
   const decision = evaluateW2Gate({
     hardGatePass,
     qualityCiLower: quality.lower,
@@ -525,8 +544,6 @@ export async function runLivePairedW2(opts: {
     }),
   );
 
-  const outDir = opts.outDir ?? join(opts.repoRoot, "artifacts/runs/w2-live-native", profile);
-  mkdirSync(outDir, { recursive: true });
   const report = {
     runId: `w2-live-native-${profile}`,
     gate: "w2-compactor",
@@ -561,7 +578,7 @@ export async function runLivePairedW2(opts: {
       armFailures: infraExcluded,
       sameCutPairs: sameCut.length,
       efficiencyPairs: efficiencyRows.length,
-      replicates: 1,
+      replicates,
       specW2GatePairs: 100,
       specW2Replicates: 3,
     },
@@ -600,6 +617,7 @@ export async function runLivePairedW2(opts: {
     pairs: rows.map((row) => ({
       id: row.id,
       family: row.family,
+      seed: row.seed,
       sameCut: row.sameCut,
       expectedFirstKeptId: row.expectedFirstKeptId,
       b0: slimArm(row.b0, [findSecret(row.id)]),

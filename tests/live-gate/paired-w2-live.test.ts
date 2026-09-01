@@ -12,7 +12,7 @@ describe("live paired W2 fixtures", () => {
     expect(pickLiveCases("one")[0]).toMatchObject({ id: "ct-00", family: "constraint" });
     expect(expectedPairCount("smoke")).toBe(10);
     expect(expectedPairCount("spec-smoke")).toBe(30);
-    expect(expectedPairCount("gate")).toBe(100);
+    expect(expectedPairCount("gate")).toBe(300);
     expect(pickLiveCases("spec-smoke")).toHaveLength(30);
     expect(pickLiveCases("gate")).toHaveLength(100);
   });
