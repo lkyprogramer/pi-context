@@ -1,6 +1,51 @@
 # 当前审计问题登记
 
-> 状态均为 `open`。关闭必须由新 Task 的验收证据和当前 HEAD 的 Gate 共同完成，不能仅以代码文件或测试名称存在为依据。
+> `findings.json` 的 `status` 仍全部为 `open`。关闭必须由 **当前 HEAD** 的 RED/GREEN/FULL-GATE、Evidence Seal 与（若该条需要 live）真实 Provider Run 共同完成，不能仅以代码文件、测试名称或提交前 SHA 的 evidence 为依据。
+>
+> 账本三栏只描述 **HEAD `8cd9de4` 上的接线与观测**，不是 Finding 关闭：
+>
+> - `hermetic-wired`：产品或评测路径已按原文接线，acceptance/unit 可证；**live/publication 未过则 Finding 仍 open**。
+> - `live-open`：需要真实 Pi/Provider 或权威 100×3/200K/overflow/recursive 观测，当前没有。
+> - `blocked-host`：Host API 或真实脱敏轨迹缺失，禁止编造字段/语料来关闭。
+
+## HEAD 8cd9de4 账本
+
+| ID | 账本 | 说明 |
+|---|---|---|
+| NF001 | live-open | 本 HEAD 未重跑 GitHub Compatibility Node 24 |
+| NF002 | hermetic-wired | Evidence v2 schema 与 taskctl 校验已存在；live 卡 `currentHead` 仍常为提交前 SHA |
+| NF003 | live-open | 旧 A43–A45 Done 已不再当权威；200K/overflow/recursive 仍未观测 |
+| NF004 | hermetic-wired | User/Tool Ingress 走 RuntimeSession；无新的 live 多 session 报告 |
+| NF005 | hermetic-wired | 全局 cursor / close-all 已按 W1 改；live 交错 session 未重报 |
+| NF006 | hermetic-wired | 原子 RuntimeSnapshot 已接线 |
+| NF007 | hermetic-wired | durable stage/ack 已接线 |
+| NF008 | live-open | JSONL tool-pair 计数已做；tools-enabled live JSONL 未跑 |
+| NF009 | hermetic-wired | Probe-only scorer 已替换 summary 污染路径 |
+| NF010 | live-open | EncryptedBlobStore hermetic CAS 已做；Pi B1 live recovery 未过 |
+| NF011 | live-open | 拒绝 label-only seed；Provider 不支持 sampling 时为 `replicate-repeat` |
+| NF012 | live-open | 无当前 HEAD 的 post-fix 100×3 raw bundle |
+| NF013 | live-open | 隔离 workspace 已做；产品 B1/B2 仍同一 extension materializer |
+| NF014 | live-open | 8 分钟 natural live 超时；overflow/recursive 未观测 |
+| NF015 | hermetic-wired | `liveProvider`+`publicationClass` 缺省不 adopt；无权威 live run identity |
+| NF016 | blocked-host | system/tools/images/reasoning/cache Usage 已接；`providerReservedTokens` 与 `getContextUsage` cache 无 Host 字段 |
+| NF017 | hermetic-wired | directory/recall/lease **view** 已注入；lease store schema 仍缺 |
+| NF018 | hermetic-wired | Background 默认关 |
+| NF019 | hermetic-wired | unbound/static cursor 与 Doctor fixture 已按 W1 收 |
+| NF020 | hermetic-wired | 互斥 lane glob 已拆 |
+| NF021 | blocked-host | corpus-v3 无脱敏真实轨迹，verify fail-closed |
+| NF022 | hermetic-wired | live pair 已改为串行；未用 100×3 证明延迟差 |
+| NF023 | live-open | cacheRead/Write 已从 assistant Usage 取；无真实价格/cache 经济 live |
+| NF024 | live-open | publication 门 fail-closed；required.yml 有意不含 live 100×3 |
+| NF025 | live-open | YAML job 名可校验；GitHub rulesets/classic protection 未在本 HEAD 核验 |
+| NF026 | hermetic-wired | 文档口径已按 W0 收过一轮；本文件即下一轮账本 |
+| NF027 | live-open | 无当前 HEAD + liveProvider=true 的 publication gate artifact |
+| NF028 | open | 包仍 private/内部 tarball；不把这个当成 npm release ready |
+| NF029 | live-open | 禁止混合 pre-fix 300 对；新 100×3 未跑 |
+| NF030 | live-open | raw 形状与 scrub 已做；无当前 HEAD live raw JSONL/request id 包 |
+
+---
+
+## NF001 — Compatibility Required 仍为红
 
 ## NF001 — Compatibility Required 仍为红
 
