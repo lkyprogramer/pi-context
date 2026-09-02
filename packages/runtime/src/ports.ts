@@ -78,6 +78,8 @@ export interface MaterializationRequest extends CancellableRuntimeOperation {
   };
   reason: "normal" | "overflow-retry" | "manual-preview";
   now: number;
+  /** B1 identity context vs B2 PCR materializer+recall. Default is pcr. */
+  materializerMode?: "identity" | "pcr";
 }
 
 export interface UserInputPort {

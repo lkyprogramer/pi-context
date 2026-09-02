@@ -39,13 +39,11 @@
 | NF025 | live-open | YAML job 名可校验；GitHub rulesets/classic protection 未在本 HEAD 核验 |
 | NF026 | hermetic-wired | 文档口径已按 W0 收过一轮；本文件即下一轮账本 |
 | NF027 | live-open | 无当前 HEAD + liveProvider=true 的 publication gate artifact |
-| NF028 | open | 包仍 private/内部 tarball；不把这个当成 npm release ready |
+| NF028 | hermetic-wired | 包仍 private/内部 tarball；不把这个当成 npm release ready |
 | NF029 | live-open | 禁止混合 pre-fix 300 对；新 100×3 未跑 |
 | NF030 | live-open | raw 形状与 scrub 已做；无当前 HEAD live raw JSONL/request id 包 |
 
 ---
-
-## NF001 — Compatibility Required 仍为红
 
 ## NF001 — Compatibility Required 仍为红
 

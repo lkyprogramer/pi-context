@@ -327,10 +327,25 @@ export function createProductionPiContextExtension(
   return { name: "pi-context-runtime", claimed: true, release: owner.release };
 }
 
+export type ProductMaterializerMode = "identity" | "pcr";
+
+export function resolveProductMaterializerMode(input: {
+  requestMode?: unknown;
+  optionMode?: unknown;
+  env?: Readonly<Record<string, string | undefined>>;
+} = {}): ProductMaterializerMode {
+  for (const value of [input.requestMode, input.optionMode, input.env?.PCR_EVAL_MATERIALIZER]) {
+    if (value === "identity") return "identity";
+    if (value === "pcr") return "pcr";
+  }
+  return "pcr";
+}
+
 export interface ProductionUserTurnRuntimeOptions {
   identity?: ProductionSessionIdentityFactory;
   dataRoot?(ctx: ExtensionContext): string;
   environment?: Readonly<Record<string, string | undefined>>;
+  materializerMode?: ProductMaterializerMode;
   clock?: { now(): number };
   busyTimeoutMs?: number;
   maxBlobBytes?: number;
@@ -994,6 +1009,11 @@ export function registerProductionUserTurnRuntime(
               ));
             },
           };
+          const materializerMode = resolveProductMaterializerMode({
+            requestMode: request.materializerMode,
+            optionMode: options.materializerMode,
+            env: options.environment ?? process.env,
+          });
           const recallPolicy = createProactiveRecallPolicy({
             cursor,
             catalog: {
@@ -1036,7 +1056,7 @@ export function registerProductionUserTurnRuntime(
               limits: { maxTurns: 4, maxTokenTurns: 2_000, ttlMs: 15 * 60 * 1_000 },
             }),
           });
-          const recall = userText.length === 0
+          const recall = materializerMode === "identity" || userText.length === 0
             ? { kind: "not-needed" as const, page: { items: [] as Array<{ evidenceId: string; quote: string }> } }
             : await recallPolicy.decide({
               cursor,
@@ -1045,7 +1065,7 @@ export function registerProductionUserTurnRuntime(
               recentlyInjected: owner.recalledBySession.get(cursor.sessionId) ?? [],
               signal: request.signal,
             });
-          if (recall.kind === "needed") {
+          if (materializerMode === "pcr" && recall.kind === "needed") {
             const prior = owner.recalledBySession.get(cursor.sessionId) ?? [];
             owner.recalledBySession.set(
               cursor.sessionId,
@@ -1090,8 +1110,8 @@ export function registerProductionUserTurnRuntime(
             ],
             ...(continuityDelta.length === 0 ? {} : { continuityDelta }),
             directory: directoryMessages(directoryPointers),
-            recall: recallMessages(recall.kind === "needed" ? recall.page.items : []),
-            warnings: leaseMessages(activeLeases),
+            recall: recallMessages(materializerMode === "pcr" && recall.kind === "needed" ? recall.page.items : []),
+            warnings: materializerMode === "pcr" ? leaseMessages(activeLeases) : [],
           });
           const serializedInputTokens = view.tokenEstimate;
           const usage = reconcileUsage({
