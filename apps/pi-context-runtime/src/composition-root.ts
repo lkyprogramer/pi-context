@@ -314,7 +314,8 @@ export function registerProductionSessionLifecycle(
   pi.on("session_tree", async (_event, ctx) => {
     await root.open(ctx);
   });
-  pi.on("session_shutdown", async (_event, ctx) => {
+  pi.on("session_shutdown", async (event, ctx) => {
+    void event;
     await root.close(ctx);
   });
 }
@@ -1280,7 +1281,8 @@ export function registerProductionUserTurnRuntime(
     const rejected = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
     if (rejected) throw rejected.reason;
   };
-  pi.on("session_shutdown", async (_event, ctx) => {
+  pi.on("session_shutdown", async (event, ctx) => {
+    void event;
     if (!isExtensionContext(ctx)) {
       throw Object.assign(new Error("PCR_SESSION_SHUTDOWN_CURSOR_INVALID"), {
         code: "PCR_SESSION_SHUTDOWN_CURSOR_INVALID",
