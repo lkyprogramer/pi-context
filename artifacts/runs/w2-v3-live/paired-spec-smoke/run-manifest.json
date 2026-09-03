@@ -1,0 +1,9 @@
+{
+  "runId": "w2-live-native-spec-smoke",
+  "profile": "spec-smoke",
+  "generatedAt": "2026-09-02T04:44:33.995Z",
+  "files": {
+    "report.json": "7540dda891f8f07687b1357369ad43613e9e58e1229568f1715a7664e579bb0d",
+    "gate-decision.json": "d8546ea0162ae22e4c43335e00c7d0eb200b4ad91d6b72f0db12a932e5d01632"
+  }
+}
