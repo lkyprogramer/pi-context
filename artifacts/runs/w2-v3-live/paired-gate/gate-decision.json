@@ -1,0 +1,19 @@
+{
+  "gate": "w2-compactor",
+  "decision": "keep-pi-native",
+  "hardGatePass": false,
+  "publicationClaim": false,
+  "livePiNative": true,
+  "reasons": [
+    "profile=gate completed=280/300 sameCut=280",
+    "B0 fromHook=false required; observed native=true",
+    "B1 fromHook=true required; observed pcr=true",
+    "B2 fromHook=true required; observed pcr=true",
+    "F0 fromHook=false full-context; observed ceiling=true",
+    "maxTokens unmodified 16384; keepRecentTokens=2048 shared",
+    "tokenMedianRelativeDelta=10.9678 realizedNetMedian=-7314",
+    "sample below W2 publication floor (100 pairs × 3 seeds)"
+  ],
+  "reportHash": "98ccb7b13f2bdfb275cfc6e5682e5b8d44d0a9629e2c874c9549d19552651b16",
+  "reportPath": "/Users/luo/Documents/github/pi-context/artifacts/runs/w2-v3-live/paired-gate/report.json"
+}

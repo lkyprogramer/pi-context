@@ -1,10 +1,13 @@
 {
   "runId": "w2-v3-live",
-  "status": "unrun",
-  "reason": "PCR_LIVE_PROVIDER_UNAVAILABLE",
+  "status": "ran-hard-fail",
+  "reason": "gate scored 280/300 with hardGatePass=false; publicationClaim=false",
   "publicationClaim": false,
   "mixedPreFix300": false,
   "arms": ["B0", "B1", "B2", "F0"],
-  "completedPairs": 0,
-  "replicates": 3
+  "completedPairs": 280,
+  "expectedPairs": 300,
+  "replicates": 3,
+  "decision": "keep-pi-native",
+  "bundle": "artifacts/runs/w2-v3-live/paired-gate"
 }

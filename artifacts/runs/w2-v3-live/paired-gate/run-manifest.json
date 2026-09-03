@@ -1,0 +1,9 @@
+{
+  "runId": "w2-live-native-gate",
+  "profile": "gate",
+  "generatedAt": "2026-09-03T04:06:46.877Z",
+  "files": {
+    "report.json": "98ccb7b13f2bdfb275cfc6e5682e5b8d44d0a9629e2c874c9549d19552651b16",
+    "gate-decision.json": "e124b1220855027dfd2e0b56ca91241f16c1d3fb58081dc1ce95d5e22fbf48d1"
+  }
+}

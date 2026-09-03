@@ -1,9 +1,9 @@
-# W2 v3 live 100×3 (unrun)
+# W2 v3 live 100×3
 
-This HEAD did not execute a post-fix Provider 100-pair × 3-seed run.
+Current-HEAD gate bundle: `paired-gate/` (see `LIVE-COMPARISON.md` §5b).
 
-- Do not mix pre-fix `artifacts/runs/w2-live-native/**` 300-pair numbers with later smoke.
-- `publicationClaim` remains false.
-- Hard/Quality/Efficiency gates are not computed from synthetic components.
+- Attempted 300 pairs; gate scored **280/300** (20 arm timeouts).
+- `hardGatePass=false`, `publicationClaim=false`, decision `keep-pi-native`.
+- Do not mix `artifacts/runs/w2-live-native/**` or `a6281b3` numbers with this bundle.
 
-NF012 / NF027 / NF029 stay open until a current-HEAD live bundle exists.
+NF012 stays open: bundle exists, but it is not a passing / publication sample.
