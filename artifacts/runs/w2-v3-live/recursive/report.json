@@ -1,0 +1,51 @@
+{
+  "lane": "recursive-long-horizon",
+  "liveProvider": true,
+  "history": [
+    {
+      "phase": "compact-1",
+      "ok": true,
+      "compactCount": 1
+    },
+    {
+      "phase": "temporal-update",
+      "ok": true
+    },
+    {
+      "phase": "grow-before-compact-2",
+      "ok": true
+    },
+    {
+      "phase": "compact-2",
+      "ok": true,
+      "compactCount": 2
+    },
+    {
+      "phase": "branch-after-compact-2",
+      "ok": true
+    },
+    {
+      "phase": "restart-before-compact-3",
+      "ok": true
+    },
+    {
+      "phase": "compact-3",
+      "ok": true,
+      "compactCount": 3,
+      "summary": "checkpoint v2 a2aec47ea5e0\n- [dir_9a92aa91] Do not merge sibling-branch\ncontinuity cr_b00227b22"
+    },
+    {
+      "phase": "recall-needed",
+      "ok": true
+    },
+    {
+      "phase": "recall-not-needed",
+      "ok": true
+    }
+  ],
+  "compactCount": 3,
+  "threeCompacts": true,
+  "branched": true,
+  "restarted": true,
+  "sideEffectGuard": true
+}
