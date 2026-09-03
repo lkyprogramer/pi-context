@@ -1,0 +1,58 @@
+{
+  "taskId": "C05",
+  "baseCommit": "098eb6e666e7ba8ea33393cdad78e803cf99f63e",
+  "headCommit": "36ed7ae6cf085511377b3199645a5085477943c9",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "red",
+      "command": "python3 check verify-protection.mjs calls api.github.com",
+      "exitCode": 1,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C05-red.log",
+      "logSha256": "a197e8ba654d41762c6b76d226d63da93eccb59e5f235bed14e746992de21a32"
+    },
+    {
+      "phase": "green",
+      "command": "node scripts/ci/verify-protection.mjs",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C05-green.log",
+      "logSha256": "292e4f1f877ae085084fc04f38298a4a57e87ceaff25cad77e5d393968bc27ff"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C05-full-gate.log",
+      "logSha256": "78a3badfd9708b2afd68ee8ca1907c1dda13fe964f870bc5a95b034f2f58fb1a"
+    },
+    {
+      "phase": "verification",
+      "command": "node scripts/ci/verify-protection.mjs",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C05-protection.log",
+      "logSha256": "9b9c6c96fa5f078000bfd04d0d5940c95bd11ddee9e547e91991582411bbcc43"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/ci/verify-protection.mjs",
+      "sha256": "706c83b7aff88d4b75d00cd163bcc43b2aa2019efbdcbe4c2e5a8a84c1066c0f"
+    },
+    {
+      "path": ".github/workflows/publication.yml",
+      "sha256": "fc213d9333c9895e17601dc8dcf5aeff02adbe3dac476b341ad9b3ef223f82d5"
+    }
+  ],
+  "requirements": {
+    "callsGitHubBranchApi": true,
+    "missingTokenExits1": true,
+    "protectedTrue": true,
+    "requiredGateAndCompatibilityRequired": true,
+    "publicationClaimFalse": true,
+    "c31NotComplete": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "grok-4.6-w0"
+  }
+}
