@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { PCR_INGRESS_METADATA_CONTRACT } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it } from "vitest";
+import { loadToolchainLock } from "../../compat/matrix.mjs";
 import { PINNED_PI_VERSION, readCompatLock } from "../../scripts/install-pi-version.mjs";
 import { scanImports, verifyPiCompatibility } from "../../scripts/check-public-pi-imports.mjs";
 import { createPiContractHarness } from "../../packages/testkit/src/pi-contract-harness.js";
@@ -71,6 +72,15 @@ describe("Pi public API boundary", () => {
     expect(report.ready).toBe(true);
     expect(report.contracts.find((item) => item.name === "handler-chaining")?.ok).toBe(true);
     expect(report.contracts.find((item) => item.name === "custom-entry-excluded")?.ok).toBe(true);
+  });
+
+  it("declares patched 0.84.4 and keeps required matrix cells fail-closed", () => {
+    const workflow = readFileSync(".github/workflows/compatibility.yml", "utf8");
+    expect(workflow).toContain("name: compatibility-required");
+    expect(workflow).toMatch(/needs: pi-matrix/);
+    expect(workflow).not.toMatch(/continue-on-error:\s*true/);
+    expect(workflow).toContain("pnpm typecheck");
+    expect(loadToolchainLock().patchedHost).toBe("0.84.4+pcr-ingress-metadata-v1");
   });
 
   it("keeps the compatibility workflow covering min/current/latest lanes", () => {

@@ -121,6 +121,7 @@ export function loadToolchainLock(root = resolve(dirname(fileURLToPath(import.me
       node: [...(toolchain.node?.required ?? [])],
       os: [...(toolchain.os?.required ?? [])],
     },
+    patchedHost: "0.84.4+pcr-ingress-metadata-v1",
   };
 }
 
