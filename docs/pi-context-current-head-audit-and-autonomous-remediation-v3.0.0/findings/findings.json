@@ -84,7 +84,7 @@
     "severity": "P1",
     "domain": "Completion",
     "title": "上一轮 B00-B31 不能整体标记完成",
-    "evidence": "14 完成、13 部分、5 未满足；当前总门仍红。",
+    "evidence": "14 完成、13 部分、5 未满足；当前总门仍红。Frozen incremental ledger at 0e684e3 in PACK-METADATA.frozenBaseline; allComplete remains false.",
     "impact": "组件实现不能等同于产品/发布完成。",
     "status": "open",
     "task": "C00"

@@ -12,5 +12,14 @@
     "default": "keep-pi-native",
     "publicationClaim": false,
     "releaseReady": false
+  },
+  "frozenBaseline": {
+    "commit": "0e684e3623f260cc0c49c6cc1d4c75cf69969f9f",
+    "previousPlan": {
+      "complete": 14,
+      "partial": 13,
+      "not_met": 5,
+      "allComplete": false
+    }
   }
 }
