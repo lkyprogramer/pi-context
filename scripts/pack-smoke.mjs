@@ -193,6 +193,7 @@ export async function packCurrentSource({ repoRoot, outDir, signal } = {}) {
       "--skipLibCheck",
       "--types",
       "node",
+      "--strict",
       "--noEmitOnError",
       "--declaration",
       "--declarationMap",

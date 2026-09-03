@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,12 @@ import {
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("packed runtime acceptance", () => {
+  it("requires packed tsc to be strict and fail on compile errors", () => {
+    const packer = readFileSync(join(repoRoot, "scripts/pack-smoke.mjs"), "utf8");
+    expect(packer).toContain("--strict");
+    expect(packer).toContain("--noEmitOnError");
+  });
+
   it(
     "npm packs the runtime and the required patched Pi host loads exact input",
     async () => {
