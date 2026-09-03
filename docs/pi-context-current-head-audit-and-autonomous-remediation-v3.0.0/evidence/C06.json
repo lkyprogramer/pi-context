@@ -1,0 +1,49 @@
+{
+  "taskId": "C06",
+  "baseCommit": "987ea19c47f4024526047438b63ea34afa826140",
+  "headCommit": "2898ecc75bc2f8dfd1e233ec8cdc0e5948518818",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "red",
+      "command": "corepack pnpm vitest run tests/contract/pi-session-lifecycle.test.ts",
+      "exitCode": 1,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C06-red.log",
+      "logSha256": "6aeba0b56a2738c42e177a6e10a2f184c5fb8f0469f3674d7b86e839a7e6d887"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run tests/contract/pi-session-lifecycle.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C06-green.log",
+      "logSha256": "52e4dbcb8883f846c4d8cf3cc3261ebeba6b74e5c37156cc6dbe220fb63bf8bd"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C06-typecheck.log",
+      "logSha256": "f2027e3233ea7f39b28dbead7ac1c0d4dd4ee15b1149b724fae6d3e42b24a17f"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "apps/pi-context-runtime/src/composition-root.ts",
+      "sha256": "fbf67616a604e2cda926f3fa78bd5d40736e671491848319d60eb85c5778c0b1"
+    },
+    {
+      "path": "tests/contract/pi-session-lifecycle.test.ts",
+      "sha256": "9ebc02d2d3d276106b5ab5e90adb8a056f7bdb9c378cc970fa2a07bfc309eed1"
+    }
+  ],
+  "requirements": {
+    "shutdownDoesNotCastEvent": true,
+    "ctxGuardedOnBothHandlers": true,
+    "typecheckExit0": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "grok-4.6-w1"
+  }
+}
