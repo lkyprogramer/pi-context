@@ -1,0 +1,53 @@
+{
+  "taskId": "C04",
+  "baseCommit": "531fe1c2dfdcf49b0746f7dfc9f446a7a2987962",
+  "headCommit": "ef32ebfe5c26ff09e9d3538ccc8c69388650ee49",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "red",
+      "command": "corepack pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts tests/compat/matrix.test.ts",
+      "exitCode": 1,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C04-red.log",
+      "logSha256": "50b94e3bca81c2f17e5a5e01f7e71a5c97719c0e99cf933e2d50af943c06de97"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts tests/compat/matrix.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C04-green.log",
+      "logSha256": "5176f2248cbed8afa9309dbbb00eb5f5f0f7a539ee410238c65b2967dcd57176"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C04-typecheck.log",
+      "logSha256": "275a3fd77b06e979c8eecfd8812b9f27eefea2aac2e0e6dc9449e99a24a141bd"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "compat/matrix.mjs",
+      "sha256": "df046a0c4cb177ee1d084319c78cfede92d5a8f35133c52f52b54d8a238d44ca"
+    },
+    {
+      "path": ".github/workflows/compatibility.yml",
+      "sha256": "f9040ae60a09b8db7dab63286b82d5217ba187bff26e529143bca16ea068a11b"
+    },
+    {
+      "path": "tests/compat/pi-version-contract.test.ts",
+      "sha256": "e657957945b8b791c7caba570572d50a8ca1867fbd8a1fa0d9ece016806f4eaa"
+    }
+  ],
+  "requirements": {
+    "patchedHostDeclared": true,
+    "requiredCellsFailClosed": true,
+    "compatVitestExit0": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "grok-4.6-w0"
+  }
+}
