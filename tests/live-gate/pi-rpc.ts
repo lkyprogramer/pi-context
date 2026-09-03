@@ -110,26 +110,32 @@ export class PiRpc {
 
   async promptAndWait(message: string, timeoutMs = 180_000): Promise<Array<Record<string, unknown>>> {
     const collected: Array<Record<string, unknown>> = [];
+    let poll: ReturnType<typeof setInterval> | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const settled = new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(`prompt did not settle in ${timeoutMs}ms`)), timeoutMs);
-      const start = this.events.length;
-      const poll = setInterval(() => {
-        for (let i = start; i < this.events.length; i += 1) {
-          const event = this.events[i];
+      timer = setTimeout(() => reject(new Error(`prompt did not settle in ${timeoutMs}ms`)), timeoutMs);
+      let cursor = this.events.length;
+      poll = setInterval(() => {
+        while (cursor < this.events.length) {
+          const event = this.events[cursor];
+          cursor += 1;
           if (!event) continue;
           collected.push(event);
           if (event.type === "agent_settled") {
-            clearTimeout(timer);
-            clearInterval(poll);
             resolve();
             return;
           }
         }
       }, 50);
     });
-    await this.request({ type: "prompt", message }, 30_000);
-    await settled;
-    return collected;
+    try {
+      await this.request({ type: "prompt", message }, 30_000);
+      await settled;
+      return collected;
+    } finally {
+      if (timer) clearTimeout(timer);
+      if (poll) clearInterval(poll);
+    }
   }
 
   private handleLine(line: string): void {
