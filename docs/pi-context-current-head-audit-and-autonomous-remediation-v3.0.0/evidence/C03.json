@@ -1,0 +1,49 @@
+{
+  "taskId": "C03",
+  "baseCommit": "8868e6586387ae94d7b66b18544e9086e0c5a015",
+  "headCommit": "7db90ef52dc2763cd3e5e2301a7847d5d0c1c4d8",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "red",
+      "command": "corepack pnpm test:packed",
+      "exitCode": 1,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C03-red.log",
+      "logSha256": "f103f6047bdd25ac9404edd600d05f6b9a1b0941d9d63b33ea0868d5b4bb2298"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm test:packed",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C03-green.log",
+      "logSha256": "47fbc36ff051c39cbac9b59fae957c1319b618f97e3307f32d5e21b6a190b080"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm test:packed",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C03-green.log",
+      "logSha256": "47fbc36ff051c39cbac9b59fae957c1319b618f97e3307f32d5e21b6a190b080"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/pack-smoke.mjs",
+      "sha256": "c691948650cc0d977d62b8aea9857b9a268e8c33f2a95741cfd1565f62cdf085"
+    },
+    {
+      "path": "tests/acceptance/packed-install.test.ts",
+      "sha256": "a3be703d30144ab1720d3eebd5a2a0f6837cbd981790d9cf40461b72937dfa12"
+    }
+  ],
+  "requirements": {
+    "packedInstallExit0": true,
+    "packUsesStrictTsc": true,
+    "sbomAndCleanInstall": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "grok-4.6-w0"
+  }
+}
