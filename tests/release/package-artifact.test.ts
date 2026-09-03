@@ -1,5 +1,12 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { inspectPackedRelease } from "./support.js";
+
+function requiredBuildJob(workflow: string): string {
+  const match = workflow.match(/^  build:\n([\s\S]*?)(?=^  [a-z0-9]|\Z)/m);
+  if (!match) throw new Error("required.yml missing build job");
+  return match[1];
+}
 
 describe("release package", () => {
   it("contains one extension entry, runtime dependencies and no source-private imports", async () => {
@@ -23,6 +30,15 @@ describe("release package", () => {
     expect(artifact.nodeMatrix).toEqual(["22.19.0", "24.18.1", "26.5.1"]);
     expect(artifact.supportedRange).toBe("0.84.4");
     expect(artifact.unsupportedHidden).toBe(false);
+  });
+
+  it("fails closed when the named build job skips strict compile", () => {
+    const workflow = readFileSync(".github/workflows/required.yml", "utf8");
+    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts?: Record<string, string> };
+    const build = requiredBuildJob(workflow);
+    expect(pkg.scripts?.compile).toMatch(/typecheck/);
+    expect(build).toContain("pnpm compile");
+    expect(build).toContain("pnpm vitest run tests/release/package-artifact.test.ts");
   });
 
   it("ships license/security docs and the gate-derived semantic default", async () => {

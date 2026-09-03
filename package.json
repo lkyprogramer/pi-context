@@ -5,6 +5,7 @@
   "scripts": {
     "check:boundaries": "node scripts/check-package-boundaries.mjs",
     "typecheck": "pnpm -r typecheck",
+    "compile": "pnpm typecheck",
     "test": "vitest run --config vitest.unit.config.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:contract": "vitest run --config vitest.contract.config.ts",

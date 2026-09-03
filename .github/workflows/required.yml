@@ -42,6 +42,7 @@ jobs:
           node-version: "22.19.0"
       - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
       - run: pnpm install --frozen-lockfile
+      - run: pnpm compile
       - run: pnpm vitest run tests/release/package-artifact.test.ts
   typecheck:
     runs-on: ubuntu-latest
