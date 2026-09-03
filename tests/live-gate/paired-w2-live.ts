@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -668,6 +669,23 @@ function redact(text: string, secrets: string[]): string {
   return out;
 }
 
+function persistJsonAtomic(path: string, value: unknown): void {
+  const tmp = `${path}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify(value)}\n`);
+  renameSync(tmp, path);
+}
+
+function loadResumedRows(outDir: string): LivePairRow[] {
+  const path = join(outDir, "rows-partial.json");
+  if (!existsSync(path)) return [];
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as LivePairRow[];
+    return Array.isArray(parsed) ? parsed.filter((row) => typeof row?.id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function runLivePairedW2(opts: {
   repoRoot: string;
   profile: LiveProfile;
@@ -689,21 +707,45 @@ export async function runLivePairedW2(opts: {
   if (modelLimits.maxTokens !== LIVE_RESERVE_TOKENS) {
     throw new Error(`expected unmodified maxTokens=${LIVE_RESERVE_TOKENS}, got ${modelLimits.maxTokens}`);
   }
-  const rows: LivePairRow[] = [];
   const outDir = opts.outDir ?? join(opts.repoRoot, "artifacts/runs/w2-live-native", profile);
   mkdirSync(outDir, { recursive: true });
+  const rows: LivePairRow[] = loadResumedRows(outDir);
+  const done = new Set(rows.map((row) => row.id));
+  if (done.size > 0) {
+    process.stderr.write(`[w2-live] resume ${done.size}/${expectedPairs} from rows-partial.json\n`);
+  }
+  persistJsonAtomic(join(outDir, "pairs-partial.json"), rows.map((row) => row.id));
+  persistJsonAtomic(join(outDir, "progress.json"), {
+    profile,
+    expectedPairs,
+    completedPairs: rows.length,
+    lastPair: rows.at(-1)?.id ?? null,
+    lastAt: new Date().toISOString(),
+    resumed: done.size > 0,
+  });
   for (let seed = 0; seed < replicates; seed += 1) {
     for (const item of cases) {
-      process.stderr.write(`[w2-live] ${item.id} ${item.family} seed=${seed}\n`);
       const pairId = replicates === 1 ? item.id : `${item.id}#s${seed}`;
+      if (done.has(pairId)) continue;
+      process.stderr.write(`[w2-live] ${item.id} ${item.family} seed=${seed} (${rows.length + 1}/${expectedPairs})\n`);
       const row = await runPair(item, extensionPath, seed, join(outDir, "pairs", pairId));
       const labeled: LivePairRow = {
         ...row,
-        id: replicates === 1 ? item.id : `${item.id}#s${seed}`,
+        id: pairId,
         seed,
       };
       rows.push(labeled);
-      writeFileSync(join(outDir, "pairs-partial.json"), `${JSON.stringify(rows.map((item) => item.id))}\n`);
+      done.add(pairId);
+      persistJsonAtomic(join(outDir, "pairs-partial.json"), rows.map((item) => item.id));
+      persistJsonAtomic(join(outDir, "rows-partial.json"), rows);
+      persistJsonAtomic(join(outDir, "progress.json"), {
+        profile,
+        expectedPairs,
+        completedPairs: rows.length,
+        lastPair: pairId,
+        lastAt: new Date().toISOString(),
+        resumed: false,
+      });
     }
   }
 
