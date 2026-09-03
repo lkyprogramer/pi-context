@@ -1,0 +1,53 @@
+{
+  "taskId": "C02",
+  "baseCommit": "3c8e8ec2bb04e601bb5389ebcb316be824d64b11",
+  "headCommit": "aef32a919c77c2ce2ace1f7a3397b155a3a93dcd",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "red",
+      "command": "corepack pnpm vitest run tests/release/package-artifact.test.ts -t fails closed",
+      "exitCode": 1,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C02-red.log",
+      "logSha256": "310f4ac63699cb7b3eeea09c7fff2f72c9d58775c56caed55040dbd0177ec94b"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run tests/release/package-artifact.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C02-green.log",
+      "logSha256": "eb4057f58f08739bcd7cb5dc496eeb21c01c68c0ad83badedbaef7eea29de755"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C02-typecheck.log",
+      "logSha256": "86483f68bd3aa206f29ee8bfac94adaf703d8694e22ddba2623cef5adb10c4e0"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "package.json",
+      "sha256": "116c93a5be53f6fe3b7445f7b78ed7efdd20250ef50a05297089d7a863148845"
+    },
+    {
+      "path": ".github/workflows/required.yml",
+      "sha256": "3307df22e57501a096d998c2c92c0e56de4d2075838ba93afe3b48de4547ef4f"
+    },
+    {
+      "path": "tests/release/package-artifact.test.ts",
+      "sha256": "27f757cbabb9efa1f82d6ccea05561fe71f8d1cfb1177d38e6bd2f119211dc5f"
+    }
+  ],
+  "requirements": {
+    "buildJobRunsCompile": true,
+    "packageArtifactTestEnforcesCompile": true,
+    "typecheckExit0": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "grok-4.6-w0"
+  }
+}
