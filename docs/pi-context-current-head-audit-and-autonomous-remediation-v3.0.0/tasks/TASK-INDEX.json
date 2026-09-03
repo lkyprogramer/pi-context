@@ -1,0 +1,611 @@
+[
+  {
+    "id": "C00",
+    "title": "冻结 0e684e3 基线并建立增量验收台账",
+    "wave": "W0",
+    "dependsOn": [],
+    "allowedFiles": [
+      "PACK-METADATA.json",
+      "compliance/previous-plan-status.csv",
+      "findings/findings.json"
+    ],
+    "commands": [
+      "python scripts/validate_pack.py"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C01",
+    "title": "修复当前严格 TypeScript 编译错误",
+    "wave": "W0",
+    "dependsOn": [],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "apps/pi-context-runtime/src/extension.ts",
+      "packages/kernel/src/control/economics.ts"
+    ],
+    "commands": [
+      "corepack pnpm typecheck"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C02",
+    "title": "让生产 Build 真正包含 strict compile 与 package compile",
+    "wave": "W0",
+    "dependsOn": [
+      "C01"
+    ],
+    "allowedFiles": [
+      "package.json",
+      ".github/workflows/required.yml",
+      "tests/release/package-artifact.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm typecheck",
+      "corepack pnpm vitest run tests/release/package-artifact.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C03",
+    "title": "恢复 packed tarball、clean install 与 SBOM",
+    "wave": "W0",
+    "dependsOn": [
+      "C01",
+      "C02"
+    ],
+    "allowedFiles": [
+      "scripts/pack-smoke.mjs",
+      "tests/acceptance/packed-install.test.ts",
+      "tests/release/clean-install.test.ts",
+      "tests/tasks/t52.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm test:packed"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C04",
+    "title": "恢复 Pi/Node/OS Compatibility Matrix",
+    "wave": "W0",
+    "dependsOn": [
+      "C01",
+      "C03"
+    ],
+    "allowedFiles": [
+      ".github/workflows/compatibility.yml",
+      "compat/matrix.mjs",
+      "tests/compat/pi-version-contract.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm typecheck",
+      "corepack pnpm vitest run tests/compat/pi-version-contract.test.ts tests/compat/provider-payload-probe.test.ts tests/compat/matrix.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C05",
+    "title": "把 Branch Protection 校验改为真实 fail-closed 并启用规则",
+    "wave": "W0",
+    "dependsOn": [
+      "C02",
+      "C04"
+    ],
+    "allowedFiles": [
+      "scripts/ci/verify-protection.mjs",
+      ".github/workflows/required.yml",
+      ".github/workflows/compatibility.yml",
+      ".github/workflows/publication.yml"
+    ],
+    "commands": [
+      "node scripts/ci/verify-protection.mjs"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C06",
+    "title": "修正 session_shutdown Event/Context 契约",
+    "wave": "W1",
+    "dependsOn": [
+      "C01"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "apps/pi-context-runtime/src/extension.ts",
+      "tests/contract/pi-session-lifecycle.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run tests/contract/pi-session-lifecycle.test.ts",
+      "corepack pnpm typecheck"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C07",
+    "title": "移除 RuntimeToolCtx.cwd 假设并建立 WorkspaceResolver",
+    "wave": "W1",
+    "dependsOn": [
+      "C01"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/extension.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/pi-adapter/src/index.ts",
+      "tests/contract/pi-tool-call-gate.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run tests/contract/pi-tool-call-gate.test.ts",
+      "corepack pnpm typecheck"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C08",
+    "title": "为 Workspace/Input/Cursor 回调建立显式内部类型",
+    "wave": "W1",
+    "dependsOn": [
+      "C01"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/contracts/src/index.ts",
+      "tests/contract/pi-context-hook.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm typecheck",
+      "corepack pnpm test:contract"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C09",
+    "title": "新增“tsc public contract”测试，阻止 transpile-only 绿",
+    "wave": "W1",
+    "dependsOn": [
+      "C01"
+    ],
+    "allowedFiles": [
+      "scripts/ci/compile-runtime.mjs",
+      "tests/ci/compile-contract.test.ts",
+      "package.json",
+      ".github/workflows/required.yml"
+    ],
+    "commands": [
+      "node scripts/ci/compile-runtime.mjs",
+      "corepack pnpm vitest run tests/ci/compile-contract.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C10",
+    "title": "重新验证 Runtime 所有权、Atomic Snapshot 和 Durable Ack",
+    "wave": "W1",
+    "dependsOn": [
+      "C06",
+      "C07",
+      "C08",
+      "C09"
+    ],
+    "allowedFiles": [
+      "tests/acceptance/product-runtime-path.test.ts",
+      "tests/acceptance/restart-branch-recovery.test.ts",
+      "packages/storage-node/test/saga-store.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm test:acceptance",
+      "corepack pnpm vitest run tests/acceptance/restart-branch-recovery.test.ts packages/storage-node/test/saga-store.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C11",
+    "title": "把 Recall Lease 持久化并实现 TTL/次数/撤销",
+    "wave": "W2",
+    "dependsOn": [
+      "C10"
+    ],
+    "allowedFiles": [
+      "packages/storage-node/src/index.ts",
+      "packages/runtime/src/index.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/storage-node/test/recall-lease-store.test.ts",
+      "packages/runtime/test/proactive-recall.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/storage-node/test/recall-lease-store.test.ts packages/runtime/test/proactive-recall.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C12",
+    "title": "完成 Provider Reserve/Cache Usage 的来源分级契约",
+    "wave": "W2",
+    "dependsOn": [
+      "C08"
+    ],
+    "allowedFiles": [
+      "packages/contracts/src/index.ts",
+      "packages/kernel/src/control/economics.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "tests/performance/token-accounting.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run tests/performance/token-accounting.test.ts",
+      "corepack pnpm typecheck"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C13",
+    "title": "拆分 logicalTokens、effectiveInput 与 monetaryCost",
+    "wave": "W2",
+    "dependsOn": [
+      "C12"
+    ],
+    "allowedFiles": [
+      "packages/kernel/src/control/economics.ts",
+      "packages/benchmark/src/economics/pairing.ts",
+      "packages/benchmark/test/economics-pairing.test.ts",
+      "tests/performance/economics.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/economics-pairing.test.ts tests/performance/economics.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C14",
+    "title": "稳定 Directory/Recall/Page 预算并加入 no-recall 负例",
+    "wave": "W2",
+    "dependsOn": [
+      "C11",
+      "C12"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/kernel/src/retrieval/proactive.ts",
+      "packages/runtime/test/proactive-recall.test.ts",
+      "tests/live/closed-loop.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/runtime/test/proactive-recall.test.ts tests/live/closed-loop.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C15",
+    "title": "运行真实 Provider Cache/Metadata Ablation",
+    "wave": "W2",
+    "dependsOn": [
+      "C13",
+      "C14"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/cache-ablation.ts",
+      "packages/benchmark/src/performance/ablation.ts",
+      "artifacts/runs/w2-v3-live/cache-ablation/run-manifest.json"
+    ],
+    "commands": [
+      "PCR_LIVE=1 corepack pnpm tsx tests/live-gate/cache-ablation.ts",
+      "corepack pnpm vitest run packages/benchmark/test/performance/ablation.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C16",
+    "title": "拆分 Component Safety Gate 与 Product Adoption Gate",
+    "wave": "W3",
+    "dependsOn": [
+      "C10"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/report/engine.ts",
+      "packages/benchmark/src/report/cli.ts",
+      "packages/benchmark/test/gate-v3.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/gate-v3.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C17",
+    "title": "把 Product Adoption 主比较改为 B2 对 B0",
+    "wave": "W3",
+    "dependsOn": [
+      "C16"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/benchmark/src/economics/pairing.ts",
+      "tests/w2-gate/head-to-head.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run tests/w2-gate/head-to-head.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C18",
+    "title": "分层记录 checkpoint、materialized view、request 与 provider usage",
+    "wave": "W3",
+    "dependsOn": [
+      "C12",
+      "C16"
+    ],
+    "allowedFiles": [
+      "packages/contracts/src/index.ts",
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/benchmark/src/report/engine.ts",
+      "packages/benchmark/test/report.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/report.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C19",
+    "title": "制定超时、重试、缺失与 ITT 统计策略",
+    "wave": "W3",
+    "dependsOn": [
+      "C16"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/rpc-client.ts",
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/benchmark/src/statistics/cluster.ts",
+      "packages/benchmark/test/statistics.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/statistics.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C20",
+    "title": "让断点续跑强制单一 Run Epoch",
+    "wave": "W3",
+    "dependsOn": [
+      "C19"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/benchmark/src/report/bundle.ts",
+      "packages/benchmark/test/bundle-verify.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/bundle-verify.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C21",
+    "title": "同时校验 canonical object hash 与 artifact byte hash",
+    "wave": "W3",
+    "dependsOn": [
+      "C20"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/report/bundle.ts",
+      "packages/benchmark/test/bundle-verify.test.ts",
+      "scripts/release/verify.mjs"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/bundle-verify.test.ts",
+      "node scripts/release/verify.mjs --dry-run"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C22",
+    "title": "冻结真实 Trace Corpus、Source Witness 和 Train/Test Split",
+    "wave": "W3",
+    "dependsOn": [
+      "C20"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/corpus/verify.ts",
+      "packages/benchmark/src/trace/freeze.ts",
+      "packages/benchmark/test/corpus-v2.test.ts",
+      "artifacts/corpus-v3/manifest.json"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/corpus-v2.test.ts packages/benchmark/test/trace-freeze.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C23",
+    "title": "校正 seed/replicate 语义并记录 Provider Sampling",
+    "wave": "W3",
+    "dependsOn": [
+      "C19",
+      "C22"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/contracts/src/index.ts",
+      "packages/benchmark/test/arms-identity.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/arms-identity.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C24",
+    "title": "完成 current-head 100×3 四臂权威运行",
+    "wave": "W4",
+    "dependsOn": [
+      "C15",
+      "C17",
+      "C18",
+      "C19",
+      "C20",
+      "C21",
+      "C22",
+      "C23"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/paired-w2-live.ts",
+      "artifacts/runs/w2-v4-live/paired-gate/run-manifest.json"
+    ],
+    "commands": [
+      "PCR_LIVE=1 PCR_W2_LIVE_PROFILE=gate corepack pnpm tsx tests/live-gate/paired-w2-live.ts",
+      "node scripts/release/verify-w2-live.mjs artifacts/runs/w2-v4-live/paired-gate"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C25",
+    "title": "重写 Natural Pressure 为 arm-specific 状态机",
+    "wave": "W4",
+    "dependsOn": [
+      "C14",
+      "C18"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/w5-live-lanes.ts",
+      "packages/benchmark/src/performance/lanes.ts",
+      "packages/benchmark/test/w5-lanes.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/w5-lanes.test.ts",
+      "PCR_LIVE=1 corepack pnpm tsx tests/live-gate/w5-live-lanes.ts natural"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C26",
+    "title": "拆分 Overflow Prevention 与 Forced Recovery",
+    "wave": "W4",
+    "dependsOn": [
+      "C19",
+      "C25"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/w5-live-lanes.ts",
+      "tests/live-gate/forced-overflow-provider.ts",
+      "tests/fault/overflow-lane.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run tests/fault/overflow-lane.test.ts",
+      "PCR_LIVE=1 corepack pnpm tsx tests/live-gate/w5-live-lanes.ts overflow"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C27",
+    "title": "实现无手工 compact 的三周期 Autonomous Recursive Lane",
+    "wave": "W4",
+    "dependsOn": [
+      "C25"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/w5-live-lanes.ts",
+      "packages/benchmark/src/performance/lanes.ts",
+      "packages/benchmark/test/w5-lanes.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/w5-lanes.test.ts",
+      "PCR_LIVE=1 corepack pnpm tsx tests/live-gate/w5-live-lanes.ts recursive-auto"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C28",
+    "title": "在长程 Lane 中验证 correction/branch/restart/side-effect oracle",
+    "wave": "W4",
+    "dependsOn": [
+      "C11",
+      "C22",
+      "C26",
+      "C27"
+    ],
+    "allowedFiles": [
+      "tests/live-gate/w5-live-lanes.ts",
+      "packages/benchmark/src/continuation/runner.ts",
+      "packages/benchmark/test/closed-loop.test.ts"
+    ],
+    "commands": [
+      "corepack pnpm vitest run packages/benchmark/test/closed-loop.test.ts",
+      "PCR_LIVE=1 corepack pnpm tsx tests/live-gate/w5-live-lanes.ts long-horizon"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C29",
+    "title": "同步 HANDOFF、UNRUN、Finding 与 Task 状态",
+    "wave": "W5",
+    "dependsOn": [
+      "C24",
+      "C25",
+      "C26",
+      "C27",
+      "C28"
+    ],
+    "allowedFiles": [
+      "HANDOFF.md",
+      "artifacts/runs/w2-v4-live/LIVE-COMPARISON.md",
+      "docs/audit/current/findings.json",
+      ".task-state.json"
+    ],
+    "commands": [
+      "python scripts/validate_status_sync.py"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C30",
+    "title": "生成去敏、可复算且不污染 Git 的 RC Bundle",
+    "wave": "W5",
+    "dependsOn": [
+      "C03",
+      "C21",
+      "C24",
+      "C28"
+    ],
+    "allowedFiles": [
+      "scripts/release/build-run-bundle.mjs",
+      "scripts/release/secret-scan.mjs",
+      "artifacts/runs/rc/manifest.json",
+      ".github/workflows/publication.yml"
+    ],
+    "commands": [
+      "node scripts/release/build-run-bundle.mjs",
+      "node scripts/release/secret-scan.mjs artifacts/runs/rc"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "C31",
+    "title": "执行双主门、保护分支与发布决策",
+    "wave": "W5",
+    "dependsOn": [
+      "C04",
+      "C05",
+      "C29",
+      "C30"
+    ],
+    "allowedFiles": [
+      "scripts/release/verify.mjs",
+      ".github/workflows/required.yml",
+      ".github/workflows/compatibility.yml",
+      ".github/workflows/publication.yml",
+      "HANDOFF.md"
+    ],
+    "commands": [
+      "corepack pnpm typecheck",
+      "corepack pnpm test:unit",
+      "corepack pnpm test:contract",
+      "corepack pnpm test:integration",
+      "corepack pnpm test:acceptance",
+      "corepack pnpm test:packed",
+      "node scripts/release/verify.mjs"
+    ],
+    "status": "pending"
+  }
+]

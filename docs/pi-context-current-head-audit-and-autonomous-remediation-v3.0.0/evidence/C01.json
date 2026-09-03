@@ -1,0 +1,55 @@
+{
+  "taskId": "C01",
+  "baseCommit": "0e684e3623f260cc0c49c6cc1d4c75cf69969f9f",
+  "headCommit": "89f96c156dc689a974c34500c53f2a93f520f1b2",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "red",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 2,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C01-red.log",
+      "logSha256": "2cfe36fb603382acc48b93ddbffd5a0c1b177e7a2616bbf61e8c8e506a8a07a5"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C01-green.log",
+      "logSha256": "1742ae4ec7101d78cf144279c3b9fb85a8a8fa475c0c336d66c46d97192cb1a9"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C01-green.log",
+      "logSha256": "1742ae4ec7101d78cf144279c3b9fb85a8a8fa475c0c336d66c46d97192cb1a9"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "apps/pi-context-runtime/src/composition-root.ts",
+      "sha256": "1b84040af256a384a716f7a282e3535002aea9834ecda92cf4a2211eb0b2293b"
+    },
+    {
+      "path": "apps/pi-context-runtime/src/extension.ts",
+      "sha256": "e6c4020b14f0157349d01bf4cb2b37662ffa185a360f7e6a6c282ce925abfdcd"
+    },
+    {
+      "path": "packages/kernel/src/control/economics.ts",
+      "sha256": "ae877d1aefb9d429aa2a9bedba2cde534f21f6b5c0ddb2bbf45e4cfb84057b5f"
+    }
+  ],
+  "requirements": {
+    "strictTypecheckExit0": true,
+    "noUnknownExtensionContextCast": true,
+    "shutdownReceivesExtensionContext": true,
+    "toolWorkspaceViaResolver": true,
+    "economicsScalarsOnly": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "grok-4.6-w0"
+  }
+}

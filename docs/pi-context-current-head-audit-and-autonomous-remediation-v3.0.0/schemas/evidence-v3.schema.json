@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pi-context Task Evidence v3",
+  "type": "object",
+  "required": [
+    "taskId",
+    "baseCommit",
+    "headCommit",
+    "worktreeCleanBefore",
+    "commands",
+    "artifacts",
+    "requirements",
+    "review"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "pattern": "^C[0-9]{2}$"
+    },
+    "baseCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "headCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "worktreeCleanBefore": {
+      "const": true
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "phase",
+          "command",
+          "exitCode",
+          "logPath",
+          "logSha256"
+        ],
+        "properties": {
+          "phase": {
+            "enum": [
+              "red",
+              "green",
+              "full-gate",
+              "verification"
+            ]
+          },
+          "command": {
+            "type": "string",
+            "minLength": 3
+          },
+          "exitCode": {
+            "type": "integer"
+          },
+          "logPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "logSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "status",
+        "reviewer"
+      ],
+      "properties": {
+        "status": {
+          "const": "accepted"
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

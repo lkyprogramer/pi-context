@@ -1,0 +1,33 @@
+task_id,title,status,evidence
+B00,冻结 v2 审计基线与源码绑定,complete,当前仓库保留 v2 审计与提交链。
+B01,让 W1 Gate 使用确定性输入,complete,w1-locked 当前通过。
+B02,拆分互斥测试 Lane,complete,unit/contract/integration/acceptance/packed 已拆分。
+B03,Evidence v2 与非空验收,complete,控制器和证据规范已加入。
+B04,重开错误 Done 与 Finding,complete,A43-A48/NF 保持 open。
+B05,真实 Branch Protection,not_met,GitHub main protected=false，校验脚本仍通过。
+B06,文档和 Release Metadata 对齐,partial,大部分声明 fail-closed，但 HANDOFF/UNRUN 状态仍旧。
+B07,不可变 Raw Run Bundle,partial,已有 raw/partial/manifest，但完整性与双哈希有缺口。
+B08,Ingress 全部进入 RuntimeSession,complete,默认 User/Tool hook 已接入。
+B09,Session-scoped lifecycle 与 shutdown,partial,结构已改，但 shutdown contract 当前无法通过 tsc。
+B10,Materialize/Compact 共用 Atomic Snapshot,complete,SQLite snapshot wiring 已实现。
+B11,Durable Compaction Stage/Ack,complete,compaction_stage 持久化和 reconcile 已加入。
+B12,Product Hard Gate,complete,Hermetic hard-stop 与 fallback 已接线。
+B13,Background 默认关闭,complete,仅显式 beta 环境变量启用。
+B14,多 Workspace/Session 并发与故障,partial,有测试，但当前编译红且 lease 仍进程内。
+B15,W1 Full Gate 全绿,not_met,Required 当前失败。
+B16,完整 I_eff Envelope,partial,System/Tools 已接入，Provider reserve/cache 仍有 Host blocker。
+B17,Recall/Directory/Lease 产品接线,partial,可见层已接入，lease 未持久且回收不完整。
+B18,Provider Usage/Cache Telemetry,partial,有来源标记和 assistant entry，权威字段不足。
+B19,Live Cache/Metadata Ablation,not_met,仍未运行。
+B20,Recursive State/Supersession,partial,组件通过，Live 仅手工三次 compact。
+B21,Probe-only Scorer,complete,已移除 summary-OR。
+B22,Exact CAS Recovery Scoring,complete,已核对 bytes/hash/length 与 wrong-cursor deny。
+B23,真实 JSONL Tool Pair Verifier,complete,不再常量 0。
+B24,Per-arm Workspace 与 Tools Isolation,complete,每个 arm 独立 home/workspace。
+B25,真实 B0/B1/B2/F0,partial,四臂 runner 存在，但 gate 主比较对象错误且有 timeout。
+B26,Controlled Replicates,partial,replicate 进入 id，但 provider seed 未受控。
+B27,真实 A1 Corpus/Provenance,not_met,仍缺 publication 级真实 trace freeze。
+B28,完整 Raw Evidence,partial,大量 raw 文件已保存，但存在 empty/partial/hash 语义问题。
+B29,Current-head 100×3,partial,attempted 300、scored 280。
+B30,Natural/Overflow/Recursive Live,partial,Native natural 有信号；overflow 未观察；recursive 为手工。
+B31,Release/Publication Gate,not_met,Required/Compatibility 红、branch 未保护。

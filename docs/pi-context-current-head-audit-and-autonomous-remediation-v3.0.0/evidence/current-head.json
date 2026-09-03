@@ -1,0 +1,37 @@
+{
+  "repository": "lkyprogramer/pi-context",
+  "head": "0e684e3623f260cc0c49c6cc1d4c75cf69969f9f",
+  "previousAuditHead": "6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31",
+  "attachmentSha256": "ecf97980f26640bac0333d2804346ea4c98fa35116c79acfb11011c33010ee8e",
+  "githubBranchProtected": false,
+  "requiredWorkflow": "failure",
+  "compatibilityWorkflow": "failure",
+  "requiredFailures": [
+    "typecheck",
+    "packed-install-hermetic",
+    "run-bundle-verify",
+    "required-gate"
+  ],
+  "compatibilityFailedCells": 10,
+  "livePaired": {
+    "planned": 300,
+    "scored": 280,
+    "armTimeouts": 20,
+    "hardGatePass": false,
+    "decision": "keep-pi-native",
+    "publicationClaim": false
+  },
+  "natural": {
+    "overallTriggered": false,
+    "nativeToolHeavyCompactTokensBefore": 187164,
+    "pcrHostCompactionEntry": false
+  },
+  "overflow": {
+    "nativeObserved": false,
+    "pcrObserved": false
+  },
+  "recursive": {
+    "threeCompacts": true,
+    "triggerMode": "manual-after-grow"
+  }
+}

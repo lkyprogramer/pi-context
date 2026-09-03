@@ -1,0 +1,16 @@
+{
+  "name": "pi-context-current-head-audit-and-autonomous-remediation-v3.0.0",
+  "generatedAt": "2026-09-03T00:00:00+08:00",
+  "auditHead": "0e684e3623f260cc0c49c6cc1d4c75cf69969f9f",
+  "previousAuditHead": "6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31",
+  "sourceArchive": "cb6f10b1-918f-4380-94c1-8771a737655e.zip",
+  "sourceArchiveSha256": "ecf97980f26640bac0333d2804346ea4c98fa35116c79acfb11011c33010ee8e",
+  "findings": 40,
+  "tasks": 32,
+  "waves": 6,
+  "verdict": {
+    "default": "keep-pi-native",
+    "publicationClaim": false,
+    "releaseReady": false
+  }
+}

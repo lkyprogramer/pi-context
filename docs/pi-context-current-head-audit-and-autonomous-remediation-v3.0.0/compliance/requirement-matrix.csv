@@ -1,0 +1,21 @@
+requirement_id,requirement,status,tasks
+R-01,All ingress through RuntimeSession,partial,"C06,C07,C08,C10"
+R-02,Atomic materialize/compact snapshot,implemented-needs-current-head-gate,C10
+R-03,Durable compaction stage/ack,implemented-needs-current-head-gate,C10
+R-04,Persistent scoped recall lease,not-met,C11
+R-05,Complete I_eff and provider usage provenance,partial,"C12,C13"
+R-06,Product recall positive and negative live evidence,not-met,"C14,C15"
+R-07,Probe-only behavioral scorer,implemented,C24
+R-08,Exact CAS recovery and scope deny,implemented,C24
+R-09,Real B0/B1/B2/F0 with correct adoption comparison,partial,"C16,C17,C24"
+R-10,Planned denominator and timeout policy,not-met,"C19,C24"
+R-11,Single run epoch and immutable dual hashes,partial,"C20,C21"
+R-12,Real trace corpus provenance,not-met,C22
+R-13,Natural pressure arm-specific gate,not-met,C25
+R-14,Overflow prevention and forced recovery,not-met,C26
+R-15,Autonomous recursive long horizon,not-met,"C27,C28"
+R-16,Strict compile and packed clean install,failed,"C01,C02,C03"
+R-17,Compatibility matrix green,failed,C04
+R-18,Branch protection required checks,failed,"C05,C31"
+R-19,Secret-scanned RC bundle outside Git history,not-met,C30
+R-20,Publication claim machine-derived,blocked-correctly,C31

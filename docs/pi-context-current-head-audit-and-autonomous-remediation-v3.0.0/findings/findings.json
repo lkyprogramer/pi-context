@@ -1,0 +1,402 @@
+[
+  {
+    "id": "CF-001",
+    "severity": "P0",
+    "domain": "CI/Compile",
+    "title": "当前 HEAD 严格 TypeScript 编译失败",
+    "evidence": "Required typecheck 与全部 Compatibility 单元在 composition-root.ts、extension.ts 等处失败。",
+    "impact": "任何运行时/评测结论都不能替代可编译性；当前不能形成可安装候选包。",
+    "status": "open",
+    "task": "C01"
+  },
+  {
+    "id": "CF-002",
+    "severity": "P0",
+    "domain": "Release/Pack",
+    "title": "clean install 与 packed-install 失败",
+    "evidence": "6 个 packed/release 测试因编译错误失败。",
+    "impact": "发布包无法构建、安装或验证。",
+    "status": "open",
+    "task": "C03"
+  },
+  {
+    "id": "CF-003",
+    "severity": "P0",
+    "domain": "Compatibility",
+    "title": "10/10 Compatibility 矩阵单元失败",
+    "evidence": "Node 22/24/26、Linux/macOS 单元均在 typecheck 阶段失败。",
+    "impact": "当前不能声明任何 Node/OS/Pi 兼容范围。",
+    "status": "open",
+    "task": "C04"
+  },
+  {
+    "id": "CF-004",
+    "severity": "P0",
+    "domain": "Governance",
+    "title": "main 分支未启用保护",
+    "evidence": "GitHub branch API 返回 protected=false、required checks 为空。",
+    "impact": "红色提交可直接进入 main，证据链没有强制力。",
+    "status": "open",
+    "task": "C05"
+  },
+  {
+    "id": "CF-005",
+    "severity": "P0",
+    "domain": "Governance",
+    "title": "verify-protection 在分支未保护时仍通过",
+    "evidence": "Required run 中保护校验步骤成功，但 GitHub 实际保护关闭。",
+    "impact": "保护校验仍是 fail-open 或只校验 workflow 文本。",
+    "status": "open",
+    "task": "C05"
+  },
+  {
+    "id": "CF-006",
+    "severity": "P1",
+    "domain": "CI Semantics",
+    "title": "名为 build 的作业在严格编译失败时仍通过",
+    "evidence": "build 只执行 package-artifact 测试，未证明生产源码可编译。",
+    "impact": "CI 名称制造错误安全感。",
+    "status": "open",
+    "task": "C02"
+  },
+  {
+    "id": "CF-007",
+    "severity": "P1",
+    "domain": "Documentation",
+    "title": "HANDOFF 仍绑定旧审计 HEAD",
+    "evidence": "根文档仍出现 6c5c5b5，而附件和 main 是 0e684e3。",
+    "impact": "接手者会混用旧结论和当前结果。",
+    "status": "open",
+    "task": "C29"
+  },
+  {
+    "id": "CF-008",
+    "severity": "P1",
+    "domain": "Documentation",
+    "title": "已运行目录仍保留 UNRUN 标记",
+    "evidence": "w2-v3-live 下报告、partial 与 UNRUN 文件并存。",
+    "impact": "状态语义冲突，自动化无法确定真值。",
+    "status": "open",
+    "task": "C29"
+  },
+  {
+    "id": "CF-009",
+    "severity": "P1",
+    "domain": "Completion",
+    "title": "上一轮 B00-B31 不能整体标记完成",
+    "evidence": "14 完成、13 部分、5 未满足；当前总门仍红。",
+    "impact": "组件实现不能等同于产品/发布完成。",
+    "status": "open",
+    "task": "C00"
+  },
+  {
+    "id": "CF-010",
+    "severity": "P0",
+    "domain": "Live Evaluation",
+    "title": "100×3 仅评分 280/300",
+    "evidence": "20 个 arm timeout，最终 hardGatePass=false。",
+    "impact": "不完整样本不能支持采纳或非劣结论。",
+    "status": "open",
+    "task": "C24"
+  },
+  {
+    "id": "CF-011",
+    "severity": "P1",
+    "domain": "Statistics",
+    "title": "超时样本的缺失机制与敏感性分析不足",
+    "evidence": "报告主要聚合已评分样本，未把所有 planned pairs 纳入 ITT。",
+    "impact": "结果可能受选择性完成偏差影响。",
+    "status": "open",
+    "task": "C19"
+  },
+  {
+    "id": "CF-012",
+    "severity": "P1",
+    "domain": "Reproducibility",
+    "title": "断点续跑可能混合运行 epoch",
+    "evidence": "rows-partial 可恢复，但每行未强制绑定相同源码、包、模型、配置和 scorer hash。",
+    "impact": "跨提交续跑会产生不可比较样本。",
+    "status": "open",
+    "task": "C20"
+  },
+  {
+    "id": "CF-013",
+    "severity": "P2",
+    "domain": "Statistics",
+    "title": "seed 名称高于真实控制能力",
+    "evidence": "replicate 已绑定 session/entry id，但目标 provider 未证明接受并执行随机种子。",
+    "impact": "应改称 replicateIndex，除非 provider 返回受控 seed 证据。",
+    "status": "open",
+    "task": "C23"
+  },
+  {
+    "id": "CF-014",
+    "severity": "P0",
+    "domain": "Gate Design",
+    "title": "采纳效率门比较 B1 Identity 与 B0 Native",
+    "evidence": "真正产品候选是带 Recall/Materializer 的 B2。",
+    "impact": "现有 Gate 没有回答“完整 PCR 产品路径是否值得启用”。",
+    "status": "open",
+    "task": "C16"
+  },
+  {
+    "id": "CF-015",
+    "severity": "P1",
+    "domain": "Arm Identity",
+    "title": "B1/B2 compact text 相同但 view/probe 差异未分层解释",
+    "evidence": "Compactor 输出和请求时 Materializer 的贡献被混在同一结论中。",
+    "impact": "无法定位收益、开销或质量变化来自哪一层。",
+    "status": "open",
+    "task": "C18"
+  },
+  {
+    "id": "CF-016",
+    "severity": "P1",
+    "domain": "Economics",
+    "title": "compact 文本、下一请求输入与实际成本仍容易混淆",
+    "evidence": "报告同时展示 summary token、probe token 和 billedTokens，但 Gate 语义未彻底分离。",
+    "impact": "短摘要不等于低总成本或高成功率。",
+    "status": "open",
+    "task": "C18"
+  },
+  {
+    "id": "CF-017",
+    "severity": "P0",
+    "domain": "Claim",
+    "title": "当前 Hard Gate 明确失败",
+    "evidence": "最新 gate decision 为 keep-pi-native、publicationClaim=false。",
+    "impact": "必须维持 Native 默认和实验开关。",
+    "status": "open",
+    "task": "C31"
+  },
+  {
+    "id": "CF-018",
+    "severity": "P1",
+    "domain": "Artifacts",
+    "title": "Raw bundle 中存在空文件、FAILED 和 partial 混合",
+    "evidence": "大量未启动/超时 arm 目录与成功 arm 同层。",
+    "impact": "物理存在不代表完成；manifest 必须逐 arm 定义状态。",
+    "status": "open",
+    "task": "C20"
+  },
+  {
+    "id": "CF-019",
+    "severity": "P0",
+    "domain": "Artifacts",
+    "title": "canonical hash 与 artifact byte hash 语义不清",
+    "evidence": "旧 verifier 可验证内部对象哈希，但不能证明 report.json 物理字节未变。",
+    "impact": "不可变证据链存在校验盲区。",
+    "status": "open",
+    "task": "C21"
+  },
+  {
+    "id": "CF-020",
+    "severity": "P2",
+    "domain": "Repository Hygiene",
+    "title": "把成千上万 per-arm 文件提交到源码仓库",
+    "evidence": "100×3×4 arms 会持续放大 Git 历史。",
+    "impact": "克隆、评审、索引和后续维护成本迅速上升。",
+    "status": "open",
+    "task": "C30"
+  },
+  {
+    "id": "CF-021",
+    "severity": "P1",
+    "domain": "Security",
+    "title": "公开提交 raw session JSONL 缺少独立脱敏门",
+    "evidence": "当前样本可能是合成数据，但流程未强制 secret/PII scan。",
+    "impact": "未来真实 trace 容易泄露凭证、路径和业务数据。",
+    "status": "open",
+    "task": "C30"
+  },
+  {
+    "id": "CF-022",
+    "severity": "P1",
+    "domain": "Natural Pressure",
+    "title": "Natural lane 的总 triggered=false 掩盖 arm 差异",
+    "evidence": "Native tool-heavy 在 tokensBefore≈187164 发生 compact；PCR 未写 compaction JSONL。",
+    "impact": "需要按 arm 状态机判断，不应只给一个布尔值。",
+    "status": "open",
+    "task": "C25"
+  },
+  {
+    "id": "CF-023",
+    "severity": "P0",
+    "domain": "Natural Pressure",
+    "title": "PCR 通过 bounded materialization 避免 Host compact 被错误视为失败",
+    "evidence": "请求时 Materializer 的目标本来就是降低进入模型的上下文。",
+    "impact": "产品臂应以无 overflow、质量保持和上下文上界判断。",
+    "status": "open",
+    "task": "C25"
+  },
+  {
+    "id": "CF-024",
+    "severity": "P1",
+    "domain": "Economics",
+    "title": "billedTokens=input+cacheRead 不是货币账单",
+    "evidence": "cache read 常有折扣，且 context window、logical tokens 与费用是不同概念。",
+    "impact": "指标命名会误导成本结论。",
+    "status": "open",
+    "task": "C13"
+  },
+  {
+    "id": "CF-025",
+    "severity": "P1",
+    "domain": "Host Contract",
+    "title": "Provider reserve/cache 字段仍缺少权威 Host API",
+    "evidence": "部分数据从 assistant entry 推导，保留估算来源。",
+    "impact": "无法形成跨 provider 的精确 I_eff 和成本门。",
+    "status": "open",
+    "task": "C12"
+  },
+  {
+    "id": "CF-026",
+    "severity": "P1",
+    "domain": "Recall",
+    "title": "Lease Store 仍是进程内 Map",
+    "evidence": "重启后 lease 丢失，无法与 SQLite snapshot 同代。",
+    "impact": "Recall 授权与重放控制不具备持久语义。",
+    "status": "open",
+    "task": "C11"
+  },
+  {
+    "id": "CF-027",
+    "severity": "P1",
+    "domain": "Recall",
+    "title": "Lease TTL、剩余使用次数和回收未形成完整闭环",
+    "evidence": "当前接线可发 lease，但长期运行的过期/消费/撤销证据不足。",
+    "impact": "可能产生陈旧召回或无界状态。",
+    "status": "open",
+    "task": "C11"
+  },
+  {
+    "id": "CF-028",
+    "severity": "P1",
+    "domain": "Recall/Economics",
+    "title": "真实 Provider Cache/Metadata Ablation 未完成",
+    "evidence": "Hermetic 比较不能证明目标 provider 的 cache hit、rewrite 和费用变化。",
+    "impact": "W2 经济价值仍未被 Live 证据支持。",
+    "status": "open",
+    "task": "C15"
+  },
+  {
+    "id": "CF-029",
+    "severity": "P0",
+    "domain": "Overflow",
+    "title": "Native 与 PCR 都未观察到真实 provider overflow",
+    "evidence": "没有 context_length/400 证据。",
+    "impact": "不能声称 overflow recovery 已验证。",
+    "status": "open",
+    "task": "C26"
+  },
+  {
+    "id": "CF-030",
+    "severity": "P1",
+    "domain": "Overflow Design",
+    "title": "Overflow prevention 与 overflow recovery 混在同一 lane",
+    "evidence": "B2 可能应避免 overflow；Recovery 则必须先观察可分类错误。",
+    "impact": "两类能力需要独立 Gate。",
+    "status": "open",
+    "task": "C26"
+  },
+  {
+    "id": "CF-031",
+    "severity": "P1",
+    "domain": "Long Horizon",
+    "title": "threeCompacts=true 来自 grow 后手工 compact",
+    "evidence": "这证明重复手动压缩，不是自主压力触发。",
+    "impact": "不能替代自动长程稳定性。",
+    "status": "open",
+    "task": "C27"
+  },
+  {
+    "id": "CF-032",
+    "severity": "P1",
+    "domain": "Long Horizon",
+    "title": "Recursive lane 未完整绑定 correction/branch/restart/side-effect oracle",
+    "evidence": "需要每一代 snapshot、指针、工具副作用和校正状态的外部断言。",
+    "impact": "三次 compact 计数不足以证明业务连续性。",
+    "status": "open",
+    "task": "C28"
+  },
+  {
+    "id": "CF-033",
+    "severity": "P1",
+    "domain": "Host Compatibility",
+    "title": "产品依赖 PCR patch 的 Pi 0.84.4",
+    "evidence": "clean-install 合同区分 patched Pi 与 stock Pi。",
+    "impact": "支持声明必须写成“0.84.4 + 指定 patch”，而不是裸版本兼容。",
+    "status": "open",
+    "task": "C04"
+  },
+  {
+    "id": "CF-034",
+    "severity": "P0",
+    "domain": "Runtime Contract",
+    "title": "session_shutdown 把 Event 强转 ExtensionContext",
+    "evidence": "TS2352 直接说明事件与上下文契约不重叠。",
+    "impact": "生命周期路径的类型和运行语义都不可靠。",
+    "status": "open",
+    "task": "C06"
+  },
+  {
+    "id": "CF-035",
+    "severity": "P0",
+    "domain": "Runtime Contract",
+    "title": "RuntimeToolCtx 被假设具有 cwd",
+    "evidence": "Pi 工具上下文类型没有 cwd。",
+    "impact": "Workspace 解析依赖不存在的字段。",
+    "status": "open",
+    "task": "C07"
+  },
+  {
+    "id": "CF-036",
+    "severity": "P1",
+    "domain": "Runtime Contract",
+    "title": "多处 callback 参数为 implicit any",
+    "evidence": "workspaceId、input、cursor 缺少稳定内部接口。",
+    "impact": "边界变更无法被编译器拦截。",
+    "status": "open",
+    "task": "C08"
+  },
+  {
+    "id": "CF-037",
+    "severity": "P1",
+    "domain": "Economics Contract",
+    "title": "economics metadata 把 unknown 写入标量字段",
+    "evidence": "packed compile 暴露 TS2322。",
+    "impact": "遥测清洗边界不完整。",
+    "status": "open",
+    "task": "C01"
+  },
+  {
+    "id": "CF-038",
+    "severity": "P1",
+    "domain": "Test Architecture",
+    "title": "Unit/Acceptance 全绿但生产严格编译失败",
+    "evidence": "Vitest 转译不等同于 tsc public contract。",
+    "impact": "测试绿不能代表可构建。",
+    "status": "open",
+    "task": "C09"
+  },
+  {
+    "id": "CF-039",
+    "severity": "P0",
+    "domain": "Publication",
+    "title": "Publication workflow 未被保护分支和双主门约束",
+    "evidence": "main 未保护，Required/Compatibility 都红。",
+    "impact": "任何自动发布都必须保持关闭。",
+    "status": "open",
+    "task": "C31"
+  },
+  {
+    "id": "CF-040",
+    "severity": "P2",
+    "domain": "Product Status",
+    "title": "Alpha 功能显著进步，但仍非 RC",
+    "evidence": "Runtime 核心已增强；Live、兼容、包和治理没有闭环。",
+    "impact": "继续以 experimental/shadow 方式迭代。",
+    "status": "open",
+    "task": "C31"
+  }
+]
