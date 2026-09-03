@@ -251,6 +251,11 @@ function copyAgent(keepRecentTokens: number): string {
   return agentDir;
 }
 
+function isThresholdCompact(row: { reason: string | null; tokensBefore: number | null }): boolean {
+  if (row.reason === "threshold") return true;
+  return typeof row.tokensBefore === "number" && row.tokensBefore >= NATURAL_THRESHOLD_TOKENS;
+}
+
 function inspectCompactions(sessionFile: string): Array<{
   fromHook: boolean;
   reason: string | null;
@@ -347,11 +352,15 @@ async function readTurnUsage(rpc: PiRpc, sessionFile: string): Promise<Record<st
     // Host may not expose get_state tokens
   }
   const compact = inspectCompactions(sessionFile);
+  const billed = typeof usage.inputTokens === "number" && typeof usage.cacheRead === "number"
+    ? usage.inputTokens + usage.cacheRead
+    : usage.inputTokens;
   return {
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
     cacheRead: usage.cacheRead,
     cacheWrite: usage.cacheWrite,
+    billedTokens: billed,
     stateTokens,
     compactCount: compact.length,
     reason: compact.at(-1)?.reason ?? null,
@@ -365,6 +374,7 @@ async function growLive(rpc: PiRpc, sessionFile: string, input: {
   stopOnCompact: boolean;
   stopOnError: boolean;
   thresholdTokens?: number;
+  onTurn?: (log: Array<Record<string, unknown>>) => void;
 }): Promise<Array<Record<string, unknown>>> {
   const log: Array<Record<string, unknown>> = [];
   for (let turn = 0; turn < input.maxTurns; turn += 1) {
@@ -377,15 +387,22 @@ async function growLive(rpc: PiRpc, sessionFile: string, input: {
       const usage = await readTurnUsage(rpc, sessionFile);
       const compactCount = Number(usage.compactCount ?? 0);
       log.push({ turn, ok: true, ...usage });
+      input.onTurn?.(log);
       if (input.stopOnCompact && compactCount > before) return log;
-      const observed = typeof usage.inputTokens === "number" ? usage.inputTokens : typeof usage.stateTokens === "number" ? usage.stateTokens : null;
+      const observed = typeof usage.billedTokens === "number"
+        ? usage.billedTokens
+        : typeof usage.inputTokens === "number"
+          ? usage.inputTokens
+          : typeof usage.stateTokens === "number" ? usage.stateTokens : null;
       if (input.thresholdTokens && observed !== null && observed > input.thresholdTokens + 8_192 && compactCount === before) {
         log.push({ turn, ok: true, providerWindowMismatch: true, observedTokens: observed, advertisedThreshold: input.thresholdTokens });
+        input.onTurn?.(log);
         return log;
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.push({ turn, ok: false, error: message, overflow: isContextOverflowError(message) });
+      input.onTurn?.(log);
       if (input.stopOnError) return log;
       throw error;
     }
@@ -400,6 +417,15 @@ function persistReport(outDir: string, report: unknown, sessions: Array<{ name: 
     if (!existsSync(session.file)) continue;
     mkdirSync(join(outDir, session.name), { recursive: true });
     copyFileSync(session.file, join(outDir, session.name, "session.jsonl"));
+  }
+}
+
+function persistPartial(outDir: string, name: string, payload: unknown, sessionFile?: string): void {
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(join(outDir, `${name}.partial.json`), `${JSON.stringify(payload, null, 2)}\n`);
+  if (sessionFile && existsSync(sessionFile)) {
+    mkdirSync(join(outDir, name), { recursive: true });
+    copyFileSync(sessionFile, join(outDir, name, "session.jsonl"));
   }
 }
 
@@ -420,6 +446,7 @@ async function runNaturalFamily(input: {
   root: string;
   family: "large-turn" | "tool-heavy";
   extension: string;
+  outDir: string;
 }): Promise<Record<string, unknown>> {
   const extra = input.family === "tool-heavy"
     ? "start the long tool-heavy task; do not deploy prod"
@@ -448,6 +475,7 @@ async function runNaturalFamily(input: {
           stopOnCompact: true,
           stopOnError: true,
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
+          onTurn: (log) => persistPartial(input.outDir, `${input.family}-native`, { turns: log }, native.sessionFile),
         });
         if (inspectCompactions(native.sessionFile).length > 0) {
           await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
@@ -474,6 +502,7 @@ async function runNaturalFamily(input: {
           stopOnCompact: true,
           stopOnError: true,
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
+          onTurn: (log) => persistPartial(input.outDir, `${input.family}-pcr`, { turns: log }, pcr.sessionFile),
         });
         if (inspectCompactions(pcr.sessionFile).length > 0) {
           await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
@@ -511,7 +540,7 @@ async function runNaturalFamily(input: {
       cwd: pcr.cwd,
       agentDir: pcr.agentDir,
     },
-    triggered: nativeCompactions.some((row) => row.reason === "threshold") && pcrCompactions.some((row) => row.reason === "threshold"),
+    triggered: nativeCompactions.some((row) => isThresholdCompact(row)) && pcrCompactions.some((row) => isThresholdCompact(row)),
     compactCount: nativeCompactions.length + pcrCompactions.length,
   };
 }
@@ -550,7 +579,7 @@ export async function runNaturalThreshold(repoRoot: string): Promise<Record<stri
   const families: Array<Record<string, unknown>> = [];
   try {
     for (const family of ["large-turn", "tool-heavy"] as const) {
-      families.push(await runNaturalFamily({ repoRoot, root, family, extension }));
+      families.push(await runNaturalFamily({ repoRoot, root, family, extension, outDir }));
     }
     const providerStarted = families.some((row) => row.providerStarted === true);
     const compactCount = families.reduce((sum, row) => sum + Number(row.compactCount ?? 0), 0);
@@ -607,6 +636,117 @@ export async function runNaturalThreshold(repoRoot: string): Promise<Record<stri
   }
 }
 
+async function runOverflowArm(input: {
+  root: string;
+  outDir: string;
+  name: "native" | "pcr";
+  extension?: string;
+}): Promise<{
+  name: "native" | "pcr";
+  sessionFile: string;
+  agentDir: string;
+  providerStarted: boolean;
+  attempts: Array<Record<string, unknown>>;
+  overflowObserved: boolean;
+  usedManualCompactAsOverflow: boolean;
+}> {
+  const arm = isolatedArm(
+    input.root,
+    input.name,
+    8_000,
+    input.name === "native"
+      ? "grow until provider overflow; native arm; do not deploy prod"
+      : "grow until provider overflow; do not deploy prod",
+    false,
+  );
+  const attempts: Array<Record<string, unknown>> = [];
+  let providerStarted = false;
+  try {
+    await withRpc({
+      sessionFile: arm.sessionFile,
+      cwd: arm.cwd,
+      agentDir: arm.agentDir,
+      extension: input.extension,
+      autoCompact: false,
+      work: async (rpc) => {
+        providerStarted = true;
+        const grown = await growLive(rpc, arm.sessionFile, {
+          maxTurns: 25,
+          charsPerTurn: 40_000,
+          stopOnCompact: false,
+          stopOnError: true,
+          onTurn: (log) => persistPartial(input.outDir, input.name, { phase: "grow", turns: log }, arm.sessionFile),
+        });
+        attempts.push({ phase: "grow", ok: true, grown });
+        persistPartial(input.outDir, input.name, { phase: "grow", attempts }, arm.sessionFile);
+        const overflowed = grown.some((row) => row.overflow === true);
+        if (!overflowed) {
+          try {
+            await rpc.promptAndWait(filler(40_000 * 4), 3 * 60_000);
+            attempts.push({ phase: "overflow-prompt", ok: true });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            attempts.push({
+              phase: "overflow-prompt",
+              ok: false,
+              overflow: isContextOverflowError(message),
+              error: message,
+            });
+          }
+        }
+        const overflowObserved = attempts.some((row) => row.overflow === true)
+          || grown.some((row) => row.overflow === true);
+        persistPartial(input.outDir, input.name, { phase: "after-overflow-prompt", attempts, overflowObserved }, arm.sessionFile);
+        if (!overflowObserved) {
+          attempts.push({ phase: "skip-hand-compact", ok: true, reason: "no-provider-overflow" });
+          persistPartial(input.outDir, input.name, { phase: "skip-hand-compact", attempts }, arm.sessionFile);
+          return;
+        }
+        const failHash = sha(rpc.stderr.slice(-800) || "overflow");
+        attempts.push({ phase: "overflow-request", ok: false, requestHash: failHash });
+        const beforeTokens = lastAssistantUsage(arm.sessionFile).inputTokens;
+        const compacted = await rpc.compact();
+        const after = inspectCompactions(arm.sessionFile).at(-1);
+        const compactHash = sha(`${after?.tokensBefore ?? ""}:${after?.summary ?? JSON.stringify(compacted)}`);
+        attempts.push({
+          phase: "compact",
+          ok: true,
+          compactHash,
+          tokensBefore: after?.tokensBefore ?? null,
+        });
+        persistPartial(input.outDir, input.name, { phase: "compact", attempts }, arm.sessionFile);
+        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
+        const afterTokens = lastAssistantUsage(arm.sessionFile).inputTokens;
+        const retryHash = sha(`${afterTokens ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`);
+        attempts.push({
+          phase: "retry",
+          ok: true,
+          compactHash: retryHash,
+          requestHash: retryHash,
+          inputTokens: afterTokens,
+          tokensDropped: beforeTokens !== null && afterTokens !== null ? afterTokens < beforeTokens : false,
+        });
+        persistPartial(input.outDir, input.name, { phase: "retry", attempts }, arm.sessionFile);
+      },
+    });
+  } catch (error) {
+    attempts.push({ phase: "rpc", ok: false, error: error instanceof Error ? error.message : String(error) });
+    persistPartial(input.outDir, input.name, { phase: "rpc", attempts }, arm.sessionFile);
+  }
+  const overflowObserved = attempts.some((row) => row.overflow === true)
+    || attempts.some((row) => Array.isArray(row.grown) && (row.grown as Array<{ overflow?: boolean }>).some((item) => item.overflow === true));
+  const usedManualCompactAsOverflow = !overflowObserved && attempts.some((row) => row.phase === "compact");
+  return {
+    name: input.name,
+    sessionFile: arm.sessionFile,
+    agentDir: arm.agentDir,
+    providerStarted,
+    attempts,
+    overflowObserved,
+    usedManualCompactAsOverflow,
+  };
+}
+
 export async function runProviderOverflow(repoRoot: string): Promise<Record<string, unknown>> {
   const outDir = join(repoRoot, "artifacts/runs/w2-v3-live/overflow");
   const extension = join(repoRoot, "apps/pi-context-runtime/dist/extension.js");
@@ -626,93 +766,57 @@ export async function runProviderOverflow(repoRoot: string): Promise<Record<stri
     persistReport(outDir, report, []);
     return report;
   }
-  const overflowPrompt = filler(40_000 * 4);
   const root = mkdtempSync(join(tmpdir(), "pcr-w5-overflow-"));
-  const arm = isolatedArm(root, "pcr", 8_000, "grow until provider overflow; do not deploy prod", false);
-  const attempts: Array<Record<string, unknown>> = [];
-  let providerStarted = false;
+  let native: Awaited<ReturnType<typeof runOverflowArm>> | undefined;
+  let pcr: Awaited<ReturnType<typeof runOverflowArm>> | undefined;
   try {
-    await withRpc({
-      sessionFile: arm.sessionFile,
-      cwd: arm.cwd,
-      agentDir: arm.agentDir,
-      extension,
-      autoCompact: false,
-      work: async (rpc) => {
-        providerStarted = true;
-        const grown = await growLive(rpc, arm.sessionFile, {
-          maxTurns: 25,
-          charsPerTurn: 40_000,
-          stopOnCompact: false,
-          stopOnError: true,
-        });
-        attempts.push({ phase: "grow", ok: true, grown });
-        const overflowed = grown.some((row) => row.overflow === true);
-        if (!overflowed) {
-          try {
-            await rpc.promptAndWait(overflowPrompt, 3 * 60_000);
-            attempts.push({ phase: "overflow-prompt", ok: true });
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            attempts.push({
-              phase: "overflow-prompt",
-              ok: false,
-              overflow: isContextOverflowError(message),
-              error: message,
-            });
-          }
-        }
-        const overflowObserved = attempts.some((row) => row.overflow === true)
-          || (Array.isArray((attempts[0] as { grown?: Array<{ overflow?: boolean }> }).grown)
-            && (attempts[0] as { grown: Array<{ overflow?: boolean }> }).grown.some((row) => row.overflow === true));
-        if (!overflowObserved) {
-          attempts.push({ phase: "skip-hand-compact", ok: true, reason: "no-provider-overflow" });
-          return;
-        }
-        const failHash = sha(rpc.stderr.slice(-800) || "overflow");
-        attempts.push({ phase: "overflow-request", ok: false, requestHash: failHash });
-        const beforeTokens = lastAssistantUsage(arm.sessionFile).inputTokens;
-        const compacted = await rpc.compact();
-        const after = inspectCompactions(arm.sessionFile).at(-1);
-        const compactHash = sha(`${after?.tokensBefore ?? ""}:${after?.summary ?? JSON.stringify(compacted)}`);
-        attempts.push({
-          phase: "compact",
-          ok: true,
-          compactHash,
-          tokensBefore: after?.tokensBefore ?? null,
-        });
-        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
-        const afterTokens = lastAssistantUsage(arm.sessionFile).inputTokens;
-        const retryHash = sha(`${afterTokens ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`);
-        attempts.push({
-          phase: "retry",
-          ok: true,
-          compactHash: retryHash,
-          requestHash: retryHash,
-          inputTokens: afterTokens,
-          tokensDropped: beforeTokens !== null && afterTokens !== null ? afterTokens < beforeTokens : false,
-        });
-      },
-    });
+    native = await runOverflowArm({ root, outDir, name: "native" });
+    pcr = await runOverflowArm({ root, outDir, name: "pcr", extension });
   } catch (error) {
-    attempts.push({ phase: "rpc", ok: false, error: error instanceof Error ? error.message : String(error) });
+    persistPartial(outDir, "fatal", { error: error instanceof Error ? error.message : String(error) });
+    throw error;
   }
-  const overflowObserved = attempts.some((row) => row.overflow === true)
-    || attempts.some((row) => Array.isArray(row.grown) && (row.grown as Array<{ overflow?: boolean }>).some((item) => item.overflow === true));
-  const usedManualCompactAsOverflow = !overflowObserved && attempts.some((row) => row.phase === "compact");
-  const hashes = attempts.map((row) => row.compactHash).filter((value): value is string => typeof value === "string");
-  const retry = attempts.find((row) => row.phase === "retry");
+  const attempts = pcr.attempts;
+  const overflowObserved = native.overflowObserved || pcr.overflowObserved;
+  const usedManualCompactAsOverflow = native.usedManualCompactAsOverflow || pcr.usedManualCompactAsOverflow;
+  const hashes = [...native.attempts, ...pcr.attempts]
+    .map((row) => row.compactHash)
+    .filter((value): value is string => typeof value === "string");
+  const retry = [...native.attempts, ...pcr.attempts].find((row) => row.phase === "retry");
   const report = {
     lane: "provider-overflow",
-    liveProvider: providerStarted,
+    liveProvider: native.providerStarted || pcr.providerStarted,
     autoCompact: false,
     attempts,
+    arms: {
+      native: {
+        providerStarted: native.providerStarted,
+        overflowObserved: native.overflowObserved,
+        usedManualCompactAsOverflow: native.usedManualCompactAsOverflow,
+        attempts: native.attempts,
+      },
+      pcr: {
+        providerStarted: pcr.providerStarted,
+        overflowObserved: pcr.overflowObserved,
+        usedManualCompactAsOverflow: pcr.usedManualCompactAsOverflow,
+        attempts: pcr.attempts,
+      },
+    },
     overflowObserved,
     usedManualCompactAsOverflow,
-    compactThenRetry: overflowObserved && attempts.some((row) => row.phase === "compact" && row.ok) && attempts.some((row) => row.phase === "retry" && row.ok),
+    compactThenRetry: overflowObserved
+      && [...native.attempts, ...pcr.attempts].some((row) => row.phase === "compact" && row.ok)
+      && [...native.attempts, ...pcr.attempts].some((row) => row.phase === "retry" && row.ok),
     hashesChange: new Set(hashes).size >= 2,
     tokensStrictlyDecrease: retry?.tokensDropped === true,
   };
+  persistReport(outDir, report, [
+    { name: "native", file: native.sessionFile },
+    { name: "pcr", file: pcr.sessionFile },
+  ]);
+  rmSync(root, { recursive: true, force: true });
+  rmSync(native.agentDir, { recursive: true, force: true });
+  rmSync(pcr.agentDir, { recursive: true, force: true });
   if (overflowObserved) {
     assertOverflowPolicy({
       overflowObserved,
@@ -721,9 +825,6 @@ export async function runProviderOverflow(repoRoot: string): Promise<Record<stri
       tokensStrictlyDecrease: report.tokensStrictlyDecrease,
     });
   }
-  persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
-  rmSync(root, { recursive: true, force: true });
-  rmSync(arm.agentDir, { recursive: true, force: true });
   return report;
 }
 
@@ -757,10 +858,16 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         providerStarted = true;
         await rpc.compact();
         history.push({ phase: "compact-1", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
         history.push({ phase: "temporal-update", ok: true });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
+        await rpc.promptAndWait(`Grow before compact 2.\n${filler(80_000)}`, 3 * 60_000);
+        history.push({ phase: "grow-before-compact-2", ok: true });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.compact();
         history.push({ phase: "compact-2", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
     const beforeRestart = readFileSync(arm.sessionFile, "utf8");
@@ -779,6 +886,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     };
     writeFileSync(arm.sessionFile, `${beforeRestart.trim()}\n${JSON.stringify(branchUser)}\n`);
     history.push({ phase: "branch-after-compact-2", ok: true });
+    persistPartial(outDir, "pcr", { history }, arm.sessionFile);
     await withRpc({
       sessionFile: arm.sessionFile,
       cwd: arm.cwd,
@@ -787,6 +895,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       autoCompact: false,
       work: async (rpc) => {
         history.push({ phase: "restart-before-compact-3", ok: true });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
         await rpc.compact();
         history.push({
@@ -795,14 +904,18 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
           compactCount: inspectCompactions(arm.sessionFile).length,
           summary: inspectCompactions(arm.sessionFile).at(-1)?.summary.slice(0, 400),
         });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("What version is currently active? Reply with the version string only.", 3 * 60_000);
         history.push({ phase: "recall-needed", ok: true });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("Should we merge sibling-branch now? Answer yes or no.", 3 * 60_000);
         history.push({ phase: "recall-not-needed", ok: true });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
   } catch (error) {
     history.push({ phase: "rpc", ok: false, error: error instanceof Error ? error.message : String(error) });
+    persistPartial(outDir, "pcr", { history }, arm.sessionFile);
   }
   const compactions = inspectCompactions(arm.sessionFile);
   const summaries = compactions.map((row) => row.summary);
