@@ -1,0 +1,49 @@
+{
+  "taskId": "C00",
+  "baseCommit": "60ed0a3aa271e5c73716408116a2e8cda386a650",
+  "headCommit": "f1ed0def997a79fd51a4ed8a607f5dcbde4d8e1f",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "red",
+      "command": "python3 -c PACK-METADATA frozenBaseline",
+      "exitCode": 1,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C00-red.log",
+      "logSha256": "d96c5d851d8eb9f61da85a7b950b86a910e5763cf8a10928fecd4aa1cbc823b2"
+    },
+    {
+      "phase": "green",
+      "command": "python scripts/validate_pack.py",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C00-green.log",
+      "logSha256": "9aa87412c15c199c2f0b1e186facde9136c1e4cc0f53272af012407475546bb7"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C00-full-gate.log",
+      "logSha256": "0df023fb3126d05ae40bd9c132db0f284bc20d1541303ea1672d49cb60c0efa4"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/PACK-METADATA.json",
+      "sha256": "d15bb8b10f03db487914b9d0142d8e7d7d4999f65f8afd710e9bce889cfb7bcb"
+    },
+    {
+      "path": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/findings/findings.json",
+      "sha256": "bc2f232a56bf3f7b751a8f12cdcaf77dec6a195b9d627598f67a762b41d67213"
+    }
+  ],
+  "requirements": {
+    "frozenBaseline0e684e3": true,
+    "previousPlanNotAllComplete": true,
+    "publicationClaimFalse": true,
+    "validatePackExit0": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "grok-4.6-w0"
+  }
+}
