@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createPiHarnessWithRuntime } from "../support/pi.js";
 
@@ -20,6 +21,18 @@ describe("session lifecycle", () => {
     expect(host.catchUp).toMatchObject({ reason: "fork", pointerUnavailable: false });
     await host.startSession("reload", false);
     expect(host.catchUp).toMatchObject({ reason: "reload", pointerUnavailable: true });
+  });
+
+  it("session_shutdown keeps Event and ExtensionContext as separate parameters", () => {
+    const source = readFileSync("apps/pi-context-runtime/src/composition-root.ts", "utf8");
+    expect(source).not.toMatch(/event as ExtensionContext/);
+    expect(source).not.toMatch(/as unknown as ExtensionContext/);
+    const shutdownBlocks = [...source.matchAll(/pi\.on\("session_shutdown", async \(event, ctx\) => \{[\s\S]*?\n  \}\);/g)];
+    expect(shutdownBlocks.length).toBeGreaterThanOrEqual(2);
+    for (const block of shutdownBlocks) {
+      expect(block[0]).toMatch(/isExtensionContext\(ctx\)/);
+      expect(block[0]).not.toMatch(/cursorFromContext\(event\)/);
+    }
   });
 
   it("shutdown closes the session worker", async () => {

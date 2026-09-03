@@ -316,6 +316,11 @@ export function registerProductionSessionLifecycle(
   });
   pi.on("session_shutdown", async (event, ctx) => {
     void event;
+    if (!isExtensionContext(ctx)) {
+      throw Object.assign(new Error("PCR_SESSION_SHUTDOWN_CURSOR_INVALID"), {
+        code: "PCR_SESSION_SHUTDOWN_CURSOR_INVALID",
+      });
+    }
     await root.close(ctx);
   });
 }
