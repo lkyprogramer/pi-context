@@ -46,10 +46,16 @@ export function sanitizeTelemetry(event: unknown): TelemetryEvent {
   return schemaParseTelemetry(hashSensitiveDimensions(event));
 }
 
-export function hashSensitiveDimensions(event: unknown): Record<string, unknown> {
-  const raw = event !== null && typeof event === "object" && !Array.isArray(event) ? { ...(event as Record<string, unknown>) } : {};
+type TelemetryScalars = Omit<TelemetryEvent, "schemaVersion" | "eventId">;
+
+export function hashSensitiveDimensions(event: unknown): TelemetryScalars {
+  const raw: Record<string, unknown> = event !== null && typeof event === "object" && !Array.isArray(event)
+    ? { ...event }
+    : {};
   const dimensions: Record<string, string | number | boolean | null> = {};
-  const incoming = raw.dimensions !== null && typeof raw.dimensions === "object" ? (raw.dimensions as Record<string, unknown>) : raw;
+  const incoming: Record<string, unknown> = raw.dimensions !== null && typeof raw.dimensions === "object" && !Array.isArray(raw.dimensions)
+    ? { ...raw.dimensions }
+    : raw;
   for (const [key, value] of Object.entries(incoming)) {
     if (key === "prompt" || key === "message" || key === "blob" || key === "text") continue;
     if (typeof value === "string" && looksSensitive(key, value)) {
@@ -69,18 +75,18 @@ export function hashSensitiveDimensions(event: unknown): Record<string, unknown>
   };
 }
 
-export function schemaParseTelemetry(event: Record<string, unknown>): TelemetryEvent {
-  const dimensions = (event.dimensions ?? {}) as TelemetryEvent["dimensions"];
+export function schemaParseTelemetry(event: TelemetryScalars): TelemetryEvent {
+  const viewId = event.viewId === null || typeof event.viewId === "string" ? event.viewId : null;
   return {
     schemaVersion: 1,
     eventId: `te_${domainHash("telemetry-event", event).slice(0, 16)}`,
-    name: String(event.name ?? "pcr.event"),
-    timestamp: Number(event.timestamp ?? 0),
-    workspaceId: String(event.workspaceId ?? "ws_opaque"),
-    sessionId: String(event.sessionId ?? "s_opaque"),
-    viewId: (event.viewId as string | null) ?? null,
-    dimensions,
-    metrics: asMetrics(event.metrics),
+    name: event.name,
+    timestamp: event.timestamp,
+    workspaceId: event.workspaceId,
+    sessionId: event.sessionId,
+    viewId,
+    dimensions: event.dimensions,
+    metrics: event.metrics,
   };
 }
 

@@ -85,6 +85,14 @@ import { claimPiContextOwner } from "./owner.js";
 
 export type PiRuntimeContext = Pick<ExtensionContext, "cwd" | "model" | "sessionManager" | "signal">;
 
+function isExtensionContext(value: unknown): value is ExtensionContext {
+  if (value === null || typeof value !== "object") return false;
+  if (!("cwd" in value) || !("sessionManager" in value)) return false;
+  const cwd = Reflect.get(value, "cwd");
+  const sessionManager = Reflect.get(value, "sessionManager");
+  return typeof cwd === "string" && sessionManager !== null && typeof sessionManager === "object";
+}
+
 export interface ProductionSessionResources {
   ports: RuntimeSessionPorts;
   dispose(): Promise<void>;
@@ -385,6 +393,7 @@ export interface ProductionUserTurnRuntime {
   resolveTools(ctx?: { workspaceId?: string; sessionId?: string }): Promise<{
     cursor: RuntimeCursor;
     evidence: EvidenceService;
+    dataRoot: string;
   }>;
 }
 
@@ -1271,20 +1280,15 @@ export function registerProductionUserTurnRuntime(
     const rejected = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
     if (rejected) throw rejected.reason;
   };
-  pi.on("session_shutdown", async (event, ctx) => {
-    const host = (ctx && typeof ctx === "object" && "sessionManager" in ctx)
-      ? ctx as ExtensionContext
-      : (event && typeof event === "object" && "sessionManager" in event)
-        ? event as ExtensionContext
-        : undefined;
-    if (!host) {
+  pi.on("session_shutdown", async (_event, ctx) => {
+    if (!isExtensionContext(ctx)) {
       throw Object.assign(new Error("PCR_SESSION_SHUTDOWN_CURSOR_INVALID"), {
         code: "PCR_SESSION_SHUTDOWN_CURSOR_INVALID",
       });
     }
     let cursor: RuntimeCursor;
     try {
-      cursor = cursorFromContext(host);
+      cursor = cursorFromContext(ctx);
     } catch (error) {
       throw Object.assign(error instanceof Error ? error : new Error(String(error)), {
         code: "PCR_SESSION_SHUTDOWN_CURSOR_INVALID",
@@ -1314,14 +1318,14 @@ export function registerProductionUserTurnRuntime(
       if (owners.size !== 1) return undefined;
       return [...owners.keys()][0];
     },
-    async lastRequestUsage(workspaceId) {
+    async lastRequestUsage(workspaceId?: string) {
       const opening = workspaceId
         ? owners.get(workspaceId)
         : (owners.size === 1 ? [...owners.values()][0] : undefined);
       if (!opening) return undefined;
       return (await opening).lastUsage;
     },
-    async lastSnapshotHash(workspaceId) {
+    async lastSnapshotHash(workspaceId?: string) {
       const opening = workspaceId
         ? owners.get(workspaceId)
         : (owners.size === 1 ? [...owners.values()][0] : undefined);
@@ -1417,7 +1421,12 @@ export function registerProductionUserTurnRuntime(
       opening.cursorsBySession.delete(cursor.sessionId);
       await session?.close?.();
     },
-    async stageCompaction(input) {
+    async stageCompaction(input: {
+      cursor: RuntimeCursor;
+      outputHash: string;
+      firstKeptEntryId: string;
+      payloadJson: string;
+    }) {
       const opening = await ownerByWorkspace(input.cursor.workspaceId);
       if (!opening) return;
       await opening.compactionJournal.stage({
@@ -1428,17 +1437,17 @@ export function registerProductionUserTurnRuntime(
         now: clock.now(),
       });
     },
-    async ackCompaction(input) {
+    async ackCompaction(input: { cursor: RuntimeCursor; outputHash: string; firstKeptEntryId: string }) {
       const opening = await ownerByWorkspace(input.cursor.workspaceId);
       if (!opening) return;
       await opening.compactionJournal.ack(input);
     },
-    async pendingCompaction(cursor) {
+    async pendingCompaction(cursor: RuntimeCursor) {
       const opening = await ownerByWorkspace(cursor.workspaceId);
       if (!opening) return null;
       return opening.compactionJournal.pending(cursor);
     },
-    async failStagedCompaction(cursor) {
+    async failStagedCompaction(cursor: RuntimeCursor) {
       const opening = await ownerByWorkspace(cursor.workspaceId);
       if (!opening) return;
       await opening.compactionJournal.fail({ cursor });
@@ -1486,7 +1495,7 @@ export function registerProductionUserTurnRuntime(
           actualWorkspaceId: ctx.workspaceId,
         });
       }
-      return { cursor, evidence: opening.evidence(cursor) };
+      return { cursor, evidence: opening.evidence(cursor), dataRoot: opening.dataRoot };
     },
   });
 }

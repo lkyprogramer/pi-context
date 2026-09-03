@@ -431,15 +431,10 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
         }
       },
       doctor: async (ctx) => {
-        const bound = await userTurns.resolveTools(ctx).catch(() => undefined);
-        const workspaceId = bound?.cursor.workspaceId ?? userTurns.lastWorkspaceId() ?? ctx.workspaceId;
-        if (!workspaceId) {
-          throw Object.assign(new Error("PCR_RUNTIME_TOOLS_CURSOR_MISSING"), { code: "PCR_RUNTIME_TOOLS_CURSOR_MISSING" });
-        }
-        const dataRoot = typeof ctx.cwd === "string" && ctx.cwd.length > 0 ? ctx.cwd : process.cwd();
+        const bound = await userTurns.resolveTools(ctx);
         return JSON.stringify({
           command: "context-doctor",
-          workspaceId,
+          workspaceId: bound.cursor.workspaceId,
           ...(await runRuntimeDoctor(
             {
               packages: [],
@@ -447,7 +442,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
               piVersion: "0.84.4",
               capabilities: REQUIRED_PI_CAPABILITIES.filter((name) => name !== "agent_settled" || semanticBeta),
               trusted: true,
-              dataRoot,
+              dataRoot: bound.dataRoot,
             },
             { conflictPolicy: "strict" },
           )),
