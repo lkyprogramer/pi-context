@@ -26,15 +26,27 @@ export function compareCheckpointMetadata(
 
 export type CacheLayoutArm = "full-metadata" | "short-ref" | "no-heads" | "directory-first";
 
+export type CacheMetricSource = "provider" | "estimated" | "unavailable";
+
 export interface CacheLayoutSample {
   arm: CacheLayoutArm;
-  quality: number;
-  cacheReadTokens: number;
-  cacheWriteTokens: number;
-  uncachedInputTokens: number;
-  eligiblePrefixTokens: number;
+  /** Null means that the provider did not expose the field. It must not be replaced with zero. */
+  quality: number | null;
+  cacheReadTokens: number | null;
+  cacheWriteTokens: number | null;
+  uncachedInputTokens: number | null;
+  eligiblePrefixTokens: number | null;
   firstDifferentSection: string | null;
-  billedCost: number;
+  /** Monetary cost is only populated when a complete price/discount snapshot exists. */
+  billedCost: number | null;
+  /** Per-field provenance for evidence consumers; omitted by legacy callers. */
+  metricSources?: Readonly<{
+    cacheReadTokens: CacheMetricSource;
+    cacheWriteTokens: CacheMetricSource;
+    uncachedInputTokens: CacheMetricSource;
+    eligiblePrefixTokens: CacheMetricSource;
+    billedCost: CacheMetricSource;
+  }>;
 }
 
 export interface CacheLayoutComparison {
@@ -44,13 +56,37 @@ export interface CacheLayoutComparison {
 }
 
 export function compareCacheLayouts(samples: readonly CacheLayoutSample[]): CacheLayoutComparison {
-  const qualityHardGate = samples.every((sample) => sample.quality >= 1);
+  // An empty set (or an unknown quality) is not a passing quality gate.
+  const qualityHardGate = samples.length > 0 && samples.every((sample) => sample.quality !== null && sample.quality >= 1);
   if (!qualityHardGate) {
     return { qualityHardGate: false, winner: null, samples: [...samples] };
   }
-  const winner = [...samples].sort((left, right) => (
-    (left.billedCost - right.billedCost)
-    || (right.eligiblePrefixTokens - left.eligiblePrefixTokens)
+  // Never rank a sample whose monetary cost is unavailable. This keeps
+  // provider usage gaps from becoming a fabricated zero-cost win.
+  const ranked = samples.filter((sample) => sample.billedCost !== null);
+  const winner = [...ranked].sort((left, right) => (
+    (left.billedCost! - right.billedCost!)
+    || ((right.eligiblePrefixTokens ?? -1) - (left.eligiblePrefixTokens ?? -1))
   ))[0];
   return { qualityHardGate: true, winner: winner?.arm ?? null, samples: [...samples] };
+}
+
+/**
+ * Finds the first named section that differs between two materialized request
+ * views. Sections are compared in order, so a later active turn cannot hide a
+ * prefix difference that would affect provider cache reuse.
+ */
+export function firstDifferentSection(
+  baseline: readonly { section: string; text: string }[],
+  candidate: readonly { section: string; text: string }[],
+): string | null {
+  const length = Math.max(baseline.length, candidate.length);
+  for (let index = 0; index < length; index += 1) {
+    const left = baseline[index];
+    const right = candidate[index];
+    if (!left || !right || left.section !== right.section || left.text !== right.text) {
+      return right?.section ?? left?.section ?? null;
+    }
+  }
+  return null;
 }
