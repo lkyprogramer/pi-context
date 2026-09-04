@@ -121,7 +121,9 @@ export class PiRpc {
           cursor += 1;
           if (!event) continue;
           collected.push(event);
-          if (event.type === "agent_settled") {
+          // Pi RPC emits `agent_end` for a completed turn; `agent_settled` is
+          // the host hook name and is not guaranteed to appear on the wire.
+          if (event.type === "agent_settled" || event.type === "agent_end") {
             resolve();
             return;
           }
