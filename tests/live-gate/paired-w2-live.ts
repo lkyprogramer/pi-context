@@ -804,10 +804,10 @@ export async function runLivePairedW2(opts: {
     costB0.length > 0 && costB1.length > 0 ? relativeDelta(median(costB1), median(costB0)) : 0;
   const overflow = completed.filter((row) => row.family === "overflow");
   const overflowB0 = overflow.filter((row) => row.b0.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
-  const overflowB1 = overflow.filter((row) => row.b1.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
+  const overflowB2 = overflow.filter((row) => row.b2.closedLoopSuccess === 1).length / Math.max(overflow.length, 1);
   const overflowQuality = pairedOrZero(
     overflow.map((row) => row.b0.quality),
-    overflow.map((row) => row.b1.quality),
+    overflow.map((row) => row.b2.quality),
   );
   const realized = tokenBase.map(
     (row) => (row.b0.probeInputTokens ?? row.b0.summaryTokens) - (row.b2.probeInputTokens ?? row.b2.summaryTokens),
@@ -829,7 +829,7 @@ export async function runLivePairedW2(opts: {
     constraintViolationsBaseline: constraintB0,
     tokenMedianRelativeDelta,
     costPerSuccessRelativeDelta,
-    overflowRecoveryBetter: overflowB1 > overflowB0,
+    overflowRecoveryBetter: overflowB2 > overflowB0,
     overflowQualityNonInferior: overflowQuality.lower >= -0.02,
     realizedNetMedian,
     budgetMismatchRate: efficiencyRows.length === 0 ? 1 : budgetMismatchRate,
