@@ -43,10 +43,6 @@ describe("tools-enabled environment closed-loop", () => {
     expect(boundedPositiveInteger("0", 80_000, 120_000)).toBe(80_000);
     expect(boundedPositiveInteger("120001", 80_000, 120_000)).toBe(80_000);
     expect(boundedPositiveInteger("NaN", 80_000, 120_000)).toBe(80_000);
-    expect(boundedPositiveInteger("100", 40, 100)).toBe(100);
-    expect(boundedPositiveInteger("101", 40, 100)).toBe(40);
-    expect(boundedPositiveInteger("200000", 40_000, 200_000)).toBe(200_000);
-    expect(boundedPositiveInteger("200001", 40_000, 200_000)).toBe(40_000);
   });
 
   it("evaluates restart lineage across source and fork sessions", () => {

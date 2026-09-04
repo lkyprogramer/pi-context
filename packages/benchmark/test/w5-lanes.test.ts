@@ -11,8 +11,16 @@ import {
   runRecursivePins,
 } from "@pcr/benchmark";
 import { evaluateNaturalPressureArm } from "../src/performance/lanes.js";
+import { boundedPositiveInteger } from "../../../tests/live-gate/w5-live-lanes.js";
 
 describe("W5 natural / overflow / recursive / fault / performance / gate", () => {
+  it("bounds natural pressure parameters", () => {
+    expect(boundedPositiveInteger("100", 40, 100)).toBe(100);
+    expect(boundedPositiveInteger("101", 40, 100)).toBe(40);
+    expect(boundedPositiveInteger("200000", 40_000, 200_000)).toBe(200_000);
+    expect(boundedPositiveInteger("200001", 40_000, 200_000)).toBe(40_000);
+  });
+
   it("uses arm-specific natural pressure completion states", () => {
     expect(evaluateNaturalPressureArm({
       arm: "B0", hostCompactionCount: 1, hostCompactReason: null, hostCompactTokensBefore: 184_000,
