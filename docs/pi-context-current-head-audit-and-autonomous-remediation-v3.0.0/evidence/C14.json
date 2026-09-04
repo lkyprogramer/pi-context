@@ -1,0 +1,23 @@
+{
+  "taskId": "C14",
+  "baseCommit": "b23716f4c548ee5464c3087ae443e790faa5376c",
+  "headCommit": "80819d301ffd12c81c4ba06c1d4bdce0be9f7c9b",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {"phase":"green","command":"corepack pnpm vitest run packages/runtime/test/proactive-recall.test.ts tests/live/closed-loop.test.ts","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C14-green.log","logSha256":"888c3045be7f080d43f3fa806ccb41592bc3b2ecf740f79f948667c6ddcd41fd"},
+    {"phase":"full-gate","command":"corepack pnpm typecheck","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C14-typecheck.log","logSha256":"74d7645e0901228bf9d828ed6a8d582dc5984476a53a65c71872eebcf69bd20e"}
+  ],
+  "artifacts": [
+    {"path":"packages/kernel/src/retrieval/proactive.ts","sha256":"8fd978b06e2dc8104009ef776723b1d43d802267398ed49c87b39157b35dca63"},
+    {"path":"apps/pi-context-runtime/src/composition-root.ts","sha256":"eb7fb572cdfab1db1a85fdae04738ccf55255bc7436330dba0ee1e1899d73f38"},
+    {"path":"packages/runtime/test/proactive-recall.test.ts","sha256":"355ce6dc0d227042326c4605ce4d134e3a0fd91ccfad79ea0c5545f3f59aca52"}
+  ],
+  "requirements": {
+    "stableDirectoryRecallPageBudgets": true,
+    "noRecallAbstention": true,
+    "productionTokenCounterAligned": true,
+    "narrowAndTypecheckGreen": true,
+    "liveProductEvidenceResidualDisclosed": true
+  },
+  "review": {"status":"accepted","reviewer":"c14-review-postfix"}
+}
