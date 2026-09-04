@@ -36,7 +36,12 @@ import {
 } from "../../packages/benchmark/src/performance/ablation.js";
 import { PiRpc } from "./pi-rpc.js";
 import { resolvePiCli } from "./pi-resolve.js";
-import { LIVE_MODEL, LIVE_PROVIDER } from "./w1-session-jsonl.js";
+import { LIVE_MODEL as DEFAULT_LIVE_MODEL, LIVE_PROVIDER as DEFAULT_LIVE_PROVIDER } from "./w1-session-jsonl.js";
+
+// Keep the runner provider-agnostic: callers may select OpenRouter (or another
+// configured provider) without writing credentials into the repository.
+const LIVE_PROVIDER = process.env.PCR_LIVE_PROVIDER ?? DEFAULT_LIVE_PROVIDER;
+const LIVE_MODEL = process.env.PCR_LIVE_MODEL ?? DEFAULT_LIVE_MODEL;
 
 const OUT_DIR = "artifacts/runs/w2-v3-live/cache-ablation";
 const RUN_ID = "w2-v3-cache-ablation";
