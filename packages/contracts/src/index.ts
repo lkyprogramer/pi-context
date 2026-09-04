@@ -53,6 +53,14 @@ export interface TokenUsageProvenance {
   totalBilledTokens: TokenMeasurement;
 }
 
+/** Distinct accounting layers for evaluation and publication evidence. */
+export interface EvaluationUsageLayers {
+  checkpoint: { tokens: TokenMeasurement };
+  materializedView: { tokens: TokenMeasurement };
+  request: { inputTokens: TokenMeasurement; outputTokens: TokenMeasurement };
+  providerUsage: { totalTokens: TokenMeasurement };
+}
+
 /** Backwards-compatible aliases for callers that use the shorter vocabulary. */
 export type TokenValue = TokenMeasurement;
 export type TokenField = TokenMeasurement;

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { EvaluationUsageLayers } from "@pcr/contracts";
 
 import { verifyRawRunBundle, type RawRunBundle } from "./bundle.js";
 
@@ -66,6 +67,7 @@ export interface RunBundle {
   rawArtifacts?: RawRunBundle;
   liveProvider?: boolean;
   publicationClass?: PublicationClass;
+  usageLayers?: EvaluationUsageLayers;
   signal?: AbortSignal;
 }
 
@@ -182,6 +184,7 @@ function snapshotBundle(bundle: RunBundle): Omit<RunBundle, "signal"> {
       : {}),
     ...(bundle.liveProvider === undefined ? {} : { liveProvider: bundle.liveProvider }),
     ...(bundle.publicationClass === undefined ? {} : { publicationClass: bundle.publicationClass }),
+    ...(bundle.usageLayers === undefined ? {} : { usageLayers: structuredClone(bundle.usageLayers) }),
   };
 }
 

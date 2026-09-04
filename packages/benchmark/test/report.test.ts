@@ -98,4 +98,20 @@ describe("gate engine", () => {
     }));
     expect(decision.decision).toBe("repeat-after-infrastructure-fix");
   });
+
+  it("keeps checkpoint, materialized view, request, and provider usage distinct", () => {
+    const layered = bundle({
+      usageLayers: {
+        checkpoint: { tokens: { value: 40, source: "estimated" } },
+        materializedView: { tokens: { value: 55, source: "estimated" } },
+        request: {
+          inputTokens: { value: 60, source: "host" },
+          outputTokens: { value: 5, source: "assistant-entry" },
+        },
+        providerUsage: { totalTokens: { value: 65, source: "assistant-entry" } },
+      },
+    });
+    const decision = engine().evaluate(layered);
+    expect(decision.reportSha256).not.toBe(engine().evaluate(bundle()).reportSha256);
+  });
 });

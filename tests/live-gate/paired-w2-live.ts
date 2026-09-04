@@ -12,6 +12,7 @@ import {
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createRuntimeCursor } from "../../packages/core/src/identity/stable-identity.js";
+import type { EvaluationUsageLayers } from "../../packages/contracts/src/index.js";
 import { estimateTextTokens } from "../../packages/kernel/src/budget/token-counter.js";
 import {
   assertProductArmText,
@@ -1002,6 +1003,17 @@ function findSecret(id: string): string {
 }
 
 function slimArm(arm: LiveArmResult, secrets: string[]) {
+  const usageLayers: EvaluationUsageLayers = {
+    checkpoint: { tokens: { value: arm.summaryTokens, source: "estimated" } },
+    materializedView: { tokens: { value: null, source: "unavailable" } },
+    request: {
+      inputTokens: arm.probeInputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeInputTokens, source: "assistant-entry" },
+      outputTokens: arm.probeOutputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeOutputTokens, source: "assistant-entry" },
+    },
+    providerUsage: {
+      totalTokens: arm.compactUsageTotal === null ? { value: null, source: "unavailable" } : { value: arm.compactUsageTotal, source: "assistant-entry" },
+    },
+  };
   return {
     ok: arm.ok,
     error: arm.error,
@@ -1034,6 +1046,7 @@ function slimArm(arm: LiveArmResult, secrets: string[]) {
     recoveryCount: arm.recoveryCount,
     crossScopeDenied: arm.crossScopeDenied,
     toolPairViolation: arm.toolPairViolation,
+    usageLayers,
   };
 }
 
