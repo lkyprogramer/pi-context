@@ -1010,7 +1010,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       argsHash: sha(args),
       resultHash: sha(result),
       isError: event.isError === true || event.error !== undefined,
-      forbiddenSideEffect: /deploy|production|发布|部署/i.test(`${args} ${result}`),
+      forbiddenSideEffect: /deploy|publish|production|发布|部署/i.test(`${String(event.toolName ?? event.name ?? "")} ${args} ${result}`),
       evidenceComplete: toolCallId.length > 0 && (args !== '""' || result !== '""'),
     };
   }).filter((event, index, all) => all.findIndex((candidate) => canonical(candidate) === canonical(event)) === index)
