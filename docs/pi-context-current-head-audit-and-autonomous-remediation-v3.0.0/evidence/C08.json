@@ -1,7 +1,7 @@
 {
   "taskId": "C08",
   "baseCommit": "6981cb9aa3e9ebd4770628f0b380d3e9929ab63e",
-  "headCommit": "f8a7a570a120603a068a08ebe6e9baab8a5f043b",
+  "headCommit": "47cebc5c58f0506cbdf88c8575567aad9e7f62ae",
   "worktreeCleanBefore": true,
   "commands": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "path": "tests/contract/pi-context-hook.test.ts",
-      "sha256": "58c78b658073a485b0c4fbda85efcb477c04a569f8f602251fd1c9fa6af90074"
+      "sha256": "afb37087f52237c459a3b284af7732d97476c20a7e8df6093381f20984c4a725"
     }
   ],
   "requirements": {
