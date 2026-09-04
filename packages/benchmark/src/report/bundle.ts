@@ -37,6 +37,12 @@ export interface ImmutableRunBundle {
   bundle: Omit<RunBundle, "signal">;
   decision: GateDecision;
   contentHash: string;
+  canonicalJsonSha256: string;
+  artifactBytesSha256: string;
+}
+
+export function hashArtifactBytes(text: string): string {
+  return createHash("sha256").update(text, "utf8").digest("hex");
 }
 
 export function hashRunBundle(payload: unknown): string {
@@ -67,7 +73,9 @@ export function sealRunBundle(bundle: Omit<RunBundle, "signal">, decision: GateD
   if (!bundle || typeof bundle !== "object") fail("PCR_BUNDLE_INPUT_INVALID", { field: "bundle" });
   if (!decision || typeof decision !== "object") fail("PCR_BUNDLE_INPUT_INVALID", { field: "decision" });
   const sealed = { bundle, decision };
-  return { ...sealed, contentHash: hashRunBundle(sealed) };
+  const canonicalJsonSha256 = hashRunBundle(sealed);
+  const artifactBytesSha256 = hashArtifactBytes(JSON.stringify(sealed));
+  return { ...sealed, contentHash: canonicalJsonSha256, canonicalJsonSha256, artifactBytesSha256 };
 }
 
 export function verifyRunBundle(input: ImmutableRunBundle, rescore?: (bundle: Omit<RunBundle, "signal">) => GateDecision): ImmutableRunBundle {
@@ -76,7 +84,10 @@ export function verifyRunBundle(input: ImmutableRunBundle, rescore?: (bundle: Om
     fail("PCR_BUNDLE_TAMPERED", { field: "contentHash" });
   }
   const expected = hashRunBundle({ bundle: input.bundle, decision: input.decision });
-  if (expected !== input.contentHash) fail("PCR_BUNDLE_TAMPERED", { expected, actual: input.contentHash });
+  if (expected !== input.contentHash || input.canonicalJsonSha256 !== expected) fail("PCR_BUNDLE_TAMPERED", { expected, actual: input.contentHash });
+  if (typeof input.artifactBytesSha256 !== "string" || !/^[a-f0-9]{64}$/u.test(input.artifactBytesSha256)) {
+    fail("PCR_BUNDLE_TAMPERED", { field: "artifactBytesSha256" });
+  }
   walkPaths(input.bundle);
   if (rescore) {
     const second = rescore(input.bundle);

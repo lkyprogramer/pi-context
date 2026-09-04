@@ -11,6 +11,8 @@ import {
   createGateEngine,
   keepFailedArmEvidence,
   hashRunEpoch,
+  hashRunBundle,
+  hashArtifactBytes,
   scrubSecretsWithProvenance,
   sealRunBundle,
   verifyRawRunBundle,
@@ -70,6 +72,15 @@ describe("immutable run bundle", () => {
     expect(() => assertRunEpoch(epoch, "b".repeat(64))).toThrowError(
       expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
     );
+  });
+
+  it("separates canonical JSON and artifact byte hashes", () => {
+    const canonical = hashRunBundle({ value: 1, whitespace: "stable" });
+    expect(hashRunBundle(JSON.parse(JSON.stringify({ value: 1, whitespace: "stable" })))).toBe(canonical);
+    expect(hashArtifactBytes('{"value":1,"whitespace":"stable"}')).not.toBe(
+      hashArtifactBytes('{ "value": 1, "whitespace": "stable" }'),
+    );
+    expect(hashRunBundle({ value: 2, whitespace: "stable" })).not.toBe(canonical);
   });
 
   it("detects tampering and rejects absolute paths", () => {

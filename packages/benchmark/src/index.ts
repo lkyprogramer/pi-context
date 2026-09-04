@@ -229,6 +229,7 @@ export {
   assertRunEpoch,
   hashRunEpoch,
   hashRunBundle,
+  hashArtifactBytes,
   sealRunBundle,
   scrubSecretsWithProvenance,
   verifyRawRunBundle,
