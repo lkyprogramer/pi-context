@@ -63,6 +63,16 @@ if (process.env.GITHUB_SHA && process.env.GITHUB_SHA !== head) fail("PCR_GITHUB_
 if (rc.commit !== head) fail("PCR_RC_MANIFEST_HEAD_MISMATCH");
 if (publicationManifest.commit !== undefined && publicationManifest.commit !== head) fail("PCR_PUBLICATION_MANIFEST_HEAD_MISMATCH");
 if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
+  const branchUrl = `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/branches/main`;
+  const branchResponse = await fetch(branchUrl, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
+  if (!branchResponse.ok) fail("PCR_PROTECTION_UNAVAILABLE");
+  const branch = await branchResponse.json();
+  if (branch.protected !== true) fail("PCR_BRANCH_UNPROTECTED");
+  const protectionResponse = await fetch(`${branchUrl}/protection`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
+  if (!protectionResponse.ok) fail("PCR_PROTECTION_UNAVAILABLE");
+  const protection = await protectionResponse.json();
+  const contexts = protection.required_status_checks?.contexts ?? branch.protection?.required_status_checks?.contexts ?? [];
+  if (!["required-gate", "compatibility-required"].every((name) => contexts.includes(name))) fail("PCR_BRANCH_PROTECTION_CONTEXTS_MISSING");
   const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs?per_page=100`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
   if (!response.ok) fail("PCR_CHECKS_UNAVAILABLE");
   const checks = await response.json();
