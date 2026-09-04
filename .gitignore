@@ -8,6 +8,7 @@ coverage
 .pcr
 .pi
 .context-runtime
+.env
 .venv
 *.tsbuildinfo
 artifacts/runs/live-compact/
