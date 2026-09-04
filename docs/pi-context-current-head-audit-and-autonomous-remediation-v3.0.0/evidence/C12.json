@@ -1,0 +1,63 @@
+{
+  "taskId": "C12",
+  "baseCommit": "3afb48bba868bb370f34869c90ae9f270f7cd278",
+  "headCommit": "270accd13693960313fc775cf3672c592b885454",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run tests/performance/token-accounting.test.ts tests/acceptance/context-budget.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C12-green.log",
+      "logSha256": "b44ba1ec18c76b699e87e756d7c38b9766d91a56a6dda4c052fd2d63acfd75b9"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C12-typecheck.log",
+      "logSha256": "68b138e95e6b362327d7e77d5d8a966bf73e3ee6deab32e6dcb9e7b703240dc9"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "packages/contracts/src/index.ts",
+      "sha256": "e8f0c9375a1bedeb0cab9547cc35bb0f5693eb88f2d10069376ae606ecaaaf39"
+    },
+    {
+      "path": "packages/kernel/src/control/economics.ts",
+      "sha256": "a8c69c8631dcfe287f1eb89bdd14162cdcef94a66cb8ca3cb9f26935624ebc32"
+    },
+    {
+      "path": "apps/pi-context-runtime/src/composition-root.ts",
+      "sha256": "370fd9ab96b02c3eb0e2f2b425325ea48a9d021ab9e9a2ea4f4a7c415c9a3f19"
+    },
+    {
+      "path": "packages/pi-adapter/src/context-hook.ts",
+      "sha256": "9ec767bd36725a556756a041a7eb1feb9bf3fb8d8fa68fba641b629e5cdadd91"
+    },
+    {
+      "path": "packages/runtime/src/ports.ts",
+      "sha256": "6d5af86cbad37190a627fbfc3b2b1af8d34e74b980c963d2ae33924f2b3f84b6"
+    },
+    {
+      "path": "packages/runtime/src/telemetry/usage.ts",
+      "sha256": "6259f7d38cfc7b0d88ec7a3a7a294c118418b654520107be49941c781919f407"
+    },
+    {
+      "path": "tests/performance/token-accounting.test.ts",
+      "sha256": "29eadcfc7c19cd2fa3e4fac9faf635374d9bc1f430e8ef242790c42165111ade"
+    }
+  ],
+  "requirements": {
+    "tokenSourceContract": true,
+    "unknownUsesUnavailableNull": true,
+    "compositionProvenanceBound": true,
+    "narrowAndTypecheckGreen": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "c12-code-review"
+  }
+}
