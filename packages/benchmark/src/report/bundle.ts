@@ -85,7 +85,9 @@ export function verifyRunBundle(input: ImmutableRunBundle, rescore?: (bundle: Om
   }
   const expected = hashRunBundle({ bundle: input.bundle, decision: input.decision });
   if (expected !== input.contentHash || input.canonicalJsonSha256 !== expected) fail("PCR_BUNDLE_TAMPERED", { expected, actual: input.contentHash });
-  if (typeof input.artifactBytesSha256 !== "string" || !/^[a-f0-9]{64}$/u.test(input.artifactBytesSha256)) {
+  const expectedArtifactBytes = hashArtifactBytes(JSON.stringify({ bundle: input.bundle, decision: input.decision }));
+  if (typeof input.artifactBytesSha256 !== "string" || !/^[a-f0-9]{64}$/u.test(input.artifactBytesSha256)
+    || input.artifactBytesSha256 !== expectedArtifactBytes) {
     fail("PCR_BUNDLE_TAMPERED", { field: "artifactBytesSha256" });
   }
   walkPaths(input.bundle);

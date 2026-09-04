@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { EvaluationUsageLayers } from "@pcr/contracts";
 
-import { verifyRawRunBundle, type RawRunBundle } from "./bundle.js";
+import { hashArtifactBytes, verifyRawRunBundle, type RawRunBundle } from "./bundle.js";
 
 export type GateName = "w1-early-net-value" | "w2-compactor" | "semantic-beta";
 
@@ -410,6 +410,10 @@ export function createGateEngine(input: CreateGateEngineInput): GateEngine {
       const payload = Buffer.from(canonicalJson({ bundle: snapshotBundle(bundle), decision }), "utf8");
       await files.writeFile(`${dir}/bundle.json`, payload);
       await files.writeFile(`${dir}/decision.json`, Buffer.from(canonicalJson(decision), "utf8"));
+      await files.writeFile(`${dir}/manifest.json`, Buffer.from(`${JSON.stringify({
+        artifactBytesSha256: hashArtifactBytes(payload.toString("utf8")),
+        canonicalJsonSha256: sha256Text(payload.toString("utf8")),
+      })}\n`, "utf8"));
       return decision.reportSha256;
     },
   };

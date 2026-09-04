@@ -95,6 +95,9 @@ describe("immutable run bundle", () => {
     expect(() => verifyRunBundle({ ...sealed, contentHash: "e".repeat(64) })).toThrowError(
       expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
     );
+    expect(() => verifyRunBundle({ ...sealed, artifactBytesSha256: "e".repeat(64) })).toThrowError(
+      expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
+    );
     const withPath = sealRunBundle({ ...sample(), runId: "/tmp/abs-run" }, decision);
     expect(() => verifyRunBundle(withPath)).toThrowError(
       expect.objectContaining({ code: "PCR_BUNDLE_ABSOLUTE_PATH" }),
