@@ -88,6 +88,11 @@ import {
 } from "../../../packages/storage-node/src/index.js";
 import { createMemorySink, emitTelemetry } from "../../../packages/worker/src/telemetry/sink.js";
 import { claimPiContextOwner } from "./owner.js";
+import {
+  DEFAULT_RETRIEVAL_BUDGETS,
+  boundDirectoryPointers,
+  boundRecallPage,
+} from "../../../packages/kernel/src/retrieval/proactive.js";
 
 export type PiRuntimeContext = Pick<ExtensionContext, "cwd" | "model" | "sessionManager" | "signal">;
 
@@ -760,7 +765,11 @@ export function registerProductionUserTurnRuntime(
   }
 
   function directoryMessages(pointers: ReadonlyArray<{ ref: string; kind: string }>): HostMessage[] {
-    const bounded = pointers.slice(0, 16);
+    const bounded = boundDirectoryPointers(
+      pointers,
+      DEFAULT_RETRIEVAL_BUDGETS.directoryTokens,
+      DEFAULT_RETRIEVAL_BUDGETS.directoryItems,
+    ).items;
     if (bounded.length === 0) return [];
     return [{
       hostMessageId: `dir_${domainHash("directory", bounded.map((item) => item.ref)).slice(0, 16)}`,
@@ -1075,23 +1084,29 @@ export function registerProductionUserTurnRuntime(
             : await recallPolicy.decide({
               cursor,
               userText,
-              maxTokens: 256,
+              maxTokens: DEFAULT_RETRIEVAL_BUDGETS.recallTokens,
               recentlyInjected: owner.recalledBySession.get(cursor.sessionId) ?? [],
               signal: request.signal,
             });
+          const boundedRecall: {
+            items: Array<{ evidenceId: string; quote: string; tokens: number }>;
+            tokenEstimate: number;
+          } = recall.kind === "needed"
+            ? boundRecallPage(recall.page.items, DEFAULT_RETRIEVAL_BUDGETS.recallTokens)
+            : { items: [], tokenEstimate: 0 };
           if (materializerMode === "pcr" && recall.kind === "needed") {
             const consumed = await owner.leaseStore.consume(cursor, recall.lease.leaseId, {
               now: clock.now(),
-              tokenTurns: recall.page.items.reduce((total, item) => total + item.tokens, 0),
+              tokenTurns: boundedRecall.items.reduce((total, item) => total + item.tokens, 0),
             });
             if (!consumed) {
-              recall = { kind: "not-needed", page: { items: [] } };
+              boundedRecall.items.length = 0;
             }
             if (consumed) {
               const prior = owner.recalledBySession.get(cursor.sessionId) ?? [];
               owner.recalledBySession.set(
                 cursor.sessionId,
-                [...prior, ...recall.page.items.map((item) => item.evidenceId)].slice(-32),
+                [...prior, ...boundedRecall.items.map((item) => item.evidenceId)].slice(-32),
               );
             }
           }
@@ -1133,7 +1148,7 @@ export function registerProductionUserTurnRuntime(
             ],
             ...(continuityDelta.length === 0 ? {} : { continuityDelta }),
             directory: directoryMessages(directoryPointers),
-            recall: recallMessages(materializerMode === "pcr" && recall.kind === "needed" ? recall.page.items : []),
+            recall: recallMessages(materializerMode === "pcr" && recall.kind === "needed" ? boundedRecall.items : []),
             warnings: materializerMode === "pcr" ? leaseMessages(activeLeases) : [],
           });
           const serializedInputTokens = view.tokenEstimate;

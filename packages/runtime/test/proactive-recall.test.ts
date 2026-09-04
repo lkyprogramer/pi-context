@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { createProactiveRecallPolicy, createRuntimeCursor } from "@pcr/core";
+import {
+  DEFAULT_RETRIEVAL_BUDGETS,
+  boundDirectoryPointers,
+  boundRecallPage,
+} from "../../kernel/src/retrieval/proactive.js";
 
 const cursor = createRuntimeCursor({
   workspacePath: "/tmp/pcr-recall",
@@ -55,5 +60,27 @@ describe("proactive recall", () => {
       taskStatus: "completed",
     });
     expect(completed.kind).toBe("not-needed");
+  });
+
+  it("keeps directory and recall pages within stable budgets and abstains on no-recall", () => {
+    const directory = boundDirectoryPointers(
+      Array.from({ length: 64 }, (_, index) => ({ ref: `src/feature-${index}.ts`, kind: "file" })),
+    );
+    expect(directory.tokenEstimate).toBeLessThanOrEqual(DEFAULT_RETRIEVAL_BUDGETS.directoryTokens);
+    expect(directory.items.length).toBeLessThan(64);
+
+    const page = boundRecallPage(
+      Array.from({ length: 32 }, (_, index) => ({
+        evidenceId: `ev-${index}`,
+        quote: `historical evidence ${index} `.repeat(8),
+        tokens: 32,
+      })),
+    );
+    expect(page.tokenEstimate).toBeLessThanOrEqual(DEFAULT_RETRIEVAL_BUDGETS.recallTokens);
+    expect(page.items.length).toBeGreaterThan(0);
+
+    const noRecall = boundRecallPage([]);
+    expect(noRecall.items).toEqual([]);
+    expect(noRecall.abstained).toBe(true);
   });
 });
