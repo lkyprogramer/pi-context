@@ -2,6 +2,11 @@
 
 ## 当前任务
 
+### v3 W5 continuation (2026-09-04)
+
+当前实现 HEAD：`cdb3c144b5aa57f0ea624d10a871dcc8e5b5db9f`。
+ C25–C30 已完成代码修补与定向验证，但真实 Provider live evidence、Evidence v3 和 C24 300-pair gate 仍未完成；发布决策继续保持 `keep-pi-native` / `publicationClaim=false`。按用户要求，300 gate 延后至全部开发任务完成后执行一次。
+
 下一轮执行入口是 `docs/pi-context-deep-audit-and-next-iteration-v2.0.0/`（W0 `B00–B07` 起）。审计对象 HEAD 为 `6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31`。
 
 不要再 claim 上一版 `T00–T54` / `A00–A49` 为已验收完成。上一版 declared-done 已与 acceptance 分离；`A43`/`A44`/`A45`/`A48` 必须保持 reopen，直到对应 Live Lane 真正通过。
