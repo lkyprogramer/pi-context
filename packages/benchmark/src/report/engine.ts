@@ -76,6 +76,16 @@ export interface GateDecision {
   hardGatePass: boolean;
   reasons: readonly string[];
   reportSha256: string;
+  /** Component-only safety result; never used as a publication decision. */
+  componentDecision: GateSubDecision;
+  /** Product adoption result; the sole source for publication decisions. */
+  productDecision: GateSubDecision;
+}
+
+export interface GateSubDecision {
+  decision: GateDecisionKind;
+  hardGatePass: boolean;
+  reasons: readonly string[];
 }
 
 export interface GitSnapshot {
@@ -307,13 +317,28 @@ export function createGateEngine(input: CreateGateEngineInput): GateEngine {
     const bundle = parseBundle(sample);
     const reportSha256 = sha256Text(canonicalJson(snapshotBundle(bundle)));
     const decided = decide(bundle);
+    const componentSafe = !bundle.provenance.dirty
+      && bundle.provenance.diffHash === EMPTY_DIFF_HASH
+      && integrityPass(bundle.integrity);
+    const componentDecision: GateSubDecision = Object.freeze({
+      decision: componentSafe ? "proceed-to-semantic" : (bundle.provenance.dirty ? "repeat-after-infrastructure-fix" : "stop"),
+      hardGatePass: componentSafe,
+      reasons: Object.freeze(componentSafe ? ["component-safety"] : [bundle.provenance.dirty ? "dirty-tree" : "integrity"]),
+    });
+    const productDecision: GateSubDecision = Object.freeze({
+      decision: decided.decision,
+      hardGatePass: decided.hardGatePass,
+      reasons: Object.freeze([...decided.reasons]),
+    });
     return Object.freeze({
       runId: bundle.runId,
       gate: bundle.gate,
       decision: decided.decision,
       hardGatePass: decided.hardGatePass,
-      reasons: Object.freeze([...decided.reasons]),
+      reasons: productDecision.reasons,
       reportSha256,
+      componentDecision,
+      productDecision,
     });
   };
   return {

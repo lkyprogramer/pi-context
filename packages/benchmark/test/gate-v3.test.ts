@@ -60,6 +60,8 @@ describe("gate v3 sample and family rules", () => {
     }));
     expect(decision.decision).toBe("keep-pi-native");
     expect(decision.reasons).toContain("insufficient-net");
+    expect(decision.componentDecision.hardGatePass).toBe(true);
+    expect(decision.productDecision.decision).toBe(decision.decision);
   });
 
   it("rejects a 5-cluster or 30x1 sample profile", () => {
