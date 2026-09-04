@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { verifyGithubProtection } from "../ci/github-protection.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -62,18 +63,43 @@ const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "
 if (process.env.GITHUB_SHA && process.env.GITHUB_SHA !== head) fail("PCR_GITHUB_SHA_HEAD_MISMATCH");
 if (rc.commit !== head) fail("PCR_RC_MANIFEST_HEAD_MISMATCH");
 if (publicationManifest.commit !== undefined && publicationManifest.commit !== head) fail("PCR_PUBLICATION_MANIFEST_HEAD_MISMATCH");
-if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
-  const branchUrl = `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/branches/main`;
-  const branchResponse = await fetch(branchUrl, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
-  if (!branchResponse.ok) fail("PCR_PROTECTION_UNAVAILABLE");
-  const branch = await branchResponse.json();
-  if (branch.protected !== true) fail("PCR_BRANCH_UNPROTECTED");
-  const protectionResponse = await fetch(`${branchUrl}/protection`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
-  if (!protectionResponse.ok) fail("PCR_PROTECTION_UNAVAILABLE");
-  const protection = await protectionResponse.json();
-  const contexts = protection.required_status_checks?.contexts ?? branch.protection?.required_status_checks?.contexts ?? [];
-  if (!["required-gate", "compatibility-required"].every((name) => contexts.includes(name))) fail("PCR_BRANCH_PROTECTION_CONTEXTS_MISSING");
-  const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs?per_page=100`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
+const githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+if (process.env.GITHUB_REPOSITORY && githubToken) {
+  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/", 2);
+  if (!owner || !repo) fail("PCR_PROTECTION_UNAVAILABLE");
+  try {
+    const branchResponse = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/branches/main`, {
+      headers: { accept: "application/vnd.github+json", authorization: `Bearer ${githubToken}` },
+    });
+    if (!branchResponse.ok) fail("PCR_PROTECTION_UNAVAILABLE");
+    const branch = await branchResponse.json();
+    if (branch.protected !== true) fail("PCR_BRANCH_UNPROTECTED");
+    await verifyGithubProtection({ owner, repo, branch: "main", token: githubToken });
+    const classicResponse = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/branches/main/protection`, {
+      headers: { accept: "application/vnd.github+json", authorization: `Bearer ${githubToken}` },
+    });
+    const classicProtection = classicResponse.ok ? await classicResponse.json() : {};
+    const rulesetResponse = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/rulesets`, {
+      headers: { accept: "application/vnd.github+json", authorization: `Bearer ${githubToken}` },
+    });
+    const rulesets = rulesetResponse.ok ? await rulesetResponse.json() : [];
+    const activeRulesetContexts = (Array.isArray(rulesets) ? rulesets : []).flatMap((ruleset) => {
+      if (ruleset?.enforcement !== "active") return [];
+      const refs = ruleset.conditions?.ref_name?.include;
+      if (!Array.isArray(refs) || refs.length === 0 || !refs.some((ref) => ref === "refs/heads/main" || ref === "~DEFAULT_BRANCH")) return [];
+      return (ruleset.rules ?? []).flatMap((rule) => rule?.type === "required_status_checks"
+        ? (rule.parameters?.required_status_checks ?? []).map((check) => check.context).filter((context) => typeof context === "string")
+        : []);
+    });
+    const classicContexts = classicProtection.required_status_checks?.contexts ?? branch.protection?.required_status_checks?.contexts ?? [];
+    const contexts = [...new Set([...classicContexts, ...activeRulesetContexts])];
+    if (!["required-gate", "compatibility-required"].every((name) => contexts.includes(name))) fail("PCR_BRANCH_PROTECTION_CONTEXTS_MISSING");
+  } catch (error) {
+    if (error?.message === "PCR_BRANCH_UNPROTECTED") fail("PCR_BRANCH_UNPROTECTED");
+    if (error?.code === "PCR_PROTECTION_UNVERIFIED") fail("PCR_BRANCH_PROTECTION_CONTEXTS_MISSING");
+    fail("PCR_PROTECTION_UNAVAILABLE");
+  }
+  const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs?per_page=100`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${githubToken}` } });
   if (!response.ok) fail("PCR_CHECKS_UNAVAILABLE");
   const checks = await response.json();
   const latestByName = new Map();
