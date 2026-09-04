@@ -610,7 +610,7 @@ export function evaluateW5Gate(input: {
   const decision = engine.evaluate(bundle);
   return {
     decision: decision.decision,
-    publicationClaim: decision.decision === "adopt-pcr-compactor",
+    publicationClaim: decision.productDecision.decision === "adopt-pcr-compactor",
     reasons: [...decision.reasons],
     missing: [],
   };

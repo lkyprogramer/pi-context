@@ -207,6 +207,7 @@ export {
   type CreateGateEngineInput,
   type EfficiencySlice,
   type GateDecision,
+  type GateSubDecision,
   type GateDecisionKind,
   type GateEngine,
   type GateErrorCode,
@@ -259,5 +260,4 @@ export {
   type RecursiveReport,
   type W5LaneId,
 } from "./lanes/w5.js";
-
 
