@@ -126,6 +126,22 @@ function lastAssistantUsage(sessionFile: string): {
   return { inputTokens, outputTokens, cacheRead, cacheWrite };
 }
 
+function lastAssistantText(sessionFile: string): string {
+  if (!existsSync(sessionFile)) return "";
+  let text = "";
+  for (const line of readFileSync(sessionFile, "utf8").split("\n")) {
+    try {
+      const parsed = JSON.parse(line) as { type?: string; message?: { role?: string; content?: unknown } };
+      if (parsed.type !== "message" || parsed.message?.role !== "assistant") continue;
+      const content = parsed.message.content;
+      text = typeof content === "string" ? content : Array.isArray(content)
+        ? content.map((part) => typeof part === "object" && part && "text" in part ? String((part as { text?: unknown }).text ?? "") : "").join("")
+        : "";
+    } catch { /* ignore malformed session lines */ }
+  }
+  return text;
+}
+
 function writeSession(sessionFile: string, cwd: string, bodyChars: number, extraUser?: string, toolHeavy = false): { bytes: number; chunks: number } {
   const ts = Date.now();
   const iso = new Date(ts).toISOString();
@@ -901,12 +917,12 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         history.push({ phase: "compact-1", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
-        history.push({ phase: "temporal-update", ok: true });
+        history.push({ phase: "temporal-update", ok: /version\s*7/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait(`Grow before compact 2.\n${filler(80_000)}`, 3 * 60_000);
         history.push({ phase: "grow-before-compact-2", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
-        history.push({ phase: "compact-2", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
+        history.push({ phase: "compact-2", ok: inspectCompactions(arm.sessionFile).length >= 2, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
@@ -945,10 +961,10 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("What version is currently active? Reply with the version string only.", 3 * 60_000);
-        history.push({ phase: "recall-needed", ok: true });
+        history.push({ phase: "recall-needed", ok: /version\s*7/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("Should we merge sibling-branch now? Answer yes or no.", 3 * 60_000);
-        history.push({ phase: "recall-not-needed", ok: true });
+        history.push({ phase: "recall-not-needed", ok: /no|不|否/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
@@ -967,6 +983,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     branched: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
     restarted: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     sideEffectGuard: summaries.every((text) => !/we deployed successfully|已成功部署/i.test(text)),
+    correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
+    oracleComplete: history.filter((row) => ["temporal-update", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "recall-needed", "recall-not-needed"].includes(row.phase)).every((row) => row.ok),
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
   rmSync(root, { recursive: true, force: true });
@@ -987,7 +1005,11 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     : profile === "natural" ? runNaturalThreshold(repoRoot)
       : profile === "overflow" ? runProviderOverflow(repoRoot)
         : Promise.all([runNaturalThreshold(repoRoot), runProviderOverflow(repoRoot), runRecursiveLive(repoRoot)]);
-  run.then((report) => process.stdout.write(`${JSON.stringify(report, null, 2)}\n`)).catch((error) => {
+  run.then((report) => {
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    const failed = Array.isArray(report) ? false : report && typeof report === "object" && (report as Record<string, unknown>).oracleComplete === false;
+    if (failed) process.exitCode = 1;
+  }).catch((error) => {
     process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
     process.exitCode = 1;
   });
