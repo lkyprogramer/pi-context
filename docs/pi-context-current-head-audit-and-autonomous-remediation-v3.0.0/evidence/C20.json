@@ -1,0 +1,18 @@
+{
+  "taskId":"C20",
+  "baseCommit":"51917de",
+  "headCommit":"2991997670c7154f2fdf56b40d02fc9ecb9ea82f",
+  "worktreeCleanBefore":true,
+  "commands":[
+    {"phase":"green","command":"corepack pnpm vitest run packages/benchmark/test/bundle-verify.test.ts","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C20-green.log","logSha256":"4974b0924fb10edb2207dda8d1a04ff226027ab37bdd28b3a157bdfd9fd1577c"},
+    {"phase":"full-gate","command":"corepack pnpm typecheck","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C20-typecheck.log","logSha256":"dc3edf23ac911e22d2d1f3280f7cc8cb083ff4728bdeb9b63fd956083211ec63"},
+    {"phase":"full-gate","command":"corepack pnpm test:packed","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C20-packed.log","logSha256":"ce88cf1db50a622e49b5f73625974afee5e9ca15394e7fdc432783f09f28efe7"}
+  ],
+  "artifacts":[
+    {"path":"packages/benchmark/src/report/bundle.ts","sha256":"b774d14527638a0fec1193af929018676b99906374ed63334e392a241defa643"},
+    {"path":"packages/benchmark/test/bundle-verify.test.ts","sha256":"d713f46521866bf1012f855685989ba5d4bb7dfde0bca173ac54577f87255db2"},
+    {"path":"tests/live-gate/paired-w2-live.ts","sha256":"18974c5b3c0e923e8a09f8778335dd796051aba837d34de4cdc7932b445d87ad"}
+  ],
+  "requirements":{"partialRowsCarryRunEpochHash":true,"resumeMismatchRejected":true,"epochIdentityIncludesHeadPackageModelProviderCorpusScorerConfig":true,"narrowTypecheckPackedGreen":true},
+  "review":{"status":"accepted","reviewer":"c20-review-subagent-dispatched; primary static gate verified"}
+}
