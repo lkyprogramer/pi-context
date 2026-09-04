@@ -233,14 +233,31 @@ function copyAgent(keepRecentTokens: number): string {
   const homeModels = join(homedir(), ".pi/agent/models.json");
   if (!existsSync(homeModels)) throw new W5LiveError("PCR_LIVE_PROVIDER_UNAVAILABLE", { missing: "models.json" });
   const agentDir = mkdtempSync(join(tmpdir(), "pcr-w5-live-agent-"));
-  copyFileSync(homeModels, join(agentDir, "models.json"));
+  const provider = process.env.PCR_LIVE_PROVIDER?.trim();
+  const modelId = process.env.PCR_LIVE_MODEL?.trim();
+  if (process.env.PCR_LIVE === "1" && provider && modelId && process.env.PCR_LIVE_API_KEY?.trim() && process.env.PCR_LIVE_BASE_URL?.trim()) {
+    const source = JSON.parse(readFileSync(homeModels, "utf8")) as { providers?: Record<string, unknown> };
+    const template = (source.providers?.openclaw ?? {}) as Record<string, unknown>;
+    source.providers = {
+      ...(source.providers ?? {}),
+      [provider]: {
+        ...template,
+        baseUrl: process.env.PCR_LIVE_BASE_URL,
+        apiKey: process.env.PCR_LIVE_API_KEY,
+        models: [{ id: modelId, name: modelId, reasoning: false, input: ["text"], contextWindow: 262144, maxTokens: LIVE_RESERVE_TOKENS, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }],
+      },
+    };
+    writeFileSync(join(agentDir, "models.json"), `${JSON.stringify(source, null, 2)}\n`);
+  } else {
+    copyFileSync(homeModels, join(agentDir, "models.json"));
+  }
   const homeAuth = join(homedir(), ".pi/agent/auth.json");
   if (existsSync(homeAuth)) copyFileSync(homeAuth, join(agentDir, "auth.json"));
   writeFileSync(
     join(agentDir, "settings.json"),
     `${JSON.stringify({
-      defaultProvider: LIVE_PROVIDER,
-      defaultModel: LIVE_MODEL,
+      defaultProvider: process.env.PCR_LIVE_PROVIDER?.trim() || LIVE_PROVIDER,
+      defaultModel: process.env.PCR_LIVE_MODEL?.trim() || LIVE_MODEL,
       compaction: {
         enabled: true,
         reserveTokens: LIVE_RESERVE_TOKENS,
@@ -301,18 +318,19 @@ async function withRpc<T>(opts: {
   autoCompact: boolean;
   work: (rpc: PiRpc) => Promise<T>;
 }): Promise<T> {
+  const provider = process.env.PCR_LIVE_PROVIDER?.trim() || LIVE_PROVIDER;
+  const model = process.env.PCR_LIVE_MODEL?.trim() || LIVE_MODEL;
   const args = [
     "--no-extensions",
-    "--offline",
     "--no-tools",
     "--session-dir",
     dirname(opts.sessionFile),
     "--session",
     opts.sessionFile,
     "--provider",
-    LIVE_PROVIDER,
+    provider,
     "--model",
-    LIVE_MODEL,
+    model,
   ];
   if (opts.extension) args.unshift("-e", opts.extension);
   const rpc = new PiRpc({
@@ -322,7 +340,9 @@ async function withRpc<T>(opts: {
     env: {
       ...process.env,
       PATH: `${nvmBin()}:${process.env.PATH ?? ""}`,
-      PI_OFFLINE: "1",
+      ...(process.env.PCR_LIVE === "1" ? { PI_OFFLINE: undefined } : { PI_OFFLINE: "1" }),
+      PCR_LIVE_PROVIDER: provider,
+      PCR_LIVE_MODEL: model,
       PI_CODING_AGENT_DIR: opts.agentDir,
     },
   });
