@@ -168,8 +168,8 @@ function calculateMonetaryCost(input: {
   const cacheReadDiscount = pricing.cacheReadDiscount;
   if (cacheReadDiscount === undefined || !validPrice(cacheReadDiscount) || cacheReadDiscount > 1) return null;
   const cacheWriteRate = pricing.cacheWritePerToken;
-  if (input.cacheWriteTokens.value !== 0
-    && (cacheWriteRate === undefined || !validPrice(cacheWriteRate))) return null;
+  if (cacheWriteRate !== undefined && !validPrice(cacheWriteRate)) return null;
+  if (input.cacheWriteTokens.value !== 0 && cacheWriteRate === undefined) return null;
   if ([input.uncachedInputTokens, input.cacheReadTokens, input.cacheWriteTokens, input.outputTokens]
     .some((entry) => entry.value === null)) return null;
   const value = (input.uncachedInputTokens.value! * pricing.inputPerToken)

@@ -67,4 +67,13 @@ describe("cache-adjusted realized net", () => {
     expect(usage.effectiveInput.value).toBe(100);
     expect(usage.monetaryCost).toBeNull();
   });
+
+  it("rejects non-finite cache write pricing even when no cache writes occurred", () => {
+    const usage = createTokenUsageProvenance({
+      serializedInputTokens: 10,
+      providerUsage: { inputTokens: 10, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 1 },
+      pricing: { version: "route-v2", currency: "USD", inputPerToken: 2, outputPerToken: 3, cacheReadDiscount: 0, cacheWritePerToken: Number.NaN },
+    });
+    expect(usage.monetaryCost).toBeNull();
+  });
 });

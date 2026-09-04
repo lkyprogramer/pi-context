@@ -151,8 +151,9 @@ function pairMonetaryCost(
   const cacheReadRate = cacheReadRateFor(prices, input);
   if (cacheReadRate === null) return null;
   const cacheWriteRate = input.cacheWritePricePerToken;
+  if (cacheWriteRate !== undefined && !validPrice(cacheWriteRate)) return null;
   if ((sample.baseline!.cacheWriteTokens > 0 || sample.candidate!.cacheWriteTokens > 0)
-    && !validPrice(cacheWriteRate)) return null;
+    && cacheWriteRate === undefined) return null;
   const baseline = armMonetaryCost(sample.baseline!, prices, cacheReadRate, cacheWriteRate);
   const candidate = armMonetaryCost(sample.candidate!, prices, cacheReadRate, cacheWriteRate);
   return pairMetric(baseline, candidate);
