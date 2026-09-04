@@ -41,6 +41,12 @@ function bundle(overrides: Partial<RunBundle> = {}): RunBundle {
       configDigest: "d".repeat(64),
     },
     sample: { clusters: 30, seedsPerCluster: 3, familyRegressions: [] },
+    usageLayers: {
+      checkpoint: { tokens: { value: 10, source: "estimated" } },
+      materializedView: { tokens: { value: 20, source: "estimated" } },
+      request: { inputTokens: { value: 30, source: "host" }, outputTokens: { value: 5, source: "host" } },
+      providerUsage: { totalTokens: { value: 35, source: "assistant-entry" } },
+    },
     ...overrides,
   };
 }
