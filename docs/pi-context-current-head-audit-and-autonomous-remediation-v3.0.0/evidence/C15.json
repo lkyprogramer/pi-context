@@ -1,0 +1,44 @@
+{
+  "taskId": "C15",
+  "baseCommit": "dc3654d7f148fc6ac043de3cd4b683ea68216f29",
+  "headCommit": "9739dea1603f3fd3d11114981a8c80a4693096d2",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "live",
+      "command": "PCR_LIVE=1 PCR_LIVE_PROVIDER=openrouter PCR_LIVE_MODEL=inclusionai/ling-3.0-flash-fin:free PCR_LIVE_BASE_URL=https://openrouter.ai/api/v1 tsx tests/live-gate/cache-ablation.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C15-live.log",
+      "logSha256": "bbd972182f4fb6ea306dadd863aefe6f3429d19ca4415228444b9a9481b83b15"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run packages/benchmark/test/performance/ablation.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C15-green.log",
+      "logSha256": "e60c2acb40b1f7242d9f4ea1a0464ca0f5fecfc4525e8417784d0ae37648ea3c"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C15-typecheck.log",
+      "logSha256": "5dacefd8b25dc1f6ca3cc63411ed6790ac06928f1ff421d9a8c88a99ade9548d"
+    }
+  ],
+  "artifacts": [
+    {"path":"tests/live-gate/cache-ablation.ts","sha256":"34e9ab47b53906a471a5a50fe1138a91b52a35928a93514d5a6b03893a1b6aac"},
+    {"path":"packages/benchmark/src/performance/ablation.ts","sha256":"4091ce2b710098d9254ef76678484032715776a4ddc3987bd309cc0097a2fa32"},
+    {"path":"artifacts/runs/w2-v3-live/cache-ablation/run-manifest.json","sha256":"a32c3b165e62859b0289ff75ad919175d5283f8eed743c6018fb128e575dfff1"}
+  ],
+  "requirements": {
+    "realProviderSamples": true,
+    "contextWindow262k": true,
+    "qualityHardGate": true,
+    "unknownCostFailsClosed": true,
+    "secretScanPass": true,
+    "narrowAndTypecheckGreen": true,
+    "costWinnerResidualDisclosed": true
+  },
+  "review": {"status":"accepted","reviewer":"w2-final-review"}
+}
