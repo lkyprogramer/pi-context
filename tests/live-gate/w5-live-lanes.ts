@@ -155,15 +155,23 @@ export function evaluateForkLineage(
   branchId: string,
   expectedParentId?: string | null,
 ): { parentSessionMatches: boolean; parentExists: boolean; sourceSiblingExists: boolean; branchPresent: boolean; activeHeadPresent: boolean; ok: boolean } {
-  const branch = forkEntries.find((entry) => entry.id === branchId);
+  const forkById = new Map<string, Record<string, unknown>>();
+  let idConflict = false;
+  for (const entry of forkEntries) {
+    if (typeof entry.id !== "string") continue;
+    const existing = forkById.get(entry.id);
+    if (existing && canonical(existing) !== canonical(entry)) idConflict = true;
+    else forkById.set(entry.id, entry);
+  }
+  const branch = forkById.get(branchId);
   const parentId = typeof branch?.parentId === "string" ? branch.parentId : null;
   const forkHeader = forkEntries.find((entry) => entry.type === "session");
   const expectedParentMatches = expectedParentId === undefined || parentId === expectedParentId;
-  const parentExists = expectedParentMatches && parentId !== null && forkEntries.some((entry) => entry.id === parentId);
+  const parentExists = expectedParentMatches && parentId !== null && forkById.has(parentId);
   const sourceSiblingExists = parentId !== null && sourceEntries.some((entry) => typeof entry.id === "string" && entry.id !== branchId && entry.parentId === parentId);
-  const activeHeadPresent = forkEntries.some((entry) => entry.id === branchId);
+  const activeHeadPresent = forkById.has(branchId);
   const parentSessionMatches = typeof forkHeader?.parentSession === "string" && forkHeader.parentSession === sourceSession;
-  return { parentSessionMatches, parentExists, sourceSiblingExists, branchPresent: branch !== undefined, activeHeadPresent, ok: parentSessionMatches && parentExists && sourceSiblingExists && activeHeadPresent };
+  return { parentSessionMatches, parentExists, sourceSiblingExists, branchPresent: branch !== undefined, activeHeadPresent, ok: !idConflict && parentSessionMatches && parentExists && sourceSiblingExists && activeHeadPresent };
 }
 
 function lastAssistantUsage(sessionFile: string): {

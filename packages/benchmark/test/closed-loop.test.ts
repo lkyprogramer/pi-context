@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import { createContinuationRunner } from "@pcr/benchmark";
-import { boundedPositiveInteger, evaluateBranchLineage, isForbiddenSideEffectEvent } from "../../../tests/live-gate/w5-live-lanes.js";
+import { boundedPositiveInteger, evaluateBranchLineage, evaluateForkLineage, isForbiddenSideEffectEvent } from "../../../tests/live-gate/w5-live-lanes.js";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
@@ -63,6 +63,9 @@ describe("tools-enabled environment closed-loop", () => {
     });
     expect(evaluateBranchLineage([...source, { id: "other", parentId: "root" }, { id: "other-sibling", parentId: "other" }, { id: "branch", parentId: "other" }, { id: "head", parentId: "branch" }], "branch", "active").ok).toBe(false);
     expect(evaluateBranchLineage([...source, ...fork, { id: "branch", parentId: "other" }], "branch", "active").ok).toBe(false);
+    const forkWithHeader = [{ type: "session", parentSession: "/tmp/source.jsonl" }, source[1], ...fork];
+    expect(evaluateForkLineage(source, forkWithHeader, "/tmp/source.jsonl", "branch", "active").ok).toBe(true);
+    expect(evaluateForkLineage(source, [...forkWithHeader, { id: "branch", parentId: "other" }], "/tmp/source.jsonl", "branch", "active").ok).toBe(false);
   });
 
   it("fails a public API prohibition and a forbidden deploy", async () => {
