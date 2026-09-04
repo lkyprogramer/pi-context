@@ -168,7 +168,7 @@ function validateUsageLayers(value: unknown): asserts value is EvaluationUsageLa
     const row = entry as Record<string, unknown>;
     if (row.value !== null && (!Number.isSafeInteger(row.value) || (row.value as number) < 0)) failInput(`${field}.value`);
     if (!(["host", "assistant-entry", "estimated", "unavailable"] as unknown[]).includes(row.source)) failInput(`${field}.source`);
-    if (row.source === "unavailable" && row.value !== null) failInput(`${field}.unavailable`);
+    if ((row.source === "unavailable") !== (row.value === null)) failInput(`${field}.provenance`);
   };
   const checkpoint = root.checkpoint as Record<string, unknown>;
   const view = root.materializedView as Record<string, unknown>;

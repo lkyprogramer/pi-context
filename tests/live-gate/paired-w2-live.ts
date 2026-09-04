@@ -796,13 +796,15 @@ export async function runLivePairedW2(opts: {
   const constraintB0 = completed.reduce((sum, row) => sum + row.b0.constraintViolation, 0);
   const constraintB1 = completed.reduce((sum, row) => sum + row.b2.constraintViolation, 0);
 
-  const tokenBase = efficiencyRows.length > 0 ? efficiencyRows : sameCut;
+  // Economics require an observed request input for both B0 and B2; never
+  // substitute checkpoint summary tokens for missing provider/request data.
+  const tokenBase = efficiencyRows.filter((row) => row.b0.probeInputTokens !== null && row.b2.probeInputTokens !== null);
   const tokenDeltas = tokenBase.map((row) =>
-    relativeDelta(row.b2.probeInputTokens ?? row.b2.summaryTokens, row.b0.probeInputTokens ?? row.b0.summaryTokens),
+    relativeDelta(row.b2.probeInputTokens!, row.b0.probeInputTokens!),
   );
   const tokenMedianRelativeDelta = tokenDeltas.length > 0 ? median(tokenDeltas) : 0;
-  const costB0 = tokenBase.filter((row) => row.b0.closedLoopSuccess === 1).map((row) => row.b0.probeInputTokens ?? row.b0.summaryTokens);
-  const costB1 = tokenBase.filter((row) => row.b2.closedLoopSuccess === 1).map((row) => row.b2.probeInputTokens ?? row.b2.summaryTokens);
+  const costB0 = tokenBase.filter((row) => row.b0.closedLoopSuccess === 1).map((row) => row.b0.probeInputTokens!);
+  const costB1 = tokenBase.filter((row) => row.b2.closedLoopSuccess === 1).map((row) => row.b2.probeInputTokens!);
   const costPerSuccessRelativeDelta =
     costB0.length > 0 && costB1.length > 0 ? relativeDelta(median(costB1), median(costB0)) : 0;
   const overflow = completed.filter((row) => row.family === "overflow");
@@ -813,7 +815,7 @@ export async function runLivePairedW2(opts: {
     overflow.map((row) => row.b2.quality),
   );
   const realized = tokenBase.map(
-    (row) => (row.b0.probeInputTokens ?? row.b0.summaryTokens) - (row.b2.probeInputTokens ?? row.b2.summaryTokens),
+    (row) => row.b0.probeInputTokens! - row.b2.probeInputTokens!,
   );
   const realizedNetMedian = realized.length > 0 ? median(realized) : 0;
   const budgetMismatchRate = completed.length === 0 ? 1 : completed.filter((row) => row.b0.budgetMismatch).length / completed.length;
@@ -1005,11 +1007,9 @@ function findSecret(id: string): string {
 function slimArm(arm: LiveArmResult, secrets: string[]) {
   const usageLayers: EvaluationUsageLayers = {
     checkpoint: { tokens: arm.ok && arm.compactionCount > 0 ? { value: arm.summaryTokens, source: "estimated" } : { value: null, source: "unavailable" } },
-    materializedView: {
-      tokens: arm.ok && arm.probeInputTokens !== null
-        ? { value: arm.probeInputTokens, source: "assistant-entry" }
-        : { value: null, source: "unavailable" },
-    },
+    // The runner does not expose the materializer's rendered view bytes;
+    // do not duplicate provider request usage under a different layer.
+    materializedView: { tokens: { value: null, source: "unavailable" } },
     request: {
       inputTokens: arm.probeInputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeInputTokens, source: "assistant-entry" },
       outputTokens: arm.probeOutputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeOutputTokens, source: "assistant-entry" },
