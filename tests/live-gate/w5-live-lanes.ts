@@ -336,13 +336,14 @@ async function withRpc<T>(opts: {
   agentDir: string;
   extension?: string;
   autoCompact: boolean;
+  tools?: boolean;
   work: (rpc: PiRpc) => Promise<T>;
 }): Promise<T> {
   const provider = process.env.PCR_LIVE_PROVIDER?.trim() || LIVE_PROVIDER;
   const model = process.env.PCR_LIVE_MODEL?.trim() || LIVE_MODEL;
   const args = [
     "--no-extensions",
-    "--no-tools",
+    ...(opts.tools ? [] : ["--no-tools"]),
     "--session-dir",
     dirname(opts.sessionFile),
     "--session",
@@ -906,6 +907,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const root = mkdtempSync(join(tmpdir(), "pcr-w5-recursive-"));
   const arm = isolatedArm(root, "pcr", 120_000, "keep version 6; do not deploy production", false);
   const history: Array<{ phase: string; ok: boolean; error?: string; compactCount?: number; summary?: string }> = [];
+  const toolEvents: Array<Record<string, unknown>> = [];
   let providerStarted = false;
   try {
     await withRpc({
@@ -914,8 +916,10 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       agentDir: arm.agentDir,
       extension,
       autoCompact: true,
+      tools: true,
       work: async (rpc) => {
         providerStarted = true;
+        toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         const compact1Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(80_000)}`, 3 * 60_000);
         history.push({ phase: "compact-1", ok: inspectCompactions(arm.sessionFile).length > compact1Before, compactCount: inspectCompactions(arm.sessionFile).length });
@@ -954,7 +958,9 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       agentDir: arm.agentDir,
       extension,
       autoCompact: true,
+      tools: true,
       work: async (rpc) => {
+        toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         history.push({ phase: "restart-before-compact-3", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
@@ -971,6 +977,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("Should we merge sibling-branch now? Answer yes or no.", 3 * 60_000);
         history.push({ phase: "recall-not-needed", ok: /^\s*(?:no|否|不)\s*[.!]?\s*$/i.test(lastAssistantText(arm.sessionFile)) });
+        toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
@@ -989,11 +996,13 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     branched: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
     restarted: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     sideEffectGuard: summaries.length > 0 && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
+    toolEvents: toolEvents.length,
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
     oracleComplete: ["compact-1", "temporal-update", "grow-before-compact-2", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
       && compactions.length >= 3
       && summaries.length > 0
-      && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
+      && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text))
+      && !toolEvents.some((event) => /deploy|production|发布|部署/i.test(JSON.stringify(event))),
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
   rmSync(root, { recursive: true, force: true });
