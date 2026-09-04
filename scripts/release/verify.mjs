@@ -63,7 +63,7 @@ if (process.env.GITHUB_SHA && process.env.GITHUB_SHA !== head) fail("PCR_GITHUB_
 if (rc.commit !== head) fail("PCR_RC_MANIFEST_HEAD_MISMATCH");
 if (publicationManifest.commit !== undefined && publicationManifest.commit !== head) fail("PCR_PUBLICATION_MANIFEST_HEAD_MISMATCH");
 if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
-  const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
+  const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs?per_page=100`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
   if (!response.ok) fail("PCR_CHECKS_UNAVAILABLE");
   const checks = await response.json();
   const names = new Map((checks.check_runs ?? []).map((run) => [run.name, run.conclusion]));
