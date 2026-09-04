@@ -17,7 +17,7 @@ describe("live paired W2 vs Pi Native compact", () => {
     async () => {
       const profile = profileFromEnv();
       const result = await runLivePairedW2({ repoRoot, profile });
-      expect(result.reportPath).toContain("w2-live-native");
+      expect(result.reportPath).toContain(profile === "gate" ? "w2-v4-live/paired-gate" : "w2-live-native");
       expect(result.report.livePiNative).toBe(true);
       expect(result.report.publicationClaim).toBe(false);
       expect(result.report.model).toEqual(

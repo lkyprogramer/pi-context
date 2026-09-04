@@ -112,10 +112,15 @@ export function computeRunEpochHash(input: {
   cases: readonly W2Case[];
 }): string {
   const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: input.repoRoot, encoding: "utf8" }).trim();
+  const sourceSha256 = (relativePath: string) => createHash("sha256").update(readFileSync(join(input.repoRoot, relativePath))).digest("hex");
   const packageLock = readFileSync(join(input.repoRoot, "pnpm-lock.yaml"));
   const payload = {
     head,
     packageLockSha256: createHash("sha256").update(packageLock).digest("hex"),
+    extensionSha256: createHash("sha256").update(readFileSync(join(input.repoRoot, "apps/pi-context-runtime/dist/extension.js"))).digest("hex"),
+    runnerSha256: sourceSha256("tests/live-gate/paired-w2-live.ts"),
+    rpcSha256: sourceSha256("tests/live-gate/pi-rpc.ts"),
+    scorerSha256: sourceSha256("tests/w2-gate/scorer.ts"),
     model: LIVE_MODEL,
     provider: LIVE_PROVIDER,
     contextWindow: input.modelLimits.contextWindow,
@@ -125,6 +130,10 @@ export function computeRunEpochHash(input: {
     config: { profile: input.profile, reserve: LIVE_RESERVE_TOKENS, keepRecent: LIVE_KEEP_RECENT_TOKENS },
   };
   return createHash("sha256").update(JSON.stringify(payload), "utf8").digest("hex");
+}
+
+export function isLiveTimeoutError(error: string): boolean {
+  return /timed?\s*out|timeout|did not settle|timeout waiting/iu.test(error);
 }
 
 function nvmBin(): string {
@@ -163,9 +172,9 @@ function copyModelsUnmodified(agentDir: string): { contextWindow: number; maxTok
   const homeModels = join(homedir(), ".pi/agent/models.json");
   if (!existsSync(homeModels)) throw new Error("missing ~/.pi/agent/models.json");
   const source = JSON.parse(readFileSync(homeModels, "utf8")) as {
-    providers?: { openclaw?: { models?: Array<{ contextWindow?: number; maxTokens?: number }> } };
+    providers?: { openclaw?: { models?: Array<{ id?: string; contextWindow?: number; maxTokens?: number }> } };
   };
-  const model = source.providers?.openclaw?.models?.[0];
+  const model = source.providers?.openclaw?.models?.find((item) => item.id === LIVE_MODEL);
   if (!model?.contextWindow || !model.maxTokens) throw new Error("openclaw model missing contextWindow/maxTokens");
   if (model.maxTokens !== LIVE_RESERVE_TOKENS) {
     throw new Error(`expected unmodified maxTokens=${LIVE_RESERVE_TOKENS}, got ${model.maxTokens}`);
@@ -639,6 +648,7 @@ function persistArmHome(home: { arm: LiveFourArmId; cwd: string; sessionFile: st
 
 async function runPair(item: W2Case, extensionPath: string, seed: number, artifactDir: string): Promise<LivePairRow> {
   const root = mkdtempSync(join(tmpdir(), `pcr-w2-live-${item.id}-s${seed}-`));
+  try {
   const seedCwd = join(root, "seed-ws");
   mkdirSync(seedCwd, { recursive: true });
   const seedFile = join(root, "seed.jsonl");
@@ -676,7 +686,6 @@ async function runPair(item: W2Case, extensionPath: string, seed: number, artifa
   const b1 = byArm.B1;
   const b2 = byArm.B2;
   const f0 = byArm.F0;
-  rmSync(root, { recursive: true, force: true });
   return {
     id: item.id,
     family: item.family,
@@ -693,6 +702,26 @@ async function runPair(item: W2Case, extensionPath: string, seed: number, artifa
     b2,
     f0,
     runEpochHash: "",
+  };
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function failedPair(item: W2Case, seed: number, error: unknown): LivePairRow {
+  const message = error instanceof Error ? error.message : String(error);
+  const failedArm = (arm: LiveFourArmId): LiveArmResult => ({
+    arm, ok: false, error: message, fromExtension: false, compactionCount: 0, firstKeptEntryId: null,
+    tokensBefore: null, summary: "", summaryTokens: 0, probeText: "", probeInputTokens: null, probeOutputTokens: null,
+    compactUsageTotal: null, compactLatencyMs: 0, budgetMismatch: true, polarity: 0, time: 0, update: 0, abstention: 0,
+    quality: 0, closedLoopSuccess: 0, constraintViolation: 1, directiveCoverage: 0, unsupportedHighRiskOutcome: 0,
+    mustOmitLeak: 0, recovered: false, recoveryStatus: "failed", recoveryDenominator: 0, recoveryCount: 0,
+    crossScopeDenied: false, toolPairViolation: 1, probeBucket: "unknown",
+  });
+  return {
+    id: item.id, family: item.family, replicateIndex: seed, seedMode: "replicate-repeat",
+    sampling: { seed, seedUnsupported: true, replicateIndex: seed }, samplingSource: "provider-capability-unavailable",
+    sameCut: false, expectedFirstKeptId: "", b0: failedArm("B0"), b1: failedArm("B1"), b2: failedArm("B2"), f0: failedArm("F0"), runEpochHash: "",
   };
 }
 
@@ -719,7 +748,8 @@ function loadResumedRows(outDir: string, runEpochHash: string): LivePairRow[] {
       throw new Error("PCR_RUN_EPOCH_MISMATCH: partial rows belong to a different HEAD/package/model/provider/corpus/scorer/config");
     }
     return rows;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("PCR_RUN_EPOCH_MISMATCH:")) throw error;
     return [];
   }
 }
@@ -736,11 +766,12 @@ export async function runLivePairedW2(opts: {
   const extensionPath = join(opts.repoRoot, "apps/pi-context-runtime/dist/extension.js");
   if (!existsSync(extensionPath)) throw new Error(`missing ${extensionPath}`);
   const homeModels = JSON.parse(readFileSync(join(homedir(), ".pi/agent/models.json"), "utf8")) as {
-    providers?: { openclaw?: { models?: Array<{ contextWindow?: number; maxTokens?: number }> } };
+    providers?: { openclaw?: { models?: Array<{ id?: string; contextWindow?: number; maxTokens?: number }> } };
   };
+  const configuredModel = homeModels.providers?.openclaw?.models?.find((item) => item.id === LIVE_MODEL);
   const modelLimits = {
-    contextWindow: homeModels.providers?.openclaw?.models?.[0]?.contextWindow ?? 0,
-    maxTokens: homeModels.providers?.openclaw?.models?.[0]?.maxTokens ?? 0,
+    contextWindow: configuredModel?.contextWindow ?? 0,
+    maxTokens: configuredModel?.maxTokens ?? 0,
   };
   const runEpochHash = computeRunEpochHash({ repoRoot: opts.repoRoot, profile, modelLimits, cases });
   if (modelLimits.maxTokens !== LIVE_RESERVE_TOKENS) {
@@ -772,7 +803,12 @@ export async function runLivePairedW2(opts: {
       const pairId = replicates === 1 ? item.id : `${item.id}#s${seed}`;
       if (done.has(pairId)) continue;
       process.stderr.write(`[w2-live] ${item.id} ${item.family} seed=${seed} (${rows.length + 1}/${expectedPairs})\n`);
-      const row = await runPair(item, extensionPath, seed, join(outDir, "pairs", pairId));
+      let row: LivePairRow;
+      try {
+        row = await runPair(item, extensionPath, seed, join(outDir, "pairs", pairId));
+      } catch (error) {
+        row = failedPair(item, seed, error);
+      }
       const labeled: LivePairRow = {
         ...row,
         id: pairId,
@@ -798,6 +834,12 @@ export async function runLivePairedW2(opts: {
   const sameCut = completed.filter((row) => row.sameCut);
   const efficiencyRows = sameCut.filter((row) => !row.b0.budgetMismatch);
   const infraExcluded = rows.filter((row) => !row.b0.ok || !row.b1.ok || !row.b2.ok || !row.f0.ok).map((row) => row.id);
+  const uniquePairCount = new Set(rows.map((row) => row.id)).size;
+  const allPlannedRowsPresent = rows.length === expectedPairs && uniquePairCount === expectedPairs && infraExcluded.length === 0;
+  const plannedMetric = (pick: (row: LivePairRow) => number) => rows.map((row) => {
+    const value = pick(row);
+    return Number.isFinite(value) ? value : 0;
+  });
 
   const directiveCoverage = completed.every((row) => row.b2.directiveCoverage === 1) ? 1 : 0;
   const unsupported = completed.filter((row) => row.b2.unsupportedHighRiskOutcome > 0).length;
@@ -814,7 +856,7 @@ export async function runLivePairedW2(opts: {
   const f0Ceiling = completed.every((row) => !row.f0.fromExtension && row.f0.compactionCount === 0);
   const sameCutRate = completed.length === 0 ? 0 : sameCut.length / completed.length;
   const hardGatePass =
-    completed.length > 0 &&
+    allPlannedRowsPresent &&
     sameCutRate === 1 &&
     directiveCoverage === 1 &&
     unsupported === 0 &&
@@ -826,15 +868,13 @@ export async function runLivePairedW2(opts: {
     b0Native &&
     f0Ceiling;
 
-  const quality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b2.quality));
-  const polarity = pairedOrZero(completed.map((row) => row.b0.polarity), completed.map((row) => row.b2.polarity));
-  const time = pairedOrZero(completed.map((row) => row.b0.time), completed.map((row) => row.b2.time));
-  const update = pairedOrZero(completed.map((row) => row.b0.update), completed.map((row) => row.b2.update));
-  const abstention = pairedOrZero(completed.map((row) => row.b0.abstention), completed.map((row) => row.b2.abstention));
-  const closedLoop = pairedOrZero(
-    completed.map((row) => row.b0.closedLoopSuccess),
-    completed.map((row) => row.b2.closedLoopSuccess),
-  );
+  const quality = pairedOrZero(plannedMetric((row) => row.b0.quality), plannedMetric((row) => row.b2.quality));
+  const polarity = pairedOrZero(plannedMetric((row) => row.b0.polarity), plannedMetric((row) => row.b2.polarity));
+  const time = pairedOrZero(plannedMetric((row) => row.b0.time), plannedMetric((row) => row.b2.time));
+  const update = pairedOrZero(plannedMetric((row) => row.b0.update), plannedMetric((row) => row.b2.update));
+  const abstention = pairedOrZero(plannedMetric((row) => row.b0.abstention), plannedMetric((row) => row.b2.abstention));
+  const closedLoop = pairedOrZero(plannedMetric((row) => row.b0.closedLoopSuccess), plannedMetric((row) => row.b2.closedLoopSuccess));
+  const completeCaseQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b2.quality));
   const diagnosticQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b1.quality));
   const containmentQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.f0.quality));
   const constraintB0 = completed.reduce((sum, row) => sum + row.b0.constraintViolation, 0);
@@ -884,6 +924,11 @@ export async function runLivePairedW2(opts: {
     budgetMismatchRate: efficiencyRows.length === 0 ? 1 : budgetMismatchRate,
   });
   const publicationClaim = false;
+  const timeouts = rows.flatMap((row) => (["b0", "b1", "b2", "f0"] as const).flatMap((arm) => {
+    const error = row[arm].error;
+    return typeof error === "string" && isLiveTimeoutError(error) ? [{ id: row.id, arm, error }] : [];
+  }));
+  const commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: opts.repoRoot, encoding: "utf8" }).trim();
 
   const families: ScenarioFamily[] = ["tool-heavy", "constraint", "temporal-update", "branch", "overflow"];
   const byFamily = Object.fromEntries(
@@ -921,6 +966,7 @@ export async function runLivePairedW2(opts: {
     gate: "w2-compactor",
     stage: profile === "gate" ? "w2" : "smoke",
     generatedAt: new Date().toISOString(),
+    commit,
     runEpochHash,
     scorer: "w2-scorer-v3",
     baselineArm: "B0",
@@ -950,9 +996,14 @@ export async function runLivePairedW2(opts: {
     piVersion: "0.84.4",
     sample: {
       profile,
+      planned: expectedPairs,
+      attempted: rows.length,
+      scored: completed.length,
+      failed: infraExcluded.length,
       expectedPairs,
       completedPairs: completed.length,
       armFailures: infraExcluded,
+      timeouts,
       sameCutPairs: sameCut.length,
       efficiencyPairs: efficiencyRows.length,
       replicates,
@@ -980,6 +1031,7 @@ export async function runLivePairedW2(opts: {
       update,
       abstention,
       closedLoop,
+      completeCase: { ci: completeCaseQuality },
       constraintViolations: { B0: constraintB0, B2: constraintB1 },
       diagnostics: { baselineArm: "B0", candidateArm: "B1", quality: diagnosticQuality },
       containment: { baselineArm: "B0", arm: "F0", quality: containmentQuality },
@@ -1035,7 +1087,8 @@ export async function runLivePairedW2(opts: {
     reportHash: digest,
     reportPath,
   };
-  writeFileSync(join(outDir, "gate-decision.json"), `${JSON.stringify(gateDecision, null, 2)}\n`);
+  const gateDecisionBytes = `${JSON.stringify(gateDecision, null, 2)}\n`;
+  writeFileSync(join(outDir, "gate-decision.json"), gateDecisionBytes);
   writeFileSync(
     join(outDir, "run-manifest.json"),
     `${JSON.stringify(
@@ -1045,7 +1098,7 @@ export async function runLivePairedW2(opts: {
         generatedAt: report.generatedAt,
         files: {
           "report.json": digest,
-          "gate-decision.json": createHash("sha256").update(JSON.stringify(gateDecision)).digest("hex"),
+          "gate-decision.json": createHash("sha256").update(gateDecisionBytes, "utf8").digest("hex"),
         },
         artifactBytesSha256: reportArtifactBytesSha256,
         canonicalJsonSha256: reportCanonicalJsonSha256,
@@ -1066,7 +1119,9 @@ if (process.argv[1]?.endsWith("paired-w2-live.ts")) {
     throw new Error("PCR_W2_LIVE_PROFILE must be one, smoke, spec-smoke, or gate");
   }
   const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
-  const defaultOutDir = join(repoRoot, "artifacts/runs/w2-v4-live/paired-gate");
+  const defaultOutDir = profile === "gate"
+    ? join(repoRoot, "artifacts/runs/w2-v4-live/paired-gate")
+    : join(repoRoot, "artifacts/runs/w2-live-native", profile);
   const requestedOutDir = process.env.PCR_W2_LIVE_OUT_DIR?.trim();
   if (profile === "gate" && requestedOutDir && requestedOutDir !== defaultOutDir) {
     throw new Error(`gate profile output must be ${defaultOutDir}`);
