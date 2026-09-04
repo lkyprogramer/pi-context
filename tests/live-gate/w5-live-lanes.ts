@@ -809,8 +809,8 @@ async function runOverflowArm(input: {
         const overflowMaxTurns = Number(process.env.PCR_W5_OVERFLOW_MAX_TURNS ?? process.env.PCR_W5_MAX_TURNS ?? 25);
         const overflowCharsPerTurn = Number(process.env.PCR_W5_OVERFLOW_CHARS_PER_TURN ?? 40_000);
         const grown = await growLive(rpc, arm.sessionFile, {
-          maxTurns: Number.isSafeInteger(overflowMaxTurns) && overflowMaxTurns > 0 ? overflowMaxTurns : 25,
-          charsPerTurn: Number.isSafeInteger(overflowCharsPerTurn) && overflowCharsPerTurn > 0 ? overflowCharsPerTurn : 40_000,
+          maxTurns: Number.isSafeInteger(overflowMaxTurns) && overflowMaxTurns > 0 && overflowMaxTurns <= 100 ? overflowMaxTurns : 25,
+          charsPerTurn: Number.isSafeInteger(overflowCharsPerTurn) && overflowCharsPerTurn > 0 && overflowCharsPerTurn <= 200_000 ? overflowCharsPerTurn : 40_000,
           stopOnCompact: false,
           stopOnError: true,
           onTurn: (log) => persistPartial(input.outDir, input.name, { phase: "grow", turns: log }, arm.sessionFile),
