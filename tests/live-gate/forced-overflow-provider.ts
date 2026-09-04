@@ -8,9 +8,9 @@ export interface ForcedOverflowAttempt {
 }
 
 export interface ForcedOverflowRecoveryInput {
-  force: () => ForcedOverflowAttempt;
-  compact: () => ForcedOverflowAttempt;
-  retry: () => ForcedOverflowAttempt;
+  force: () => ForcedOverflowAttempt | Promise<ForcedOverflowAttempt>;
+  compact: () => ForcedOverflowAttempt | Promise<ForcedOverflowAttempt>;
+  retry: () => ForcedOverflowAttempt | Promise<ForcedOverflowAttempt>;
 }
 
 export interface ForcedOverflowRecoveryReport {
@@ -20,25 +20,26 @@ export interface ForcedOverflowRecoveryReport {
 }
 
 export function isContextLengthError(error: string): boolean {
-  return /context(?:[_ -]?length| window)|prompt.{0,20}(?:too long|exceed)|maximum context/iu.test(error);
+  return /context(?:[_ -]?length|[_ -]?window)|prompt.{0,20}(?:too long|exceed)|maximum context|too many tokens|please reduce/iu.test(error);
 }
 
-export function runForcedOverflowRecovery(input: ForcedOverflowRecoveryInput): ForcedOverflowRecoveryReport {
+export async function runForcedOverflowRecovery(input: ForcedOverflowRecoveryInput): Promise<ForcedOverflowRecoveryReport> {
   if (!input || typeof input !== "object") throw new TypeError("input");
-  const force = input.force();
+  const force = await input.force();
   const errorClass = force.ok ? "none" : isContextLengthError(force.error ?? "") ? "context-length" : "other";
   const attempts: ForcedOverflowAttempt[] = [force];
   if (errorClass !== "context-length") {
     return { prevention: { overflowObserved: false, errorClass }, recovery: { compacted: false, retried: false, sideEffectsUnchanged: true, ok: false }, attempts };
   }
-  const compact = input.compact();
+  const compact = await input.compact();
   attempts.push(compact);
   if (!compact.ok) {
     return { prevention: { overflowObserved: true, errorClass }, recovery: { compacted: false, retried: false, sideEffectsUnchanged: true, ok: false }, attempts };
   }
-  const retry = input.retry();
+  const retry = await input.retry();
   attempts.push(retry);
-  const sideEffectsUnchanged = retry.sideEffectCount === force.sideEffectCount;
+  const sideEffectsUnchanged = compact.sideEffectCount === force.sideEffectCount
+    && retry.sideEffectCount === force.sideEffectCount;
   return {
     prevention: { overflowObserved: true, errorClass },
     recovery: {

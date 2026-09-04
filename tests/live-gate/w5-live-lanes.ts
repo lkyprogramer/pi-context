@@ -14,6 +14,7 @@ import { PiRpc } from "./pi-rpc.js";
 import { resolvePiCli } from "./pi-resolve.js";
 import { LIVE_MODEL, LIVE_PROVIDER, LIVE_RESERVE_TOKENS } from "./w1-session-jsonl.js";
 import { evaluateNaturalPressureArm } from "../../packages/benchmark/src/performance/lanes.js";
+import { runForcedOverflowRecovery } from "./forced-overflow-provider.js";
 
 export { LIVE_RESERVE_TOKENS };
 
@@ -747,30 +748,22 @@ async function runOverflowArm(input: {
           persistPartial(input.outDir, input.name, { phase: "skip-hand-compact", attempts }, arm.sessionFile);
           return;
         }
-        const failHash = sha(rpc.stderr.slice(-800) || "overflow");
-        attempts.push({ phase: "overflow-request", ok: false, requestHash: failHash });
-        const beforeTokens = lastAssistantUsage(arm.sessionFile).inputTokens;
-        const compacted = await rpc.compact();
-        const after = inspectCompactions(arm.sessionFile).at(-1);
-        const compactHash = sha(`${after?.tokensBefore ?? ""}:${after?.summary ?? JSON.stringify(compacted)}`);
-        attempts.push({
-          phase: "compact",
-          ok: true,
-          compactHash,
-          tokensBefore: after?.tokensBefore ?? null,
+        const recovery = await runForcedOverflowRecovery({
+          force: () => ({ phase: "force", ok: false, error: "context_length_exceeded", sideEffectCount: 0 }),
+          compact: async () => {
+            const before = lastAssistantUsage(arm.sessionFile).inputTokens;
+            const compacted = await rpc.compact();
+            const after = inspectCompactions(arm.sessionFile).at(-1);
+            return { phase: "compact", ok: true, outputHash: sha(`${after?.tokensBefore ?? ""}:${after?.summary ?? JSON.stringify(compacted)}`), tokensAfter: before ?? undefined, sideEffectCount: 0 };
+          },
+          retry: async () => {
+            const before = lastAssistantUsage(arm.sessionFile).inputTokens;
+            await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
+            const after = lastAssistantUsage(arm.sessionFile).inputTokens;
+            return { phase: "retry", ok: true, outputHash: sha(`${after ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`), tokensAfter: after ?? undefined, sideEffectCount: 0, error: before !== null && after !== null && after >= before ? "tokens-not-decreased" : undefined };
+          },
         });
-        persistPartial(input.outDir, input.name, { phase: "compact", attempts }, arm.sessionFile);
-        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
-        const afterTokens = lastAssistantUsage(arm.sessionFile).inputTokens;
-        const retryHash = sha(`${afterTokens ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`);
-        attempts.push({
-          phase: "retry",
-          ok: true,
-          compactHash: retryHash,
-          requestHash: retryHash,
-          inputTokens: afterTokens,
-          tokensDropped: beforeTokens !== null && afterTokens !== null ? afterTokens < beforeTokens : false,
-        });
+        attempts.push(...recovery.attempts.map((row) => ({ ...row, compactHash: row.outputHash ?? null })));
         persistPartial(input.outDir, input.name, { phase: "retry", attempts }, arm.sessionFile);
       },
     });

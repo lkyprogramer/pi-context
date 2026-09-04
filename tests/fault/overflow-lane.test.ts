@@ -12,8 +12,8 @@ const ROUTE = {
 } as const;
 
 describe("provider overflow lane", () => {
-  it("classifies context overflow and retries once without side effects", () => {
-    const report = runForcedOverflowRecovery({
+  it("classifies context overflow and retries once without side effects", async () => {
+    const report = await runForcedOverflowRecovery({
       force: () => ({ phase: "force", ok: false, error: "context_length_exceeded: prompt is too long", sideEffectCount: 1 }),
       compact: () => ({ phase: "compact", ok: true, tokensAfter: 100, outputHash: "compact", sideEffectCount: 1 }),
       retry: () => ({ phase: "retry", ok: true, tokensAfter: 20, outputHash: "retry", sideEffectCount: 1 }),
@@ -24,8 +24,8 @@ describe("provider overflow lane", () => {
     expect(isContextLengthError("provider timeout")).toBe(false);
   });
 
-  it("fails closed when retry changes side-effect count", () => {
-    const report = runForcedOverflowRecovery({
+  it("fails closed when retry changes side-effect count", async () => {
+    const report = await runForcedOverflowRecovery({
       force: () => ({ phase: "force", ok: false, error: "maximum context window exceeded", sideEffectCount: 2 }),
       compact: () => ({ phase: "compact", ok: true, sideEffectCount: 2 }),
       retry: () => ({ phase: "retry", ok: true, sideEffectCount: 3 }),
