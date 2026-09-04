@@ -60,6 +60,11 @@ function filler(chars: number): string {
   return line.repeat(Math.max(1, Math.ceil(chars / line.length)));
 }
 
+function liveOutputDir(repoRoot: string, lane: "natural-threshold" | "overflow" | "recursive"): string {
+  const configuredRoot = process.env.PCR_W5_LIVE_OUT_DIR;
+  return configuredRoot ? join(repoRoot, configuredRoot, lane) : join(repoRoot, "artifacts/runs/w2-v3-live", lane);
+}
+
 export function assertNaturalThresholdPolicy(input: {
   keepRecentTokens: number;
   reserveTokens: number;
@@ -669,7 +674,7 @@ async function runNaturalFamily(input: {
 }
 
 export async function runNaturalThreshold(repoRoot: string): Promise<Record<string, unknown>> {
-  const outDir = join(repoRoot, "artifacts/runs/w2-v3-live/natural-threshold");
+  const outDir = liveOutputDir(repoRoot, "natural-threshold");
   const extension = join(repoRoot, "apps/pi-context-runtime/dist/extension.js");
   const threshold = NATURAL_THRESHOLD_TOKENS;
   mkdirSync(outDir, { recursive: true });
@@ -877,7 +882,7 @@ async function runOverflowArm(input: {
 }
 
 export async function runProviderOverflow(repoRoot: string): Promise<Record<string, unknown>> {
-  const outDir = join(repoRoot, "artifacts/runs/w2-v3-live/overflow");
+  const outDir = liveOutputDir(repoRoot, "overflow");
   const extension = join(repoRoot, "apps/pi-context-runtime/dist/extension.js");
   mkdirSync(outDir, { recursive: true });
   if (process.env.PCR_LIVE !== "1" || !existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
@@ -965,7 +970,7 @@ export async function runProviderOverflow(repoRoot: string): Promise<Record<stri
 }
 
 export async function runRecursiveLive(repoRoot: string): Promise<Record<string, unknown>> {
-  const outDir = join(repoRoot, "artifacts/runs/w2-v3-live/recursive");
+  const outDir = liveOutputDir(repoRoot, "recursive");
   const extension = join(repoRoot, "apps/pi-context-runtime/dist/extension.js");
   mkdirSync(outDir, { recursive: true });
   if (process.env.PCR_LIVE !== "1" || !existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
