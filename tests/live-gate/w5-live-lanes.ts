@@ -32,7 +32,8 @@ export type W5LiveErrorCode =
   | "PCR_W5_MANUAL_COMPACT"
   | "PCR_W5_FAKE_LIVE_PROVIDER"
   | "PCR_W5_TRIGGER_WITHOUT_COMPACT"
-  | "PCR_W5_OVERFLOW_HAND_COMPACT";
+  | "PCR_W5_OVERFLOW_HAND_COMPACT"
+  | "PCR_W5_LIVE_PROFILE_INVALID";
 
 export class W5LiveError extends TypeError {
   readonly code: W5LiveErrorCode;
@@ -992,7 +993,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     oracleComplete: ["temporal-update", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
       && compactions.length >= 3
       && summaries.length > 0
-      && summaries.every((text) => !/we deployed successfully|已成功部署/i.test(text)),
+      && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
   rmSync(root, { recursive: true, force: true });
@@ -1002,7 +1003,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
 
 export function w5LiveProfileFromEnv(value = process.env.PCR_W5_LIVE_PROFILE): W5LiveProfile {
   if (value === "natural" || value === "overflow" || value === "recursive" || value === "recursive-auto" || value === "long-horizon" || value === "all") return value;
-  return "all";
+  if (value === undefined || value === "") return "all";
+  throw new W5LiveError("PCR_W5_LIVE_PROFILE_INVALID", { value });
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
@@ -1020,7 +1022,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     const failed = reports.some((data) => data.liveProvider !== true
       || (data.lane === "natural-threshold" && data.triggered !== true)
       || (data.lane === "provider-overflow" && (data.overflowObserved !== true || data.usedManualCompactAsOverflow === true))
-      || (recursiveProfile && (data.oracleComplete !== true || data.threeCompacts !== true)));
+      || ((recursiveProfile || data.lane === "recursive-long-horizon") && (data.oracleComplete !== true || data.threeCompacts !== true || data.sideEffectGuard !== true)));
     if (failed) process.exitCode = 1;
   }).catch((error) => {
     process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
