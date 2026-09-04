@@ -10,6 +10,8 @@ C15 cache/metadata ablation has now completed against the configured Provider on
 
 W5 continuation additionally records the interrupted Pi live runs in `artifacts/runs/w2-v4-live/LIVE-COMPARISON.md`. The tracked RC manifest is a sanitized bundle index only; it must be regenerated in the final release job so its `commit` binds the release checkout HEAD. A locally committed manifest can become stale after the commit that updates it and is not release evidence by itself.
 
+C30 bundle hardening is committed as `ed8d701`: raw `session.jsonl` files are included, structured message content is redacted, post-redaction 8MiB overflow fails closed, archive member paths match manifest paths, and artifact symlinks are rejected. The regenerated local RC manifest is bound to that HEAD; it remains an uncommitted release artifact by design. Node `v22.19.0` `typecheck` passed and `test:packed` passed 19/19.
+
 The post-fix bounded v14 recursive smoke reached a terminal report and verified fork/branch pointer/correction evidence, but restart continuity and three-compaction criteria remained false. A subsequent v15 smoke verified cross-session restart continuity and branch lineage; Provider correction/compaction assertions still failed. Both are retained as fail-closed evidence, not a C27/C28 acceptance result.
 
 下一轮执行入口仍以 `docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/` 的未完成任务和当前工作树为准；审计附件中的旧 HEAD 仅作为历史基线，不代表当前实现 HEAD。
