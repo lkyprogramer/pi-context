@@ -110,14 +110,17 @@ export function boundRecallPage<T extends RecallPageItem>(
     }
     seenIds.add(item.evidenceId);
     seenQuotes.add(item.quote);
+    // Recompute from the quote and never trust a lower caller estimate. This
+    // keeps the bound aligned with materializer/token-counter semantics.
+    const measuredTokens = Math.max(item.tokens, estimateTextTokens(item.quote));
     // A required item cannot bypass the hard page ceiling: callers should
     // represent truly mandatory directives in the hard-directive section.
-    if (tokenEstimate + item.tokens > maxTokens) {
+    if (tokenEstimate + measuredTokens > maxTokens) {
       omitted.push({ evidenceId: item.evidenceId, reason: "budget" });
       continue;
     }
     selected.push(item);
-    tokenEstimate += item.tokens;
+    tokenEstimate += measuredTokens;
   }
   return {
     items: selected,

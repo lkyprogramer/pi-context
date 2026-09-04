@@ -93,6 +93,7 @@ import {
   boundDirectoryPointers,
   boundRecallPage,
 } from "../../../packages/kernel/src/retrieval/proactive.js";
+import { estimateTextTokens } from "../../../packages/kernel/src/budget/token-counter.js";
 
 export type PiRuntimeContext = Pick<ExtensionContext, "cwd" | "model" | "sessionManager" | "signal">;
 
@@ -1066,7 +1067,7 @@ export function registerProductionUserTurnRuntime(
                   pages.push({
                     evidenceId: hit.evidenceId,
                     quote,
-                    tokens: Math.max(8, Math.ceil(quote.length / 4)),
+                    tokens: estimateTextTokens(quote),
                   });
                 }
                 return pages;
