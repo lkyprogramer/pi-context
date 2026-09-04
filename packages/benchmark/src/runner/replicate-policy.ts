@@ -93,13 +93,16 @@ export function bindReplicate(input: {
 export function rejectLabelOnlySeed(input: {
   seed: number;
   label?: string;
-  sampling?: { seed?: number; seedUnsupported?: boolean };
+  sampling?: { seed?: number; seedUnsupported?: true; replicateIndex?: number };
   workspaceId?: string;
   sessionId?: string;
 }): void {
   if (!input || typeof input !== "object") failInput("input");
   if (!Number.isSafeInteger(input.seed) || input.seed < 0) failInput("seed");
-  const samplingBound = input.sampling?.seed === input.seed || input.sampling?.seedUnsupported === true;
+  const providerSeedBound = input.sampling?.seed === input.seed;
+  const unsupportedSeedBound = input.sampling?.seedUnsupported === true
+    && input.sampling.replicateIndex === input.seed;
+  const samplingBound = providerSeedBound || unsupportedSeedBound;
   if (!input.workspaceId || !input.sessionId || !samplingBound) {
     fail("PCR_REPLICATE_LABEL_ONLY", { seed: input.seed, label: input.label ?? null });
   }

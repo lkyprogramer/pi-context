@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bindReplicate, createW2ArmRunner, type W1ArmCase } from "@pcr/benchmark";
+import { bindReplicate, createW2ArmRunner, rejectLabelOnlySeed, type W1ArmCase } from "@pcr/benchmark";
 import type { RuntimeCursor } from "@pcr/contracts";
 
 const CURSOR: RuntimeCursor = {
@@ -43,6 +43,21 @@ describe("B0/B1/B2 arm identity", () => {
       providerSupportsSeed: false,
     });
     expect(repeated.sampling).toEqual({ seedUnsupported: true, replicateIndex: 3 });
+  });
+
+  it("rejects unsupported-seed metadata without the matching replicate index", () => {
+    expect(() => rejectLabelOnlySeed({
+      seed: 3,
+      workspaceId: "ws_repeat",
+      sessionId: "session_repeat",
+      sampling: { seedUnsupported: true },
+    })).toThrowError("PCR_REPLICATE_LABEL_ONLY");
+    expect(() => rejectLabelOnlySeed({
+      seed: 3,
+      workspaceId: "ws_repeat",
+      sessionId: "session_repeat",
+      sampling: { seedUnsupported: true, replicateIndex: 2 },
+    })).toThrowError("PCR_REPLICATE_LABEL_ONLY");
   });
 
   it("proves B0 is not from a PCR hook while B1/B2 are, and shares the cut", async () => {
