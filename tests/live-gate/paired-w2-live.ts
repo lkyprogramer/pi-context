@@ -754,11 +754,11 @@ export async function runLivePairedW2(opts: {
   const efficiencyRows = sameCut.filter((row) => !row.b0.budgetMismatch);
   const infraExcluded = rows.filter((row) => !row.b0.ok || !row.b1.ok || !row.b2.ok || !row.f0.ok).map((row) => row.id);
 
-  const directiveCoverage = completed.every((row) => row.b1.directiveCoverage === 1) ? 1 : 0;
-  const unsupported = completed.filter((row) => row.b1.unsupportedHighRiskOutcome > 0).length;
-  const leaks = completed.filter((row) => row.b1.mustOmitLeak > 0).length;
+  const directiveCoverage = completed.every((row) => row.b2.directiveCoverage === 1) ? 1 : 0;
+  const unsupported = completed.filter((row) => row.b2.unsupportedHighRiskOutcome > 0).length;
+  const leaks = completed.filter((row) => row.b2.mustOmitLeak > 0).length;
   const nativeLeaks = completed.filter((row) => row.b0.mustOmitLeak > 0).length;
-  const recovered = completed.length === 0 ? 0 : completed.filter((row) => row.b1.recovered).length / completed.length;
+  const recovered = completed.length === 0 ? 0 : completed.filter((row) => row.b2.recovered).length / completed.length;
   const toolPairViolation = completed.reduce(
     (sum, row) => sum + row.b0.toolPairViolation + row.b1.toolPairViolation + row.b2.toolPairViolation + row.f0.toolPairViolation,
     0,
@@ -781,25 +781,25 @@ export async function runLivePairedW2(opts: {
     b0Native &&
     f0Ceiling;
 
-  const quality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b1.quality));
-  const polarity = pairedOrZero(completed.map((row) => row.b0.polarity), completed.map((row) => row.b1.polarity));
-  const time = pairedOrZero(completed.map((row) => row.b0.time), completed.map((row) => row.b1.time));
-  const update = pairedOrZero(completed.map((row) => row.b0.update), completed.map((row) => row.b1.update));
-  const abstention = pairedOrZero(completed.map((row) => row.b0.abstention), completed.map((row) => row.b1.abstention));
+  const quality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b2.quality));
+  const polarity = pairedOrZero(completed.map((row) => row.b0.polarity), completed.map((row) => row.b2.polarity));
+  const time = pairedOrZero(completed.map((row) => row.b0.time), completed.map((row) => row.b2.time));
+  const update = pairedOrZero(completed.map((row) => row.b0.update), completed.map((row) => row.b2.update));
+  const abstention = pairedOrZero(completed.map((row) => row.b0.abstention), completed.map((row) => row.b2.abstention));
   const closedLoop = pairedOrZero(
     completed.map((row) => row.b0.closedLoopSuccess),
-    completed.map((row) => row.b1.closedLoopSuccess),
+    completed.map((row) => row.b2.closedLoopSuccess),
   );
   const constraintB0 = completed.reduce((sum, row) => sum + row.b0.constraintViolation, 0);
-  const constraintB1 = completed.reduce((sum, row) => sum + row.b1.constraintViolation, 0);
+  const constraintB1 = completed.reduce((sum, row) => sum + row.b2.constraintViolation, 0);
 
   const tokenBase = efficiencyRows.length > 0 ? efficiencyRows : sameCut;
   const tokenDeltas = tokenBase.map((row) =>
-    relativeDelta(row.b1.probeInputTokens ?? row.b1.summaryTokens, row.b0.probeInputTokens ?? row.b0.summaryTokens),
+    relativeDelta(row.b2.probeInputTokens ?? row.b2.summaryTokens, row.b0.probeInputTokens ?? row.b0.summaryTokens),
   );
   const tokenMedianRelativeDelta = tokenDeltas.length > 0 ? median(tokenDeltas) : 0;
   const costB0 = tokenBase.filter((row) => row.b0.closedLoopSuccess === 1).map((row) => row.b0.probeInputTokens ?? row.b0.summaryTokens);
-  const costB1 = tokenBase.filter((row) => row.b1.closedLoopSuccess === 1).map((row) => row.b1.probeInputTokens ?? row.b1.summaryTokens);
+  const costB1 = tokenBase.filter((row) => row.b2.closedLoopSuccess === 1).map((row) => row.b2.probeInputTokens ?? row.b2.summaryTokens);
   const costPerSuccessRelativeDelta =
     costB0.length > 0 && costB1.length > 0 ? relativeDelta(median(costB1), median(costB0)) : 0;
   const overflow = completed.filter((row) => row.family === "overflow");
@@ -810,7 +810,7 @@ export async function runLivePairedW2(opts: {
     overflow.map((row) => row.b1.quality),
   );
   const realized = tokenBase.map(
-    (row) => (row.b0.probeInputTokens ?? row.b0.summaryTokens) - (row.b1.probeInputTokens ?? row.b1.summaryTokens),
+    (row) => (row.b0.probeInputTokens ?? row.b0.summaryTokens) - (row.b2.probeInputTokens ?? row.b2.summaryTokens),
   );
   const realizedNetMedian = realized.length > 0 ? median(realized) : 0;
   const budgetMismatchRate = completed.length === 0 ? 1 : completed.filter((row) => row.b0.budgetMismatch).length / completed.length;
@@ -870,6 +870,9 @@ export async function runLivePairedW2(opts: {
     generatedAt: new Date().toISOString(),
     baselineArm: "B0",
     candidateArms: ["B1", "B2", "F0"],
+    primaryCandidateArm: "B2",
+    diagnostics: { baselineArm: "B0", candidateArm: "B1" },
+    containment: { baselineArm: "B0", arm: "F0" },
     corpusClass: "synthetic-public-replayed-into-live-pi-session",
     publicationClaim,
     usedWalkthroughConstants: false,
