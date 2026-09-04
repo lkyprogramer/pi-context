@@ -616,8 +616,8 @@ async function runNaturalFamily(input: {
       work: async (rpc) => {
         nativeStarted = true;
         const grown = await growLive(rpc, native.sessionFile, {
-          maxTurns: Number(process.env.PCR_W5_MAX_TURNS ?? 40),
-          charsPerTurn: Number(process.env.PCR_W5_CHARS_PER_TURN ?? 40_000),
+          maxTurns: boundedPositiveInteger(process.env.PCR_W5_MAX_TURNS, 40, 100),
+          charsPerTurn: boundedPositiveInteger(process.env.PCR_W5_CHARS_PER_TURN, 40_000, 200_000),
           stopOnCompact: true,
           stopOnError: true,
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
@@ -642,8 +642,8 @@ async function runNaturalFamily(input: {
       work: async (rpc) => {
         pcrStarted = true;
         const grown = await growLive(rpc, pcr.sessionFile, {
-          maxTurns: Number(process.env.PCR_W5_MAX_TURNS ?? 40),
-          charsPerTurn: Number(process.env.PCR_W5_CHARS_PER_TURN ?? 40_000),
+          maxTurns: boundedPositiveInteger(process.env.PCR_W5_MAX_TURNS, 40, 100),
+          charsPerTurn: boundedPositiveInteger(process.env.PCR_W5_CHARS_PER_TURN, 40_000, 200_000),
           stopOnCompact: true,
           stopOnError: true,
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
