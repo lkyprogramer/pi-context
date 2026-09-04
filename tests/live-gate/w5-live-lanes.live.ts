@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
@@ -12,7 +12,10 @@ import {
 } from "./w5-live-lanes.js";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
-const outDir = join(repoRoot, "artifacts/runs/w2-v3-live");
+const configuredRoot = process.env.PCR_W5_LIVE_OUT_DIR;
+const outDir = configuredRoot
+  ? (isAbsolute(configuredRoot) ? configuredRoot : resolve(repoRoot, configuredRoot))
+  : join(repoRoot, "artifacts/runs/w2-v3-live");
 
 describe("W5 live lanes vs unmodified Pi window", () => {
   it("runs the selected 200k / overflow / recursive lane without lowering keepRecent", async () => {

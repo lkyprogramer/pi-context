@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PiRpc } from "./pi-rpc.js";
 import { resolvePiCli } from "./pi-resolve.js";
@@ -62,7 +62,10 @@ function filler(chars: number): string {
 
 function liveOutputDir(repoRoot: string, lane: "natural-threshold" | "overflow" | "recursive"): string {
   const configuredRoot = process.env.PCR_W5_LIVE_OUT_DIR;
-  return configuredRoot ? join(repoRoot, configuredRoot, lane) : join(repoRoot, "artifacts/runs/w2-v3-live", lane);
+  const root = configuredRoot
+    ? (isAbsolute(configuredRoot) ? configuredRoot : resolve(repoRoot, configuredRoot))
+    : join(repoRoot, "artifacts/runs/w2-v3-live");
+  return join(root, lane);
 }
 
 export function assertNaturalThresholdPolicy(input: {
