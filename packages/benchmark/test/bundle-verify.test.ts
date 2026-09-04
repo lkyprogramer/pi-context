@@ -6,9 +6,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertFailedSampleRetained,
+  assertRunEpoch,
   collectPerArmRawEvidence,
   createGateEngine,
   keepFailedArmEvidence,
+  hashRunEpoch,
   scrubSecretsWithProvenance,
   sealRunBundle,
   verifyRawRunBundle,
@@ -58,6 +60,18 @@ function sample(): RunBundle {
 }
 
 describe("immutable run bundle", () => {
+  it("seals one run epoch and rejects mismatched resume state", () => {
+    const epoch = hashRunEpoch({
+      head: "c".repeat(40), packageSha256: "a".repeat(64), model: "model",
+      provider: "provider", corpus: "corpus", scorer: "scorer", config: "config",
+    });
+    expect(epoch).toMatch(/^[a-f0-9]{64}$/u);
+    expect(() => assertRunEpoch(epoch, epoch)).not.toThrow();
+    expect(() => assertRunEpoch(epoch, "b".repeat(64))).toThrowError(
+      expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
+    );
+  });
+
   it("detects tampering and rejects absolute paths", () => {
     const engine = createGateEngine({
       workspaceId: "ws-report",
@@ -156,4 +170,3 @@ describe("immutable run bundle", () => {
     expect(existsSync(join(armDir, "store.sha256"))).toBe(true);
   });
 });
-
