@@ -29,3 +29,30 @@ export interface CursorCallbackInput {
   cursor: HostSessionCursor;
   signal?: AbortSignal;
 }
+
+/**
+ * Provenance for token counters that may come from the host, a persisted
+ * assistant entry, or an estimator.  `unavailable` is intentionally explicit:
+ * an unknown counter is represented by `null`, never by a synthetic zero.
+ */
+export type TokenSource = "host" | "assistant-entry" | "estimated" | "unavailable";
+
+export interface TokenMeasurement {
+  value: number | null;
+  source: TokenSource;
+}
+
+/** Token counters attached to a request usage record. */
+export interface TokenUsageProvenance {
+  serializedInputTokens: TokenMeasurement;
+  providerReservedTokens: TokenMeasurement;
+  uncachedInputTokens: TokenMeasurement;
+  cacheReadTokens: TokenMeasurement;
+  cacheWriteTokens: TokenMeasurement;
+  outputTokens: TokenMeasurement;
+  totalBilledTokens: TokenMeasurement;
+}
+
+/** Backwards-compatible aliases for callers that use the shorter vocabulary. */
+export type TokenValue = TokenMeasurement;
+export type TokenField = TokenMeasurement;

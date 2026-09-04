@@ -1,6 +1,11 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { join, resolve } from "node:path";
-import { domainHash, type HostMessage, type RuntimeCursor } from "../../../packages/contracts/src/index.js";
+import {
+  domainHash,
+  type HostMessage,
+  type RuntimeCursor,
+  type TokenUsageProvenance,
+} from "../../../packages/contracts/src/index.js";
 import {
   createCacheReceipt,
   createCheckpointRenderer,
@@ -372,7 +377,12 @@ export interface ProductionUserTurnRuntime {
   close(): Promise<void>;
   lastWorkspaceId(): string | undefined;
   lastSnapshotHash(workspaceId?: string): Promise<string | undefined>;
-  lastRequestUsage(workspaceId?: string): Promise<(ReturnType<typeof reconcileUsage> & { viewId: string; outputHash: string; estimateBucket: ReturnType<typeof estimateErrorBucket> }) | undefined>;
+  lastRequestUsage(workspaceId?: string): Promise<(ReturnType<typeof reconcileUsage> & {
+    viewId: string;
+    outputHash: string;
+    estimateBucket: ReturnType<typeof estimateErrorBucket>;
+    tokenProvenance: TokenUsageProvenance;
+  }) | undefined>;
   lastPointers(): ReadonlyArray<{ ref: string; kind: string }>;
   ensure(ctx: ExtensionContext): Promise<void>;
   openSession(ctx: PiSessionContext): Promise<RuntimeSession>;
@@ -425,7 +435,12 @@ interface WorkspaceUserTurnOwner {
   readonly leaseStore: RecallLeaseStore;
   readonly recalledBySession: Map<string, string[]>;
   readonly lastContinuityHash: Map<string, string>;
-  lastUsage?: ReturnType<typeof reconcileUsage> & { viewId: string; outputHash: string; estimateBucket: ReturnType<typeof estimateErrorBucket> };
+  lastUsage?: ReturnType<typeof reconcileUsage> & {
+    viewId: string;
+    outputHash: string;
+    estimateBucket: ReturnType<typeof estimateErrorBucket>;
+    tokenProvenance: TokenUsageProvenance;
+  };
   readonly telemetry: ReturnType<typeof createMemorySink>;
   service(cursor: RuntimeCursor): UserTurnService;
   observation(cursor: RuntimeCursor): ObservationService;
@@ -828,6 +843,12 @@ export function registerProductionUserTurnRuntime(
     const model = ctx?.model;
     const contextWindow = typeof model?.contextWindow === "number" ? model.contextWindow : undefined;
     const maxOutputTokens = typeof model?.maxTokens === "number" ? model.maxTokens : undefined;
+    // Keep an explicit host reserve (including a legitimate zero) distinct
+    // from the adapter's historical `0` fallback when the host omits it.
+    const modelProviderReservedTokens = (model as unknown as { providerReservedTokens?: unknown } | undefined)?.providerReservedTokens;
+    const hostProviderReservedTokens = typeof modelProviderReservedTokens === "number"
+      ? modelProviderReservedTokens
+      : undefined;
     if (contextWindow === undefined || maxOutputTokens === undefined) {
       // Route is calibrated on materialize from the request; register a fail-closed placeholder only when host limits exist.
     }
@@ -1116,15 +1137,21 @@ export function registerProductionUserTurnRuntime(
             warnings: materializerMode === "pcr" ? leaseMessages(activeLeases) : [],
           });
           const serializedInputTokens = view.tokenEstimate;
-          const usage = reconcileUsage({
+          const actual = request.providerUsage?.inputTokens;
+          const providerReservedTokens = hostProviderReservedTokens
+            ?? (request.providerReservedTokens !== undefined && request.providerReservedTokens !== 0
+              ? request.providerReservedTokens
+              : undefined);
+          const usageWithReserve = reconcileUsage({
             serializedInputTokens,
             cacheHit: (request.providerUsage?.cacheReadTokens ?? 0) > 0,
             overflowRetry: request.reason === "overflow-retry",
             ...(request.providerUsage === undefined ? {} : { provider: request.providerUsage }),
+            ...(request.providerUsageSources === undefined ? {} : { providerUsageSources: request.providerUsageSources }),
+            ...(providerReservedTokens === undefined ? {} : { providerReservedTokens }),
           });
-          const actual = request.providerUsage?.inputTokens;
           owner.lastUsage = {
-            ...usage,
+            ...usageWithReserve,
             viewId: view.viewId,
             outputHash: view.outputHash,
             estimateBucket: estimateErrorBucket(serializedInputTokens, actual ?? serializedInputTokens),
@@ -1137,10 +1164,10 @@ export function registerProductionUserTurnRuntime(
             viewId: view.viewId,
             dimensions: { outputHash: view.outputHash },
             metrics: {
-              serializedInputTokens: usage.serializedInputTokens,
-              cacheReadTokens: usage.cacheReadTokens,
-              cacheWriteTokens: usage.cacheWriteTokens,
-              uncachedInputTokens: usage.uncachedInputTokens,
+              serializedInputTokens: usageWithReserve.serializedInputTokens,
+              cacheReadTokens: usageWithReserve.cacheReadTokens,
+              cacheWriteTokens: usageWithReserve.cacheWriteTokens,
+              uncachedInputTokens: usageWithReserve.uncachedInputTokens,
             },
           }, owner.telemetry);
           return view;

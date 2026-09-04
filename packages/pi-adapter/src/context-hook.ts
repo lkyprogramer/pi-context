@@ -1,4 +1,10 @@
-import { domainHash, type HostMessage, type MaterializedView, type RuntimeCursor } from "@pcr/contracts";
+import {
+  domainHash,
+  type HostMessage,
+  type MaterializedView,
+  type RuntimeCursor,
+  type TokenSource,
+} from "@pcr/contracts";
 import { createMessageCodec, type PiMessageEnvelope } from "./message-codec.js";
 import { toHostMessages, toPiMessages, type PiAgentMessage } from "./message-conversion.js";
 
@@ -34,6 +40,7 @@ export interface ContextHookSession {
       cacheWriteTokens?: number;
       outputTokens?: number;
     };
+    providerUsageSources?: ProviderUsageSources;
     reason: "normal" | "overflow-retry" | "manual-preview";
     now: number;
     signal?: AbortSignal;
@@ -74,7 +81,11 @@ export interface ContextHookCtx {
     cacheWriteTokens?: number;
     outputTokens?: number;
   };
+  providerUsageSources?: ProviderUsageSources;
 }
+
+export type ProviderUsageField = "inputTokens" | "cacheReadTokens" | "cacheWriteTokens" | "outputTokens";
+export type ProviderUsageSources = Partial<Record<ProviderUsageField, Extract<TokenSource, "host" | "assistant-entry">>>;
 
 export interface NormalizedPcrError {
   code: string;
@@ -270,11 +281,23 @@ export function cacheTokensFromSessionEntries(entries: readonly unknown[]): {
 
 function mergeProviderUsage(
   ctx: ContextHookCtx,
-): ContextHookCtx["providerUsage"] {
+): { usage: ContextHookCtx["providerUsage"]; sources: ProviderUsageSources } {
   const entries = typeof ctx.sessionManager?.getEntries === "function" ? ctx.sessionManager.getEntries() : [];
   const fromEntries = cacheTokensFromSessionEntries(entries);
   const merged = { ...fromEntries, ...(ctx.providerUsage ?? {}) };
-  return Object.keys(merged).length === 0 ? undefined : merged;
+  const sources: ProviderUsageSources = {};
+  for (const key of Object.keys(fromEntries) as ProviderUsageField[]) sources[key] = "assistant-entry";
+  for (const key of Object.keys(ctx.providerUsage ?? {}) as ProviderUsageField[]) {
+    const value = ctx.providerUsage?.[key];
+    if (asNonNegativeInt(value) !== undefined) sources[key] = "host";
+  }
+  for (const [key, source] of Object.entries(ctx.providerUsageSources ?? {})) {
+    if (source === "host" || source === "assistant-entry") sources[key as ProviderUsageField] = source;
+  }
+  return {
+    usage: Object.keys(merged).length === 0 ? undefined : merged,
+    sources,
+  };
 }
 
 function thinkingTextFromPiMessages(messages: readonly PiAgentMessage[]): string {
@@ -365,7 +388,7 @@ export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRe
       const reasoningText = thinkingTextFromPiMessages(event.messages);
       const providerReservedTokens = typeof ctx.providerReservedTokens === "number"
         ? ctx.providerReservedTokens
-        : (typeof ctx.model?.providerReservedTokens === "number" ? ctx.model.providerReservedTokens : 0);
+        : (typeof ctx.model?.providerReservedTokens === "number" ? ctx.model.providerReservedTokens : undefined);
       const providerUsage = mergeProviderUsage(ctx);
       const view = await session.materialize({
         operationId: "op_context",
@@ -373,12 +396,13 @@ export function registerContextHook(pi: ExtensionAPI, registry: RuntimeSessionRe
         canonicalMessages: canonical,
         currentContextWindow: ctx.currentContextWindow,
         maxOutputTokens: ctx.maxOutputTokens,
-        providerReservedTokens,
+        ...(providerReservedTokens === undefined ? {} : { providerReservedTokens }),
         imageReserveTokens: imageBlocks * 765,
         ...(systemText === undefined ? {} : { systemText }),
         ...(toolsJson === undefined ? {} : { toolsJson }),
         ...(reasoningText.length === 0 ? {} : { reasoningText }),
-        ...(providerUsage === undefined ? {} : { providerUsage }),
+        ...(providerUsage.usage === undefined ? {} : { providerUsage: providerUsage.usage }),
+        ...(Object.keys(providerUsage.sources).length === 0 ? {} : { providerUsageSources: providerUsage.sources }),
         reason: "normal",
         now: typeof ctx.now === "number" && Number.isFinite(ctx.now) ? ctx.now : 0,
         signal: ctx.signal,

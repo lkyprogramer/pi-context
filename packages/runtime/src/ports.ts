@@ -9,7 +9,11 @@ import type {
   RuntimeCursor,
   SourceClass,
   UserTurnRecord,
+  TokenSource,
 } from "@pcr/contracts";
+
+export type ProviderUsageField = "inputTokens" | "cacheReadTokens" | "cacheWriteTokens" | "outputTokens";
+export type ProviderUsageSources = Partial<Record<ProviderUsageField, Extract<TokenSource, "host" | "assistant-entry">>>;
 
 export interface RuntimeSessionScope {
   workspaceId: string;
@@ -76,6 +80,7 @@ export interface MaterializationRequest extends CancellableRuntimeOperation {
     cacheWriteTokens?: number;
     outputTokens?: number;
   };
+  providerUsageSources?: ProviderUsageSources;
   reason: "normal" | "overflow-retry" | "manual-preview";
   now: number;
   /** B1 identity context vs B2 PCR materializer+recall. Default is pcr. */

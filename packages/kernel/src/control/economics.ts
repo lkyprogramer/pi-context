@@ -1,4 +1,4 @@
-import { domainHash } from "../../../contracts/src/index.js";
+import { domainHash, type TokenMeasurement, type TokenSource, type TokenUsageProvenance } from "../../../contracts/src/index.js";
 
 export interface TelemetryEvent {
   schemaVersion: 1;
@@ -21,6 +21,98 @@ export interface EconomicsSample {
   qualityRegression: number;
   staleBackground: number;
   taskSucceeded?: boolean;
+}
+
+/** Provider counters as exposed by a host or recovered assistant entry. */
+export interface TokenUsageProvenanceInput {
+  serializedInputTokens: number;
+  providerReservedTokens?: number;
+  providerReservedSource?: Extract<TokenSource, "host" | "estimated" | "unavailable">;
+  providerUsage?: Partial<{
+    inputTokens: number;
+    cacheReadTokens: number;
+    cacheWriteTokens: number;
+    outputTokens: number;
+  }>;
+  /** Identifies whether providerUsage came directly from the host or an assistant entry. */
+  providerUsageSource?: Extract<TokenSource, "host" | "assistant-entry">;
+  cacheHit?: boolean;
+}
+
+function validToken(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0;
+}
+
+/** Construct a source-bearing token field, failing closed for invalid values. */
+export function tokenMeasurement(value: unknown, source: TokenSource): TokenMeasurement {
+  if (source === "unavailable") return { value: null, source };
+  return validToken(value) ? { value, source } : { value: null, source: "unavailable" };
+}
+
+function providerMeasurement(
+  value: unknown,
+  source: Extract<TokenSource, "host" | "assistant-entry"> | undefined,
+): TokenMeasurement {
+  return source === undefined
+    ? { value: null, source: "unavailable" }
+    : tokenMeasurement(value, source);
+}
+
+function totalMeasurement(values: readonly TokenMeasurement[]): TokenMeasurement {
+  if (values.some((entry) => entry.value === null)) return { value: null, source: "unavailable" };
+  const value = values.reduce((sum, entry) => sum + (entry.value ?? 0), 0);
+  const sources = new Set(values.map((entry) => entry.source));
+  const source = sources.size === 1 ? values[0]!.source : "estimated";
+  return tokenMeasurement(value, source);
+}
+
+/**
+ * Attach explicit provenance to provider reserve/cache usage.
+ *
+ * Missing provider counters remain `null + unavailable`; in particular they
+ * are not silently converted to the historical numeric zero fallback.
+ */
+export function createTokenUsageProvenance(input: TokenUsageProvenanceInput): TokenUsageProvenance {
+  const serializedInputTokens = tokenMeasurement(input.serializedInputTokens, "estimated");
+  const reserveSource = input.providerReservedSource
+    ?? (input.providerReservedTokens === undefined ? "unavailable" : "host");
+  const providerReservedTokens = reserveSource === "unavailable"
+    ? { value: null, source: "unavailable" as const }
+    : tokenMeasurement(input.providerReservedTokens, reserveSource);
+  const provider = input.providerUsage;
+  const providerSource = provider === undefined ? undefined : (input.providerUsageSource ?? "host");
+  const cacheHit = input.cacheHit ?? (validToken(provider?.cacheReadTokens) && provider!.cacheReadTokens! > 0);
+  const cacheReadTokens = provider?.cacheReadTokens !== undefined
+    ? providerMeasurement(provider.cacheReadTokens, providerSource)
+    : cacheHit
+      ? tokenMeasurement(serializedInputTokens.value, "estimated")
+      : { value: null, source: "unavailable" as const };
+  const uncachedInputTokens = provider?.inputTokens !== undefined
+    ? providerMeasurement(provider.inputTokens, providerSource)
+    : cacheHit
+      ? { value: null, source: "unavailable" as const }
+      : tokenMeasurement(serializedInputTokens.value, "estimated");
+  const cacheWriteTokens = provider?.cacheWriteTokens !== undefined
+    ? providerMeasurement(provider.cacheWriteTokens, providerSource)
+    : { value: null, source: "unavailable" as const };
+  const outputTokens = provider?.outputTokens !== undefined
+    ? providerMeasurement(provider.outputTokens, providerSource)
+    : { value: null, source: "unavailable" as const };
+  const totalBilledTokens = totalMeasurement([
+    uncachedInputTokens,
+    cacheReadTokens,
+    cacheWriteTokens,
+    outputTokens,
+  ]);
+  return {
+    serializedInputTokens,
+    providerReservedTokens,
+    uncachedInputTokens,
+    cacheReadTokens,
+    cacheWriteTokens,
+    outputTokens,
+    totalBilledTokens,
+  };
 }
 
 export function calculateRealizedNetValue(x: EconomicsSample): number {

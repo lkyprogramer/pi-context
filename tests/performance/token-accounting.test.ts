@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { computeEffectiveInput, createRuntimeCursor, createTokenPricer, estimateTextTokens, reservesFromPayload } from "@pcr/core";
+import { createTokenUsageProvenance } from "../../packages/kernel/src/control/economics.js";
 
 function cursor() {
   return createRuntimeCursor({
@@ -64,5 +65,34 @@ describe("token accounting", () => {
     expect(shrunk).toBeLessThan(110000);
     expect(enlarged.toolsTokens).toBeGreaterThan(0);
     expect(enlarged.reasoningTokens).toBeGreaterThan(0);
+  });
+
+  it("keeps provider reserve/cache token provenance explicit", () => {
+    const host = createTokenUsageProvenance({
+      serializedInputTokens: 120,
+      providerReservedTokens: 24,
+      providerUsage: { inputTokens: 40, cacheReadTokens: 80, cacheWriteTokens: 5, outputTokens: 12 },
+    });
+    expect(host.providerReservedTokens).toEqual({ value: 24, source: "host" });
+    expect(host.cacheReadTokens).toEqual({ value: 80, source: "host" });
+    expect(host.cacheWriteTokens).toEqual({ value: 5, source: "host" });
+    expect(host.outputTokens).toEqual({ value: 12, source: "host" });
+
+    const assistantEntry = createTokenUsageProvenance({
+      serializedInputTokens: 120,
+      providerUsage: { cacheReadTokens: 100 },
+      providerUsageSource: "assistant-entry",
+      cacheHit: true,
+    });
+    expect(assistantEntry.cacheReadTokens).toEqual({ value: 100, source: "assistant-entry" });
+    expect(assistantEntry.cacheWriteTokens).toEqual({ value: null, source: "unavailable" });
+    expect(assistantEntry.uncachedInputTokens).toEqual({ value: null, source: "unavailable" });
+
+    const unknown = createTokenUsageProvenance({ serializedInputTokens: 120 });
+    expect(unknown.providerReservedTokens).toEqual({ value: null, source: "unavailable" });
+    expect(unknown.cacheReadTokens).toEqual({ value: null, source: "unavailable" });
+    expect(unknown.cacheWriteTokens).toEqual({ value: null, source: "unavailable" });
+    expect(unknown.outputTokens).toEqual({ value: null, source: "unavailable" });
+    expect(unknown.totalBilledTokens).toEqual({ value: null, source: "unavailable" });
   });
 });
