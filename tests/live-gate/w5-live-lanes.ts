@@ -127,6 +127,22 @@ export function evaluateBranchLineage(entries: readonly Record<string, unknown>[
   };
 }
 
+export function evaluateForkLineage(
+  sourceEntries: readonly Record<string, unknown>[],
+  forkEntries: readonly Record<string, unknown>[],
+  sourceSession: string,
+  branchId: string,
+): { parentSessionMatches: boolean; parentExists: boolean; sourceSiblingExists: boolean; branchPresent: boolean; activeHeadPresent: boolean; ok: boolean } {
+  const branch = forkEntries.find((entry) => entry.id === branchId);
+  const parentId = typeof branch?.parentId === "string" ? branch.parentId : null;
+  const forkHeader = forkEntries.find((entry) => entry.type === "session");
+  const parentExists = parentId !== null && (sourceEntries.some((entry) => entry.id === parentId) || forkEntries.some((entry) => entry.id === parentId));
+  const sourceSiblingExists = parentId !== null && sourceEntries.some((entry) => typeof entry.id === "string" && entry.id !== branchId && entry.parentId === parentId);
+  const activeHeadPresent = forkEntries.some((entry) => entry.id === branchId);
+  const parentSessionMatches = typeof forkHeader?.parentSession === "string" && forkHeader.parentSession === sourceSession;
+  return { parentSessionMatches, parentExists, sourceSiblingExists, branchPresent: branch !== undefined, activeHeadPresent, ok: parentSessionMatches && parentExists && sourceSiblingExists && activeHeadPresent };
+}
+
 function lastAssistantUsage(sessionFile: string): {
   inputTokens: number | null;
   outputTokens: number | null;
@@ -963,6 +979,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const toolEvents: Array<Record<string, unknown>> = [];
   const treeEvents: Array<Record<string, unknown>> = [];
   let branchLineage: ReturnType<typeof evaluateBranchLineage> | null = null;
+  let forkEvidence: ReturnType<typeof evaluateForkLineage> | null = null;
+  let branchEntryId = "";
   let providerStarted = false;
   try {
     await withRpc({
@@ -1009,6 +1027,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         const fork = await rpc.request({ type: "fork", entryId: branchFrom }, 30_000);
         if (fork.success !== true) throw new Error(fork.error ?? "fork failed");
         const state = await rpc.request({ type: "get_state" }, 15_000);
+        const sourceSessionFile = arm.sessionFile;
         const sessionFile = (state.data as { sessionFile?: unknown } | undefined)?.sessionFile;
         if (typeof sessionFile !== "string" || sessionFile === arm.sessionFile) throw new Error("fork did not create a new session");
         arm.sessionFile = sessionFile;
@@ -1017,16 +1036,30 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
         });
         const branchEntry = [...branchedEntries].reverse().find((entry) => entry.message && (entry.message as Record<string, unknown>).role === "user" && JSON.stringify(entry).includes("sibling-branch"));
-        branchLineage = evaluateBranchLineage(branchedEntries, typeof branchEntry?.id === "string" ? branchEntry.id : "");
+        branchEntryId = typeof branchEntry?.id === "string" ? branchEntry.id : "";
+        const sourceEntries = branchBefore.trim().split("\n").flatMap((line) => {
+          try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
+        });
+        forkEvidence = evaluateForkLineage(sourceEntries, branchedEntries, sourceSessionFile, branchEntryId);
+        branchLineage = evaluateBranchLineage(branchedEntries, branchEntryId);
         treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));
-        history.push({ phase: "branch-after-compact-2", ok: branchLineage.ok && branchBefore.length > 0 });
+        history.push({ phase: "branch-after-compact-2", ok: forkEvidence.ok && branchBefore.length > 0 });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
+      },
+    });
+    await withRpc({
+      sessionFile: arm.sessionFile,
+      cwd: arm.cwd,
+      agentDir: arm.agentDir,
+      extension,
+      autoCompact: true,
+      tools: true,
+      work: async (rpc) => {
         const restartedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
         });
-        branchLineage = evaluateBranchLineage(restartedEntries);
-        history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && branchLineage.ok });
+        history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && restartedEntries.some((entry) => entry.id === branchEntryId) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
@@ -1077,7 +1110,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     newLeafId: String(event.newLeafId ?? event.toId ?? event.leafId ?? ""),
     eventHash: sha(canonical(event)),
   })).filter((event, index, all) => all.findIndex((candidate) => candidate.eventHash === event.eventHash) === index);
-  const branchNavigationObserved = treeEventEvidence.some((event) => event.oldLeafId.length > 0 && event.newLeafId.length > 0)
+  const branchNavigationObserved = Boolean(forkEvidence && (forkEvidence as { ok?: boolean }).ok === true)
+    || treeEventEvidence.some((event) => event.oldLeafId.length > 0 && event.newLeafId.length > 0)
     || toolEventEvidence.some((event) => /branch|navigate|tree/i.test(event.toolName));
   const report = {
     lane: "recursive-long-horizon",
@@ -1094,6 +1128,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     toolEvents: toolEventEvidence,
     treeEvents: treeEventEvidence,
     branchLineage,
+    forkEvidence,
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
     oracleComplete: ["compact-1", "temporal-update", "grow-before-compact-2", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
       && compactions.length >= 3

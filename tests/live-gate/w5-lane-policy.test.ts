@@ -5,6 +5,7 @@ import {
   assertNaturalThresholdPolicy,
   assertOverflowPolicy,
   evaluateBranchLineage,
+  evaluateForkLineage,
   isContextOverflowError,
 } from "./w5-live-lanes.js";
 
@@ -100,5 +101,21 @@ describe("W5 long-horizon lane policy", () => {
       { id: "u-branch", parentId: "root" },
       { id: "tail", parentId: "u-branch" },
     ]).restartHeadPresent).toBe(false);
+  });
+
+  it("accepts fork lineage only when the new session points to the source", () => {
+    const source = [
+      { type: "session", id: "source", parentSession: undefined },
+      { id: "root", parentId: null },
+      { id: "front", parentId: "root" },
+    ];
+    const fork = [
+      { type: "session", id: "fork", parentSession: "/tmp/source.jsonl" },
+      { id: "root", parentId: null },
+      { id: "branch", parentId: "root" },
+      { id: "assistant", parentId: "branch" },
+    ];
+    expect(evaluateForkLineage(source, fork, "/tmp/source.jsonl", "branch").ok).toBe(true);
+    expect(evaluateForkLineage(source, fork, "/tmp/other.jsonl", "branch").ok).toBe(false);
   });
 });
