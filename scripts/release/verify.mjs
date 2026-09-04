@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,18 +13,38 @@ function fail(code) {
 
 const unrun = join(root, "artifacts/runs/w2-v3-live/UNRUN.md");
 const publication = join(root, "artifacts/runs/w2-v3-live/run-manifest.json");
+const pairedPublication = join(root, "artifacts/runs/w2-v3-live/paired-gate/run-manifest.json");
 const natural = join(root, "artifacts/runs/w2-v3-live/natural-threshold/report.json");
 const overflow = join(root, "artifacts/runs/w2-v3-live/overflow/report.json");
 const recursive = join(root, "artifacts/runs/w2-v3-live/recursive/report.json");
 
 if (existsSync(unrun)) fail("PCR_PUBLICATION_RUN_MISSING");
-if (!existsSync(publication)) fail("PCR_PUBLICATION_RUN_MISSING");
+if (!existsSync(publication) && !existsSync(pairedPublication)) fail("PCR_PUBLICATION_RUN_MISSING");
 
-const manifest = JSON.parse(readFileSync(publication, "utf8"));
+const publicationManifest = JSON.parse(readFileSync(publication, "utf8"));
+const hashManifest = JSON.parse(readFileSync(pairedPublication, "utf8"));
+const manifest = { ...publicationManifest, ...hashManifest };
 for (const field of ["artifactBytesSha256", "canonicalJsonSha256"]) {
-  if (typeof manifest[field] !== "string" || !/^[a-f0-9]{64}$/u.test(manifest[field])) {
+  if (typeof hashManifest[field] !== "string" || !/^[a-f0-9]{64}$/u.test(hashManifest[field])) {
     fail(`PCR_PUBLICATION_HASH_MISSING:${field}`);
   }
+}
+const reportPath = join(root, "artifacts/runs/w2-v3-live/paired-gate/report.json");
+if (!existsSync(reportPath)) fail("PCR_PUBLICATION_RUN_MISSING");
+const reportBytes = readFileSync(reportPath);
+const report = JSON.parse(reportBytes.toString("utf8"));
+const canonical = (value) => value === null || typeof value !== "object"
+  ? JSON.stringify(value)
+  : Array.isArray(value)
+    ? `[${value.map(canonical).join(",")}]`
+    : `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
+const byteHash = createHash("sha256").update(reportBytes).digest("hex");
+const canonicalHash = createHash("sha256").update(canonical(report), "utf8").digest("hex");
+if (manifest.artifactBytesSha256 !== byteHash || manifest.canonicalJsonSha256 !== canonicalHash) {
+  fail("PCR_PUBLICATION_HASH_MISMATCH");
+}
+if (hashManifest.files?.["report.json"] !== byteHash) {
+  fail("PCR_PUBLICATION_REPORT_HASH_MISMATCH");
 }
 if (manifest.publicationClaim === true) fail("PCR_PUBLICATION_CLAIM_WITHOUT_LIVE");
 if (manifest.status === "unrun" || (manifest.completedPairs ?? 0) < 300) fail("PCR_PUBLICATION_RUN_MISSING");

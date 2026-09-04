@@ -1001,8 +1001,8 @@ export async function runLivePairedW2(opts: {
   };
   const reportPath = join(outDir, "report.json");
   writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
-  const digest = createHash("sha256").update(JSON.stringify(report)).digest("hex");
   const reportBytes = `${JSON.stringify(report, null, 2)}\n`;
+  const digest = createHash("sha256").update(reportBytes, "utf8").digest("hex");
   const reportArtifactBytesSha256 = createHash("sha256").update(reportBytes, "utf8").digest("hex");
   const reportCanonicalJsonSha256 = hashRunBundle(report);
   const gateDecision = {
