@@ -143,7 +143,9 @@ function nvmBin(): string {
 }
 
 function redactError(error: unknown): string {
-  const text = error instanceof Error ? error.message : String(error);
+  const secret = process.env.PCR_LIVE_API_KEY?.trim();
+  let text = error instanceof Error ? error.message : String(error);
+  if (secret) text = text.split(secret).join("[redacted]");
   return text
     .replace(/sk-[A-Za-z0-9._-]+/gu, "[redacted]")
     .replace(/Bearer\s+[A-Za-z0-9._-]+/giu, "Bearer [redacted]")
@@ -247,14 +249,16 @@ function copyAgentConfig(target: LiveTarget): string {
   const models = join(homedir(), ".pi/agent/models.json");
   if (!existsSync(models)) throw new Error("missing ~/.pi/agent/models.json");
   const agentDir = mkdtempSync(join(tmpdir(), "pcr-cache-ablation-agent-"));
-  const root = JSON.parse(readFileSync(models, "utf8")) as Record<string, any>;
-  const provider = root.providers?.[target.provider];
-  if (!provider?.models?.some((item: { id?: string }) => item.id === target.model)) {
+  try {
+  const root = JSON.parse(readFileSync(models, "utf8")) as Record<string, unknown>;
+  const providers = (root.providers && typeof root.providers === "object" && !Array.isArray(root.providers))
+    ? root.providers as Record<string, unknown> : {};
+  const provider = providers[target.provider] as { models?: Array<{ id?: string }> } | undefined;
+  if (!provider?.models?.some((item) => item.id === target.model)) {
     const baseUrl = process.env.PCR_LIVE_BASE_URL?.trim();
     const apiKey = process.env.PCR_LIVE_API_KEY?.trim();
     if (!baseUrl || !apiKey) throw new Error(`provider/model is not configured: ${target.provider}/${target.model}`);
-    root.providers ??= {};
-    root.providers[target.provider] = {
+    providers[target.provider] = {
       baseUrl,
       api: "openai-completions",
       apiKey,
@@ -262,6 +266,7 @@ function copyAgentConfig(target: LiveTarget): string {
       models: [{ id: target.model, name: target.model, reasoning: false, input: ["text"], contextWindow: 200_192, maxTokens: 16_384, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }],
     };
   }
+  root.providers = providers;
   writeFileSync(join(agentDir, "models.json"), `${JSON.stringify(root, null, 2)}\n`);
   const auth = join(homedir(), ".pi/agent/auth.json");
   if (existsSync(auth)) copyFileSync(auth, join(agentDir, "auth.json"));
@@ -271,6 +276,10 @@ function copyAgentConfig(target: LiveTarget): string {
     compaction: { enabled: false, reserveTokens: 16_384, keepRecentTokens: 2_048 },
   }, null, 2)}\n`);
   return agentDir;
+  } catch (error) {
+    rmSync(agentDir, { recursive: true, force: true });
+    throw error;
+  }
 }
 
 function modelConfigSha256(): string | null {
@@ -293,7 +302,7 @@ function loadModelConfig(target: LiveTarget): LiveTarget {
   };
   const models = root.providers?.[target.provider]?.models ?? [];
   if (!models.some((item) => item.id === target.model)) {
-    if (!process.env.PCR_LIVE_BASE_URL || !process.env.PCR_LIVE_API_KEY) {
+    if (!process.env.PCR_LIVE_BASE_URL?.trim() || !process.env.PCR_LIVE_API_KEY?.trim()) {
       throw new Error(`provider/model is not configured: ${target.provider}/${target.model}`);
     }
   }
