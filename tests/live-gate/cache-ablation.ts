@@ -275,7 +275,7 @@ function copyAgentConfig(target: LiveTarget): string {
       api: "openai-completions",
       apiKey,
       authHeader: true,
-      models: [{ id: target.model, name: target.model, reasoning: false, input: ["text"], contextWindow: 262_144, maxTokens: 16_384, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }],
+      models: [{ id: target.model, name: target.model, reasoning: false, input: ["text"], contextWindow: 200_192, maxTokens: 16_384, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }],
     };
   }
   root.providers = providers;

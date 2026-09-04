@@ -17,7 +17,7 @@ import { LIVE_MODEL, LIVE_PROVIDER, LIVE_RESERVE_TOKENS } from "./w1-session-jso
 export { LIVE_RESERVE_TOKENS };
 
 export const PI_DEFAULT_KEEP_RECENT = 20_000;
-export const LIVE_CONTEXT_WINDOW = 262_144;
+export const LIVE_CONTEXT_WINDOW = 200_192;
 export const NATURAL_THRESHOLD_TOKENS = LIVE_CONTEXT_WINDOW - LIVE_RESERVE_TOKENS;
 
 export type W5LiveProfile = "natural" | "overflow" | "recursive" | "all";
@@ -244,7 +244,7 @@ function copyAgent(keepRecentTokens: number): string {
         ...template,
         baseUrl: process.env.PCR_LIVE_BASE_URL,
         apiKey: process.env.PCR_LIVE_API_KEY,
-        models: [{ id: modelId, name: modelId, reasoning: false, input: ["text"], contextWindow: 262144, maxTokens: LIVE_RESERVE_TOKENS, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }],
+        models: [{ id: modelId, name: modelId, reasoning: false, input: ["text"], contextWindow: LIVE_CONTEXT_WINDOW, maxTokens: LIVE_RESERVE_TOKENS, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }],
       },
     };
     writeFileSync(join(agentDir, "models.json"), `${JSON.stringify(source, null, 2)}\n`);
