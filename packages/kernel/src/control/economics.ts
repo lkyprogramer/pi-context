@@ -37,6 +37,33 @@ export interface TokenUsageProvenanceInput {
   /** Identifies whether providerUsage came directly from the host or an assistant entry. */
   providerUsageSource?: Extract<TokenSource, "host" | "assistant-entry">;
   cacheHit?: boolean;
+  /** Optional immutable price snapshot used to derive a monetary amount. */
+  pricing?: TokenPricingTable;
+}
+
+export interface TokenPricingTable {
+  version: string;
+  currency: string;
+  inputPerToken: number;
+  outputPerToken: number;
+  /** Fraction of the regular input price charged for cache reads. */
+  cacheReadDiscount?: number;
+  cacheWritePerToken?: number;
+}
+
+export interface MonetaryCost {
+  value: number;
+  currency: string;
+  priceTableVersion: string;
+}
+
+export interface TokenEconomicsBreakdown {
+  /** Serialized request size, independent of provider cache accounting. */
+  logicalTokens: TokenMeasurement;
+  /** Provider-observed input tokens (uncached input plus cache reads). */
+  effectiveInput: TokenMeasurement;
+  /** Null when usage or the complete price/cache-discount snapshot is unknown. */
+  monetaryCost: MonetaryCost | null;
 }
 
 function validToken(value: unknown): value is number {
@@ -72,7 +99,7 @@ function totalMeasurement(values: readonly TokenMeasurement[]): TokenMeasurement
  * Missing provider counters remain `null + unavailable`; in particular they
  * are not silently converted to the historical numeric zero fallback.
  */
-export function createTokenUsageProvenance(input: TokenUsageProvenanceInput): TokenUsageProvenance {
+export function createTokenUsageProvenance(input: TokenUsageProvenanceInput): TokenUsageProvenance & TokenEconomicsBreakdown {
   const serializedInputTokens = tokenMeasurement(input.serializedInputTokens, "estimated");
   const reserveSource = input.providerReservedSource
     ?? (input.providerReservedTokens === undefined ? "unavailable" : "host");
@@ -104,6 +131,15 @@ export function createTokenUsageProvenance(input: TokenUsageProvenanceInput): To
     cacheWriteTokens,
     outputTokens,
   ]);
+  const logicalTokens = serializedInputTokens;
+  const effectiveInput = totalMeasurement([uncachedInputTokens, cacheReadTokens]);
+  const monetaryCost = calculateMonetaryCost({
+    uncachedInputTokens,
+    cacheReadTokens,
+    cacheWriteTokens,
+    outputTokens,
+    pricing: input.pricing,
+  });
   return {
     serializedInputTokens,
     providerReservedTokens,
@@ -112,7 +148,39 @@ export function createTokenUsageProvenance(input: TokenUsageProvenanceInput): To
     cacheWriteTokens,
     outputTokens,
     totalBilledTokens,
+    logicalTokens,
+    effectiveInput,
+    monetaryCost,
   };
+}
+
+function calculateMonetaryCost(input: {
+  uncachedInputTokens: TokenMeasurement;
+  cacheReadTokens: TokenMeasurement;
+  cacheWriteTokens: TokenMeasurement;
+  outputTokens: TokenMeasurement;
+  pricing?: TokenPricingTable;
+}): MonetaryCost | null {
+  const pricing = input.pricing;
+  if (!pricing || typeof pricing.version !== "string" || pricing.version.length === 0
+    || typeof pricing.currency !== "string" || pricing.currency.length === 0
+    || !validPrice(pricing.inputPerToken) || !validPrice(pricing.outputPerToken)) return null;
+  const cacheReadDiscount = pricing.cacheReadDiscount;
+  if (cacheReadDiscount === undefined || !validPrice(cacheReadDiscount) || cacheReadDiscount > 1) return null;
+  const cacheWriteRate = pricing.cacheWritePerToken;
+  if (input.cacheWriteTokens.value !== 0
+    && (cacheWriteRate === undefined || !validPrice(cacheWriteRate))) return null;
+  if ([input.uncachedInputTokens, input.cacheReadTokens, input.cacheWriteTokens, input.outputTokens]
+    .some((entry) => entry.value === null)) return null;
+  const value = (input.uncachedInputTokens.value! * pricing.inputPerToken)
+    + (input.cacheReadTokens.value! * pricing.inputPerToken * cacheReadDiscount)
+    + (input.cacheWriteTokens.value! * (cacheWriteRate ?? pricing.inputPerToken))
+    + (input.outputTokens.value! * pricing.outputPerToken);
+  return { value, currency: pricing.currency, priceTableVersion: pricing.version };
+}
+
+function validPrice(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
 export function calculateRealizedNetValue(x: EconomicsSample): number {

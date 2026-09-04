@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { computeRealizedNet } from "@pcr/core";
+import { createTokenUsageProvenance } from "../../packages/kernel/src/control/economics.js";
 
 describe("cache-adjusted realized net", () => {
   it("prices cache rewrite after the eligible prefix and zeros benefits on failure", () => {
@@ -30,5 +31,40 @@ describe("cache-adjusted realized net", () => {
     expect(failed.avoidedOverflow).toBe(0);
     expect(failed.failureCost).toBe(190_000 * 2);
     expect(failed.net).toBeLessThan(success.net);
+  });
+
+  it("keeps logical/effective input separate from optional monetary cost", () => {
+    const usage = createTokenUsageProvenance({
+      serializedInputTokens: 100,
+      providerUsage: {
+        inputTokens: 20,
+        cacheReadTokens: 80,
+        cacheWriteTokens: 5,
+        outputTokens: 10,
+      },
+      pricing: {
+        version: "route-v2",
+        currency: "USD",
+        inputPerToken: 2,
+        outputPerToken: 3,
+        cacheReadDiscount: 0.1,
+        cacheWritePerToken: 2,
+      },
+    });
+    expect(usage.logicalTokens).toEqual({ value: 100, source: "estimated" });
+    expect(usage.effectiveInput).toEqual({ value: 100, source: "host" });
+    expect(usage.monetaryCost).toEqual({ value: 96, currency: "USD", priceTableVersion: "route-v2" });
+    expect("billedTokens" in usage).toBe(false);
+  });
+
+  it("does not invent monetary cost when cache discount is unknown", () => {
+    const usage = createTokenUsageProvenance({
+      serializedInputTokens: 100,
+      providerUsage: { inputTokens: 100, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 10 },
+      pricing: { version: "route-v2", currency: "USD", inputPerToken: 2, outputPerToken: 3 },
+    });
+    expect(usage.logicalTokens.value).toBe(100);
+    expect(usage.effectiveInput.value).toBe(100);
+    expect(usage.monetaryCost).toBeNull();
   });
 });

@@ -30,7 +30,10 @@ describe("pair-preserving realized net", () => {
       ],
     });
     expect(report.pairs).toBe(1);
-    expect(report.nets.map((item) => item.caseId)).toEqual(["a"]);
+    expect(report.measurements.map((item) => item.caseId)).toEqual(["a"]);
+    expect(report.logicalTokens.deltaMedian).toBe(60);
+    expect(report.effectiveInput.deltaMedian).toBe(60);
+    expect(report.monetaryCost).toBeNull();
   });
 
   it("fails closed when usage is missing", () => {
@@ -73,6 +76,42 @@ describe("pair-preserving realized net", () => {
     const cheap = pairPreservingCost({ prices, cacheReadPricePerToken: 0, samples: [sample] });
     const dear = pairPreservingCost({ prices, cacheReadPricePerToken: 3, samples: [sample] });
     expect(cheap.pairs).toBe(1);
-    expect(dear.costDeltaMedian).toBe(cheap.costDeltaMedian);
+    expect(dear.monetaryCost?.deltaMedian).toBe(cheap.monetaryCost?.deltaMedian);
+  });
+
+  it("does not turn an unknown cache discount into a free cache read", () => {
+    const report = pairPreservingCost({
+      prices,
+      samples: [{
+        caseId: "unknown-discount",
+        baseline: { serializedInputTokens: 80, uncachedInputTokens: 0, cacheReadTokens: 80, cacheWriteTokens: 0, outputTokens: 0, succeeded: true },
+        candidate: { serializedInputTokens: 40, uncachedInputTokens: 40, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 0, succeeded: true },
+        summaryTokens: 0,
+        recallTokens: 0,
+        rewriteTokens: 0,
+        overflowAvoided: false,
+      }],
+    });
+    expect(report.logicalTokens.deltaMedian).toBe(40);
+    expect(report.effectiveInput.deltaMedian).toBe(40);
+    expect(report.monetaryCost).toBeNull();
+  });
+
+  it("prices monetary cost only with a complete cache discount snapshot", () => {
+    const report = pairPreservingCost({
+      prices,
+      cacheReadDiscount: 0.1,
+      cacheWritePricePerToken: 5,
+      samples: [{
+        caseId: "priced",
+        baseline: { serializedInputTokens: 100, uncachedInputTokens: 20, cacheReadTokens: 80, cacheWriteTokens: 4, outputTokens: 10, succeeded: true },
+        candidate: { serializedInputTokens: 50, uncachedInputTokens: 50, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 10, succeeded: true },
+        summaryTokens: 0,
+        recallTokens: 0,
+        rewriteTokens: 0,
+        overflowAvoided: false,
+      }],
+    });
+    expect(report.monetaryCost).toEqual({ baselineMedian: 116, candidateMedian: 140, deltaMedian: -24 });
   });
 });
