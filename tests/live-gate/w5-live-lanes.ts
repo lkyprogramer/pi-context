@@ -1007,7 +1007,12 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
         : Promise.all([runNaturalThreshold(repoRoot), runProviderOverflow(repoRoot), runRecursiveLive(repoRoot)]);
   run.then((report) => {
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-    const failed = Array.isArray(report) ? false : report && typeof report === "object" && (report as Record<string, unknown>).oracleComplete === false;
+    const data = !Array.isArray(report) && report && typeof report === "object" ? report as Record<string, unknown> : null;
+    const failed = data !== null && (
+      data.oracleComplete === false
+      || (profile === "recursive-auto" || profile === "recursive" || profile === "long-horizon")
+        && (data.liveProvider !== true || data.threeCompacts !== true)
+    );
     if (failed) process.exitCode = 1;
   }).catch((error) => {
     process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
