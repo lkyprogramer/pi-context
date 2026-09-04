@@ -116,7 +116,14 @@ export function evaluateBranchLineage(entries: readonly Record<string, unknown>[
       && entry.id !== branchId
       && entry.parentId === parentId)
     : false;
-  const restartHeadPresent = byId.has(branchId) && entries.at(-1)?.id === branchId;
+  let restartHeadPresent = false;
+  let cursor = entries.at(-1);
+  const visited = new Set<string>();
+  while (cursor && typeof cursor.id === "string" && !visited.has(cursor.id)) {
+    if (cursor.id === branchId) { restartHeadPresent = true; break; }
+    visited.add(cursor.id);
+    cursor = typeof cursor.parentId === "string" ? byId.get(cursor.parentId) : undefined;
+  }
   return {
     branchId,
     branchParentId: parentId,
@@ -136,7 +143,7 @@ export function evaluateForkLineage(
   const branch = forkEntries.find((entry) => entry.id === branchId);
   const parentId = typeof branch?.parentId === "string" ? branch.parentId : null;
   const forkHeader = forkEntries.find((entry) => entry.type === "session");
-  const parentExists = parentId !== null && (sourceEntries.some((entry) => entry.id === parentId) || forkEntries.some((entry) => entry.id === parentId));
+  const parentExists = parentId !== null && forkEntries.some((entry) => entry.id === parentId);
   const sourceSiblingExists = parentId !== null && sourceEntries.some((entry) => typeof entry.id === "string" && entry.id !== branchId && entry.parentId === parentId);
   const activeHeadPresent = forkEntries.some((entry) => entry.id === branchId);
   const parentSessionMatches = typeof forkHeader?.parentSession === "string" && forkHeader.parentSession === sourceSession;
@@ -1059,7 +1066,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         const restartedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
         });
-        history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && restartedEntries.some((entry) => entry.id === branchEntryId) });
+        branchLineage = evaluateBranchLineage(restartedEntries, branchEntryId);
+        history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && branchLineage.ok });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);

@@ -100,7 +100,7 @@ describe("W5 long-horizon lane policy", () => {
       { id: "front", parentId: "root" },
       { id: "u-branch", parentId: "root" },
       { id: "tail", parentId: "u-branch" },
-    ]).restartHeadPresent).toBe(false);
+    ]).restartHeadPresent).toBe(true);
   });
 
   it("accepts fork lineage only when the new session points to the source", () => {
