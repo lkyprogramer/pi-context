@@ -895,10 +895,10 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       cwd: arm.cwd,
       agentDir: arm.agentDir,
       extension,
-      autoCompact: false,
+      autoCompact: true,
       work: async (rpc) => {
         providerStarted = true;
-        await rpc.compact();
+        await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(80_000)}`, 3 * 60_000);
         history.push({ phase: "compact-1", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
@@ -907,7 +907,6 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         await rpc.promptAndWait(`Grow before compact 2.\n${filler(80_000)}`, 3 * 60_000);
         history.push({ phase: "grow-before-compact-2", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
-        await rpc.compact();
         history.push({ phase: "compact-2", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
@@ -934,12 +933,11 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       cwd: arm.cwd,
       agentDir: arm.agentDir,
       extension,
-      autoCompact: false,
+      autoCompact: true,
       work: async (rpc) => {
         history.push({ phase: "restart-before-compact-3", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
-        await rpc.compact();
         history.push({
           phase: "compact-3",
           ok: true,
