@@ -950,7 +950,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       },
     };
     writeFileSync(arm.sessionFile, `${beforeRestart.trim()}\n${JSON.stringify(branchUser)}\n`);
-    history.push({ phase: "branch-after-compact-2", ok: true });
+    history.push({ phase: "branch-after-compact-2", ok: branchUser.parentId === last.id && existsSync(arm.sessionFile) });
     persistPartial(outDir, "pcr", { history }, arm.sessionFile);
     await withRpc({
       sessionFile: arm.sessionFile,
@@ -961,7 +961,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       tools: true,
       work: async (rpc) => {
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
-        history.push({ phase: "restart-before-compact-3", ok: true });
+        history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && readFileSync(arm.sessionFile, "utf8").includes('"id":"u-branch"') });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
@@ -995,6 +995,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     threeCompacts: compactions.length >= 3,
     branched: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
     restarted: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
+    branchPointerVerified: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
+    restartContinuityVerified: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     sideEffectGuard: summaries.length > 0 && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
     toolEvents: toolEvents.length,
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
