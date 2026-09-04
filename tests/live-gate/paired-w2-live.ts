@@ -753,18 +753,21 @@ function persistJsonAtomic(path: string, value: unknown): void {
 function loadResumedRows(outDir: string, runEpochHash: string): LivePairRow[] {
   const path = join(outDir, "rows-partial.json");
   if (!existsSync(path)) return [];
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(readFileSync(path, "utf8")) as LivePairRow[];
-    if (!Array.isArray(parsed)) return [];
-    const rows = parsed.filter((row) => typeof row?.id === "string");
-    if (rows.some((row) => row.runEpochHash !== runEpochHash)) {
-      throw new Error("PCR_RUN_EPOCH_MISMATCH: partial rows belong to a different HEAD/package/model/provider/corpus/scorer/config");
-    }
-    return rows;
+    parsed = JSON.parse(readFileSync(path, "utf8"));
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith("PCR_RUN_EPOCH_MISMATCH:")) throw error;
-    return [];
+    throw new Error(`PCR_PARTIAL_ROWS_INVALID: cannot parse ${path}: ${error instanceof Error ? error.message : String(error)}`);
   }
+  if (!Array.isArray(parsed)) throw new Error(`PCR_PARTIAL_ROWS_INVALID: expected an array in ${path}`);
+  if (parsed.some((row) => !row || typeof row !== "object" || typeof (row as { id?: unknown }).id !== "string")) {
+    throw new Error(`PCR_PARTIAL_ROWS_INVALID: malformed row in ${path}`);
+  }
+  const rows = parsed as LivePairRow[];
+  if (rows.some((row) => row.runEpochHash !== runEpochHash)) {
+    throw new Error("PCR_RUN_EPOCH_MISMATCH: partial rows belong to a different HEAD/package/model/provider/corpus/scorer/config");
+  }
+  return rows;
 }
 
 export async function runLivePairedW2(opts: {
