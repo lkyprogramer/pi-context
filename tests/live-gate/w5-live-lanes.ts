@@ -111,7 +111,10 @@ export function evaluateBranchLineage(entries: readonly Record<string, unknown>[
   const parentId = typeof branch?.parentId === "string" ? branch.parentId : null;
   const parent = parentId ? byId.get(parentId) : undefined;
   const sibling = parentId
-    ? entries.some((entry) => entry !== branch && entry.parentId === parentId && entry.id !== branchId)
+    ? entries.some((entry) => entry !== branch
+      && typeof entry.id === "string"
+      && entry.id !== branchId
+      && entry.parentId === parentId)
     : false;
   const restartHeadPresent = byId.has(branchId) && entries.at(-1)?.id === branchId;
   return {

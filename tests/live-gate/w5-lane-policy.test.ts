@@ -89,5 +89,16 @@ describe("W5 long-horizon lane policy", () => {
       { id: "root", parentId: null },
       { id: "u-branch", parentId: "missing", timestamp: "2026-09-04T00:00:00.000Z" },
     ]).parentExists).toBe(false);
+    expect(evaluateBranchLineage([
+      { id: "root", parentId: null },
+      { parentId: "root" },
+      { id: "u-branch", parentId: "root" },
+    ]).isSibling).toBe(false);
+    expect(evaluateBranchLineage([
+      { id: "root", parentId: null },
+      { id: "front", parentId: "root" },
+      { id: "u-branch", parentId: "root" },
+      { id: "tail", parentId: "u-branch" },
+    ]).restartHeadPresent).toBe(false);
   });
 });
