@@ -623,6 +623,7 @@ export async function runNaturalThreshold(repoRoot: string): Promise<Record<stri
       manualCompact: false,
       triggered: false,
       error: "PCR_LIVE_PROVIDER_UNAVAILABLE",
+      oracleComplete: false,
     };
     assertNaturalThresholdPolicy({
       keepRecentTokens: PI_DEFAULT_KEEP_RECENT,
@@ -895,6 +896,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       liveProvider: false,
       compactCount: 0,
       threeCompacts: false,
+      oracleComplete: false,
       error: "PCR_LIVE_PROVIDER_UNAVAILABLE",
     };
     persistReport(outDir, report, []);
@@ -917,7 +919,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         history.push({ phase: "compact-1", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
-        history.push({ phase: "temporal-update", ok: /version\s*7/i.test(lastAssistantText(arm.sessionFile)) });
+        history.push({ phase: "temporal-update", ok: /\bversion\s*7\b/i.test(lastAssistantText(arm.sessionFile)) && !/\bversion\s*6\b/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait(`Grow before compact 2.\n${filler(80_000)}`, 3 * 60_000);
         history.push({ phase: "grow-before-compact-2", ok: true });
@@ -961,10 +963,10 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("What version is currently active? Reply with the version string only.", 3 * 60_000);
-        history.push({ phase: "recall-needed", ok: /version\s*7/i.test(lastAssistantText(arm.sessionFile)) });
+        history.push({ phase: "recall-needed", ok: /^\s*version\s*7\s*$/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("Should we merge sibling-branch now? Answer yes or no.", 3 * 60_000);
-        history.push({ phase: "recall-not-needed", ok: /no|不|否/i.test(lastAssistantText(arm.sessionFile)) });
+        history.push({ phase: "recall-not-needed", ok: /^\s*(?:no|否|不)\s*[.!]?\s*$/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
@@ -984,7 +986,10 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     restarted: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     sideEffectGuard: summaries.every((text) => !/we deployed successfully|已成功部署/i.test(text)),
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
-    oracleComplete: history.filter((row) => ["temporal-update", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "recall-needed", "recall-not-needed"].includes(row.phase)).every((row) => row.ok),
+    oracleComplete: ["temporal-update", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
+      && compactions.length >= 3
+      && summaries.length > 0
+      && summaries.every((text) => !/we deployed successfully|已成功部署/i.test(text)),
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
   rmSync(root, { recursive: true, force: true });
@@ -1007,12 +1012,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
         : Promise.all([runNaturalThreshold(repoRoot), runProviderOverflow(repoRoot), runRecursiveLive(repoRoot)]);
   run.then((report) => {
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-    const data = !Array.isArray(report) && report && typeof report === "object" ? report as Record<string, unknown> : null;
-    const failed = data !== null && (
-      data.oracleComplete === false
-      || (profile === "recursive-auto" || profile === "recursive" || profile === "long-horizon")
-        && (data.liveProvider !== true || data.threeCompacts !== true)
-    );
+    const reports = Array.isArray(report) ? report.filter((item): item is Record<string, unknown> => !!item && typeof item === "object") : [report as Record<string, unknown>];
+    const failed = reports.some((data) => data.oracleComplete !== true
+      || data.liveProvider !== true
+      || ((profile === "recursive-auto" || profile === "recursive" || profile === "long-horizon") && data.threeCompacts !== true));
     if (failed) process.exitCode = 1;
   }).catch((error) => {
     process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
