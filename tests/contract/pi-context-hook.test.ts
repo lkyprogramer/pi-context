@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { stitchContextMessages } from "../../packages/pi-adapter/src/context-hook.js";
 import { toHostMessages, toPiMessages } from "../../packages/pi-adapter/src/message-conversion.js";
 import { createPiHarnessWithRuntime } from "../support/pi.js";
+import type { CursorCallbackInput, UserInputCallbackInput, WorkspaceCallbackContext } from "../../packages/contracts/src/index.js";
+
+const callbackContractFixture = (value: WorkspaceCallbackContext, input: UserInputCallbackInput, cursor: CursorCallbackInput) => ({ value, input, cursor });
 
 function fixturePiMessages() {
   return [
@@ -12,6 +15,14 @@ function fixturePiMessages() {
 }
 
 describe("Pi context hook", () => {
+  it("exposes explicit workspace, input, and cursor callback contracts", () => {
+    const result = callbackContractFixture(
+      { workspaceId: "ws", sessionId: "session", leafId: null },
+      { operationId: "op", cursor: {} as never, content: [], capturedAt: 0 },
+      { cursor: {} as never },
+    );
+    expect(result.value.sessionId).toBe("session");
+  });
   it("returns materialized messages before convertToLlm and aborts on hard safety failure", async () => {
     const host = await createPiHarnessWithRuntime({ materializeError: "PCR_DIRECTIVE_BUDGET_EXCEEDED" });
     const messages = await host.emitContext(fixturePiMessages());
