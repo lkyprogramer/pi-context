@@ -932,6 +932,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         history.push({ phase: "grow-before-compact-2", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         history.push({ phase: "compact-2", ok: inspectCompactions(arm.sessionFile).length > compact2Before, compactCount: inspectCompactions(arm.sessionFile).length });
+        toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
@@ -1004,6 +1005,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       && compactions.length >= 3
       && summaries.length > 0
       && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text))
+      && toolEvents.length > 0
       && !toolEvents.some((event) => /deploy|production|发布|部署/i.test(JSON.stringify(event))),
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
