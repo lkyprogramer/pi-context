@@ -43,6 +43,26 @@ export function hashRunBundle(payload: unknown): string {
   return createHash("sha256").update(canonicalJson(payload), "utf8").digest("hex");
 }
 
+export interface RunEpochIdentity {
+  head: string;
+  packageSha256: string;
+  model: string;
+  provider: string;
+  corpus: string;
+  scorer: string;
+  config: string;
+}
+
+export function hashRunEpoch(identity: RunEpochIdentity): string {
+  return hashRunBundle(identity);
+}
+
+export function assertRunEpoch(expected: string, actual: string): void {
+  if (!/^[a-f0-9]{64}$/u.test(expected) || !/^[a-f0-9]{64}$/u.test(actual) || expected !== actual) {
+    fail("PCR_BUNDLE_TAMPERED", { field: "runEpochHash", expected, actual });
+  }
+}
+
 export function sealRunBundle(bundle: Omit<RunBundle, "signal">, decision: GateDecision): ImmutableRunBundle {
   if (!bundle || typeof bundle !== "object") fail("PCR_BUNDLE_INPUT_INVALID", { field: "bundle" });
   if (!decision || typeof decision !== "object") fail("PCR_BUNDLE_INPUT_INVALID", { field: "decision" });

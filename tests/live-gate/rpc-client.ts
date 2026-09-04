@@ -12,6 +12,7 @@ export interface TransportRetryOptions {
   maxRetries?: number;
   isTransportError?: (error: unknown) => boolean;
   onAttempt?: (attempt: RetryAttempt) => void;
+  attemptLogPath?: string;
 }
 
 function defaultTransportError(error: unknown): boolean {
@@ -38,11 +39,13 @@ export async function withTransportRetry<T>(
       const value = await operation(attempt);
       const record = { attempt, ok: true } as const;
       attemptLog.push(record);
+      if (options.attemptLogPath) appendFileSync(options.attemptLogPath, `${JSON.stringify(record)}\n`);
       options.onAttempt?.(record);
       return { ok: true, value, attempts: attempt, retried: attempt > 1, attemptLog: Object.freeze([...attemptLog]) };
     } catch (error) {
       const record = { attempt, ok: false, error: error instanceof Error ? error.message : String(error) };
       attemptLog.push(record);
+      if (options.attemptLogPath) appendFileSync(options.attemptLogPath, `${JSON.stringify(record)}\n`);
       options.onAttempt?.(record);
       if (!isTransportError(error) || attempt > maxRetries) {
         return { ok: false, error, exhausted: true, attempts: attempt, retried: attempt > 1, attemptLog: Object.freeze([...attemptLog]) };
@@ -51,3 +54,4 @@ export async function withTransportRetry<T>(
   }
   throw new Error("unreachable");
 }
+import { appendFileSync } from "node:fs";

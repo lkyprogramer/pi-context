@@ -79,6 +79,8 @@ export interface ITTStatisticsResult {
   scored: number;
   failed: number;
   retried: number;
+  timeout: number;
+  missing: number;
   /** Primary ITT rates. Every failed, timed-out, or missing arm contributes zero. */
   itt: { baseline: number; candidate: number };
   /** Complete-case calculation, retained for appendix/sensitivity only. */
@@ -284,6 +286,8 @@ export function createClusterStatistics(input: { catalog: ClusterCatalog }): Clu
       const seen = new Set<string>();
       let completed = 0;
       let retried = 0;
+      let timeout = 0;
+      let missing = 0;
       let baselineObserved = 0;
       let candidateObserved = 0;
       let completeBaseline = 0;
@@ -299,6 +303,10 @@ export function createClusterStatistics(input: { catalog: ClusterCatalog }): Clu
         const baseline = validateITTArm(pair.baseline, `pairs[${index}].baseline`);
         const candidate = validateITTArm(pair.candidate, `pairs[${index}].candidate`);
         if (baseline.retried || candidate.retried) retried += 1;
+        if (baseline.status === "timeout") timeout += 1;
+        if (candidate.status === "timeout") timeout += 1;
+        if (baseline.status === "missing") missing += 1;
+        if (candidate.status === "missing") missing += 1;
         if (baseline.status === "completed" && candidate.status !== "missing") baselineObserved += baseline.value ?? 0;
         if (candidate.status === "completed" && baseline.status !== "missing") candidateObserved += candidate.value ?? 0;
         if (baseline.status === "completed" && candidate.status === "completed") {
@@ -321,6 +329,8 @@ export function createClusterStatistics(input: { catalog: ClusterCatalog }): Clu
         scored,
         failed,
         retried,
+        timeout,
+        missing,
         itt: {
           baseline: baselineObserved / sample.planned,
           candidate: candidateObserved / sample.planned,

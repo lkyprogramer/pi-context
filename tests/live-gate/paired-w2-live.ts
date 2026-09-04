@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
   existsSync,
@@ -100,6 +101,29 @@ export interface LivePairRow {
   b1: LiveArmResult;
   b2: LiveArmResult;
   f0: LiveArmResult;
+  runEpochHash: string;
+}
+
+export function computeRunEpochHash(input: {
+  repoRoot: string;
+  profile: LiveProfile;
+  modelLimits: { contextWindow: number; maxTokens: number };
+  cases: readonly W2Case[];
+}): string {
+  const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: input.repoRoot, encoding: "utf8" }).trim();
+  const packageLock = readFileSync(join(input.repoRoot, "pnpm-lock.yaml"));
+  const payload = {
+    head,
+    packageLockSha256: createHash("sha256").update(packageLock).digest("hex"),
+    model: LIVE_MODEL,
+    provider: LIVE_PROVIDER,
+    contextWindow: input.modelLimits.contextWindow,
+    maxTokens: input.modelLimits.maxTokens,
+    corpus: input.cases.map((item) => ({ id: item.id, family: item.family })),
+    scorer: "w2-scorer-v3",
+    config: { profile: input.profile, reserve: LIVE_RESERVE_TOKENS, keepRecent: LIVE_KEEP_RECENT_TOKENS },
+  };
+  return createHash("sha256").update(JSON.stringify(payload), "utf8").digest("hex");
 }
 
 function nvmBin(): string {
@@ -661,6 +685,7 @@ async function runPair(item: W2Case, extensionPath: string, seed: number, artifa
     b1,
     b2,
     f0,
+    runEpochHash: "",
   };
 }
 
@@ -676,12 +701,17 @@ function persistJsonAtomic(path: string, value: unknown): void {
   renameSync(tmp, path);
 }
 
-function loadResumedRows(outDir: string): LivePairRow[] {
+function loadResumedRows(outDir: string, runEpochHash: string): LivePairRow[] {
   const path = join(outDir, "rows-partial.json");
   if (!existsSync(path)) return [];
   try {
     const parsed = JSON.parse(readFileSync(path, "utf8")) as LivePairRow[];
-    return Array.isArray(parsed) ? parsed.filter((row) => typeof row?.id === "string") : [];
+    if (!Array.isArray(parsed)) return [];
+    const rows = parsed.filter((row) => typeof row?.id === "string");
+    if (rows.some((row) => row.runEpochHash !== runEpochHash)) {
+      throw new Error("PCR_RUN_EPOCH_MISMATCH: partial rows belong to a different HEAD/package/model/provider/corpus/scorer/config");
+    }
+    return rows;
   } catch {
     return [];
   }
@@ -705,12 +735,13 @@ export async function runLivePairedW2(opts: {
     contextWindow: homeModels.providers?.openclaw?.models?.[0]?.contextWindow ?? 0,
     maxTokens: homeModels.providers?.openclaw?.models?.[0]?.maxTokens ?? 0,
   };
+  const runEpochHash = computeRunEpochHash({ repoRoot: opts.repoRoot, profile, modelLimits, cases });
   if (modelLimits.maxTokens !== LIVE_RESERVE_TOKENS) {
     throw new Error(`expected unmodified maxTokens=${LIVE_RESERVE_TOKENS}, got ${modelLimits.maxTokens}`);
   }
   const outDir = opts.outDir ?? join(opts.repoRoot, "artifacts/runs/w2-live-native", profile);
   mkdirSync(outDir, { recursive: true });
-  const rows: LivePairRow[] = loadResumedRows(outDir);
+  const rows: LivePairRow[] = loadResumedRows(outDir, runEpochHash);
   const done = new Set(rows.map((row) => row.id));
   if (done.size > 0) {
     process.stderr.write(`[w2-live] resume ${done.size}/${expectedPairs} from rows-partial.json\n`);
@@ -734,6 +765,7 @@ export async function runLivePairedW2(opts: {
         ...row,
         id: pairId,
         seed,
+        runEpochHash,
       };
       rows.push(labeled);
       done.add(pairId);

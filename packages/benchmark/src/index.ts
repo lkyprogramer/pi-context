@@ -226,6 +226,8 @@ export {
 } from "./report/engine.js";
 export {
   BundleVerifyError,
+  assertRunEpoch,
+  hashRunEpoch,
   hashRunBundle,
   sealRunBundle,
   scrubSecretsWithProvenance,
@@ -234,6 +236,7 @@ export {
   type BundleVerifyErrorCode,
   type ImmutableRunBundle,
   type RawRunBundle,
+  type RunEpochIdentity,
 } from "./report/bundle.js";
 export {
   assertFailedSampleRetained,
