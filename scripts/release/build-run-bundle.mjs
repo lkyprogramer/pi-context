@@ -14,7 +14,6 @@ const files = [];
 function walk(dir) {
   for (const name of readdirSync(dir)) {
     if (name === "rc") continue;
-    if (name === "pairs" || name === "session.jsonl" || name === "raw.json") continue;
     const path = join(dir, name);
     if (statSync(path).isDirectory()) walk(path);
     else if (/\.(json|md|txt)$/u.test(name) && statSync(path).size <= 8 * 1024 * 1024) files.push(path);
@@ -54,7 +53,7 @@ freezeDirectories(staging);
 const tarPath = `${archive}.tmp`;
 const packed = spawnSync("tar", ["--format=ustar", "--uid", "0", "--gid", "0", "--uname", "root", "--gname", "root", "--no-xattrs", "--no-acls", "-cf", tarPath, "-C", staging, "."], { encoding: "utf8", env: { ...process.env, TZ: "UTC" } });
 if (packed.status !== 0) throw new Error(packed.stderr || "PCR_RC_ARCHIVE_FAILED");
-const gzipped = spawnSync("gzip", ["-n", "-c", tarPath], { encoding: null });
+const gzipped = spawnSync("gzip", ["-n", "-c", tarPath], { encoding: null, maxBuffer: 256 * 1024 * 1024 });
 if (gzipped.status !== 0 || !gzipped.stdout) throw new Error(gzipped.stderr?.toString() || "PCR_RC_GZIP_FAILED");
 writeFileSync(archive, gzipped.stdout);
 unlinkSync(tarPath);

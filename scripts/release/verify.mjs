@@ -67,8 +67,10 @@ if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
   if (!response.ok) fail("PCR_CHECKS_UNAVAILABLE");
   const checks = await response.json();
   const names = new Map((checks.check_runs ?? []).map((run) => [run.name, run.conclusion]));
-  if (!["Required", "Compatibility"].every((name) => names.get(name) === "success")) fail("PCR_REQUIRED_COMPATIBILITY_NOT_GREEN");
+  if (!["required-gate", "compatibility-required"].every((name) => names.get(name) === "success")) fail("PCR_REQUIRED_COMPATIBILITY_NOT_GREEN");
 } else if (process.env.GITHUB_ACTIONS === "true") {
+  fail("PCR_CHECKS_UNAVAILABLE");
+} else if (process.env.PCR_ALLOW_OFFLINE_VERIFY !== "1") {
   fail("PCR_CHECKS_UNAVAILABLE");
 }
 if (!existsSync(rcArchive) || !rc.archive || typeof rc.archive.sha256 !== "string") fail("PCR_RC_ARCHIVE_MISSING");
