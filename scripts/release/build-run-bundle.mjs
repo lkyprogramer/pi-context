@@ -30,10 +30,12 @@ function freezeDirectories(dir) {
 }
 const SECRET = /(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{8,}|sk-(?:live|t\d+|ff)(?:-[A-Za-z0-9_-]+)?|Bearer\s+[A-Za-z0-9._-]{20,})/giu;
 const PII = [/\/(?:Users|home)\/[A-Za-z0-9._-]+(?:\/[^\s"']+)+/gu, /\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/gu, /\b(?:\d{1,3}\.){3}\d{1,3}\b/gu];
+const SENSITIVE_PREVIEW = /("(?:summaryPreview|probePreview|prompt|toolResult)"\s*:\s*)"(?:\\.|[^"\\])*"/gu;
 const entries = files.sort().map((path) => {
   const original = readFileSync(path, "utf8");
   let text = original.replace(SECRET, "[redacted]");
   for (const pattern of PII) text = text.replace(pattern, "[redacted]");
+  text = text.replace(SENSITIVE_PREVIEW, '$1"[redacted]"');
   SECRET.lastIndex = 0;
   const rel = relative(root, path);
   const staged = join(staging, rel);
