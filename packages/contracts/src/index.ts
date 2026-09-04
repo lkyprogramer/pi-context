@@ -61,6 +61,23 @@ export interface EvaluationUsageLayers {
   providerUsage: { totalTokens: TokenMeasurement };
 }
 
+/** Explicit replicate provenance used by live benchmark reports. */
+export type ReplicateSampling =
+  | { seed: number; temperature: number }
+  | { seedUnsupported: true; replicateIndex: number };
+
+export type ReplicateSamplingSource =
+  | "provider-response"
+  | "provider-seed-unavailable"
+  | "provider-capability-unavailable";
+
+export interface ReplicateProvenance {
+  replicateIndex: number;
+  seedMode: "provider-sampling" | "replicate-repeat";
+  sampling: ReplicateSampling;
+  samplingSource: ReplicateSamplingSource;
+}
+
 /** Backwards-compatible aliases for callers that use the shorter vocabulary. */
 export type TokenValue = TokenMeasurement;
 export type TokenField = TokenMeasurement;

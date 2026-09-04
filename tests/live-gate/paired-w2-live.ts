@@ -13,7 +13,7 @@ import {
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createRuntimeCursor } from "../../packages/core/src/identity/stable-identity.js";
-import type { EvaluationUsageLayers } from "../../packages/contracts/src/index.js";
+import type { EvaluationUsageLayers, ReplicateProvenance } from "../../packages/contracts/src/index.js";
 import { estimateTextTokens } from "../../packages/kernel/src/budget/token-counter.js";
 import {
   assertProductArmText,
@@ -92,13 +92,9 @@ export interface LiveArmResult {
   toolPairViolation: number;
 }
 
-export interface LivePairRow {
+export interface LivePairRow extends ReplicateProvenance {
   id: string;
   family: ScenarioFamily;
-  replicateIndex: number;
-  seedMode: SeedMode;
-  sampling: BoundReplicate["sampling"];
-  samplingSource: "provider-response" | "provider-seed-unavailable" | "provider-capability-unavailable";
   sameCut: boolean;
   expectedFirstKeptId: string;
   b0: LiveArmResult;
