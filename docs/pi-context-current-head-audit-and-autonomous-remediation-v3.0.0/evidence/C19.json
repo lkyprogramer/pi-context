@@ -1,0 +1,19 @@
+{
+  "taskId":"C19",
+  "baseCommit":"b445172b6a225f626d72d796ea5c6976d4029851",
+  "headCommit":"350cfd8baecb9535948cd211436477d854402b4a",
+  "worktreeCleanBefore":true,
+  "commands":[
+    {"phase":"green","command":"corepack pnpm vitest run packages/benchmark/test/statistics.test.ts","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C19-green.log","logSha256":"1e5769ca6d183f1cd2af44ec59bbc525620a4763beab320065568ee621347be9"},
+    {"phase":"full-gate","command":"corepack pnpm typecheck","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C19-typecheck.log","logSha256":"7c9f63c2c8173037122879770fa78ff2552be4204d03e8b656c39526ab9821f7"},
+    {"phase":"full-gate","command":"corepack pnpm test:packed","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C19-packed.log","logSha256":"c0b170b162f8bf37158a1b6b1354aa00de6ca3531980c647adcfd976f2eff4f0"}
+  ],
+  "artifacts":[
+    {"path":"packages/benchmark/src/statistics/cluster.ts","sha256":"f9ea283f46eb9f21cc5b66525f78f89524a3f4befc716203298f495538319359"},
+    {"path":"packages/benchmark/src/index.ts","sha256":"26906c0aed0208e266501fa84851310f2f263754d4eeddee31009c430ebde7a4"},
+    {"path":"packages/benchmark/test/statistics.test.ts","sha256":"95edb3b68e8ea7d1876ac7026ff2b7caf0551b535bda701325344cc55b119ebf"},
+    {"path":"tests/live-gate/rpc-client.ts","sha256":"2d6ba60a1078c4a0785b7299cd215bd586807e2ad1a9210c494c9febbeab2c48"}
+  ],
+  "requirements":{"transportRetryMaxTwo":true,"attemptsSeparatelyObservable":true,"exhaustedTimeoutCountsAsIttFailure":true,"completeCaseAppendixOnly":true,"narrowTypecheckPackedGreen":true},
+  "review":{"status":"accepted","reviewer":"c19-review-subagent-dispatched; static gate verified by primary"}
+}
