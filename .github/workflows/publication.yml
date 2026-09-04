@@ -17,6 +17,7 @@ jobs:
           node-version: "22.19.0"
       - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
       - run: pnpm install --frozen-lockfile
+      - run: test "$GITHUB_REF" = "refs/heads/main"
       - run: node scripts/ci/verify-protection.mjs
       - run: node scripts/release/build-run-bundle.mjs
       - run: node scripts/release/secret-scan.mjs artifacts/runs/rc
