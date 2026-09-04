@@ -1004,14 +1004,16 @@ function findSecret(id: string): string {
 
 function slimArm(arm: LiveArmResult, secrets: string[]) {
   const usageLayers: EvaluationUsageLayers = {
-    checkpoint: { tokens: { value: arm.summaryTokens, source: "estimated" } },
+    checkpoint: { tokens: arm.ok && arm.compactionCount > 0 ? { value: arm.summaryTokens, source: "estimated" } : { value: null, source: "unavailable" } },
     materializedView: { tokens: { value: null, source: "unavailable" } },
     request: {
       inputTokens: arm.probeInputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeInputTokens, source: "assistant-entry" },
       outputTokens: arm.probeOutputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeOutputTokens, source: "assistant-entry" },
     },
     providerUsage: {
-      totalTokens: arm.compactUsageTotal === null ? { value: null, source: "unavailable" } : { value: arm.compactUsageTotal, source: "assistant-entry" },
+      // Compaction hook usage is synthetic bookkeeping, not provider usage.
+      // Keep it unavailable until a real provider response is captured.
+      totalTokens: { value: null, source: "unavailable" },
     },
   };
   return {
