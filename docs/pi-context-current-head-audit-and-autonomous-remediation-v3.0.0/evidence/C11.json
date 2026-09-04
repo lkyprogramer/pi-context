@@ -1,0 +1,55 @@
+{
+  "taskId": "C11",
+  "baseCommit": "a38e7f77bc437b837906ff5e43de25f904525a2d",
+  "headCommit": "b5ab2b55c320cb83b8a995c6029e760c866abb54",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run packages/storage-node/test/recall-lease-store.test.ts packages/runtime/test/proactive-recall.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C11-green.log",
+      "logSha256": "c90528ba62a1b5b9420ec6ae786c1c8c4378f97dc06c0bc96aa93c4bf7778ecf"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C11-typecheck.log",
+      "logSha256": "6ff60bbb154d953045a67bc1bc80e50b3192303f2233f108af79cd2d40559d54"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "packages/storage-node/src/index.ts",
+      "sha256": "d6a42341dbddc3aebfea671e8329fb47ba8585980ed0cec4a4c78fb735591a73"
+    },
+    {
+      "path": "packages/storage-node/src/schema/migrations.ts",
+      "sha256": "cfef77530b6558371e36525c146b65de3dcb32eb8346f94fd4071050457e9302"
+    },
+    {
+      "path": "packages/runtime/src/lease-service.ts",
+      "sha256": "875149adfb05b26dabd673e4d98c06144491badca67af8fdfa7f49e022f3ad18"
+    },
+    {
+      "path": "apps/pi-context-runtime/src/composition-root.ts",
+      "sha256": "398eda3e20a7f37bb52f4d43ba44ff4e4e43f7618af4b55833aa5c1b78d4255e"
+    },
+    {
+      "path": "packages/storage-node/test/recall-lease-store.test.ts",
+      "sha256": "ff7da5f374fe6607fd374077483d247630cfadb3a7afdedd3b7d0b9624ff9a94"
+    }
+  ],
+  "requirements": {
+    "persistentRecallLeaseTable": true,
+    "conditionalConsume": true,
+    "ttlUsesRevokeScope": true,
+    "restartConcurrentCovered": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "c11-code-review"
+  }
+}
