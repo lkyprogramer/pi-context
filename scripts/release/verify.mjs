@@ -74,7 +74,9 @@ if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
       const parsed = Date.parse(value ?? "");
       return Number.isNaN(parsed) ? -1 : parsed;
     };
-    const rank = [timestamp(run.completed_at), timestamp(run.started_at), Number(run.id ?? -1)];
+    // An in-progress rerun must supersede an older success; never let stale
+    // green checks mask a currently running/queued required check.
+    const rank = [run.status === "completed" ? timestamp(run.completed_at) : timestamp(run.started_at), timestamp(run.started_at), Number(run.id ?? -1)];
     const currentRank = current?.rank ?? [-1, -1, -1];
     if (!current || rank[0] > currentRank[0]
       || (rank[0] === currentRank[0] && rank[1] > currentRank[1])
