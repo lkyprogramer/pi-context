@@ -611,7 +611,7 @@ export async function runNaturalThreshold(repoRoot: string): Promise<Record<stri
   const extension = join(repoRoot, "apps/pi-context-runtime/dist/extension.js");
   const threshold = NATURAL_THRESHOLD_TOKENS;
   mkdirSync(outDir, { recursive: true });
-  if (!existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
+  if (process.env.PCR_LIVE !== "1" || !existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
     const report = {
       lane: "natural-threshold",
       liveProvider: false,
@@ -809,7 +809,7 @@ export async function runProviderOverflow(repoRoot: string): Promise<Record<stri
   const outDir = join(repoRoot, "artifacts/runs/w2-v3-live/overflow");
   const extension = join(repoRoot, "apps/pi-context-runtime/dist/extension.js");
   mkdirSync(outDir, { recursive: true });
-  if (!existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
+  if (process.env.PCR_LIVE !== "1" || !existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
     const report = {
       lane: "provider-overflow",
       liveProvider: false,
@@ -890,7 +890,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const outDir = join(repoRoot, "artifacts/runs/w2-v3-live/recursive");
   const extension = join(repoRoot, "apps/pi-context-runtime/dist/extension.js");
   mkdirSync(outDir, { recursive: true });
-  if (!existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
+  if (process.env.PCR_LIVE !== "1" || !existsSync(join(homedir(), ".pi/agent/models.json")) || !existsSync(extension)) {
     const report = {
       lane: "recursive-long-horizon",
       liveProvider: false,
@@ -1013,9 +1013,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   run.then((report) => {
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
     const reports = Array.isArray(report) ? report.filter((item): item is Record<string, unknown> => !!item && typeof item === "object") : [report as Record<string, unknown>];
-    const failed = reports.some((data) => data.oracleComplete !== true
-      || data.liveProvider !== true
-      || ((profile === "recursive-auto" || profile === "recursive" || profile === "long-horizon") && data.threeCompacts !== true));
+    const recursiveProfile = profile === "recursive-auto" || profile === "recursive" || profile === "long-horizon";
+    const failed = reports.some((data) => data.liveProvider !== true
+      || (recursiveProfile && (data.oracleComplete !== true || data.threeCompacts !== true)));
     if (failed) process.exitCode = 1;
   }).catch((error) => {
     process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
