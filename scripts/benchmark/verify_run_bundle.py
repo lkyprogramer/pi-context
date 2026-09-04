@@ -54,6 +54,22 @@ def verify_hashed_bundle(bundle_path: Path, manifest_path: Path) -> None:
         fail("PCR_BUNDLE_TAMPERED:canonicalJsonSha256")
 
 
+def verify_report_manifest(report_path: Path, manifest_path: Path) -> None:
+    raw = report_path.read_bytes()
+    report = json.loads(raw)
+    if not isinstance(report, dict):
+        fail("PCR_PUBLICATION_RUN_MISSING")
+    manifest = json.loads(manifest_path.read_text())
+    byte_hash = hashlib.sha256(raw).hexdigest()
+    canonical_hash = hashlib.sha256(canonical_json(report).encode("utf-8")).hexdigest()
+    if manifest.get("artifactBytesSha256") != byte_hash:
+        fail("PCR_PUBLICATION_HASH_MISMATCH:artifactBytesSha256")
+    if manifest.get("canonicalJsonSha256") != canonical_hash:
+        fail("PCR_PUBLICATION_HASH_MISMATCH:canonicalJsonSha256")
+    if manifest.get("files", {}).get("report.json") != byte_hash:
+        fail("PCR_PUBLICATION_REPORT_HASH_MISMATCH")
+
+
 def verify_arm_dir(arm_dir: Path) -> None:
     session = arm_dir / "session.jsonl"
     if not session.is_file():
@@ -84,6 +100,12 @@ def verify(path: Path) -> None:
         if raw.is_file():
             verify_payload(json.loads(raw.read_text()))
             return
+        report = path / "report.json"
+        run_manifest = path / "run-manifest.json"
+        if report.is_file() or run_manifest.is_file():
+            if not report.is_file() or not run_manifest.is_file():
+                fail("PCR_PUBLICATION_RUN_MISSING")
+            verify_report_manifest(report, run_manifest)
         if arms.is_dir():
             children = [child for child in arms.iterdir() if child.is_dir()]
             if not children:
