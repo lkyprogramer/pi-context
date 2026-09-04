@@ -66,7 +66,23 @@ if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
   const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs?per_page=100`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
   if (!response.ok) fail("PCR_CHECKS_UNAVAILABLE");
   const checks = await response.json();
-  const names = new Map((checks.check_runs ?? []).map((run) => [run.name, run.conclusion]));
+  const latestByName = new Map();
+  for (const run of checks.check_runs ?? []) {
+    if (typeof run?.name !== "string") continue;
+    const current = latestByName.get(run.name);
+    const timestamp = (value) => {
+      const parsed = Date.parse(value ?? "");
+      return Number.isNaN(parsed) ? -1 : parsed;
+    };
+    const rank = [timestamp(run.completed_at), timestamp(run.started_at), Number(run.id ?? -1)];
+    const currentRank = current?.rank ?? [-1, -1, -1];
+    if (!current || rank[0] > currentRank[0]
+      || (rank[0] === currentRank[0] && rank[1] > currentRank[1])
+      || (rank[0] === currentRank[0] && rank[1] === currentRank[1] && rank[2] > currentRank[2])) {
+      latestByName.set(run.name, { conclusion: run.conclusion, rank });
+    }
+  }
+  const names = new Map([...latestByName].map(([name, value]) => [name, value.conclusion]));
   if (!["required-gate", "compatibility-required"].every((name) => names.get(name) === "success")) fail("PCR_REQUIRED_COMPATIBILITY_NOT_GREEN");
 } else if (process.env.GITHUB_ACTIONS === "true") {
   fail("PCR_CHECKS_UNAVAILABLE");
