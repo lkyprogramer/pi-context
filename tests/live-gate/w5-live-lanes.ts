@@ -1037,7 +1037,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     const beforeRestart = readFileSync(arm.sessionFile, "utf8");
     const lines = beforeRestart.trim().split("\n");
     const last = JSON.parse(lines.at(-1) ?? "{}") as { id?: string; parentId?: string };
-    const branchFrom = last.parentId ?? last.id ?? "t1";
+    const branchFrom = last.id ?? last.parentId ?? "t1";
     const branchBefore = readFileSync(arm.sessionFile, "utf8");
     await withRpc({
       sessionFile: arm.sessionFile,
@@ -1121,7 +1121,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       argsHash: sha(args),
       resultHash: sha(result),
       isError: event.isError === true || event.error !== undefined,
-      forbiddenSideEffect: /deploy|publish|production|发布|部署/i.test(`${String(event.toolName ?? event.name ?? "")} ${args} ${result}`),
+      forbiddenSideEffect: /(?:^|[-_.])(?:deploy|publish|release)(?:$|[-_.])/i.test(String(event.toolName ?? event.name ?? ""))
+        || /\b(?:deployment\s+(?:succeeded|successful)|deployed\s+(?:prod|production)|published)\b|已成功部署|部署成功/i.test(result),
       evidenceComplete: toolCallId.length > 0 && (args !== '""' || result !== '""'),
     };
   }).filter((event, index, all) => all.findIndex((candidate) => canonical(candidate) === canonical(event)) === index)
