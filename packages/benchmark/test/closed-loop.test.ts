@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import { createContinuationRunner } from "@pcr/benchmark";
-import { boundedPositiveInteger, isForbiddenSideEffectEvent } from "../../../tests/live-gate/w5-live-lanes.js";
+import { boundedPositiveInteger, evaluateBranchLineage, isForbiddenSideEffectEvent } from "../../../tests/live-gate/w5-live-lanes.js";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
@@ -43,6 +43,23 @@ describe("tools-enabled environment closed-loop", () => {
     expect(boundedPositiveInteger("0", 80_000, 120_000)).toBe(80_000);
     expect(boundedPositiveInteger("120001", 80_000, 120_000)).toBe(80_000);
     expect(boundedPositiveInteger("NaN", 80_000, 120_000)).toBe(80_000);
+  });
+
+  it("evaluates restart lineage across source and fork sessions", () => {
+    const source = [
+      { id: "parent", parentId: "root" },
+      { id: "sibling", parentId: "parent" },
+    ];
+    const fork = [
+      { id: "branch", parentId: "parent" },
+      { id: "head", parentId: "branch" },
+    ];
+    expect(evaluateBranchLineage([...source, ...fork], "branch")).toMatchObject({
+      parentExists: true,
+      isSibling: true,
+      restartHeadPresent: true,
+      ok: true,
+    });
   });
 
   it("fails a public API prohibition and a forbidden deploy", async () => {

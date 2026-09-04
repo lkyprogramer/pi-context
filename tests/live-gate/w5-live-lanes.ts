@@ -1056,6 +1056,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     const entriesBeforeRestart = lines.flatMap((line) => {
       try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
     });
+    const sourceEntriesBeforeRestart = entriesBeforeRestart;
     const branchEntry = [...entriesBeforeRestart].reverse().find((entry) => {
       const message = entry.message;
       return typeof entry.id === "string"
@@ -1108,7 +1109,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         const restartedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
         });
-        branchLineage = evaluateBranchLineage(restartedEntries, branchEntryId);
+        branchLineage = evaluateBranchLineage([...sourceEntriesBeforeRestart, ...restartedEntries], branchEntryId);
         history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && branchLineage.ok });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
