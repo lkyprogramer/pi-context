@@ -17,7 +17,7 @@ import { LIVE_MODEL, LIVE_PROVIDER, LIVE_RESERVE_TOKENS } from "./w1-session-jso
 export { LIVE_RESERVE_TOKENS };
 
 export const PI_DEFAULT_KEEP_RECENT = 20_000;
-export const LIVE_CONTEXT_WINDOW = 200_192;
+export const LIVE_CONTEXT_WINDOW = 262_144;
 export const NATURAL_THRESHOLD_TOKENS = LIVE_CONTEXT_WINDOW - LIVE_RESERVE_TOKENS;
 
 export type W5LiveProfile = "natural" | "overflow" | "recursive" | "all";
@@ -489,8 +489,8 @@ async function runNaturalFamily(input: {
       work: async (rpc) => {
         nativeStarted = true;
         const grown = await growLive(rpc, native.sessionFile, {
-          maxTurns: 40,
-          charsPerTurn: 40_000,
+          maxTurns: Number(process.env.PCR_W5_MAX_TURNS ?? 40),
+          charsPerTurn: Number(process.env.PCR_W5_CHARS_PER_TURN ?? 40_000),
           stopOnCompact: true,
           stopOnError: true,
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
@@ -516,8 +516,8 @@ async function runNaturalFamily(input: {
       work: async (rpc) => {
         pcrStarted = true;
         const grown = await growLive(rpc, pcr.sessionFile, {
-          maxTurns: 40,
-          charsPerTurn: 40_000,
+          maxTurns: Number(process.env.PCR_W5_MAX_TURNS ?? 40),
+          charsPerTurn: Number(process.env.PCR_W5_CHARS_PER_TURN ?? 40_000),
           stopOnCompact: true,
           stopOnError: true,
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
