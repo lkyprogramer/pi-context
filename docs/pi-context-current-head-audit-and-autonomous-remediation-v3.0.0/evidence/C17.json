@@ -1,0 +1,16 @@
+{
+  "taskId":"C17",
+  "baseCommit":"823441c",
+  "headCommit":"006624aed5349182b578e7849b5b0cd0370ff14d",
+  "worktreeCleanBefore":true,
+  "commands":[
+    {"phase":"green","command":"corepack pnpm vitest run tests/w2-gate/head-to-head.test.ts","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C17-green.log","logSha256":"db11e26acca7109d57a23f5119e7287246f936df5115c9d41dff6d2f1cfa5bc7"},
+    {"phase":"full-gate","command":"corepack pnpm typecheck","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C17-typecheck.log","logSha256":"6dfe21a47c00800600f8d47cbfc119025c7a032fa476f0e3bba11885ec81ed0d"}
+  ],
+  "artifacts":[
+    {"path":"tests/live-gate/paired-w2-live.ts","sha256":"2ff25c14c5ded2aeb307e914eeb9e9666a0dc80b0608feadd83e234b13217bc8"},
+    {"path":"tests/w2-gate/head-to-head.test.ts","sha256":"f5005bd873f7249eca91bdc982380cd1c105106755f7988372dcbc32b8a54256"}
+  ],
+  "requirements":{"primaryB2VsB0":true,"b1Diagnostics":true,"f0Containment":true,"narrowAndTypecheckGreen":true,"liveComparisonResidualDisclosed":true},
+  "review":{"status":"accepted","reviewer":"c17-code-review"}
+}
