@@ -157,6 +157,30 @@ function requireCount(value: unknown, field: string): asserts value is number {
   if (!Number.isSafeInteger(value) || (value as number) < 0) failInput(field);
 }
 
+function validateUsageLayers(value: unknown): asserts value is EvaluationUsageLayers {
+  if (!value || typeof value !== "object") failInput("usageLayers");
+  const root = value as Record<string, unknown>;
+  for (const layer of ["checkpoint", "materializedView", "request", "providerUsage"]) {
+    if (!root[layer] || typeof root[layer] !== "object") failInput(`usageLayers.${layer}`);
+  }
+  const measurement = (entry: unknown, field: string): void => {
+    if (!entry || typeof entry !== "object") failInput(field);
+    const row = entry as Record<string, unknown>;
+    if (row.value !== null && (!Number.isSafeInteger(row.value) || (row.value as number) < 0)) failInput(`${field}.value`);
+    if (!(["host", "assistant-entry", "estimated", "unavailable"] as unknown[]).includes(row.source)) failInput(`${field}.source`);
+    if (row.source === "unavailable" && row.value !== null) failInput(`${field}.unavailable`);
+  };
+  const checkpoint = root.checkpoint as Record<string, unknown>;
+  const view = root.materializedView as Record<string, unknown>;
+  const request = root.request as Record<string, unknown>;
+  const provider = root.providerUsage as Record<string, unknown>;
+  measurement(checkpoint.tokens, "usageLayers.checkpoint.tokens");
+  measurement(view.tokens, "usageLayers.materializedView.tokens");
+  measurement(request.inputTokens, "usageLayers.request.inputTokens");
+  measurement(request.outputTokens, "usageLayers.request.outputTokens");
+  measurement(provider.totalTokens, "usageLayers.providerUsage.totalTokens");
+}
+
 function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
@@ -236,6 +260,8 @@ function parseBundle(bundle: RunBundle): RunBundle {
       failInput("publicationClass");
     }
   }
+  if (bundle.usageLayers !== undefined) validateUsageLayers(bundle.usageLayers);
+  if (bundle.liveProvider === true && bundle.gate === "w2-compactor" && bundle.usageLayers === undefined) failInput("usageLayers");
   return bundle;
 }
 
