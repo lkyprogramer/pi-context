@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { computeEffectiveInput, createRuntimeCursor, createTokenPricer, estimateTextTokens, reservesFromPayload } from "@pcr/core";
 import { createTokenUsageProvenance } from "../../packages/kernel/src/control/economics.js";
+import { reconcileUsage } from "../../packages/runtime/src/telemetry/usage.js";
 
 function cursor() {
   return createRuntimeCursor({
@@ -94,5 +95,19 @@ describe("token accounting", () => {
     expect(unknown.cacheWriteTokens).toEqual({ value: null, source: "unavailable" });
     expect(unknown.outputTokens).toEqual({ value: null, source: "unavailable" });
     expect(unknown.totalBilledTokens).toEqual({ value: null, source: "unavailable" });
+  });
+
+  it("preserves per-field host versus assistant-entry provenance", () => {
+    const usage = reconcileUsage({
+      serializedInputTokens: 120,
+      cacheHit: true,
+      overflowRetry: false,
+      provider: { inputTokens: 20, cacheReadTokens: 100 },
+      providerUsageSources: { inputTokens: "host", cacheReadTokens: "assistant-entry" },
+    });
+    expect(usage.tokenProvenance.uncachedInputTokens).toEqual({ value: 20, source: "host" });
+    expect(usage.tokenProvenance.cacheReadTokens).toEqual({ value: 100, source: "assistant-entry" });
+    expect(usage.tokenProvenance.cacheWriteTokens).toEqual({ value: null, source: "unavailable" });
+    expect(usage.tokenProvenance.outputTokens).toEqual({ value: null, source: "unavailable" });
   });
 });
