@@ -123,6 +123,8 @@ export function computeRunEpochHash(input: {
     runnerSha256: sourceSha256("tests/live-gate/paired-w2-live.ts"),
     rpcSha256: sourceSha256("tests/live-gate/pi-rpc.ts"),
     scorerSha256: sourceSha256("tests/w2-gate/scorer.ts"),
+    corpusSha256: sourceSha256("tests/w2-gate/corpus.ts"),
+    sessionShapeSha256: sourceSha256("tests/live-gate/w1-session-jsonl.ts"),
     model: LIVE_MODEL,
     provider: LIVE_PROVIDER,
     contextWindow: input.modelLimits.contextWindow,

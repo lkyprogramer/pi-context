@@ -50,6 +50,8 @@ const epochPayload = {
   runnerSha256: createHash("sha256").update(readFileSync(join(repoRoot, "tests/live-gate/paired-w2-live.ts"))).digest("hex"),
   rpcSha256: createHash("sha256").update(readFileSync(join(repoRoot, "tests/live-gate/pi-rpc.ts"))).digest("hex"),
   scorerSha256: createHash("sha256").update(readFileSync(join(repoRoot, "tests/w2-gate/scorer.ts"))).digest("hex"),
+  corpusSha256: createHash("sha256").update(readFileSync(join(repoRoot, "tests/w2-gate/corpus.ts"))).digest("hex"),
+  sessionShapeSha256: createHash("sha256").update(readFileSync(join(repoRoot, "tests/live-gate/w1-session-jsonl.ts"))).digest("hex"),
   model: "openclaw/Qwen3.8-27B-WORK",
   provider: "openclaw",
   contextWindow: 200192,
