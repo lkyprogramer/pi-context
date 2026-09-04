@@ -211,7 +211,7 @@ function requestObservation(phase: "cold" | "warm", sessionFile: string, error: 
     cacheWriteTokens: usage.cacheWriteTokens,
     uncachedInputTokens: usage.inputTokens,
     providerUsageAvailable: Object.values(usage).some((value) => value !== null),
-    assistantText: latest.text.slice(0, 500),
+    assistantText: redactError(latest.text).slice(0, 500),
     error,
   };
 }
@@ -296,6 +296,8 @@ async function runArm(
   writeSeedSession(sessionFile, cwd, `cache-ablation-${arm}`);
   const agentDir = copyAgentConfig(target);
   const requests: RequestObservation[] = [];
+  const liveEnv = { ...process.env };
+  delete liveEnv.PI_OFFLINE;
   let rpc: PiRpc | null = null;
   try {
     rpc = new PiRpc({
@@ -314,7 +316,7 @@ async function runArm(
         target.model,
       ],
       env: {
-        ...process.env,
+        ...liveEnv,
         PATH: `${nvmBin()}:${process.env.PATH ?? ""}`,
         PI_CODING_AGENT_DIR: agentDir,
         PCR_EVAL_ARM: arm,
@@ -342,7 +344,9 @@ async function runArm(
     }
     const cold = requests.find((item) => item.phase === "cold")!;
     const warm = requests.find((item) => item.phase === "warm")!;
-    const quality = warm.assistantText.includes(QUALITY_QUOTE) && !FORBIDDEN_DEPLOY.test(warm.assistantText) ? 1 : 0;
+    const quality = cold.error === null && warm.error === null
+      && warm.assistantText.includes(QUALITY_QUOTE)
+      && !FORBIDDEN_DEPLOY.test(warm.assistantText) ? 1 : 0;
     const qualityReason = quality === 1
       ? "warm assistant preserved KEEP_STAGING_WINDOW and did not suggest deployment"
       : "warm assistant did not provide the required quote-preserving response";
