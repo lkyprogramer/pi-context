@@ -1049,7 +1049,7 @@ export function registerProductionUserTurnRuntime(
               limits: { maxTurns: 4, maxTokenTurns: 2_000, ttlMs: 15 * 60 * 1_000 },
             }),
           });
-          const recall = materializerMode === "identity" || userText.length === 0
+          let recall = materializerMode === "identity" || userText.length === 0
             ? { kind: "not-needed" as const, page: { items: [] as Array<{ evidenceId: string; quote: string }> } }
             : await recallPolicy.decide({
               cursor,
@@ -1059,15 +1059,20 @@ export function registerProductionUserTurnRuntime(
               signal: request.signal,
             });
           if (materializerMode === "pcr" && recall.kind === "needed") {
-            await owner.leaseStore.consume(cursor, recall.lease.leaseId, {
+            const consumed = await owner.leaseStore.consume(cursor, recall.lease.leaseId, {
               now: clock.now(),
               tokenTurns: recall.page.items.reduce((total, item) => total + item.tokens, 0),
             });
-            const prior = owner.recalledBySession.get(cursor.sessionId) ?? [];
-            owner.recalledBySession.set(
-              cursor.sessionId,
-              [...prior, ...recall.page.items.map((item) => item.evidenceId)].slice(-32),
-            );
+            if (!consumed) {
+              recall = { kind: "not-needed", page: { items: [] } };
+            }
+            if (consumed) {
+              const prior = owner.recalledBySession.get(cursor.sessionId) ?? [];
+              owner.recalledBySession.set(
+                cursor.sessionId,
+                [...prior, ...recall.page.items.map((item) => item.evidenceId)].slice(-32),
+              );
+            }
           }
           const activeLeases = await owner.leaseStore.list(cursor);
           const directoryPointers = mergePointers(

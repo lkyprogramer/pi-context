@@ -161,7 +161,7 @@ export function openWorkspaceRecallLeaseStore(input: OpenWorkspaceRecallLeaseSto
           expires_at_ms = excluded.expires_at_ms, remaining_uses = excluded.remaining_uses, status = excluded.status
           WHERE recall_lease.workspace_id = excluded.workspace_id AND recall_lease.session_id = excluded.session_id
             AND recall_lease.leaf_id IS excluded.leaf_id AND recall_lease.lineage_hash = excluded.lineage_hash
-            AND recall_lease.model_key = excluded.model_key`).run(
+            AND recall_lease.model_key = excluded.model_key AND recall_lease.status = 'active'`).run(
           lease.leaseId, cursor.workspaceId, cursor.sessionId, cursor.leafId, cursor.lineageHash, cursor.modelKey,
           lease.pageId, lease.purpose, "inform", lease.turns, lease.tokenTurns, issuedAt, lease.expiresAt,
           lease.remainingUses, status,

@@ -13,7 +13,7 @@ async function fixture() {
   const database = await openWorkspaceSqliteStore({ dataRoot: root, workspaceId: cursor.workspaceId, busyTimeoutMs: 1000 });
   return { root, cursor, database, store: openWorkspaceRecallLeaseStore({ database }) };
 }
-const lease = (cursor: ReturnType<typeof createRuntimeCursor>, expiresAt = 1000, remainingUses = 2) => ({ leaseId: "ls_test", pageId: "page", purpose: "test", authority: "inform" as const, turns: 0, tokenTurns: 0, issuedAt: 0, expiresAt, remainingUses, status: "active" as const, cursor });
+const lease = (cursor: ReturnType<typeof createRuntimeCursor>, expiresAt = 1000, remainingUses = 2, leaseId = "ls_test") => ({ leaseId, pageId: "page", purpose: "test", authority: "inform" as const, turns: 0, tokenTurns: 0, issuedAt: 0, expiresAt, remainingUses, status: "active" as const, cursor });
 
 describe("durable recall lease store", () => {
   it("consumes conditionally and persists across reopen", async () => {
@@ -36,9 +36,9 @@ describe("durable recall lease store", () => {
     const f = await fixture(); await f.store.put(lease(f.cursor, 1000, 1));
     const results = await Promise.all([f.store.consume(f.cursor, "ls_test", { now: 1 }), f.store.consume(f.cursor, "ls_test", { now: 1 })]);
     expect(results.filter(Boolean)).toHaveLength(1);
-    await f.store.put(lease(f.cursor, 1000, 1));
-    expect(await f.store.revoke(f.cursor, "ls_test")).toBe(true);
-    expect(await f.store.consume(f.cursor, "ls_test", { now: 1 })).toBeNull();
+    await f.store.put(lease(f.cursor, 1000, 1, "ls_revoke"));
+    expect(await f.store.revoke(f.cursor, "ls_revoke")).toBe(true);
+    expect(await f.store.consume(f.cursor, "ls_revoke", { now: 1 })).toBeNull();
     await f.database.close();
   });
 });

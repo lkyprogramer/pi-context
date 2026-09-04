@@ -1,7 +1,7 @@
 {
   "taskId": "C11",
   "baseCommit": "a38e7f77bc437b837906ff5e43de25f904525a2d",
-  "headCommit": "b5ab2b55c320cb83b8a995c6029e760c866abb54",
+  "headCommit": "a16a093ff04c392d4ad5b1c165cd19f78316a82d",
   "worktreeCleanBefore": true,
   "commands": [
     {
@@ -9,14 +9,14 @@
       "command": "corepack pnpm vitest run packages/storage-node/test/recall-lease-store.test.ts packages/runtime/test/proactive-recall.test.ts",
       "exitCode": 0,
       "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C11-green.log",
-      "logSha256": "c90528ba62a1b5b9420ec6ae786c1c8c4378f97dc06c0bc96aa93c4bf7778ecf"
+      "logSha256": "996f2cdb1fc741dc7bdf53d74f96cde9a9fb571a61efb12c2c95fc5f17ec799a"
     },
     {
       "phase": "full-gate",
       "command": "corepack pnpm typecheck",
       "exitCode": 0,
       "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C11-typecheck.log",
-      "logSha256": "6ff60bbb154d953045a67bc1bc80e50b3192303f2233f108af79cd2d40559d54"
+      "logSha256": "0afabb080a5d0896e0ca19c473e0c0040ffd567f61ee116b22065cacf2b52a7b"
     }
   ],
   "artifacts": [

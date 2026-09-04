@@ -11,6 +11,7 @@ import {
   type RecallLease,
   type RecallLeasePort,
 } from "@pcr/core";
+import { randomUUID } from "node:crypto";
 import { domainHash, type ActionAuthority, type RuntimeCursor } from "@pcr/contracts";
 
 export {
@@ -179,7 +180,9 @@ export function createLeaseService(input: CreateLeaseServiceInput): LeaseService
       }
       event.signal?.throwIfAborted();
       const lease: LeaseRecord = {
-        leaseId: `ls_${domainHash("recall-lease", { cursor, pageId: event.pageId }).slice(0, 24)}`,
+        // A terminal lease must never be resurrected by a later grant for the
+        // same page; include the issuance instant when allocating a new row.
+        leaseId: `ls_${domainHash("recall-lease", { cursor, pageId: event.pageId, issuedAt: now, nonce: randomUUID() }).slice(0, 24)}`,
         pageId: event.pageId,
         purpose: event.purpose,
         authority: "inform",
