@@ -45,7 +45,6 @@ import {
   type CompactionJournal,
   type CompactionSnapshotAssembler,
   type LeaseRecord,
-  type LeaseStore,
   type StagedCompactionRecord,
   type BranchChange,
   type CandidateRepository,
@@ -74,6 +73,8 @@ import {
   openWorkspaceSqliteStore,
   openWorkspaceCompactionJournal,
   openWorkspaceStateStore,
+  openWorkspaceRecallLeaseStore,
+  type RecallLeaseStore,
   openWorkspaceUserTurnLedger,
   type EncryptedBlobStore,
   type LocalWorkspaceBlobKeyProvider,
@@ -421,7 +422,7 @@ interface WorkspaceUserTurnOwner {
   readonly compactionJournal: CompactionJournal;
   lastRuntimeSnapshotHash?: string;
   readonly snapshotHashByCursor: Map<string, string>;
-  readonly leases: Map<string, LeaseRecord>;
+  readonly leaseStore: RecallLeaseStore;
   readonly recalledBySession: Map<string, string[]>;
   readonly lastContinuityHash: Map<string, string>;
   lastUsage?: ReturnType<typeof reconcileUsage> & { viewId: string; outputHash: string; estimateBucket: ReturnType<typeof estimateErrorBucket> };
@@ -554,7 +555,7 @@ export function registerProductionUserTurnRuntime(
           evidences,
           compactionJournal,
           snapshotHashByCursor: new Map(),
-          leases: new Map(),
+          leaseStore: openWorkspaceRecallLeaseStore({ database }),
           recalledBySession: new Map(),
           lastContinuityHash: new Map(),
           telemetry: createMemorySink(),
@@ -1001,29 +1002,6 @@ export function registerProductionUserTurnRuntime(
             throw Object.assign(new Error("PCR_BUDGET_ROUTE_UNKNOWN"), { code: "PCR_BUDGET_ROUTE_UNKNOWN" });
           }
           const userText = lastAuthenticatedUserText(request.canonicalMessages);
-          const leaseStore: LeaseStore = {
-            async put(lease) {
-              owner.leases.set(`${cursorKey(lease.cursor)}:${lease.leaseId}`, lease);
-            },
-            async get(scope, leaseId) {
-              return owner.leases.get(`${cursorKey(scope)}:${leaseId}`) ?? null;
-            },
-            async findByPage(scope, pageId) {
-              return [...owner.leases.values()].find((row) => (
-                row.pageId === pageId
-                && row.cursor.sessionId === scope.sessionId
-                && row.cursor.workspaceId === scope.workspaceId
-              )) ?? null;
-            },
-            async delete(scope, leaseId) {
-              owner.leases.delete(`${cursorKey(scope)}:${leaseId}`);
-            },
-            async list(scope) {
-              return [...owner.leases.values()].filter((row) => (
-                row.cursor.workspaceId === scope.workspaceId && row.cursor.sessionId === scope.sessionId
-              ));
-            },
-          };
           const materializerMode = resolveProductMaterializerMode({
             requestMode: request.materializerMode,
             optionMode: options.materializerMode,
@@ -1066,7 +1044,7 @@ export function registerProductionUserTurnRuntime(
             },
             leases: createLeaseService({
               cursor,
-              store: leaseStore,
+              store: owner.leaseStore,
               clock,
               limits: { maxTurns: 4, maxTokenTurns: 2_000, ttlMs: 15 * 60 * 1_000 },
             }),
@@ -1081,13 +1059,17 @@ export function registerProductionUserTurnRuntime(
               signal: request.signal,
             });
           if (materializerMode === "pcr" && recall.kind === "needed") {
+            await owner.leaseStore.consume(cursor, recall.lease.leaseId, {
+              now: clock.now(),
+              tokenTurns: recall.page.items.reduce((total, item) => total + item.tokens, 0),
+            });
             const prior = owner.recalledBySession.get(cursor.sessionId) ?? [];
             owner.recalledBySession.set(
               cursor.sessionId,
               [...prior, ...recall.page.items.map((item) => item.evidenceId)].slice(-32),
             );
           }
-          const activeLeases = await leaseStore.list(cursor);
+          const activeLeases = await owner.leaseStore.list(cursor);
           const directoryPointers = mergePointers(
             rows.pointers,
             owner.pointersByCursor.get(cursorKey(cursor)) ?? [],

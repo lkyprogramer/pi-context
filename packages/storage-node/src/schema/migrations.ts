@@ -316,6 +316,36 @@ CREATE INDEX compaction_stage_scope ON compaction_stage (
 );
 `;
 
+const V9_SQL = `
+CREATE TABLE recall_lease (
+  lease_id TEXT PRIMARY KEY CHECK (length(lease_id) > 0),
+  workspace_id TEXT NOT NULL CHECK (
+    length(workspace_id) = 43 AND substr(workspace_id, 1, 3) = 'ws_' AND substr(workspace_id, 4) NOT GLOB '*[^0-9a-f]*'
+  ),
+  session_id TEXT NOT NULL CHECK (length(session_id) > 0),
+  leaf_id TEXT CHECK (leaf_id IS NULL OR length(leaf_id) > 0),
+  lineage_hash TEXT NOT NULL CHECK (length(lineage_hash) = 64 AND lineage_hash NOT GLOB '*[^0-9a-f]*'),
+  model_key TEXT NOT NULL CHECK (length(model_key) > 0),
+  page_id TEXT NOT NULL CHECK (length(page_id) > 0),
+  purpose TEXT NOT NULL CHECK (length(purpose) > 0),
+  authority TEXT NOT NULL CHECK (authority = 'inform'),
+  turns INTEGER NOT NULL CHECK (turns >= 0),
+  token_turns INTEGER NOT NULL CHECK (token_turns >= 0),
+  issued_at_ms INTEGER NOT NULL CHECK (issued_at_ms >= 0),
+  expires_at_ms INTEGER NOT NULL CHECK (expires_at_ms >= issued_at_ms),
+  remaining_uses INTEGER NOT NULL CHECK (remaining_uses >= 0),
+  status TEXT NOT NULL CHECK(status IN ('active','consumed','expired','revoked'))
+) STRICT;
+
+CREATE INDEX recall_lease_scope ON recall_lease (
+  workspace_id, session_id, leaf_id, lineage_hash, model_key, status, lease_id
+);
+
+CREATE INDEX recall_lease_page ON recall_lease (
+  workspace_id, session_id, leaf_id, lineage_hash, model_key, page_id, status
+);
+`;
+
 export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = Object.freeze([
   Object.freeze({ version: 1, name: "workspace-evidence-v1", sql: V1_SQL }),
   Object.freeze({ version: 2, name: "workspace-saga-v2", sql: V2_SQL }),
@@ -325,6 +355,7 @@ export const WORKSPACE_SQLITE_MIGRATIONS: readonly WorkspaceSqliteMigration[] = 
   Object.freeze({ version: 6, name: "workspace-background-candidate-v6", sql: V6_SQL }),
   Object.freeze({ version: 7, name: "workspace-runtime-state-v7", sql: V7_SQL }),
   Object.freeze({ version: 8, name: "workspace-compaction-stage-v8", sql: V8_SQL }),
+  Object.freeze({ version: 9, name: "workspace-recall-lease-v9", sql: V9_SQL }),
 ]);
 
 export const WORKSPACE_SQLITE_SCHEMA_VERSION = WORKSPACE_SQLITE_MIGRATIONS.at(-1)?.version ?? 0;

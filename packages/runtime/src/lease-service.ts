@@ -24,20 +24,30 @@ export {
 
 export interface LeaseRecord extends RecallLease {
   cursor: RuntimeCursor;
+  /** Number of atomic consumes still permitted for this lease. */
+  remainingUses: number;
+  /** Durable lifecycle state. Active leases are eligible for consumption. */
+  status?: "active" | "consumed" | "expired" | "revoked";
+  issuedAt?: number;
 }
 
 export interface LeaseStore {
   put(lease: LeaseRecord): Promise<void>;
   get(cursor: RuntimeCursor, leaseId: string): Promise<LeaseRecord | null>;
-  findByPage(cursor: RuntimeCursor, pageId: string): Promise<LeaseRecord | null>;
+  findByPage(cursor: RuntimeCursor, pageId: string, now?: number): Promise<LeaseRecord | null>;
   delete(cursor: RuntimeCursor, leaseId: string): Promise<void>;
-  list(cursor: RuntimeCursor): Promise<LeaseRecord[]>;
+  list(cursor: RuntimeCursor, now?: number): Promise<LeaseRecord[]>;
+  /** Atomically consume one use. Returns null when scope, TTL or remaining uses deny consumption. */
+  consume?(cursor: RuntimeCursor, leaseId: string, input?: { now?: number; tokenTurns?: number }): Promise<LeaseRecord | null>;
+  /** Revoke an active lease. Returns true only when the conditional update changed a row. */
+  revoke?(cursor: RuntimeCursor, leaseId: string): Promise<boolean>;
 }
 
 export interface LeaseLimits {
   maxTurns: number;
   maxTokenTurns: number;
   ttlMs: number;
+  maxUses?: number;
 }
 
 export interface CreateLeaseServiceInput {
@@ -56,6 +66,13 @@ export interface LeaseService extends RecallLeasePort {
     signal?: AbortSignal;
   }): Promise<LeaseRecord>;
   active(cursor: RuntimeCursor, signal?: AbortSignal): Promise<LeaseRecord[]>;
+  consume(input: {
+    cursor: RuntimeCursor;
+    leaseId: string;
+    tokenTurns?: number;
+    signal?: AbortSignal;
+  }): Promise<LeaseRecord | null>;
+  revoke(input: { cursor: RuntimeCursor; leaseId: string; signal?: AbortSignal }): Promise<boolean>;
 }
 
 export type LeaseServiceErrorCode =
@@ -114,6 +131,9 @@ export function createLeaseService(input: CreateLeaseServiceInput): LeaseService
   if (!Number.isInteger(input.limits.maxTurns) || input.limits.maxTurns <= 0) failMissing("limits.maxTurns");
   if (!Number.isInteger(input.limits.maxTokenTurns) || input.limits.maxTokenTurns <= 0) failMissing("limits.maxTokenTurns");
   if (!Number.isInteger(input.limits.ttlMs) || input.limits.ttlMs <= 0) failMissing("limits.ttlMs");
+  if (input.limits.maxUses !== undefined && (!Number.isInteger(input.limits.maxUses) || input.limits.maxUses <= 0)) {
+    failMissing("limits.maxUses");
+  }
   let bound: RuntimeCursor;
   try {
     bound = snapshotRecallCursor(input.cursor, "input.cursor");
@@ -143,14 +163,17 @@ export function createLeaseService(input: CreateLeaseServiceInput): LeaseService
       const cursor = assertScope(event.cursor, event.signal);
       if (typeof event.pageId !== "string" || event.pageId.length === 0) failInput("event.pageId");
       if (typeof event.purpose !== "string" || event.purpose.length === 0) failInput("event.purpose");
-      const existing = await store.findByPage(cursor, event.pageId);
       const now = clock.now();
       if (!Number.isFinite(now)) failInput("clock.now");
+      const existing = await store.findByPage(cursor, event.pageId, now);
       if (
         existing
         && existing.expiresAt > now
         && existing.turns < limits.maxTurns
         && existing.tokenTurns < limits.maxTokenTurns
+        && existing.remainingUses > 0
+        && existing.status !== "revoked"
+        && existing.status !== "consumed"
       ) {
         return existing;
       }
@@ -163,6 +186,9 @@ export function createLeaseService(input: CreateLeaseServiceInput): LeaseService
         turns: 0,
         tokenTurns: 0,
         expiresAt: now + limits.ttlMs,
+        remainingUses: limits.maxUses ?? limits.maxTurns,
+        status: "active",
+        issuedAt: now,
         cursor,
       };
       await store.put(lease);
@@ -170,7 +196,29 @@ export function createLeaseService(input: CreateLeaseServiceInput): LeaseService
     },
     async active(cursor, signal) {
       const scoped = assertScope(cursor, signal);
-      return store.list(scoped);
+      const now = clock.now();
+      if (!Number.isFinite(now)) failInput("clock.now");
+      return store.list(scoped, now);
+    },
+    async consume(event) {
+      if (!event || typeof event !== "object") failInput("event");
+      const cursor = assertScope(event.cursor, event.signal);
+      if (typeof event.leaseId !== "string" || event.leaseId.length === 0) failInput("event.leaseId");
+      if (event.tokenTurns !== undefined && (!Number.isSafeInteger(event.tokenTurns) || event.tokenTurns < 0)) {
+        failInput("event.tokenTurns");
+      }
+      if (typeof store.consume !== "function") failMissing("store.consume");
+      return store.consume(cursor, event.leaseId, {
+        now: clock.now(),
+        tokenTurns: event.tokenTurns ?? 0,
+      });
+    },
+    async revoke(event) {
+      if (!event || typeof event !== "object") failInput("event");
+      const cursor = assertScope(event.cursor, event.signal);
+      if (typeof event.leaseId !== "string" || event.leaseId.length === 0) failInput("event.leaseId");
+      if (typeof store.revoke !== "function") failMissing("store.revoke");
+      return store.revoke(cursor, event.leaseId);
     },
   };
 }
