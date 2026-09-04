@@ -40,3 +40,8 @@ export {
   type ReadToolOutput,
 } from "./tools/search.js";
 export { createReadTool } from "./tools/read.js";
+
+/** Resolves a host tool callback to the session-owned workspace context. */
+export interface WorkspaceResolver<TContext = unknown, TResult = unknown> {
+  resolve(context?: TContext): Promise<TResult> | TResult;
+}

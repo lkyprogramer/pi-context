@@ -11,6 +11,7 @@ import {
 } from "../../../packages/pi-adapter/src/context-hook.js";
 import { isHardBackgroundPath, registerBackgroundHook } from "../../../packages/pi-adapter/src/background-hook.js";
 import { registerRuntimeTools } from "../../../packages/pi-adapter/src/commands/context.js";
+import type { WorkspaceResolver } from "../../../packages/pi-adapter/src/index.js";
 import { registerSessionLifecycle, toPcrSessionStartReason } from "../../../packages/pi-adapter/src/lifecycle.js";
 import { domainHash, type HostCheckpointDetails, type RuntimeCursor } from "../../../packages/contracts/src/index.js";
 import { createRuntimeCursor, estimateTextTokens } from "../../../packages/core/src/index.js";
@@ -428,7 +429,10 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
     },
     evidence: deferredEvidence,
     claimed: true,
-    resolve: (ctx) => userTurns.resolveTools(ctx),
+    resolve: ((ctx) => userTurns.resolveTools(ctx)) satisfies WorkspaceResolver<
+      { workspaceId?: string; sessionId?: string },
+      { cursor: RuntimeCursor; evidence: unknown; dataRoot: string }
+    >["resolve"],
     commands: {
       status: async (ctx) => {
         try {
