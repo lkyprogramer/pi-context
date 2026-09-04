@@ -47,9 +47,50 @@ export interface McNemarInput {
   signal?: AbortSignal;
 }
 
+/** Outcome for one arm in the intention-to-treat (ITT) denominator. */
+export type ITTArmStatus = "completed" | "failed" | "timeout" | "missing";
+
+export interface ITTArmResult {
+  status: ITTArmStatus;
+  /** Binary or bounded metric value. Failed/missing outcomes are imputed as zero. */
+  value?: number;
+  /** True when at least one pre-registered transport retry was used. */
+  retried?: boolean;
+}
+
+export interface ITTPair {
+  caseId: string;
+  baseline: ITTArmResult;
+  candidate: ITTArmResult;
+}
+
+export interface ITTInput {
+  corpusId: string;
+  /** Number of planned pairs; this denominator is never reduced by missing rows. */
+  planned: number;
+  pairs: readonly ITTPair[];
+  signal?: AbortSignal;
+}
+
+export interface ITTStatisticsResult {
+  planned: number;
+  attempted: number;
+  completed: number;
+  scored: number;
+  failed: number;
+  retried: number;
+  /** Primary ITT rates. Every failed, timed-out, or missing arm contributes zero. */
+  itt: { baseline: number; candidate: number };
+  /** Complete-case calculation, retained for appendix/sensitivity only. */
+  completeCase: { baseline: number; candidate: number; pairs: number };
+  /** Worst-case sensitivity, where all unobserved outcomes are failures. */
+  worstCase: { baseline: number; candidate: number };
+}
+
 export interface ClusterStatistics {
   bootstrap(input: BootstrapInput): Promise<ClusterBootstrapResult>;
   mcnemar(input: McNemarInput): Promise<McNemarResult>;
+  itt(input: ITTInput): ITTStatisticsResult;
 }
 
 export type StatisticsErrorCode =
@@ -89,6 +130,10 @@ function requireNonEmpty(value: unknown, field: string): asserts value is string
 
 function requireFinite(value: unknown, field: string): asserts value is number {
   if (typeof value !== "number" || !Number.isFinite(value)) failInput(field);
+}
+
+function requireSafeInteger(value: unknown, field: string): asserts value is number {
+  if (!Number.isSafeInteger(value)) failInput(field);
 }
 
 function mulberry32(seed: number): () => number {
@@ -225,5 +270,86 @@ export function createClusterStatistics(input: { catalog: ClusterCatalog }): Clu
         pairs: sample.pairs.length,
       });
     },
+    itt(sample: ITTInput): ITTStatisticsResult {
+      if (!sample || typeof sample !== "object") failInput("sample");
+      if (sample.signal !== undefined && !(sample.signal instanceof AbortSignal)) failInput("signal");
+      sample.signal?.throwIfAborted();
+      requireNonEmpty(sample.corpusId, "corpusId");
+      if (sample.corpusId !== catalog.corpusId) failScope({ corpusId: sample.corpusId });
+      requireSafeInteger(sample.planned, "planned");
+      if (sample.planned < 1) failInput("planned");
+      if (!Array.isArray(sample.pairs)) failInput("pairs");
+      if (sample.pairs.length > sample.planned) failInput("pairs");
+
+      const seen = new Set<string>();
+      let completed = 0;
+      let retried = 0;
+      let baselineObserved = 0;
+      let candidateObserved = 0;
+      let completeBaseline = 0;
+      let completeCandidate = 0;
+      for (const [index, pair] of sample.pairs.entries()) {
+        sample.signal?.throwIfAborted();
+        if (!pair || typeof pair !== "object") failInput(`pairs[${index}]`);
+        requireNonEmpty(pair.caseId, `pairs[${index}].caseId`);
+        if (seen.has(pair.caseId)) failInput(`pairs[${index}].caseId`);
+        seen.add(pair.caseId);
+        const cluster = catalog.caseToCluster.get(pair.caseId);
+        if (!cluster) failScope({ caseId: pair.caseId, corpusId: sample.corpusId });
+        const baseline = validateITTArm(pair.baseline, `pairs[${index}].baseline`);
+        const candidate = validateITTArm(pair.candidate, `pairs[${index}].candidate`);
+        if (baseline.retried || candidate.retried) retried += 1;
+        if (baseline.status === "completed" && candidate.status !== "missing") baselineObserved += baseline.value ?? 0;
+        if (candidate.status === "completed" && baseline.status !== "missing") candidateObserved += candidate.value ?? 0;
+        if (baseline.status === "completed" && candidate.status === "completed") {
+          completed += 1;
+          completeBaseline += baseline.value ?? 0;
+          completeCandidate += candidate.value ?? 0;
+        }
+      }
+      const scored = completed;
+      const failed = sample.planned - completed;
+      const completeCase = {
+        baseline: completed === 0 ? 0 : completeBaseline / completed,
+        candidate: completed === 0 ? 0 : completeCandidate / completed,
+        pairs: completed,
+      };
+      return Object.freeze({
+        planned: sample.planned,
+        attempted: sample.pairs.length,
+        completed,
+        scored,
+        failed,
+        retried,
+        itt: {
+          baseline: baselineObserved / sample.planned,
+          candidate: candidateObserved / sample.planned,
+        },
+        completeCase,
+        worstCase: {
+          baseline: baselineObserved / sample.planned,
+          candidate: candidateObserved / sample.planned,
+        },
+      });
+    },
+  };
+}
+
+function validateITTArm(value: unknown, field: string): ITTArmResult {
+  if (!value || typeof value !== "object") failInput(field);
+  const arm = value as Partial<ITTArmResult>;
+  if (arm.status !== "completed" && arm.status !== "failed" && arm.status !== "timeout" && arm.status !== "missing") {
+    failInput(`${field}.status`);
+  }
+  if (arm.retried !== undefined && typeof arm.retried !== "boolean") failInput(`${field}.retried`);
+  if (arm.status === "completed") {
+    requireFinite(arm.value, `${field}.value`);
+  } else if (arm.value !== undefined && (typeof arm.value !== "number" || !Number.isFinite(arm.value))) {
+    failInput(`${field}.value`);
+  }
+  return {
+    status: arm.status,
+    value: arm.status === "completed" ? arm.value : undefined,
+    retried: arm.retried === true,
   };
 }

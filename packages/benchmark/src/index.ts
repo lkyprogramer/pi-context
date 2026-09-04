@@ -180,6 +180,10 @@ export {
   type McNemarInput,
   type McNemarResult,
   type NumericPair,
+  type ITTInput,
+  type ITTArmResult,
+  type ITTPair,
+  type ITTStatisticsResult,
   type StatisticsErrorCode,
 } from "./statistics/cluster.js";
 export {
@@ -260,4 +264,3 @@ export {
   type RecursiveReport,
   type W5LaneId,
 } from "./lanes/w5.js";
-
