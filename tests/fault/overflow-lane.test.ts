@@ -21,6 +21,7 @@ describe("provider overflow lane", () => {
       { type: "message", message: { role: "assistant", content: [
         { type: "toolCall", id: "w2", name: "write_file", arguments: { path: "b" } },
       ] } },
+      { type: "message", message: { role: "toolResult", toolCallId: "w2", toolName: "write_file", content: [{ type: "text", text: "ok" }] } },
     ])).toBe(3);
   });
 
