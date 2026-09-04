@@ -1,0 +1,42 @@
+{
+  "taskId": "C08",
+  "baseCommit": "6981cb9aa3e9ebd4770628f0b380d3e9929ab63e",
+  "headCommit": "f8a7a570a120603a068a08ebe6e9baab8a5f043b",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "green",
+      "command": "corepack pnpm test:contract",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C08-green.log",
+      "logSha256": "70062d5f263a40a28273aebec1caeb4e85dcd953ae5ab1f2f0e9de054ad4fe6d"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C08-typecheck.log",
+      "logSha256": "e7454596a7122912a77a09598c9a371bea02f32b3a9991739e052666ddc0ed75"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "packages/contracts/src/index.ts",
+      "sha256": "e49750f555ce03a28dc169031ee324264ab959054befa154de75d7bb7472e825"
+    },
+    {
+      "path": "tests/contract/pi-context-hook.test.ts",
+      "sha256": "58c78b658073a485b0c4fbda85efcb477c04a569f8f602251fd1c9fa6af90074"
+    }
+  ],
+  "requirements": {
+    "workspaceInputCursorContractsExported": true,
+    "contractSuiteExit0": true,
+    "strictTypecheckExit0": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "w1-consistency-review"
+  }
+}
