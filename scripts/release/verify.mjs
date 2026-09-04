@@ -18,6 +18,7 @@ const natural = join(root, "artifacts/runs/w2-v3-live/natural-threshold/report.j
 const overflow = join(root, "artifacts/runs/w2-v3-live/overflow/report.json");
 const recursive = join(root, "artifacts/runs/w2-v3-live/recursive/report.json");
 const rcManifest = join(root, "artifacts/runs/rc/manifest.json");
+const rcArchive = join(root, "artifacts/runs/rc/raw-bundle.tar.gz");
 
 if (existsSync(unrun)) fail("PCR_PUBLICATION_RUN_MISSING");
 if (!existsSync(publication) || !existsSync(pairedPublication)) fail("PCR_PUBLICATION_RUN_MISSING");
@@ -57,6 +58,10 @@ if (publicationManifest.status === "unrun" || (report.sample?.completedPairs ?? 
 if (!existsSync(rcManifest)) fail("PCR_RC_MANIFEST_MISSING");
 const rc = JSON.parse(readFileSync(rcManifest, "utf8"));
 if (rc.commit !== publicationManifest.commit && rc.commit !== process.env.GITHUB_SHA) fail("PCR_RC_MANIFEST_HEAD_MISMATCH");
+if (!existsSync(rcArchive) || !rc.archive || typeof rc.archive.sha256 !== "string") fail("PCR_RC_ARCHIVE_MISSING");
+const archiveBytes = readFileSync(rcArchive);
+const archiveHash = createHash("sha256").update(archiveBytes).digest("hex");
+if (archiveHash !== rc.archive.sha256 || archiveBytes.byteLength !== rc.archive.bytes) fail("PCR_RC_ARCHIVE_HASH_MISMATCH");
 
 function liveLane(path, lane) {
   if (!existsSync(path)) fail(`PCR_LIVE_PROVIDER_REQUIRED:${lane}`);
