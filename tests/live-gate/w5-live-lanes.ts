@@ -916,7 +916,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       work: async (rpc) => {
         providerStarted = true;
         await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(80_000)}`, 3 * 60_000);
-        history.push({ phase: "compact-1", ok: true, compactCount: inspectCompactions(arm.sessionFile).length });
+        history.push({ phase: "compact-1", ok: inspectCompactions(arm.sessionFile).length >= 1, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
         history.push({ phase: "temporal-update", ok: /\bversion\s*7\b/i.test(lastAssistantText(arm.sessionFile)) && !/\bversion\s*6\b/i.test(lastAssistantText(arm.sessionFile)) });
@@ -957,7 +957,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
         history.push({
           phase: "compact-3",
-          ok: true,
+          ok: inspectCompactions(arm.sessionFile).length >= 3,
           compactCount: inspectCompactions(arm.sessionFile).length,
           summary: inspectCompactions(arm.sessionFile).at(-1)?.summary.slice(0, 400),
         });
