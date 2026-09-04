@@ -1036,8 +1036,17 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     });
     const beforeRestart = readFileSync(arm.sessionFile, "utf8");
     const lines = beforeRestart.trim().split("\n");
-    const last = JSON.parse(lines.at(-1) ?? "{}") as { id?: string; parentId?: string };
-    const branchFrom = last.id ?? last.parentId ?? "t1";
+    const entriesBeforeRestart = lines.flatMap((line) => {
+      try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
+    });
+    const branchEntry = [...entriesBeforeRestart].reverse().find((entry) => {
+      const message = entry.message;
+      return typeof entry.id === "string"
+        && typeof message === "object"
+        && message !== null
+        && (message as Record<string, unknown>).role === "user";
+    });
+    const branchFrom = typeof branchEntry?.id === "string" ? branchEntry.id : "u1";
     const branchBefore = readFileSync(arm.sessionFile, "utf8");
     await withRpc({
       sessionFile: arm.sessionFile,
