@@ -492,15 +492,17 @@ async function runArm(opts: {
     extensionPath: opts.extensionPath,
     provider: LIVE_PROVIDER,
     model: LIVE_MODEL,
+    live: process.env.PCR_LIVE === "1",
   });
+  const liveEnv = { ...process.env };
+  if (process.env.PCR_LIVE === "1") delete liveEnv.PI_OFFLINE;
   const rpc = new PiRpc({
     cliPath,
     cwd: opts.cwd,
     args: plan.args,
     env: {
-      ...process.env,
+      ...liveEnv,
       PATH: `${nvmBin()}:${process.env.PATH ?? ""}`,
-      PI_OFFLINE: "1",
       PI_CODING_AGENT_DIR: opts.agentDir,
       ...plan.env,
     },

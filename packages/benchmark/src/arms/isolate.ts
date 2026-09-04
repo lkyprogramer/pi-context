@@ -210,6 +210,7 @@ export function piLaunchPlan(arm: LiveFourArmId, input: {
   extensionPath: string;
   provider: string;
   model: string;
+  live?: boolean;
 }): { args: string[]; env: Readonly<Record<string, string>>; compact: boolean; fromHook: boolean } {
   const identity = liveFourIdentity(arm);
   if (!input || typeof input !== "object") fail("PCR_ARM_ISOLATE_INPUT_INVALID", { field: "input" });
@@ -219,7 +220,6 @@ export function piLaunchPlan(arm: LiveFourArmId, input: {
   requireNonEmpty(input.model, "model");
   const args = [
     "--no-extensions",
-    "--offline",
     "--session-dir",
     dirname(input.sessionFile),
     "--session",
@@ -229,6 +229,7 @@ export function piLaunchPlan(arm: LiveFourArmId, input: {
     "--model",
     input.model,
   ];
+  if (input.live !== true) args.splice(1, 0, "--offline");
   if (identity.extension) args.unshift("-e", input.extensionPath);
   return {
     args,
