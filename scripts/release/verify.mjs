@@ -100,4 +100,4 @@ if (recursiveReport.oracleComplete !== true || recursiveReport.correctionVerifie
 if (naturalReport.keepRecentTokens !== 20_000 || naturalReport.manualCompact === true) fail("PCR_W5_KEEP_RECENT_LOWERED");
 if (overflowReport.usedManualCompactAsOverflow === true) fail("PCR_W5_OVERFLOW_HAND_COMPACT");
 
-process.stdout.write(`${JSON.stringify({ ok: true, publicationClaim: false, semanticDefault: "off" })}\n`);
+process.stdout.write(`${JSON.stringify({ ok: true, decision: "keep-pi-native", publicationClaim: false, semanticDefault: "off" })}\n`);

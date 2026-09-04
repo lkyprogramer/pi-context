@@ -185,6 +185,8 @@ jobs:
       - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
       - run: pnpm install --frozen-lockfile
       - run: node scripts/ci/verify-protection.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - run: pnpm vitest run tests/acceptance/packed-install.test.ts
   required-gate:
     if: always()
