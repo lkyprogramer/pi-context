@@ -13,6 +13,17 @@ export interface ForcedOverflowRecoveryInput {
   retry: () => ForcedOverflowAttempt | Promise<ForcedOverflowAttempt>;
 }
 
+export function countSideEffectEvents(events: readonly Record<string, unknown>[]): number {
+  const ids = new Set<string>();
+  for (const event of events) {
+    const label = `${String(event.toolName ?? event.name ?? "")} ${JSON.stringify(event.args ?? event.input ?? "")}`;
+    if (!/\b(?:write|edit|delete|remove|move|rename|deploy|publish|execute|shell|bash)\b|写入|删除|部署|发布/iu.test(label)) continue;
+    const id = String(event.toolCallId ?? event.id ?? label);
+    ids.add(id);
+  }
+  return ids.size;
+}
+
 export interface ForcedOverflowRecoveryReport {
   prevention: { overflowObserved: boolean; errorClass: "context-length" | "other" | "none" };
   recovery: { compacted: boolean; retried: boolean; sideEffectsUnchanged: boolean; ok: boolean };

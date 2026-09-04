@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createPerformanceLaneRunner } from "@pcr/benchmark";
-import { isContextLengthError, runForcedOverflowRecovery } from "../live-gate/forced-overflow-provider.js";
+import { countSideEffectEvents, isContextLengthError, runForcedOverflowRecovery } from "../live-gate/forced-overflow-provider.js";
 
 const MODEL = "openclaw/Qwen3.8-27B-WORK";
 const ROUTE = {
@@ -12,6 +12,15 @@ const ROUTE = {
 } as const;
 
 describe("provider overflow lane", () => {
+  it("counts unique mutating tool calls instead of trusting a synthetic zero", () => {
+    expect(countSideEffectEvents([
+      { type: "tool_call", toolCallId: "w1", toolName: "write", args: { path: "a" } },
+      { type: "tool_result", toolCallId: "w1", toolName: "write", args: { path: "a" } },
+      { type: "tool_call", toolCallId: "r1", toolName: "read", args: { path: "a" } },
+      { type: "tool_call", toolCallId: "d1", toolName: "bash", args: { command: "deploy production" } },
+    ])).toBe(2);
+  });
+
   it("classifies context overflow and retries once without side effects", async () => {
     const report = await runForcedOverflowRecovery({
       force: () => ({ phase: "force", ok: false, error: "context_length_exceeded: prompt is too long", sideEffectCount: 1 }),

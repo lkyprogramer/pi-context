@@ -15,7 +15,7 @@ import { PiRpc } from "./pi-rpc.js";
 import { resolvePiCli } from "./pi-resolve.js";
 import { LIVE_MODEL, LIVE_PROVIDER, LIVE_RESERVE_TOKENS } from "./w1-session-jsonl.js";
 import { evaluateNaturalPressureArm } from "../../packages/benchmark/src/performance/lanes.js";
-import { runForcedOverflowRecovery } from "./forced-overflow-provider.js";
+import { countSideEffectEvents, runForcedOverflowRecovery } from "./forced-overflow-provider.js";
 
 export { LIVE_RESERVE_TOKENS };
 
@@ -773,6 +773,7 @@ async function runOverflowArm(input: {
       autoCompact: false,
       work: async (rpc) => {
         providerStarted = true;
+        const sideEffectCount = () => countSideEffectEvents(rpc.events);
         const grown = await growLive(rpc, arm.sessionFile, {
           maxTurns: 25,
           charsPerTurn: 40_000,
@@ -806,18 +807,18 @@ async function runOverflowArm(input: {
           return;
         }
         const recovery = await runForcedOverflowRecovery({
-          force: () => ({ phase: "force", ok: false, error: String(attempts.find((row) => row.phase === "overflow-prompt")?.error ?? "context_length_exceeded"), sideEffectCount: 0 }),
+          force: () => ({ phase: "force", ok: false, error: String(attempts.find((row) => row.phase === "overflow-prompt")?.error ?? "context_length_exceeded"), sideEffectCount: sideEffectCount() }),
           compact: async () => {
             const before = lastAssistantUsage(arm.sessionFile).inputTokens;
             const compacted = await rpc.compact();
             const after = inspectCompactions(arm.sessionFile).at(-1);
-            return { phase: "compact", ok: true, outputHash: sha(`${after?.tokensBefore ?? ""}:${after?.summary ?? JSON.stringify(compacted)}`), tokensAfter: before ?? undefined, sideEffectCount: 0 };
+            return { phase: "compact", ok: true, outputHash: sha(`${after?.tokensBefore ?? ""}:${after?.summary ?? JSON.stringify(compacted)}`), tokensAfter: before ?? undefined, sideEffectCount: sideEffectCount() };
           },
           retry: async () => {
             const before = lastAssistantUsage(arm.sessionFile).inputTokens;
             await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
             const after = lastAssistantUsage(arm.sessionFile).inputTokens;
-            return { phase: "retry", ok: true, outputHash: sha(`${after ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`), tokensAfter: after ?? undefined, sideEffectCount: 0, error: before !== null && after !== null && after >= before ? "tokens-not-decreased" : undefined, tokensDropped: before !== null && after !== null && after < before };
+            return { phase: "retry", ok: true, outputHash: sha(`${after ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`), tokensAfter: after ?? undefined, sideEffectCount: sideEffectCount(), error: before !== null && after !== null && after >= before ? "tokens-not-decreased" : undefined, tokensDropped: before !== null && after !== null && after < before };
           },
         });
         recoveryReport = { prevention: recovery.prevention, recovery: recovery.recovery };
