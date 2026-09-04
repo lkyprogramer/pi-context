@@ -24,11 +24,11 @@ import {
 import { scoreToolPairsFromSession } from "../../packages/benchmark/src/continuation/runner.js";
 import {
   collectPerArmRawEvidence,
-  hashRunBundle,
   keepFailedArmEvidence,
   workspaceManifestSha256,
   writeArmArtifactDir,
 } from "../../packages/benchmark/src/report/raw-arm.js";
+import { hashRunBundle } from "../../packages/benchmark/src/report/bundle.js";
 import {
   assertSerialArms,
   bindReplicate,
