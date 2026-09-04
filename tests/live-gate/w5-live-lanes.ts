@@ -13,6 +13,7 @@ import { dirname, join } from "node:path";
 import { PiRpc } from "./pi-rpc.js";
 import { resolvePiCli } from "./pi-resolve.js";
 import { LIVE_MODEL, LIVE_PROVIDER, LIVE_RESERVE_TOKENS } from "./w1-session-jsonl.js";
+import { evaluateNaturalPressureArm } from "../../packages/benchmark/src/performance/lanes.js";
 
 export { LIVE_RESERVE_TOKENS };
 
@@ -496,10 +497,8 @@ async function runNaturalFamily(input: {
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
           onTurn: (log) => persistPartial(input.outDir, `${input.family}-native`, { turns: log }, native.sessionFile),
         });
-        if (inspectCompactions(native.sessionFile).length > 0) {
-          await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
-          nativeContinuation = lastAssistantUsage(native.sessionFile).inputTokens !== null ? "asked" : "asked";
-        }
+        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
+        nativeContinuation = "asked";
         return grown;
       },
     });
@@ -512,7 +511,8 @@ async function runNaturalFamily(input: {
       cwd: pcr.cwd,
       agentDir: pcr.agentDir,
       extension: input.extension,
-      autoCompact: true,
+      // B2 may complete through bounded materialization without Host auto-compact.
+      autoCompact: false,
       work: async (rpc) => {
         pcrStarted = true;
         const grown = await growLive(rpc, pcr.sessionFile, {
@@ -523,10 +523,8 @@ async function runNaturalFamily(input: {
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
           onTurn: (log) => persistPartial(input.outDir, `${input.family}-pcr`, { turns: log }, pcr.sessionFile),
         });
-        if (inspectCompactions(pcr.sessionFile).length > 0) {
-          await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
-          pcrContinuation = "asked";
-        }
+        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
+        pcrContinuation = "asked";
         return grown;
       },
     });
@@ -538,6 +536,30 @@ async function runNaturalFamily(input: {
   }
   const nativeCompactions = inspectCompactions(native.sessionFile);
   const pcrCompactions = inspectCompactions(pcr.sessionFile);
+  const latestTokens = (turns: readonly Record<string, unknown>[]): number | null => {
+    const value = turns.at(-1)?.inputTokens;
+    return typeof value === "number" && Number.isSafeInteger(value) ? value : null;
+  };
+  const nativeState = evaluateNaturalPressureArm({
+    arm: "B0",
+    hostCompactionCount: nativeCompactions.length,
+    hostCompactReason: nativeCompactions.at(-1)?.reason === "threshold" ? "threshold" : null,
+    materializationBounded: false,
+    inputTokens: latestTokens(nativeTurns),
+    effectiveInputUpperBound: NATURAL_THRESHOLD_TOKENS,
+    overflowObserved: nativeTurns.some((row) => row.overflow === true),
+    behaviorComplete: nativeContinuation === "asked",
+  });
+  const pcrState = evaluateNaturalPressureArm({
+    arm: "B2",
+    hostCompactionCount: pcrCompactions.filter((row) => row.fromHook !== true).length,
+    hostCompactReason: null,
+    materializationBounded: pcrCompactions.some((row) => row.fromHook === true),
+    inputTokens: latestTokens(pcrTurns),
+    effectiveInputUpperBound: NATURAL_THRESHOLD_TOKENS,
+    overflowObserved: pcrTurns.some((row) => row.overflow === true),
+    behaviorComplete: pcrContinuation === "asked",
+  });
   return {
     family: input.family,
     providerStarted: nativeStarted || pcrStarted,
@@ -559,7 +581,8 @@ async function runNaturalFamily(input: {
       cwd: pcr.cwd,
       agentDir: pcr.agentDir,
     },
-    triggered: nativeCompactions.some((row) => isThresholdCompact(row)) && pcrCompactions.some((row) => isThresholdCompact(row)),
+    triggered: nativeState.ok && pcrState.ok,
+    armStates: { B0: nativeState, B2: pcrState },
     compactCount: nativeCompactions.length + pcrCompactions.length,
   };
 }

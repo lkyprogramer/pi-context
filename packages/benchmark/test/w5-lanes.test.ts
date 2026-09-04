@@ -10,8 +10,26 @@ import {
   runPerformanceCache,
   runRecursivePins,
 } from "@pcr/benchmark";
+import { evaluateNaturalPressureArm } from "../src/performance/lanes.js";
 
 describe("W5 natural / overflow / recursive / fault / performance / gate", () => {
+  it("uses arm-specific natural pressure completion states", () => {
+    expect(evaluateNaturalPressureArm({
+      arm: "B0", hostCompactionCount: 1, hostCompactReason: "threshold",
+      materializationBounded: false, inputTokens: 184_000, effectiveInputUpperBound: 183_808,
+      overflowObserved: false, behaviorComplete: true,
+    })).toMatchObject({ ok: true, state: "host-auto-compacted" });
+    expect(evaluateNaturalPressureArm({
+      arm: "B2", hostCompactionCount: 0, hostCompactReason: null,
+      materializationBounded: true, inputTokens: 120_000, effectiveInputUpperBound: 183_808,
+      overflowObserved: false, behaviorComplete: true,
+    })).toMatchObject({ ok: true, state: "bounded-materialized" });
+    expect(evaluateNaturalPressureArm({
+      arm: "B2", hostCompactionCount: 0, hostCompactReason: null,
+      materializationBounded: true, inputTokens: 190_000, effectiveInputUpperBound: 183_808,
+      overflowObserved: false, behaviorComplete: true,
+    }).reasons).toContain("input-above-bound");
+  });
   it("rejects no-trigger, early trigger, and keepRecent on natural threshold", async () => {
     expect((await runNaturalThreshold({ tokensBefore: 190_000, compactReason: "threshold", triggered: false })).ok).toBe(false);
     expect((await runNaturalThreshold({ tokensBefore: 6_200, compactReason: "threshold", triggered: true })).ok).toBe(false);

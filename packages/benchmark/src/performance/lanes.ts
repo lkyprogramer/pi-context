@@ -10,6 +10,26 @@ export type PerformanceLane = "boundary-replay" | "natural-threshold" | "provide
 
 export type CompactReason = "threshold" | "overflow" | "replay";
 
+export type NaturalPressureArm = "B0" | "B2";
+
+export interface NaturalPressureArmInput {
+  arm: NaturalPressureArm;
+  hostCompactionCount: number;
+  hostCompactReason: CompactReason | null;
+  materializationBounded: boolean;
+  inputTokens: number | null;
+  effectiveInputUpperBound: number;
+  overflowObserved: boolean;
+  behaviorComplete: boolean;
+}
+
+export interface NaturalPressureArmResult {
+  arm: NaturalPressureArm;
+  state: "host-auto-compacted" | "bounded-materialized" | "failed";
+  ok: boolean;
+  reasons: readonly string[];
+}
+
 export interface RouteWindow {
   modelKey: string;
   contextWindow: number;
@@ -126,6 +146,35 @@ function snapshotRoutes(routes: CreatePerformanceLaneRunnerInput["routes"]): Rea
 
 function effectiveInput(route: RouteWindow): number {
   return route.contextWindow - route.maxOutputTokens - route.providerReservedTokens;
+}
+
+export function evaluateNaturalPressureArm(input: NaturalPressureArmInput): NaturalPressureArmResult {
+  if (!input || typeof input !== "object") failInput("naturalPressure");
+  requireCount(input.hostCompactionCount, "hostCompactionCount");
+  requireCount(input.effectiveInputUpperBound, "effectiveInputUpperBound");
+  if (input.inputTokens !== null) requireCount(input.inputTokens, "inputTokens");
+  const reasons: string[] = [];
+  if (input.overflowObserved) reasons.push("overflow");
+  if (!input.behaviorComplete) reasons.push("behavior-incomplete");
+  if (input.arm === "B0") {
+    if (input.hostCompactionCount < 1 || input.hostCompactReason !== "threshold") reasons.push("host-auto-compact-missing");
+    return Object.freeze({
+      arm: "B0",
+      state: reasons.length === 0 ? "host-auto-compacted" : "failed",
+      ok: reasons.length === 0,
+      reasons: Object.freeze(reasons),
+    });
+  }
+  if (input.arm !== "B2") failInput("arm");
+  if (input.hostCompactionCount !== 0) reasons.push("unexpected-host-compaction");
+  if (!input.materializationBounded) reasons.push("materialization-unbounded");
+  if (input.inputTokens === null || input.inputTokens > input.effectiveInputUpperBound) reasons.push("input-above-bound");
+  return Object.freeze({
+    arm: "B2",
+    state: reasons.length === 0 ? "bounded-materialized" : "failed",
+    ok: reasons.length === 0,
+    reasons: Object.freeze(reasons),
+  });
 }
 
 function assertLane(sample: PerformanceLaneSample, route: RouteWindow): void {
