@@ -247,7 +247,22 @@ function copyAgentConfig(target: LiveTarget): string {
   const models = join(homedir(), ".pi/agent/models.json");
   if (!existsSync(models)) throw new Error("missing ~/.pi/agent/models.json");
   const agentDir = mkdtempSync(join(tmpdir(), "pcr-cache-ablation-agent-"));
-  copyFileSync(models, join(agentDir, "models.json"));
+  const root = JSON.parse(readFileSync(models, "utf8")) as Record<string, any>;
+  const provider = root.providers?.[target.provider];
+  if (!provider?.models?.some((item: { id?: string }) => item.id === target.model)) {
+    const baseUrl = process.env.PCR_LIVE_BASE_URL?.trim();
+    const apiKey = process.env.PCR_LIVE_API_KEY?.trim();
+    if (!baseUrl || !apiKey) throw new Error(`provider/model is not configured: ${target.provider}/${target.model}`);
+    root.providers ??= {};
+    root.providers[target.provider] = {
+      baseUrl,
+      api: "openai-completions",
+      apiKey,
+      authHeader: true,
+      models: [{ id: target.model, name: target.model, reasoning: false, input: ["text"], contextWindow: 200_192, maxTokens: 16_384, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } }],
+    };
+  }
+  writeFileSync(join(agentDir, "models.json"), `${JSON.stringify(root, null, 2)}\n`);
   const auth = join(homedir(), ".pi/agent/auth.json");
   if (existsSync(auth)) copyFileSync(auth, join(agentDir, "auth.json"));
   writeFileSync(join(agentDir, "settings.json"), `${JSON.stringify({
@@ -278,7 +293,9 @@ function loadModelConfig(target: LiveTarget): LiveTarget {
   };
   const models = root.providers?.[target.provider]?.models ?? [];
   if (!models.some((item) => item.id === target.model)) {
-    throw new Error(`provider/model is not configured: ${target.provider}/${target.model}`);
+    if (!process.env.PCR_LIVE_BASE_URL || !process.env.PCR_LIVE_API_KEY) {
+      throw new Error(`provider/model is not configured: ${target.provider}/${target.model}`);
+    }
   }
   return target;
 }
