@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
@@ -21,6 +21,13 @@ function walk(dir) {
   }
 }
 walk(source);
+function freezeDirectories(dir) {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) freezeDirectories(path);
+  }
+  utimesSync(dir, 0, 0);
+}
 const SECRET = /(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{8,}|sk-(?:live|t\d+|ff)(?:-[A-Za-z0-9_-]+)?|Bearer\s+[A-Za-z0-9._-]{20,})/giu;
 const entries = files.sort().map((path) => {
   const original = readFileSync(path, "utf8");
@@ -39,8 +46,14 @@ if (scan.status !== 0) throw new Error("PCR_RC_SECRET_SCAN_FAILED");
 const scanReport = JSON.parse(scan.stdout);
 delete scanReport.root;
 const archive = join(out, "raw-bundle.tar.gz");
-const packed = spawnSync("tar", ["-czf", archive, "-C", staging, "."], { encoding: "utf8", env: { ...process.env, TZ: "UTC" } });
+freezeDirectories(staging);
+const tarPath = `${archive}.tmp`;
+const packed = spawnSync("tar", ["-cf", tarPath, "-C", staging, "."], { encoding: "utf8", env: { ...process.env, TZ: "UTC" } });
 if (packed.status !== 0) throw new Error(packed.stderr || "PCR_RC_ARCHIVE_FAILED");
+const gzipped = spawnSync("gzip", ["-n", "-c", tarPath], { encoding: null });
+if (gzipped.status !== 0 || !gzipped.stdout) throw new Error(gzipped.stderr?.toString() || "PCR_RC_GZIP_FAILED");
+writeFileSync(archive, gzipped.stdout);
+unlinkSync(tarPath);
 const manifest = { format: "pcr-rc-bundle-v1", commit: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(), files: entries, secretScan: scanReport };
 manifest.digest = createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
 writeFileSync(join(out, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
