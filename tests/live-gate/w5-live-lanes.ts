@@ -104,7 +104,7 @@ export function isContextOverflowError(error: string): boolean {
   return /context.?length|maximum context|too many tokens|prompt is too long|context_length_exceeded|please reduce/i.test(error);
 }
 
-export function evaluateBranchLineage(entries: readonly Record<string, unknown>[], branchId = "u-branch"): {
+export function evaluateBranchLineage(entries: readonly Record<string, unknown>[], branchId = "u-branch", expectedParentId?: string | null): {
   branchId: string;
   branchParentId: string | null;
   parentExists: boolean;
@@ -112,11 +112,17 @@ export function evaluateBranchLineage(entries: readonly Record<string, unknown>[
   restartHeadPresent: boolean;
   ok: boolean;
 } {
-  const byId = new Map(entries
-    .filter((entry) => typeof entry.id === "string")
-    .map((entry) => [String(entry.id), entry]));
+  const byId = new Map<string, Record<string, unknown>>();
+  let idConflict = false;
+  for (const entry of entries) {
+    if (typeof entry.id !== "string") continue;
+    const existing = byId.get(entry.id);
+    if (existing && canonical(existing) !== canonical(entry)) idConflict = true;
+    else byId.set(entry.id, entry);
+  }
   const branch = byId.get(branchId);
   const parentId = typeof branch?.parentId === "string" ? branch.parentId : null;
+  const expectedParentMatches = expectedParentId === undefined || parentId === expectedParentId;
   const parent = parentId ? byId.get(parentId) : undefined;
   const sibling = parentId
     ? entries.some((entry) => entry !== branch
@@ -138,7 +144,7 @@ export function evaluateBranchLineage(entries: readonly Record<string, unknown>[
     parentExists: parent !== undefined,
     isSibling: sibling,
     restartHeadPresent,
-    ok: parent !== undefined && sibling && restartHeadPresent,
+    ok: !idConflict && expectedParentMatches && parent !== undefined && sibling && restartHeadPresent,
   };
 }
 
@@ -147,11 +153,13 @@ export function evaluateForkLineage(
   forkEntries: readonly Record<string, unknown>[],
   sourceSession: string,
   branchId: string,
+  expectedParentId?: string | null,
 ): { parentSessionMatches: boolean; parentExists: boolean; sourceSiblingExists: boolean; branchPresent: boolean; activeHeadPresent: boolean; ok: boolean } {
   const branch = forkEntries.find((entry) => entry.id === branchId);
   const parentId = typeof branch?.parentId === "string" ? branch.parentId : null;
   const forkHeader = forkEntries.find((entry) => entry.type === "session");
-  const parentExists = parentId !== null && forkEntries.some((entry) => entry.id === parentId);
+  const expectedParentMatches = expectedParentId === undefined || parentId === expectedParentId;
+  const parentExists = expectedParentMatches && parentId !== null && forkEntries.some((entry) => entry.id === parentId);
   const sourceSiblingExists = parentId !== null && sourceEntries.some((entry) => typeof entry.id === "string" && entry.id !== branchId && entry.parentId === parentId);
   const activeHeadPresent = forkEntries.some((entry) => entry.id === branchId);
   const parentSessionMatches = typeof forkHeader?.parentSession === "string" && forkHeader.parentSession === sourceSession;
@@ -1065,6 +1073,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         && (message as Record<string, unknown>).role === "user";
     });
     const branchFrom = typeof branchEntry?.id === "string" ? branchEntry.id : "u1";
+    const expectedBranchParentId = typeof branchEntry?.parentId === "string" ? branchEntry.parentId : null;
     const branchBefore = readFileSync(arm.sessionFile, "utf8");
     await withRpc({
       sessionFile: arm.sessionFile,
@@ -1090,8 +1099,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         const sourceEntries = branchBefore.trim().split("\n").flatMap((line) => {
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
         });
-        forkEvidence = evaluateForkLineage(sourceEntries, branchedEntries, sourceSessionFile, branchEntryId);
-        branchLineage = evaluateBranchLineage(branchedEntries, branchEntryId);
+        forkEvidence = evaluateForkLineage(sourceEntries, branchedEntries, sourceSessionFile, branchEntryId, expectedBranchParentId);
+        branchLineage = evaluateBranchLineage(branchedEntries, branchEntryId, expectedBranchParentId);
         treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));
         history.push({ phase: "branch-after-compact-2", ok: forkEvidence.ok && branchBefore.length > 0 });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
@@ -1109,7 +1118,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         const restartedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
         });
-        branchLineage = evaluateBranchLineage([...sourceEntriesBeforeRestart, ...restartedEntries], branchEntryId);
+        branchLineage = evaluateBranchLineage([...sourceEntriesBeforeRestart, ...restartedEntries], branchEntryId, expectedBranchParentId);
         history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && branchLineage.ok });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;

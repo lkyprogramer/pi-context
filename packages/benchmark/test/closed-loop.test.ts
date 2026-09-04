@@ -54,12 +54,14 @@ describe("tools-enabled environment closed-loop", () => {
       { id: "branch", parentId: "parent" },
       { id: "head", parentId: "branch" },
     ];
-    expect(evaluateBranchLineage([...source, ...fork], "branch")).toMatchObject({
+    expect(evaluateBranchLineage([...source, ...fork], "branch", "parent")).toMatchObject({
       parentExists: true,
       isSibling: true,
       restartHeadPresent: true,
       ok: true,
     });
+    expect(evaluateBranchLineage([...source, { id: "other", parentId: "root" }, { id: "other-sibling", parentId: "other" }, { id: "branch", parentId: "other" }, { id: "head", parentId: "branch" }], "branch", "parent").ok).toBe(false);
+    expect(evaluateBranchLineage([...source, ...fork, { id: "branch", parentId: "other" }], "branch", "parent").ok).toBe(false);
   });
 
   it("fails a public API prohibition and a forbidden deploy", async () => {
