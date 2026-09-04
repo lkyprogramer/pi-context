@@ -1005,7 +1005,11 @@ function findSecret(id: string): string {
 function slimArm(arm: LiveArmResult, secrets: string[]) {
   const usageLayers: EvaluationUsageLayers = {
     checkpoint: { tokens: arm.ok && arm.compactionCount > 0 ? { value: arm.summaryTokens, source: "estimated" } : { value: null, source: "unavailable" } },
-    materializedView: { tokens: { value: null, source: "unavailable" } },
+    materializedView: {
+      tokens: arm.ok && arm.probeInputTokens !== null
+        ? { value: arm.probeInputTokens, source: "assistant-entry" }
+        : { value: null, source: "unavailable" },
+    },
     request: {
       inputTokens: arm.probeInputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeInputTokens, source: "assistant-entry" },
       outputTokens: arm.probeOutputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeOutputTokens, source: "assistant-entry" },
