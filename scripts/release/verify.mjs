@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -57,7 +58,18 @@ if (publicationManifest.publicationClaim === true) fail("PCR_PUBLICATION_CLAIM_W
 if (publicationManifest.status === "unrun" || (report.sample?.completedPairs ?? 0) < 300) fail("PCR_PUBLICATION_RUN_MISSING");
 if (!existsSync(rcManifest)) fail("PCR_RC_MANIFEST_MISSING");
 const rc = JSON.parse(readFileSync(rcManifest, "utf8"));
-if (rc.commit !== publicationManifest.commit && rc.commit !== process.env.GITHUB_SHA) fail("PCR_RC_MANIFEST_HEAD_MISMATCH");
+const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
+if (process.env.GITHUB_SHA && process.env.GITHUB_SHA !== head) fail("PCR_GITHUB_SHA_HEAD_MISMATCH");
+if (rc.commit !== head) fail("PCR_RC_MANIFEST_HEAD_MISMATCH");
+if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
+  const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
+  if (!response.ok) fail("PCR_CHECKS_UNAVAILABLE");
+  const checks = await response.json();
+  const names = new Map((checks.check_runs ?? []).map((run) => [run.name, run.conclusion]));
+  if (!["Required", "Compatibility"].every((name) => names.get(name) === "success")) fail("PCR_REQUIRED_COMPATIBILITY_NOT_GREEN");
+} else if (process.env.GITHUB_ACTIONS === "true") {
+  fail("PCR_CHECKS_UNAVAILABLE");
+}
 if (!existsSync(rcArchive) || !rc.archive || typeof rc.archive.sha256 !== "string") fail("PCR_RC_ARCHIVE_MISSING");
 const archiveBytes = readFileSync(rcArchive);
 const archiveHash = createHash("sha256").update(archiveBytes).digest("hex");
