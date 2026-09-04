@@ -847,6 +847,10 @@ export async function runLivePairedW2(opts: {
       const rowsF = completed.filter((row) => row.family === family);
       const n = rowsF.length;
       const mean = (pick: (row: LivePairRow) => number) => (n === 0 ? 0 : rowsF.reduce((sum, row) => sum + pick(row), 0) / n);
+      const meanObserved = (pick: (row: LivePairRow) => number | null): number | null => {
+        const values = rowsF.map(pick).filter((value): value is number => value !== null);
+        return values.length === 0 ? null : values.reduce((sum, value) => sum + value, 0) / values.length;
+      };
       return [
         family,
         {
@@ -856,8 +860,8 @@ export async function runLivePairedW2(opts: {
           b1ClosedLoop: rowsF.filter((row) => row.b1.closedLoopSuccess === 1).length,
           b0QualityMean: mean((row) => row.b0.quality),
           b1QualityMean: mean((row) => row.b1.quality),
-          b0ProbeInputMean: mean((row) => row.b0.probeInputTokens ?? 0),
-          b1ProbeInputMean: mean((row) => row.b1.probeInputTokens ?? 0),
+          b0ProbeInputMean: meanObserved((row) => row.b0.probeInputTokens),
+          b1ProbeInputMean: meanObserved((row) => row.b1.probeInputTokens),
           b0SummaryTokensMean: mean((row) => row.b0.summaryTokens),
           b1SummaryTokensMean: mean((row) => row.b1.summaryTokens),
           b0MustOmitLeak: rowsF.filter((row) => row.b0.mustOmitLeak > 0).length,
