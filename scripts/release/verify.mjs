@@ -76,11 +76,13 @@ if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
     };
     // An in-progress rerun must supersede an older success; never let stale
     // green checks mask a currently running/queued required check.
-    const rank = [run.status === "completed" ? timestamp(run.completed_at) : timestamp(run.started_at), timestamp(run.started_at), Number(run.id ?? -1)];
-    const currentRank = current?.rank ?? [-1, -1, -1];
+    const pending = run.status === "completed" ? 0 : 1;
+    const rank = [pending, run.status === "completed" ? timestamp(run.completed_at) : timestamp(run.started_at), timestamp(run.started_at), Number(run.id ?? -1)];
+    const currentRank = current?.rank ?? [-1, -1, -1, -1];
     if (!current || rank[0] > currentRank[0]
       || (rank[0] === currentRank[0] && rank[1] > currentRank[1])
-      || (rank[0] === currentRank[0] && rank[1] === currentRank[1] && rank[2] > currentRank[2])) {
+      || (rank[0] === currentRank[0] && rank[1] === currentRank[1] && rank[2] > currentRank[2])
+      || (rank[0] === currentRank[0] && rank[1] === currentRank[1] && rank[2] === currentRank[2] && rank[3] > currentRank[3])) {
       latestByName.set(run.name, { conclusion: run.conclusion, rank });
     }
   }
