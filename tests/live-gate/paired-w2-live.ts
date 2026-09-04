@@ -98,7 +98,7 @@ export interface LivePairRow {
   replicateIndex: number;
   seedMode: SeedMode;
   sampling: BoundReplicate["sampling"];
-  samplingSource: "provider-response" | "provider-seed-unavailable";
+  samplingSource: "provider-response" | "provider-seed-unavailable" | "provider-capability-unavailable";
   sameCut: boolean;
   expectedFirstKeptId: string;
   b0: LiveArmResult;
@@ -686,7 +686,7 @@ async function runPair(item: W2Case, extensionPath: string, seed: number, artifa
     sampling: bound.sampling,
     // This live runner has no provider seed capability/response witness; keep
     // provenance explicitly unavailable even if the local policy shape grows.
-    samplingSource: "provider-seed-unavailable",
+    samplingSource: "provider-capability-unavailable",
     sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
     expectedFirstKeptId: frozen.expectedFirstKeptId,
     b0,
