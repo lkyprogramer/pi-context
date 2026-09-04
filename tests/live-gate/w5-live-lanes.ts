@@ -60,7 +60,7 @@ function filler(chars: number): string {
   return line.repeat(Math.max(1, Math.ceil(chars / line.length)));
 }
 
-function liveOutputDir(repoRoot: string, lane: "natural-threshold" | "overflow" | "recursive"): string {
+export function liveOutputDir(repoRoot: string, lane: "natural-threshold" | "overflow" | "recursive"): string {
   const configuredRoot = process.env.PCR_W5_LIVE_OUT_DIR;
   const root = configuredRoot
     ? (isAbsolute(configuredRoot) ? configuredRoot : resolve(repoRoot, configuredRoot))

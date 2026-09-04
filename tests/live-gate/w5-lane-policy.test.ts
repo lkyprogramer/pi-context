@@ -7,9 +7,24 @@ import {
   evaluateBranchLineage,
   evaluateForkLineage,
   isContextOverflowError,
+  liveOutputDir,
 } from "./w5-live-lanes.js";
 
 describe("W5 long-horizon lane policy", () => {
+  it("resolves live output roots without changing the default", () => {
+    const previous = process.env.PCR_W5_LIVE_OUT_DIR;
+    try {
+      delete process.env.PCR_W5_LIVE_OUT_DIR;
+      expect(liveOutputDir("/repo", "natural-threshold")).toBe("/repo/artifacts/runs/w2-v3-live/natural-threshold");
+      process.env.PCR_W5_LIVE_OUT_DIR = "artifacts/runs/w2-v4-live";
+      expect(liveOutputDir("/repo", "overflow")).toBe("/repo/artifacts/runs/w2-v4-live/overflow");
+      process.env.PCR_W5_LIVE_OUT_DIR = "/tmp/pcr-w5-live";
+      expect(liveOutputDir("/repo", "recursive")).toBe("/tmp/pcr-w5-live/recursive");
+    } finally {
+      if (previous === undefined) delete process.env.PCR_W5_LIVE_OUT_DIR;
+      else process.env.PCR_W5_LIVE_OUT_DIR = previous;
+    }
+  });
   it("rejects lowered keepRecent/reserve, hand compact, and fake liveProvider", () => {
     expect(() => assertNaturalThresholdPolicy({
       keepRecentTokens: 2_000,
