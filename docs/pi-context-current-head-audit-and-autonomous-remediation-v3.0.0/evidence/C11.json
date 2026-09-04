@@ -1,7 +1,7 @@
 {
   "taskId": "C11",
   "baseCommit": "a38e7f77bc437b837906ff5e43de25f904525a2d",
-  "headCommit": "a16a093ff04c392d4ad5b1c165cd19f78316a82d",
+  "headCommit": "0cbade6995b16b4a693a77a2d85d37e878a1db58",
   "worktreeCleanBefore": true,
   "commands": [
     {
@@ -22,7 +22,7 @@
   "artifacts": [
     {
       "path": "packages/storage-node/src/index.ts",
-      "sha256": "d6a42341dbddc3aebfea671e8329fb47ba8585980ed0cec4a4c78fb735591a73"
+      "sha256": "e8547c3ec2b296ffce474b0d47ebccd227c7f063c42c675f864a8962a280df2b"
     },
     {
       "path": "packages/storage-node/src/schema/migrations.ts",
@@ -30,15 +30,15 @@
     },
     {
       "path": "packages/runtime/src/lease-service.ts",
-      "sha256": "875149adfb05b26dabd673e4d98c06144491badca67af8fdfa7f49e022f3ad18"
+      "sha256": "f6aeb565305b3ae17f3dc9d96a5688a0e45f03748ab0e8866e0fb5f5ce82b335"
     },
     {
       "path": "apps/pi-context-runtime/src/composition-root.ts",
-      "sha256": "398eda3e20a7f37bb52f4d43ba44ff4e4e43f7618af4b55833aa5c1b78d4255e"
+      "sha256": "a2a56511fe585efaad18e29330e8019f681c5d25cf2f314f66788278268ceb67"
     },
     {
       "path": "packages/storage-node/test/recall-lease-store.test.ts",
-      "sha256": "ff7da5f374fe6607fd374077483d247630cfadb3a7afdedd3b7d0b9624ff9a94"
+      "sha256": "565cfdb23474605974b3f31eceb62d8ee2cc9f8710b1c30c33dd397e0e6e6cb4"
     }
   ],
   "requirements": {
