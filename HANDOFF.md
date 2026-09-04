@@ -4,9 +4,9 @@
 
 ### v3 W5 continuation (2026-09-04)
 
-代码 HEAD 以接手时 `git rev-parse HEAD` 为准（本文件不硬编码易漂移的 commit）。C25–C30 已有代码修补与定向验证，但真实 Provider live evidence、Evidence v3 和 C24 300-pair gate 仍未完成；发布决策继续保持 `keep-pi-native` / `publicationClaim=false`。按用户要求，300 gate 延后至全部开发任务完成后执行一次。
+当前代码已完成 C19/C20/C24 的增量修复（transport attempt 记录、planned/complete-case/worst-case 统计、corpus/session source binding、partial rows fail-closed、权威 live verifier）；C25–C28 也已有实现与定向测试。真实 Provider live evidence、Evidence v3 和 C24 300-pair gate 仍未完成；发布决策继续保持 `keep-pi-native` / `publicationClaim=false`。按用户要求，300 gate 延后至全部开发任务完成后执行一次。代码 HEAD 以接手时 `git rev-parse HEAD` 为准，本文件不硬编码易漂移的 commit。
 
-下一轮执行入口是 `docs/pi-context-deep-audit-and-next-iteration-v2.0.0/`（W0 `B00–B07` 起）。审计对象 HEAD 为 `6c5c5b5ace3c14ea28535de9de2b95cc4fa40a31`。
+下一轮执行入口仍以 `docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/` 的未完成任务和当前工作树为准；审计附件中的旧 HEAD 仅作为历史基线，不代表当前实现 HEAD。
 
 不要再 claim 上一版 `T00–T54` / `A00–A49` 为已验收完成。上一版 declared-done 已与 acceptance 分离；`A43`/`A44`/`A45`/`A48` 必须保持 reopen，直到对应 Live Lane 真正通过。
 
