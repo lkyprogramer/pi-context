@@ -1,0 +1,18 @@
+{
+  "taskId":"C18",
+  "baseCommit":"ce7a4c768f81365f2c2e021eda148d404d6b862d",
+  "headCommit":"56b338663f0a2a4c7f73abc9881bf1eb1781646f",
+  "worktreeCleanBefore":true,
+  "commands":[
+    {"phase":"green","command":"corepack pnpm vitest run packages/benchmark/test/report.test.ts","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C18-green.log","logSha256":"73fdcd2d2a82a425be91727395d512d1bce38b62723fe1b3324896bc659f1147"},
+    {"phase":"full-gate","command":"corepack pnpm typecheck","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C18-typecheck.log","logSha256":"64fb7de32220fc1fa104ce45ee068b8186ddc7fbe4b6b0317c6b3b53ee2e9b7e"}
+  ],
+  "artifacts":[
+    {"path":"packages/contracts/src/index.ts","sha256":"6a32191bfc880fa8af928adfcf3424ae0a7ac34ff7e4df73971d47268382265b"},
+    {"path":"packages/benchmark/src/report/engine.ts","sha256":"6d4985d87cfa9e4866e683d367ce498a813ded513f0351096bdb4dfcfe2e974f"},
+    {"path":"tests/live-gate/paired-w2-live.ts","sha256":"59846ef79b1597b1d75f6a9738cef03da1448b9616b2b14c600bb0e946014832"},
+    {"path":"packages/benchmark/test/report.test.ts","sha256":"ed4464e2ecca43987ce4b365701be4ca925807e89fdadeb85239929bf50a322c"}
+  ],
+  "requirements":{"checkpointViewRequestProviderLayers":true,"nullUnavailableInvariant":true,"syntheticProviderUsageDisclosed":true,"missingRequestNotUsedAsSummary":true,"narrowAndTypecheckGreen":true,"unavailableMaterializerProviderResidualDisclosed":true},
+  "review":{"status":"accepted","reviewer":"c18-code-review-postfix"}
+}
