@@ -988,6 +988,12 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   }
   const compactions = inspectCompactions(arm.sessionFile);
   const summaries = compactions.map((row) => row.summary);
+  const toolEventEvidence = toolEvents.map((event) => ({
+    type: String(event.type ?? ""),
+    toolName: String(event.toolName ?? event.name ?? ""),
+    argsHash: sha(JSON.stringify(event.args ?? event.input ?? "")),
+    isError: event.isError === true || event.error !== undefined,
+  }));
   const report = {
     lane: "recursive-long-horizon",
     liveProvider: providerStarted,
@@ -999,13 +1005,13 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     branchPointerVerified: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
     restartContinuityVerified: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     sideEffectGuard: summaries.length > 0 && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
-    toolEvents: toolEvents.length,
+    toolEvents: toolEventEvidence,
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
     oracleComplete: ["compact-1", "temporal-update", "grow-before-compact-2", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
       && compactions.length >= 3
       && summaries.length > 0
       && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text))
-      && toolEvents.length > 0
+      && toolEventEvidence.length > 0
       && !toolEvents.some((event) => /deploy|production|发布|部署/i.test(JSON.stringify(event))),
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
