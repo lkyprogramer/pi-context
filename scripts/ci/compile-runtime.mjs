@@ -11,8 +11,9 @@ const sources = [
   "apps/pi-context-runtime/src/doctor.ts",
   "apps/pi-context-runtime/src/conflicts.ts",
 ];
-const result = spawnSync(process.env.npm_execpath ?? "pnpm", ["exec", "tsc", "--noEmit", "--strict", "--skipLibCheck", "--module", "NodeNext", "--moduleResolution", "NodeNext", "--target", "ES2022", "--types", "node", ...sources], {
+const result = spawnSync("corepack", ["pnpm", "exec", "tsc", "--noEmit", "--strict", "--skipLibCheck", "--module", "NodeNext", "--moduleResolution", "NodeNext", "--target", "ES2022", "--types", "node", ...sources], {
   cwd: root,
   stdio: "inherit",
 });
+if ((result.status ?? 1) === 0) console.log(`strict runtime tsc passed (${sources.length} entrypoints)`);
 process.exit(result.status ?? 1);

@@ -1486,13 +1486,21 @@ export function registerProductionUserTurnRuntime(
       if (!ctx?.sessionId) {
         throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "sessionId" });
       }
-      const opening = await ownerByWorkspace(ctx.workspaceId);
-      if (!opening) {
+      let owner: WorkspaceUserTurnOwner | undefined;
+      if (ctx.workspaceId) {
+        const opening = await ownerByWorkspace(ctx.workspaceId);
+        owner = opening ? await opening : undefined;
+      } else {
+        const candidates = await Promise.all([...owners.values()].map((pending) => pending));
+        const matches = candidates.filter((candidate) => candidate.cursorsBySession.has(ctx.sessionId!));
+        if (matches.length === 1) owner = matches[0];
+      }
+      if (!owner) {
         throw new ProductionCompositionError("PCR_PRODUCTION_DEPENDENCY_MISSING", {
           dependency: "workspaceOwner",
         });
       }
-      const cursor = opening.cursorsBySession.get(ctx.sessionId);
+      const cursor = owner.cursorsBySession.get(ctx.sessionId);
       if (!cursor) {
         throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "sessionId" });
       }
@@ -1502,7 +1510,7 @@ export function registerProductionUserTurnRuntime(
           actualWorkspaceId: ctx.workspaceId,
         });
       }
-      return { cursor, evidence: opening.evidence(cursor), dataRoot: opening.dataRoot };
+      return { cursor, evidence: owner.evidence(cursor), dataRoot: owner.dataRoot };
     },
   });
 }

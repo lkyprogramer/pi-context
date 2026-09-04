@@ -43,6 +43,8 @@ jobs:
       - run: corepack enable && corepack prepare pnpm@10.15.0 --activate
       - run: pnpm install --frozen-lockfile
       - run: pnpm compile
+      - run: node scripts/ci/compile-runtime.mjs
+      - run: pnpm vitest run tests/ci/compile-contract.test.ts
       - run: pnpm vitest run tests/release/package-artifact.test.ts
   typecheck:
     runs-on: ubuntu-latest
