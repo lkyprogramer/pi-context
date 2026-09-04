@@ -995,6 +995,12 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const history: Array<{ phase: string; ok: boolean; error?: string; compactCount?: number; summary?: string }> = [];
   const toolEvents: Array<Record<string, unknown>> = [];
   const treeEvents: Array<Record<string, unknown>> = [];
+  const configuredFillerChars = Number(process.env.PCR_W5_RECURSIVE_FILLER_CHARS ?? 80_000);
+  const recursiveFillerChars = Number.isSafeInteger(configuredFillerChars)
+    && configuredFillerChars > 0
+    && configuredFillerChars <= 120_000
+    ? configuredFillerChars
+    : 80_000;
   let branchLineage: ReturnType<typeof evaluateBranchLineage> | null = null;
   let forkEvidence: ReturnType<typeof evaluateForkLineage> | null = null;
   let branchEntryId = "";
@@ -1012,14 +1018,14 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));
         const compact1Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(80_000)}`, 3 * 60_000);
+        await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(recursiveFillerChars)}`, 3 * 60_000);
         history.push({ phase: "compact-1", ok: inspectCompactions(arm.sessionFile).length > compact1Before, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
         history.push({ phase: "temporal-update", ok: /\bversion\s*7\b/i.test(lastAssistantText(arm.sessionFile)) && !/\bversion\s*6\b/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact2Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Grow before compact 2.\n${filler(80_000)}`, 3 * 60_000);
+        await rpc.promptAndWait(`Grow before compact 2.\n${filler(recursiveFillerChars)}`, 3 * 60_000);
         history.push({ phase: "grow-before-compact-2", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         history.push({ phase: "compact-2", ok: inspectCompactions(arm.sessionFile).length > compact2Before, compactCount: inspectCompactions(arm.sessionFile).length });
@@ -1080,7 +1086,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && branchLineage.ok });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
+        await rpc.promptAndWait(`Add more history before compact 3.\n${filler(recursiveFillerChars)}`, 3 * 60_000);
         history.push({
           phase: "compact-3",
           ok: inspectCompactions(arm.sessionFile).length > compact3Before,
