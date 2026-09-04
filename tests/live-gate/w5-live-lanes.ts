@@ -807,7 +807,14 @@ async function runOverflowArm(input: {
           return;
         }
         const recovery = await runForcedOverflowRecovery({
-          force: () => ({ phase: "force", ok: false, error: String(attempts.find((row) => row.phase === "overflow-prompt")?.error ?? "context_length_exceeded"), sideEffectCount: sideEffectCount() }),
+          force: () => ({
+            phase: "force",
+            ok: false,
+            error: String(attempts.find((row) => row.phase === "overflow-prompt")?.error
+              ?? grown.find((row) => row.overflow === true)?.error
+              ?? "context_length_exceeded"),
+            sideEffectCount: sideEffectCount(),
+          }),
           compact: async () => {
             const before = lastAssistantUsage(arm.sessionFile).inputTokens;
             const compacted = await rpc.compact();
@@ -891,17 +898,22 @@ export async function runProviderOverflow(repoRoot: string): Promise<Record<stri
         providerStarted: native.providerStarted,
         overflowObserved: native.overflowObserved,
         usedManualCompactAsOverflow: native.usedManualCompactAsOverflow,
+        recovery: native.recovery,
         attempts: native.attempts,
       },
       pcr: {
         providerStarted: pcr.providerStarted,
         overflowObserved: pcr.overflowObserved,
         usedManualCompactAsOverflow: pcr.usedManualCompactAsOverflow,
+        recovery: pcr.recovery,
         attempts: pcr.attempts,
       },
     },
     overflowObserved,
     usedManualCompactAsOverflow,
+    recoveryOk: [native, pcr]
+      .filter((arm) => arm.overflowObserved)
+      .every((arm) => arm.recovery !== null && (arm.recovery as Record<string, unknown>).recovery?.ok === true),
     compactThenRetry: overflowObserved
       && [...native.attempts, ...pcr.attempts].some((row) => row.phase === "compact" && row.ok)
       && [...native.attempts, ...pcr.attempts].some((row) => row.phase === "retry" && row.ok),
@@ -916,6 +928,7 @@ export async function runProviderOverflow(repoRoot: string): Promise<Record<stri
   rmSync(native.agentDir, { recursive: true, force: true });
   rmSync(pcr.agentDir, { recursive: true, force: true });
   if (overflowObserved) {
+    if (report.recoveryOk !== true) throw new W5LiveError("PCR_W5_OVERFLOW_HAND_COMPACT", { reason: "recovery-side-effect-or-retry-failed" });
     assertOverflowPolicy({
       overflowObserved,
       usedManualCompactAsOverflow,

@@ -15,12 +15,24 @@ export interface ForcedOverflowRecoveryInput {
 
 export function countSideEffectEvents(events: readonly Record<string, unknown>[]): number {
   const ids = new Set<string>();
-  for (const event of events) {
-    const label = `${String(event.toolName ?? event.name ?? "")} ${JSON.stringify(event.args ?? event.input ?? "")}`;
-    if (!/\b(?:write|edit|delete|remove|move|rename|deploy|publish|execute|shell|bash)\b|写入|删除|部署|发布/iu.test(label)) continue;
-    const id = String(event.toolCallId ?? event.id ?? label);
-    ids.add(id);
-  }
+  const visit = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    const event = value as Record<string, unknown>;
+    const name = String(event.toolName ?? event.name ?? "");
+    const args = event.args ?? event.arguments ?? event.input ?? "";
+    const label = `${name} ${JSON.stringify(args)}`;
+    if (/\b(?:write|write_file|edit|apply_patch|delete|remove|move|rename|deploy|publish|execute|shell|bash)\b|写入|删除|部署|发布/iu.test(label)) {
+      const id = String(event.toolCallId ?? event.id ?? label);
+      ids.add(id);
+    }
+    for (const child of Object.values(event)) {
+      if (child && typeof child === "object") {
+        if (Array.isArray(child)) child.forEach(visit);
+        else visit(child);
+      }
+    }
+  };
+  for (const event of events) visit(event);
   return ids.size;
 }
 
@@ -45,7 +57,16 @@ export async function runForcedOverflowRecovery(input: ForcedOverflowRecoveryInp
   const compact = await input.compact();
   attempts.push(compact);
   if (!compact.ok) {
-    return { prevention: { overflowObserved: true, errorClass }, recovery: { compacted: false, retried: false, sideEffectsUnchanged: true, ok: false }, attempts };
+    return {
+      prevention: { overflowObserved: true, errorClass },
+      recovery: {
+        compacted: false,
+        retried: false,
+        sideEffectsUnchanged: compact.sideEffectCount === force.sideEffectCount,
+        ok: false,
+      },
+      attempts,
+    };
   }
   const retry = await input.retry();
   attempts.push(retry);

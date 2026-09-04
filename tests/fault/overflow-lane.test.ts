@@ -18,7 +18,10 @@ describe("provider overflow lane", () => {
       { type: "tool_result", toolCallId: "w1", toolName: "write", args: { path: "a" } },
       { type: "tool_call", toolCallId: "r1", toolName: "read", args: { path: "a" } },
       { type: "tool_call", toolCallId: "d1", toolName: "bash", args: { command: "deploy production" } },
-    ])).toBe(2);
+      { type: "message", message: { role: "assistant", content: [
+        { type: "toolCall", id: "w2", name: "write_file", arguments: { path: "b" } },
+      ] } },
+    ])).toBe(3);
   });
 
   it("classifies context overflow and retries once without side effects", async () => {
@@ -41,6 +44,15 @@ describe("provider overflow lane", () => {
     });
     expect(report.recovery.ok).toBe(false);
     expect(report.recovery.sideEffectsUnchanged).toBe(false);
+  });
+  it("reports side-effect drift even when compaction itself fails", async () => {
+    const report = await runForcedOverflowRecovery({
+      force: () => ({ phase: "force", ok: false, error: "context_length_exceeded", sideEffectCount: 1 }),
+      compact: () => ({ phase: "compact", ok: false, sideEffectCount: 2 }),
+      retry: () => ({ phase: "retry", ok: true, sideEffectCount: 2 }),
+    });
+    expect(report.recovery.sideEffectsUnchanged).toBe(false);
+    expect(report.recovery.ok).toBe(false);
   });
   it("rejects overflow claims that never exceeded the provider window", async () => {
     const lanes = createPerformanceLaneRunner({
