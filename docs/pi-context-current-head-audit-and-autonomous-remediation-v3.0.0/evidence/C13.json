@@ -1,0 +1,39 @@
+{
+  "taskId": "C13",
+  "baseCommit": "a38353d5cb63813dbfaa0a2ecc0f53e047c8d83d",
+  "headCommit": "5ff6b9421ca7b13f901a45b00a6c9824ac4c08fc",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run packages/benchmark/test/economics-pairing.test.ts tests/performance/economics.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C13-green.log",
+      "logSha256": "e7444dd2383a9c594dcd38f131af275f21879d6f232b9ff7fa35777a20263d95"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C13-typecheck.log",
+      "logSha256": "ef1b8144bbad1c4c886f413b90ea0869e1e8bb61eb5ce575cd387430d90403e2"
+    }
+  ],
+  "artifacts": [
+    {"path": "packages/kernel/src/control/economics.ts", "sha256": "c35d16b571826c3fd691f0a2bc54910f302ca034ee628b99bc3aa70cff2bbffd"},
+    {"path": "packages/benchmark/src/economics/pairing.ts", "sha256": "909cd08bb0ea6a19e70bd686bf03010c0cc2d3dd87a3dfe84ae5326531c032d8"},
+    {"path": "packages/benchmark/test/economics-pairing.test.ts", "sha256": "53e4e14b2e25d2692fe2229c6a2b1e2e765e5c084652bcfcbbd32effd71d1711"},
+    {"path": "tests/performance/economics.test.ts", "sha256": "b9486dff1f750d515876b8404908b7ebdf8516a3ab9f8c80613c049b132612fb"}
+  ],
+  "requirements": {
+    "logicalEffectiveMonetarySplit": true,
+    "unknownPricingFailsClosed": true,
+    "invalidCacheWriteRateFailsClosed": true,
+    "narrowAndTypecheckGreen": true,
+    "legacyTotalBilledCompatibilityDisclosed": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "c13-code-review"
+  }
+}
