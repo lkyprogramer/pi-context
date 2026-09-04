@@ -947,11 +947,12 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     });
     const beforeRestart = readFileSync(arm.sessionFile, "utf8");
     const lines = beforeRestart.trim().split("\n");
-    const last = JSON.parse(lines.at(-1) ?? "{}") as { id?: string };
+    const last = JSON.parse(lines.at(-1) ?? "{}") as { id?: string; parentId?: string };
+    const branchFrom = last.parentId ?? last.id ?? "t1";
     const branchUser = {
       type: "message",
       id: "u-branch",
-      parentId: last.id ?? "t1",
+      parentId: branchFrom,
       timestamp: new Date().toISOString(),
       message: {
         role: "user",
@@ -960,7 +961,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       },
     };
     writeFileSync(arm.sessionFile, `${beforeRestart.trim()}\n${JSON.stringify(branchUser)}\n`);
-    history.push({ phase: "branch-after-compact-2", ok: branchUser.parentId === last.id && existsSync(arm.sessionFile) });
+    history.push({ phase: "branch-after-compact-2", ok: branchUser.parentId === branchFrom && branchFrom !== last.id && existsSync(arm.sessionFile) });
     persistPartial(outDir, "pcr", { history }, arm.sessionFile);
     await withRpc({
       sessionFile: arm.sessionFile,
@@ -1001,19 +1002,29 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const toolEventEvidence = toolEvents.map((event) => {
     const args = canonical(event.args ?? event.input ?? "");
     const result = canonical(event.result ?? event.partialResult ?? event.content ?? event.details ?? "");
+    const toolCallId = String(event.toolCallId ?? "");
     return {
       type: String(event.type ?? ""),
       toolName: String(event.toolName ?? event.name ?? ""),
-      toolCallId: String(event.toolCallId ?? event.id ?? ""),
+      toolCallId,
       argsHash: sha(args),
       resultHash: sha(result),
       isError: event.isError === true || event.error !== undefined,
       forbiddenSideEffect: /deploy|production|发布|部署/i.test(`${args} ${result}`),
+      evidenceComplete: toolCallId.length > 0 && (args !== '""' || result !== '""'),
     };
   }).filter((event, index, all) => all.findIndex((candidate) => canonical(candidate) === canonical(event)) === index)
     .map((event, ordinal) => ({ ordinal, ...event }));
   const forbiddenSideEffectObserved = toolEventEvidence.some((event) => event.forbiddenSideEffect);
-  const branchNavigationObserved = treeEvents.length > 0 || toolEventEvidence.some((event) => /branch|navigate|tree/i.test(event.toolName));
+  const treeEventEvidence = treeEvents.map((event, ordinal) => ({
+    ordinal,
+    type: String(event.type ?? ""),
+    oldLeafId: String(event.oldLeafId ?? event.fromId ?? ""),
+    newLeafId: String(event.newLeafId ?? event.toId ?? event.leafId ?? ""),
+    eventHash: sha(canonical(event)),
+  })).filter((event, index, all) => all.findIndex((candidate) => candidate.eventHash === event.eventHash) === index);
+  const branchNavigationObserved = treeEventEvidence.some((event) => event.oldLeafId.length > 0 && event.newLeafId.length > 0)
+    || toolEventEvidence.some((event) => /branch|navigate|tree/i.test(event.toolName));
   const report = {
     lane: "recursive-long-horizon",
     liveProvider: providerStarted,
@@ -1027,13 +1038,14 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     sideEffectGuard: summaries.length > 0 && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)) && !forbiddenSideEffectObserved,
     forbiddenSideEffectObserved,
     toolEvents: toolEventEvidence,
-    treeEvents: treeEvents.length,
+    treeEvents: treeEventEvidence,
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
     oracleComplete: ["compact-1", "temporal-update", "grow-before-compact-2", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
       && compactions.length >= 3
       && summaries.length > 0
       && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text))
       && toolEventEvidence.length > 0
+      && toolEventEvidence.every((event) => event.evidenceComplete)
       && !forbiddenSideEffectObserved
       && branchNavigationObserved,
   };
