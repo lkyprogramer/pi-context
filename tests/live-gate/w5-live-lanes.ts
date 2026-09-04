@@ -1073,7 +1073,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         && (message as Record<string, unknown>).role === "user";
     });
     const branchFrom = typeof branchEntry?.id === "string" ? branchEntry.id : "u1";
-    const expectedBranchParentId = typeof branchEntry?.parentId === "string" ? branchEntry.parentId : null;
+    const expectedBranchParentId = typeof entriesBeforeRestart.at(-1)?.id === "string" ? String(entriesBeforeRestart.at(-1)?.id) : null;
     const branchBefore = readFileSync(arm.sessionFile, "utf8");
     await withRpc({
       sessionFile: arm.sessionFile,

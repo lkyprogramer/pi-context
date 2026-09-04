@@ -48,20 +48,21 @@ describe("tools-enabled environment closed-loop", () => {
   it("evaluates restart lineage across source and fork sessions", () => {
     const source = [
       { id: "parent", parentId: "root" },
-      { id: "sibling", parentId: "parent" },
+      { id: "active", parentId: "parent" },
+      { id: "sibling", parentId: "active" },
     ];
     const fork = [
-      { id: "branch", parentId: "parent" },
+      { id: "branch", parentId: "active" },
       { id: "head", parentId: "branch" },
     ];
-    expect(evaluateBranchLineage([...source, ...fork], "branch", "parent")).toMatchObject({
+    expect(evaluateBranchLineage([...source, ...fork], "branch", "active")).toMatchObject({
       parentExists: true,
       isSibling: true,
       restartHeadPresent: true,
       ok: true,
     });
-    expect(evaluateBranchLineage([...source, { id: "other", parentId: "root" }, { id: "other-sibling", parentId: "other" }, { id: "branch", parentId: "other" }, { id: "head", parentId: "branch" }], "branch", "parent").ok).toBe(false);
-    expect(evaluateBranchLineage([...source, ...fork, { id: "branch", parentId: "other" }], "branch", "parent").ok).toBe(false);
+    expect(evaluateBranchLineage([...source, { id: "other", parentId: "root" }, { id: "other-sibling", parentId: "other" }, { id: "branch", parentId: "other" }, { id: "head", parentId: "branch" }], "branch", "active").ok).toBe(false);
+    expect(evaluateBranchLineage([...source, ...fork, { id: "branch", parentId: "other" }], "branch", "active").ok).toBe(false);
   });
 
   it("fails a public API prohibition and a forbidden deploy", async () => {
