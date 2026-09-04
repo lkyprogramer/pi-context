@@ -1018,6 +1018,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     const reports = Array.isArray(report) ? report.filter((item): item is Record<string, unknown> => !!item && typeof item === "object") : [report as Record<string, unknown>];
     const recursiveProfile = profile === "recursive-auto" || profile === "recursive" || profile === "long-horizon";
     const failed = reports.some((data) => data.liveProvider !== true
+      || (data.lane === "natural-threshold" && data.triggered !== true)
+      || (data.lane === "provider-overflow" && (data.overflowObserved !== true || data.usedManualCompactAsOverflow === true))
       || (recursiveProfile && (data.oracleComplete !== true || data.threeCompacts !== true)));
     if (failed) process.exitCode = 1;
   }).catch((error) => {
