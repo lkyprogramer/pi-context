@@ -96,6 +96,34 @@ export function isContextOverflowError(error: string): boolean {
   return /context.?length|maximum context|too many tokens|prompt is too long|context_length_exceeded|please reduce/i.test(error);
 }
 
+export function evaluateBranchLineage(entries: readonly Record<string, unknown>[], branchId = "u-branch"): {
+  branchId: string;
+  branchParentId: string | null;
+  parentExists: boolean;
+  isSibling: boolean;
+  restartHeadPresent: boolean;
+  ok: boolean;
+} {
+  const byId = new Map(entries
+    .filter((entry) => typeof entry.id === "string")
+    .map((entry) => [String(entry.id), entry]));
+  const branch = byId.get(branchId);
+  const parentId = typeof branch?.parentId === "string" ? branch.parentId : null;
+  const parent = parentId ? byId.get(parentId) : undefined;
+  const sibling = parentId
+    ? entries.some((entry) => entry !== branch && entry.parentId === parentId && entry.id !== branchId)
+    : false;
+  const restartHeadPresent = byId.has(branchId) && entries.at(-1)?.id === branchId;
+  return {
+    branchId,
+    branchParentId: parentId,
+    parentExists: parent !== undefined,
+    isSibling: sibling,
+    restartHeadPresent,
+    ok: parent !== undefined && sibling && restartHeadPresent,
+  };
+}
+
 function lastAssistantUsage(sessionFile: string): {
   inputTokens: number | null;
   outputTokens: number | null;
@@ -915,6 +943,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const history: Array<{ phase: string; ok: boolean; error?: string; compactCount?: number; summary?: string }> = [];
   const toolEvents: Array<Record<string, unknown>> = [];
   const treeEvents: Array<Record<string, unknown>> = [];
+  let branchLineage: ReturnType<typeof evaluateBranchLineage> | null = null;
   let providerStarted = false;
   try {
     await withRpc({
@@ -961,7 +990,11 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       },
     };
     writeFileSync(arm.sessionFile, `${beforeRestart.trim()}\n${JSON.stringify(branchUser)}\n`);
-    history.push({ phase: "branch-after-compact-2", ok: branchUser.parentId === branchFrom && branchFrom !== last.id && existsSync(arm.sessionFile) });
+    const branchedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
+      try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
+    });
+    branchLineage = evaluateBranchLineage(branchedEntries);
+    history.push({ phase: "branch-after-compact-2", ok: branchUser.parentId === branchFrom && branchFrom !== last.id && branchLineage.ok });
     persistPartial(outDir, "pcr", { history }, arm.sessionFile);
     await withRpc({
       sessionFile: arm.sessionFile,
@@ -972,7 +1005,11 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       tools: true,
       work: async (rpc) => {
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
-        history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && readFileSync(arm.sessionFile, "utf8").includes('"id":"u-branch"') });
+        const restartedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
+          try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
+        });
+        branchLineage = evaluateBranchLineage(restartedEntries);
+        history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && branchLineage.ok });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
@@ -1039,6 +1076,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     forbiddenSideEffectObserved,
     toolEvents: toolEventEvidence,
     treeEvents: treeEventEvidence,
+    branchLineage,
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
     oracleComplete: ["compact-1", "temporal-update", "grow-before-compact-2", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
       && compactions.length >= 3
@@ -1047,7 +1085,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       && toolEventEvidence.length > 0
       && toolEventEvidence.every((event) => event.evidenceComplete)
       && !forbiddenSideEffectObserved
-      && branchNavigationObserved,
+      && branchNavigationObserved
+      && branchLineage?.ok === true,
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
   rmSync(root, { recursive: true, force: true });

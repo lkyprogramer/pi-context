@@ -4,6 +4,7 @@ import {
   LIVE_RESERVE_TOKENS,
   assertNaturalThresholdPolicy,
   assertOverflowPolicy,
+  evaluateBranchLineage,
   isContextOverflowError,
 } from "./w5-live-lanes.js";
 
@@ -74,5 +75,19 @@ describe("W5 long-horizon lane policy", () => {
     })).toThrowError(expect.objectContaining({ code: "PCR_W5_OVERFLOW_HAND_COMPACT" }));
     expect(isContextOverflowError("context_length_exceeded: prompt is too long")).toBe(true);
     expect(isContextOverflowError("provider timeout")).toBe(false);
+  });
+
+  it("requires a real parent and sibling branch before accepting restart continuity", () => {
+    const entries = [
+      { id: "root", parentId: null },
+      { id: "front", parentId: "root" },
+      { id: "u-branch", parentId: "root", timestamp: "2026-09-04T00:00:00.000Z" },
+    ];
+    expect(evaluateBranchLineage(entries).ok).toBe(true);
+    expect(evaluateBranchLineage(entries.slice(0, 2)).ok).toBe(false);
+    expect(evaluateBranchLineage([
+      { id: "root", parentId: null },
+      { id: "u-branch", parentId: "missing", timestamp: "2026-09-04T00:00:00.000Z" },
+    ]).parentExists).toBe(false);
   });
 });
