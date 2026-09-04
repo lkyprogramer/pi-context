@@ -61,6 +61,7 @@ const rc = JSON.parse(readFileSync(rcManifest, "utf8"));
 const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
 if (process.env.GITHUB_SHA && process.env.GITHUB_SHA !== head) fail("PCR_GITHUB_SHA_HEAD_MISMATCH");
 if (rc.commit !== head) fail("PCR_RC_MANIFEST_HEAD_MISMATCH");
+if (publicationManifest.commit !== undefined && publicationManifest.commit !== head) fail("PCR_PUBLICATION_MANIFEST_HEAD_MISMATCH");
 if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
   const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/commits/${head}/check-runs`, { headers: { accept: "application/vnd.github+json", authorization: `Bearer ${process.env.GITHUB_TOKEN}` } });
   if (!response.ok) fail("PCR_CHECKS_UNAVAILABLE");
