@@ -751,6 +751,7 @@ async function runOverflowArm(input: {
   attempts: Array<Record<string, unknown>>;
   overflowObserved: boolean;
   usedManualCompactAsOverflow: boolean;
+  recovery: Record<string, unknown> | null;
 }> {
   const arm = isolatedArm(
     input.root,
@@ -913,7 +914,8 @@ export async function runProviderOverflow(repoRoot: string): Promise<Record<stri
     usedManualCompactAsOverflow,
     recoveryOk: [native, pcr]
       .filter((arm) => arm.overflowObserved)
-      .every((arm) => arm.recovery !== null && (arm.recovery as Record<string, unknown>).recovery?.ok === true),
+      .every((arm) => arm.recovery !== null
+        && (arm.recovery as { recovery?: { ok?: boolean } }).recovery?.ok === true),
     compactThenRetry: overflowObserved
       && [...native.attempts, ...pcr.attempts].some((row) => row.phase === "compact" && row.ok)
       && [...native.attempts, ...pcr.attempts].some((row) => row.phase === "retry" && row.ok),
@@ -995,24 +997,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     const lines = beforeRestart.trim().split("\n");
     const last = JSON.parse(lines.at(-1) ?? "{}") as { id?: string; parentId?: string };
     const branchFrom = last.parentId ?? last.id ?? "t1";
-    const branchUser = {
-      type: "message",
-      id: "u-branch",
-      parentId: branchFrom,
-      timestamp: new Date().toISOString(),
-      message: {
-        role: "user",
-        content: [{ type: "text", text: "Park the previous front. New branch: recall whether version 7 is active. Do not merge sibling-branch." }],
-        timestamp: Date.now(),
-      },
-    };
-    writeFileSync(arm.sessionFile, `${beforeRestart.trim()}\n${JSON.stringify(branchUser)}\n`);
-    const branchedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
-      try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
-    });
-    branchLineage = evaluateBranchLineage(branchedEntries);
-    history.push({ phase: "branch-after-compact-2", ok: branchUser.parentId === branchFrom && branchFrom !== last.id && branchLineage.ok });
-    persistPartial(outDir, "pcr", { history }, arm.sessionFile);
+    const branchBefore = readFileSync(arm.sessionFile, "utf8");
     await withRpc({
       sessionFile: arm.sessionFile,
       cwd: arm.cwd,
@@ -1021,6 +1006,21 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       autoCompact: true,
       tools: true,
       work: async (rpc) => {
+        const fork = await rpc.request({ type: "fork", entryId: branchFrom }, 30_000);
+        if (fork.success !== true) throw new Error(fork.error ?? "fork failed");
+        const state = await rpc.request({ type: "get_state" }, 15_000);
+        const sessionFile = (state.data as { sessionFile?: unknown } | undefined)?.sessionFile;
+        if (typeof sessionFile !== "string" || sessionFile === arm.sessionFile) throw new Error("fork did not create a new session");
+        arm.sessionFile = sessionFile;
+        await rpc.promptAndWait("Park the previous front. New branch: recall whether version 7 is active. Do not merge sibling-branch.", 3 * 60_000);
+        const branchedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
+          try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
+        });
+        const branchEntry = [...branchedEntries].reverse().find((entry) => entry.message && (entry.message as Record<string, unknown>).role === "user" && JSON.stringify(entry).includes("sibling-branch"));
+        branchLineage = evaluateBranchLineage(branchedEntries, typeof branchEntry?.id === "string" ? branchEntry.id : "");
+        treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));
+        history.push({ phase: "branch-after-compact-2", ok: branchLineage.ok && branchBefore.length > 0 });
+        persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         const restartedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
@@ -1103,7 +1103,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       && toolEventEvidence.every((event) => event.evidenceComplete)
       && !forbiddenSideEffectObserved
       && branchNavigationObserved
-      && branchLineage?.ok === true,
+      && Boolean(branchLineage && (branchLineage as { ok?: boolean }).ok === true),
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
   rmSync(root, { recursive: true, force: true });
