@@ -19,4 +19,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: pcr-rc-manifest
-          path: artifacts/runs/rc/manifest.json
+          path: |
+            artifacts/runs/rc/manifest.json
+            artifacts/runs/rc/raw-bundle.tar.gz

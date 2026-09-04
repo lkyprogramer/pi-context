@@ -37,7 +37,10 @@ const scan = spawnSync(process.execPath, [join(root, "scripts/release/secret-sca
 if (scan.status !== 0) throw new Error("PCR_RC_SECRET_SCAN_FAILED");
 const scanReport = JSON.parse(scan.stdout);
 delete scanReport.root;
+const archive = join(out, "raw-bundle.tar.gz");
+const packed = spawnSync("tar", ["-czf", archive, "-C", staging, "."], { encoding: "utf8" });
+if (packed.status !== 0) throw new Error(packed.stderr || "PCR_RC_ARCHIVE_FAILED");
 const manifest = { format: "pcr-rc-bundle-v1", commit: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(), files: entries, secretScan: scanReport };
 manifest.digest = createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
 writeFileSync(join(out, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(JSON.stringify({ manifest: join(out, "manifest.json"), digest: manifest.digest, files: entries.length }, null, 2));
+console.log(JSON.stringify({ manifest: join(out, "manifest.json"), archive, digest: manifest.digest, files: entries.length }, null, 2));
