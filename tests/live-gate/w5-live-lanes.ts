@@ -994,16 +994,21 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   }
   const compactions = inspectCompactions(arm.sessionFile);
   const summaries = compactions.map((row) => row.summary);
-  const toolEventEvidence = toolEvents.map((event) => ({
-    type: String(event.type ?? ""),
-    toolName: String(event.toolName ?? event.name ?? ""),
-    toolCallId: String(event.toolCallId ?? event.id ?? ""),
-    argsHash: sha(canonical(event.args ?? event.input ?? "")),
-    resultHash: sha(canonical(event.result ?? event.partialResult ?? "")),
-    isError: event.isError === true || event.error !== undefined,
-  })).filter((event, index, all) => all.findIndex((candidate) => canonical(candidate) === canonical(event)) === index)
+  const toolEventEvidence = toolEvents.map((event) => {
+    const args = canonical(event.args ?? event.input ?? "");
+    const result = canonical(event.result ?? event.partialResult ?? "");
+    return {
+      type: String(event.type ?? ""),
+      toolName: String(event.toolName ?? event.name ?? ""),
+      toolCallId: String(event.toolCallId ?? event.id ?? ""),
+      argsHash: sha(args),
+      resultHash: sha(result),
+      isError: event.isError === true || event.error !== undefined,
+      forbiddenSideEffect: /deploy|production|发布|部署/i.test(`${args} ${result}`),
+    };
+  }).filter((event, index, all) => all.findIndex((candidate) => canonical(candidate) === canonical(event)) === index)
     .map((event, ordinal) => ({ ordinal, ...event }));
-  const forbiddenSideEffectObserved = toolEventEvidence.some((event) => /deploy|production|发布|部署/i.test(canonical(event)));
+  const forbiddenSideEffectObserved = toolEventEvidence.some((event) => event.forbiddenSideEffect);
   const branchNavigationObserved = toolEventEvidence.some((event) => /branch|navigate|tree/i.test(event.toolName));
   const report = {
     lane: "recursive-long-horizon",
