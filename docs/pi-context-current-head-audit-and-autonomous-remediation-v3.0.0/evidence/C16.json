@@ -1,0 +1,19 @@
+{
+  "taskId":"C16",
+  "baseCommit":"2580b4455a2e741f2a34b7f20575014ff22da1fd",
+  "headCommit":"b1428d17dc7542031cb26d98858ec623c5056bfb",
+  "worktreeCleanBefore":true,
+  "commands":[
+    {"phase":"green","command":"corepack pnpm vitest run packages/benchmark/test/gate-v3.test.ts packages/benchmark/test/w5-lanes.test.ts","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C16-green.log","logSha256":"2be00883ae25eb2cf7b03d2e271c9ef8b264417f49b8445294a39b94d553375f"},
+    {"phase":"full-gate","command":"corepack pnpm typecheck","exitCode":0,"logPath":"docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C16-typecheck.log","logSha256":"b7a52a9c0e97443a4ff3506b0f1b4bbc9d72f90b5a0c8738856a7262049071ab"}
+  ],
+  "artifacts":[
+    {"path":"packages/benchmark/src/report/engine.ts","sha256":"ab8f3b1f6438a176c18d865798bf4e5084beb701e60f7e36f7d0a3f62e67da8a"},
+    {"path":"packages/benchmark/src/report/cli.ts","sha256":"a4210faf669fabedae946b0bc5ee7cd37946dc415abdfd9e092ccd5a70580365"},
+    {"path":"packages/benchmark/test/gate-v3.test.ts","sha256":"c497e2ee16a568c101e4511597c174a6e36507225671c77a667f162ddde813a2"},
+    {"path":"packages/benchmark/src/lanes/w5.ts","sha256":"18d83100c91dab16696d2c3d7422a373139b44fdf0807e42a5060d4cfa3f5639"},
+    {"path":"packages/benchmark/src/index.ts","sha256":"bba3ee8464648d1f61a3e091ac9a4f3bccb51ee1f3345bb35335d24875590dcd"}
+  ],
+  "requirements":{"componentDecision":true,"productDecision":true,"publicationUsesProductDecision":true,"narrowAndTypecheckGreen":true,"scopeWaiverForPublicationAndBarrel":true},
+  "review":{"status":"accepted","reviewer":"c16-code-review"}
+}
