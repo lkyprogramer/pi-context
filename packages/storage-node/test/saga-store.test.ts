@@ -12,6 +12,7 @@ import {
   createWorkspaceBlobKeyLease,
   createWorkspaceBlobKeyMaterial,
   openWorkspaceSagaJournal,
+  openWorkspaceCompactionJournal,
   openWorkspaceSqliteStore,
   WORKSPACE_SQLITE_MIGRATIONS,
   type WorkspaceSqliteEvidenceStore,
@@ -533,6 +534,21 @@ describe("workspace SQLite Saga journal", () => {
     await replayJournal.close();
     await replayDatabase.close();
   }, 20_000);
+
+  it("persists compaction stage and durable ack across database reopen", async () => {
+    const dataRoot = root("compaction-ack");
+    const scope = cursor(dataRoot);
+    const outputHash = domainHash("compaction-output", "stable");
+    const database = await openDatabase(dataRoot, scope);
+    const journal = openWorkspaceCompactionJournal({ database });
+    await journal.stage({ cursor: scope, outputHash, firstKeptEntryId: "entry-1", payloadJson: "{}", now: 1 });
+    await database.close();
+    const reopened = await openDatabase(dataRoot, scope);
+    const recovered = openWorkspaceCompactionJournal({ database: reopened });
+    expect(await recovered.pending(scope)).toMatchObject({ outputHash, state: "staged" });
+    expect(await recovered.ack({ cursor: scope, outputHash, firstKeptEntryId: "entry-1" })).toMatchObject({ state: "acked" });
+    await reopened.close();
+  });
 
   it("maps SQLite lock waits, preserves the shared evidence owner, and fails after close", async () => {
     const dataRoot = root("busy");
