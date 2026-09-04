@@ -684,7 +684,9 @@ async function runPair(item: W2Case, extensionPath: string, seed: number, artifa
     replicateIndex: seed,
     seedMode: bound.seedMode,
     sampling: bound.sampling,
-    samplingSource: bound.seedMode === "provider-sampling" ? "provider-response" : "provider-seed-unavailable",
+    // This live runner has no provider seed capability/response witness; keep
+    // provenance explicitly unavailable even if the local policy shape grows.
+    samplingSource: "provider-seed-unavailable",
     sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
     expectedFirstKeptId: frozen.expectedFirstKeptId,
     b0,
@@ -915,6 +917,8 @@ export async function runLivePairedW2(opts: {
     gate: "w2-compactor",
     stage: profile === "gate" ? "w2" : "smoke",
     generatedAt: new Date().toISOString(),
+    runEpochHash,
+    scorer: "w2-scorer-v3",
     baselineArm: "B0",
     candidateArms: ["B1", "B2", "F0"],
     primaryCandidateArm: "B2",
@@ -1022,7 +1026,7 @@ export async function runLivePairedW2(opts: {
       `F0 fromHook=false full-context; observed ceiling=${String(f0Ceiling)}`,
       `maxTokens unmodified ${modelLimits.maxTokens}; keepRecentTokens=${LIVE_KEEP_RECENT_TOKENS} shared`,
       `tokenMedianRelativeDelta=${tokenMedianRelativeDelta.toFixed(4)} realizedNetMedian=${realizedNetMedian}`,
-      sampleMeetsW2Gate ? "sample meets W2 100-pair floor" : "sample below W2 publication floor (100 pairs × 3 seeds)",
+      sampleMeetsW2Gate ? "sample meets W2 100-pair floor" : "sample below W2 publication floor (100 pairs × 3 replicates)",
     ],
     reportHash: digest,
     reportPath,
