@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createPerformanceLaneRunner } from "@pcr/benchmark";
+import { isContextLengthError, runForcedOverflowRecovery } from "../live-gate/forced-overflow-provider.js";
 
 const MODEL = "openclaw/Qwen3.8-27B-WORK";
 const ROUTE = {
@@ -11,6 +12,27 @@ const ROUTE = {
 } as const;
 
 describe("provider overflow lane", () => {
+  it("classifies context overflow and retries once without side effects", () => {
+    const report = runForcedOverflowRecovery({
+      force: () => ({ phase: "force", ok: false, error: "context_length_exceeded: prompt is too long", sideEffectCount: 1 }),
+      compact: () => ({ phase: "compact", ok: true, tokensAfter: 100, outputHash: "compact", sideEffectCount: 1 }),
+      retry: () => ({ phase: "retry", ok: true, tokensAfter: 20, outputHash: "retry", sideEffectCount: 1 }),
+    });
+    expect(report.prevention).toEqual({ overflowObserved: true, errorClass: "context-length" });
+    expect(report.recovery).toMatchObject({ compacted: true, retried: true, sideEffectsUnchanged: true, ok: true });
+    expect(report.attempts.map((row) => row.phase)).toEqual(["force", "compact", "retry"]);
+    expect(isContextLengthError("provider timeout")).toBe(false);
+  });
+
+  it("fails closed when retry changes side-effect count", () => {
+    const report = runForcedOverflowRecovery({
+      force: () => ({ phase: "force", ok: false, error: "maximum context window exceeded", sideEffectCount: 2 }),
+      compact: () => ({ phase: "compact", ok: true, sideEffectCount: 2 }),
+      retry: () => ({ phase: "retry", ok: true, sideEffectCount: 3 }),
+    });
+    expect(report.recovery.ok).toBe(false);
+    expect(report.recovery.sideEffectsUnchanged).toBe(false);
+  });
   it("rejects overflow claims that never exceeded the provider window", async () => {
     const lanes = createPerformanceLaneRunner({
       workspaceId: "ws-fault",
