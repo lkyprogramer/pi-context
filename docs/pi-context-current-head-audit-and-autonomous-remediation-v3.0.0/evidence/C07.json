@@ -1,0 +1,54 @@
+{
+  "taskId": "C07",
+  "baseCommit": "f6281860867d971e6559efafe785613b35e8a41a",
+  "headCommit": "6651cd5628b45c6a8ee2dba9e3eede6f1096d226",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run tests/contract/pi-tool-call-gate.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C07-green.log",
+      "logSha256": "2aa8261adef71a8f8518c21536b1c69750beffb9fa7b58ecc2a979f1379bba3f"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C07-typecheck.log",
+      "logSha256": "49b56c46eb4b1cc49cd128c480ec11410eb63d2efabded78efe12237d6be620c"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "apps/pi-context-runtime/src/extension.ts",
+      "sha256": "8cec170affea9d597124b8b67fb5a528350de832c943b660d8733df2d1ff4391"
+    },
+    {
+      "path": "apps/pi-context-runtime/src/composition-root.ts",
+      "sha256": "07faf2b5f5cac33688ffad91bcbf658e31eea1ae3eb71dfc58ff1f82908827d0"
+    },
+    {
+      "path": "packages/pi-adapter/src/index.ts",
+      "sha256": "10830147bbdd08a28c88d4d7f28453cf6ef5b9e8398817152b878f2c8a7cbc67"
+    },
+    {
+      "path": "packages/pi-adapter/src/commands/context.ts",
+      "sha256": "cef97512ebf6688c316f82b17524aaf92a0942439ff08e49b12f325205a4b31f"
+    },
+    {
+      "path": "tests/contract/pi-tool-call-gate.test.ts",
+      "sha256": "856257aec4a1812382a2fb672e760f59e55b9184d25fe573581fe30c1d24e910"
+    }
+  ],
+  "requirements": {
+    "runtimeToolCtxHasNoCwd": true,
+    "workspaceResolverExportedAndBound": true,
+    "strictTypecheckExit0": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "w1-consistency-review"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "taskId": "C09",
+  "baseCommit": "6651cd5628b45c6a8ee2dba9e3eede6f1096d226",
+  "headCommit": "6651cd5628b45c6a8ee2dba9e3eede6f1096d226",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "green",
+      "command": "node scripts/ci/compile-runtime.mjs",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C09-green.log",
+      "logSha256": "d48f52916182f4c99def2366c07cc005dda3d5276f920b8ee09f9338651291f9"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm vitest run tests/ci/compile-contract.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C09-typecheck.log",
+      "logSha256": "fbf50ce5751de8012ae70f0eb8f959fda795c8f3542fd2c8a3c8fd65e4679957"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/ci/compile-runtime.mjs",
+      "sha256": "c27075c0a2da9a0786d96dc77591e780176a861ede0d93b50293ea6eb41f8047"
+    },
+    {
+      "path": "tests/ci/compile-contract.test.ts",
+      "sha256": "52b2e2872f2de2da207e7af3886aa547aa4c0ac13b8ad3ea42937de5ca36e536"
+    },
+    {
+      "path": ".github/workflows/required.yml",
+      "sha256": "5dc5b7606e62e1490b9d4832b10297f9e28d8017d5238af05776d0cfe4c2830f"
+    }
+  ],
+  "requirements": {
+    "runtimeStrictTscCommandExists": true,
+    "publicContractTestExists": true,
+    "compileExit0": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "w1-consistency-review"
+  }
+}
