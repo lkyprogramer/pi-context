@@ -6,6 +6,8 @@
 
 当前代码已完成 C19/C20/C24 的增量修复（transport attempt 记录、planned/complete-case/worst-case 统计、corpus/session source binding、partial rows fail-closed、权威 live verifier）；C25–C28 也已有实现与定向测试。真实 Provider live evidence、Evidence v3 和 C24 300-pair gate 仍未完成；发布决策继续保持 `keep-pi-native` / `publicationClaim=false`。按用户要求，300 gate 延后至全部开发任务完成后执行一次。代码 HEAD 以接手时 `git rev-parse HEAD` 为准，本文件不硬编码易漂移的 commit。
 
+C15 cache/metadata ablation has now completed against the configured Provider on Node `v22.19.0` with four samples and `qualityHardGate=true`; the Provider did not expose a complete price/cache-discount snapshot, so `winner=null` and publication remains blocked (`PCR_CACHE_COST_UNAVAILABLE`).
+
 W5 continuation additionally records the interrupted Pi live runs in `artifacts/runs/w2-v4-live/LIVE-COMPARISON.md`. The tracked RC manifest is a sanitized bundle index only; it must be regenerated in the final release job so its `commit` binds the release checkout HEAD. A locally committed manifest can become stale after the commit that updates it and is not release evidence by itself.
 
 The post-fix bounded v14 recursive smoke reached a terminal report and verified fork/branch pointer/correction evidence, but restart continuity and three-compaction criteria remained false. A subsequent v15 smoke verified cross-session restart continuity and branch lineage; Provider correction/compaction assertions still failed. Both are retained as fail-closed evidence, not a C27/C28 acceptance result.
