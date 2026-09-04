@@ -33,6 +33,7 @@ import {
   assertSerialArms,
   bindReplicate,
   latinSquareOrder,
+  type BoundReplicate,
   type SeedMode,
 } from "../../packages/benchmark/src/runner/replicate-policy.js";
 import { scoreExactRecovery, type ExactRecoveryReport } from "../../packages/benchmark/src/scoring/integrity.js";
@@ -96,6 +97,7 @@ export interface LivePairRow {
   family: ScenarioFamily;
   seed: number;
   seedMode: SeedMode;
+  sampling: BoundReplicate["sampling"];
   sameCut: boolean;
   expectedFirstKeptId: string;
   b0: LiveArmResult;
@@ -680,6 +682,7 @@ async function runPair(item: W2Case, extensionPath: string, seed: number, artifa
     family: item.family,
     seed,
     seedMode: bound.seedMode,
+    sampling: bound.sampling,
     sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
     expectedFirstKeptId: frozen.expectedFirstKeptId,
     b0,
@@ -987,6 +990,7 @@ export async function runLivePairedW2(opts: {
       family: row.family,
       seed: row.seed,
       seedMode: row.seedMode,
+      sampling: row.sampling,
       sameCut: row.sameCut,
       expectedFirstKeptId: row.expectedFirstKeptId,
       b0: slimArm(row.b0, [findSecret(row.id)]),
