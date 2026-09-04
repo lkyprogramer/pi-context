@@ -81,7 +81,7 @@ const scanReport = JSON.parse(scan.stdout);
 delete scanReport.root;
 const archive = join(out, "raw-bundle.tar.gz");
 freezeDirectories(staging);
-const tarPath = `${archive}.tmp`;
+const tarPath = `${archive}.${process.pid}.${Date.now()}.tmp`;
 const packed = spawnSync("tar", ["--format=ustar", "--uid", "0", "--gid", "0", "--uname", "root", "--gname", "root", "--no-xattrs", "--no-acls", "-cf", tarPath, "-C", staging, ...entries.map(({ path }) => path)], { encoding: "utf8", env: { ...process.env, TZ: "UTC" } });
 if (packed.status !== 0) throw new Error(packed.stderr || "PCR_RC_ARCHIVE_FAILED");
 const gzipped = spawnSync("gzip", ["-n", "-c", tarPath], { encoding: null, maxBuffer: 256 * 1024 * 1024 });
