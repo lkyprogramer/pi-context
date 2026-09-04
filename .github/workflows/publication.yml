@@ -8,8 +8,6 @@ jobs:
     permissions:
       contents: read
       checks: read
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,9 +17,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: test "$GITHUB_REF" = "refs/heads/main"
       - run: node scripts/ci/verify-protection.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - run: node scripts/release/build-run-bundle.mjs
       - run: node scripts/release/secret-scan.mjs artifacts/runs/rc
       - run: node scripts/release/verify.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-artifact@v4
         with:
           name: pcr-rc-manifest
