@@ -333,16 +333,15 @@ async function withRpc<T>(opts: {
     model,
   ];
   if (opts.extension) args.unshift("-e", opts.extension);
+  const liveEnv = { ...process.env, PATH: `${nvmBin()}:${process.env.PATH ?? ""}`, PCR_LIVE_PROVIDER: provider, PCR_LIVE_MODEL: model };
+  if (process.env.PCR_LIVE === "1") delete liveEnv.PI_OFFLINE;
+  else liveEnv.PI_OFFLINE = "1";
   const rpc = new PiRpc({
     cliPath: resolvePiCli(),
     cwd: opts.cwd,
     args,
     env: {
-      ...process.env,
-      PATH: `${nvmBin()}:${process.env.PATH ?? ""}`,
-      ...(process.env.PCR_LIVE === "1" ? { PI_OFFLINE: undefined } : { PI_OFFLINE: "1" }),
-      PCR_LIVE_PROVIDER: provider,
-      PCR_LIVE_MODEL: model,
+      ...liveEnv,
       PI_CODING_AGENT_DIR: opts.agentDir,
     },
   });
