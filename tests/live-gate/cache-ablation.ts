@@ -172,7 +172,24 @@ function providerUsageFrom(value: unknown): ProviderUsage {
   };
 }
 
-function lastAssistant(sessionFile: string): { usage: ProviderUsage; text: string } {
+function assistantFromMessage(message: unknown): { usage: ProviderUsage; text: string } | null {
+  if (!message || typeof message !== "object") return null;
+  const row = message as { role?: unknown; usage?: unknown; content?: unknown };
+  if (row.role !== "assistant") return null;
+  const content = row.content;
+  const text = typeof content === "string"
+    ? content
+    : Array.isArray(content)
+      ? content
+        .filter((part): part is { type?: unknown; text?: unknown } => Boolean(part) && typeof part === "object")
+        .filter((part) => part.type === "text" && typeof part.text === "string")
+        .map((part) => String(part.text))
+        .join("\n")
+      : "";
+  return { usage: providerUsageFrom(row.usage), text };
+}
+
+function lastAssistant(sessionFile: string, events: readonly Record<string, unknown>[] = []): { usage: ProviderUsage; text: string } {
   const empty = { inputTokens: null, outputTokens: null, cacheReadTokens: null, cacheWriteTokens: null };
   if (!existsSync(sessionFile)) return { usage: empty, text: "" };
   let usage: ProviderUsage = empty;
@@ -184,26 +201,21 @@ function lastAssistant(sessionFile: string): { usage: ProviderUsage; text: strin
         type?: string;
         message?: { role?: string; usage?: unknown; content?: unknown };
       };
-      if (row.type !== "message" || row.message?.role !== "assistant") continue;
-      usage = providerUsageFrom(row.message.usage);
-      const content = row.message.content;
-      if (typeof content === "string") text = content;
-      else if (Array.isArray(content)) {
-        text = content
-          .filter((part): part is { type?: unknown; text?: unknown } => Boolean(part) && typeof part === "object")
-          .filter((part) => part.type === "text" && typeof part.text === "string")
-          .map((part) => String(part.text))
-          .join("\n");
-      }
+      const message = row.type === "message" ? assistantFromMessage(row.message) : null;
+      if (message) ({ usage, text } = message);
     } catch {
       // A partially flushed JSONL line is not provider evidence.
     }
   }
+  for (const event of events) {
+    const message = assistantFromMessage(event.message) ?? assistantFromMessage(event);
+    if (message) ({ usage, text } = message);
+  }
   return { usage, text };
 }
 
-function requestObservation(phase: "cold" | "warm", sessionFile: string, error: string | null = null): RequestObservation {
-  const latest = lastAssistant(sessionFile);
+function requestObservation(phase: "cold" | "warm", sessionFile: string, error: string | null = null, events: readonly Record<string, unknown>[] = []): RequestObservation {
+  const latest = lastAssistant(sessionFile, events);
   const usage = latest.usage;
   return {
     phase,
@@ -354,19 +366,23 @@ async function runArm(
     const warmSections = sectionsFor(arm, "warm probe: return KEEP_STAGING_WINDOW only");
     try {
       await rpc.promptAndWait(promptFor(arm, "cold probe: preserve the exact quote"), 180_000);
-      requests.push(requestObservation("cold", sessionFile));
+      // Pi emits agent_settled before the session JSONL append is flushed.
+      // Give the writer a bounded turn so provider text/usage is observable.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      requests.push(requestObservation("cold", sessionFile, null, rpc.events));
     } catch (error) {
       const message = redactError(error);
       errors.push({ arm, phase: "cold", message });
-      requests.push(requestObservation("cold", sessionFile, message));
+      requests.push(requestObservation("cold", sessionFile, message, rpc.events));
     }
     try {
       await rpc.promptAndWait(promptFor(arm, "warm probe: return KEEP_STAGING_WINDOW only"), 180_000);
-      requests.push(requestObservation("warm", sessionFile));
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      requests.push(requestObservation("warm", sessionFile, null, rpc.events));
     } catch (error) {
       const message = redactError(error);
       errors.push({ arm, phase: "warm", message });
-      requests.push(requestObservation("warm", sessionFile, message));
+      requests.push(requestObservation("warm", sessionFile, message, rpc.events));
     }
     const cold = requests.find((item) => item.phase === "cold")!;
     const warm = requests.find((item) => item.phase === "warm")!;

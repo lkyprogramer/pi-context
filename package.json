@@ -59,9 +59,10 @@
     "@pcr/runtime": "workspace:*",
     "@pcr/storage-node": "workspace:*",
     "@types/node": "^22.18.0",
-    "typescript": "5.9.2",
-    "vitest": "3.2.4",
     "jiti": "2.7.0",
-    "pi-context-runtime": "workspace:*"
+    "pi-context-runtime": "workspace:*",
+    "tsx": "4.19.2",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
   }
 }
