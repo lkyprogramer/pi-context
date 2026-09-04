@@ -74,18 +74,20 @@ export function sealRunBundle(bundle: Omit<RunBundle, "signal">, decision: GateD
   if (!decision || typeof decision !== "object") fail("PCR_BUNDLE_INPUT_INVALID", { field: "decision" });
   const sealed = { bundle, decision };
   const canonicalJsonSha256 = hashRunBundle(sealed);
-  const artifactBytesSha256 = hashArtifactBytes(JSON.stringify(sealed));
+  const artifactBytesSha256 = hashArtifactBytes(canonicalJson(sealed));
   return { ...sealed, contentHash: canonicalJsonSha256, canonicalJsonSha256, artifactBytesSha256 };
 }
 
-export function verifyRunBundle(input: ImmutableRunBundle, rescore?: (bundle: Omit<RunBundle, "signal">) => GateDecision): ImmutableRunBundle {
+export function verifyRunBundle(input: ImmutableRunBundle, rescore?: (bundle: Omit<RunBundle, "signal">) => GateDecision, artifactBytes?: string): ImmutableRunBundle {
   if (!input || typeof input !== "object") fail("PCR_BUNDLE_INPUT_INVALID");
   if (typeof input.contentHash !== "string" || !/^[a-f0-9]{64}$/u.test(input.contentHash)) {
     fail("PCR_BUNDLE_TAMPERED", { field: "contentHash" });
   }
   const expected = hashRunBundle({ bundle: input.bundle, decision: input.decision });
   if (expected !== input.contentHash || input.canonicalJsonSha256 !== expected) fail("PCR_BUNDLE_TAMPERED", { expected, actual: input.contentHash });
-  const expectedArtifactBytes = hashArtifactBytes(JSON.stringify({ bundle: input.bundle, decision: input.decision }));
+  const expectedArtifactBytes = artifactBytes === undefined
+    ? hashArtifactBytes(canonicalJson({ bundle: input.bundle, decision: input.decision }))
+    : hashArtifactBytes(artifactBytes);
   if (typeof input.artifactBytesSha256 !== "string" || !/^[a-f0-9]{64}$/u.test(input.artifactBytesSha256)
     || input.artifactBytesSha256 !== expectedArtifactBytes) {
     fail("PCR_BUNDLE_TAMPERED", { field: "artifactBytesSha256" });
