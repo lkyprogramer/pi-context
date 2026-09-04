@@ -1010,10 +1010,13 @@ function findSecret(id: string): string {
 
 function slimArm(arm: LiveArmResult, secrets: string[]) {
   const usageLayers: EvaluationUsageLayers = {
-    checkpoint: { tokens: arm.ok && arm.compactionCount > 0 ? { value: arm.summaryTokens, source: "estimated" } : { value: null, source: "unavailable" } },
+    // Checkpoint bytes are not exposed by this runner; retain unknown rather
+    // than reusing the rendered view estimate.
+    checkpoint: { tokens: { value: null, source: "unavailable" } },
     // The runner does not expose the materializer's rendered view bytes;
-    // do not duplicate provider request usage under a different layer.
-    materializedView: { tokens: { value: null, source: "unavailable" } },
+    // estimate the rendered summary itself, which is the materialized view
+    // consumed by the probe.
+    materializedView: { tokens: arm.ok ? { value: arm.summaryTokens, source: "estimated" } : { value: null, source: "unavailable" } },
     request: {
       inputTokens: arm.probeInputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeInputTokens, source: "assistant-entry" },
       outputTokens: arm.probeOutputTokens === null ? { value: null, source: "unavailable" } : { value: arm.probeOutputTokens, source: "assistant-entry" },
