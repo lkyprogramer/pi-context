@@ -23,7 +23,7 @@ export const PI_DEFAULT_KEEP_RECENT = 20_000;
 export const LIVE_CONTEXT_WINDOW = 200_192;
 export const NATURAL_THRESHOLD_TOKENS = LIVE_CONTEXT_WINDOW - LIVE_RESERVE_TOKENS;
 
-export type W5LiveProfile = "natural" | "overflow" | "recursive" | "recursive-auto" | "all";
+export type W5LiveProfile = "natural" | "overflow" | "recursive" | "recursive-auto" | "long-horizon" | "all";
 
 export type W5LiveErrorCode =
   | "PCR_LIVE_PROVIDER_UNAVAILABLE"
@@ -973,14 +973,14 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
 }
 
 export function w5LiveProfileFromEnv(value = process.env.PCR_W5_LIVE_PROFILE): W5LiveProfile {
-  if (value === "natural" || value === "overflow" || value === "recursive" || value === "recursive-auto" || value === "all") return value;
+  if (value === "natural" || value === "overflow" || value === "recursive" || value === "recursive-auto" || value === "long-horizon" || value === "all") return value;
   return "all";
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const profile = w5LiveProfileFromEnv(process.argv[2] ?? process.env.PCR_W5_LIVE_PROFILE);
   const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
-  const run = profile === "recursive-auto" || profile === "recursive"
+  const run = profile === "recursive-auto" || profile === "recursive" || profile === "long-horizon"
     ? runRecursiveLive(repoRoot)
     : profile === "natural" ? runNaturalThreshold(repoRoot)
       : profile === "overflow" ? runProviderOverflow(repoRoot)
