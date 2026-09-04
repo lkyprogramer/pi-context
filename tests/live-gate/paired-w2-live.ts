@@ -46,6 +46,7 @@ import {
 import { buildW2SyntheticCorpus, type ScenarioFamily, type W2Case } from "../w2-gate/corpus.js";
 import { evaluateW2Gate, median, pairedBootstrapCi, relativeDelta } from "../w2-gate/scorer.js";
 import { PiRpc } from "./pi-rpc.js";
+import { withTransportRetry, type RetryAttempt } from "./rpc-client.js";
 import { resolvePiCli } from "./pi-resolve.js";
 import {
   LIVE_KEEP_RECENT_TOKENS,
@@ -91,6 +92,7 @@ export interface LiveArmResult {
   recoveryCount: number;
   crossScopeDenied: boolean;
   toolPairViolation: number;
+  attempts: readonly (RetryAttempt & { stage: string })[];
 }
 
 export interface LivePairRow extends ReplicateProvenance {
@@ -518,23 +520,29 @@ async function runArm(opts: {
     },
   });
   const started = Date.now();
+  const attempts: Array<RetryAttempt & { stage: string }> = [];
+  const transport = async <T>(stage: string, operation: () => Promise<T>): Promise<T> => {
+    const result = await withTransportRetry(operation, { maxRetries: 2, onAttempt: (attempt) => attempts.push({ ...attempt, stage }) });
+    if (!result.ok) throw result.error;
+    return result.value;
+  };
   try {
     armInFlight += 1;
     await rpc.start();
-    await rpc.request({ type: "set_auto_compaction", enabled: false }, 15_000);
+    await transport("set-auto-compaction", () => rpc.request({ type: "set_auto_compaction", enabled: false }, 15_000));
     try {
-      await rpc.request({ type: "set_thinking_level", level: "off" }, 15_000);
+      await transport("set-thinking-level", () => rpc.request({ type: "set_thinking_level", level: "off" }, 15_000));
     } catch {
       // model may not expose thinking levels
     }
-    const state = await rpc.request({ type: "get_state" }, 15_000);
+    const state = await transport("get-state", () => rpc.request({ type: "get_state" }, 15_000));
     const messageCount = Number((state.data as { messageCount?: number } | undefined)?.messageCount ?? 0);
     if (messageCount < 3) {
       throw new Error(`session did not load (messageCount=${messageCount})`);
     }
-    const compact = plan.compact ? await rpc.compact() : {};
+    const compact = plan.compact ? await transport("compact", () => rpc.compact()) : {};
     const compactLatencyMs = Date.now() - started;
-    await rpc.promptAndWait(closedLoopProbe(opts.item));
+    await transport("closed-loop-probe", () => rpc.promptAndWait(closedLoopProbe(opts.item)));
     const compaction = inspectCompaction(opts.sessionFile);
     const probe = lastAssistant(opts.sessionFile);
     const visible = compaction.summary;
@@ -582,6 +590,7 @@ async function runArm(opts: {
       recoveryCount: recovery.recoveredCount,
       crossScopeDenied: recovery.crossScopeDenied,
       toolPairViolation: pairs.toolPairViolations,
+      attempts: Object.freeze([...attempts]),
     };
   } catch (error) {
     return {
@@ -617,6 +626,7 @@ async function runArm(opts: {
       recoveryCount: 0,
       crossScopeDenied: false,
       toolPairViolation: 1,
+      attempts: [],
     };
   } finally {
     armInFlight = Math.max(0, armInFlight - 1);
@@ -717,6 +727,7 @@ function failedPair(item: W2Case, seed: number, error: unknown): LivePairRow {
     quality: 0, closedLoopSuccess: 0, constraintViolation: 1, directiveCoverage: 0, unsupportedHighRiskOutcome: 0,
     mustOmitLeak: 0, recovered: false, recoveryStatus: "failed", recoveryDenominator: 0, recoveryCount: 0,
     crossScopeDenied: false, toolPairViolation: 1, probeBucket: "unknown",
+    attempts: [],
   });
   return {
     id: item.id, family: item.family, replicateIndex: seed, seedMode: "replicate-repeat",
@@ -1186,6 +1197,7 @@ function slimArm(arm: LiveArmResult, secrets: string[]) {
     recoveryCount: arm.recoveryCount,
     crossScopeDenied: arm.crossScopeDenied,
     toolPairViolation: arm.toolPairViolation,
+    attempts: arm.attempts,
     usageLayers,
   };
 }
