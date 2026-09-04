@@ -988,6 +988,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         await rpc.promptAndWait("Should we merge sibling-branch now? Answer yes or no.", 3 * 60_000);
         history.push({ phase: "recall-not-needed", ok: /^\s*(?:no|否|不)\s*[.!]?\s*$/i.test(lastAssistantText(arm.sessionFile)) });
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
+        treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
@@ -999,7 +1000,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const summaries = compactions.map((row) => row.summary);
   const toolEventEvidence = toolEvents.map((event) => {
     const args = canonical(event.args ?? event.input ?? "");
-    const result = canonical(event.result ?? event.partialResult ?? "");
+    const result = canonical(event.result ?? event.partialResult ?? event.content ?? event.details ?? "");
     return {
       type: String(event.type ?? ""),
       toolName: String(event.toolName ?? event.name ?? ""),
