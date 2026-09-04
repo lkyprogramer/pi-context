@@ -84,6 +84,28 @@ describe("immutable run bundle", () => {
     expect(hashRunBundle({ value: 2, whitespace: "stable" })).not.toBe(canonical);
   });
 
+  it("writes manifest hashes that verify the canonical bundle bytes", async () => {
+    const writes = new Map<string, Buffer>();
+    const engine = createGateEngine({
+      workspaceId: "ws-report",
+      git: { async status() { return { commit: "c".repeat(40), diffHash: EMPTY_DIFF, dirty: false }; } },
+      files: {
+        async mkdir() {},
+        async writeFile(path: string, data: Buffer) { writes.set(path, Buffer.from(data)); },
+      },
+    });
+    const report = await engine.writeImmutableBundle(sample(), "/tmp/ignored-by-fake-store");
+    const bundlePath = [...writes.keys()].find((path) => path.endsWith("/bundle.json"));
+    const manifestPath = [...writes.keys()].find((path) => path.endsWith("/manifest.json"));
+    expect(bundlePath).toBeDefined();
+    expect(manifestPath).toBeDefined();
+    const manifest = JSON.parse(writes.get(manifestPath!)!.toString("utf8")) as { artifactBytesSha256: string; canonicalJsonSha256: string };
+    const bytes = writes.get(bundlePath!)!.toString("utf8");
+    expect(manifest.artifactBytesSha256).toBe(hashArtifactBytes(bytes));
+    expect(manifest.canonicalJsonSha256).toMatch(/^[a-f0-9]{64}$/u);
+    expect(report).toMatch(/^[a-f0-9]{64}$/u);
+  });
+
   it("detects tampering and rejects absolute paths", () => {
     const engine = createGateEngine({
       workspaceId: "ws-report",
