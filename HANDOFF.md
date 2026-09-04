@@ -6,6 +6,8 @@
 
 当前代码已完成 C19/C20/C24 的增量修复（transport attempt 记录、planned/complete-case/worst-case 统计、corpus/session source binding、partial rows fail-closed、权威 live verifier）；C25–C28 也已有实现与定向测试。真实 Provider live evidence、Evidence v3 和 C24 300-pair gate 仍未完成；发布决策继续保持 `keep-pi-native` / `publicationClaim=false`。按用户要求，300 gate 延后至全部开发任务完成后执行一次。代码 HEAD 以接手时 `git rev-parse HEAD` 为准，本文件不硬编码易漂移的 commit。
 
+W5 continuation additionally records the interrupted Pi live runs in `artifacts/runs/w2-v4-live/LIVE-COMPARISON.md`. The tracked RC manifest is a sanitized bundle index only; it must be regenerated in the final release job so its `commit` binds the release checkout HEAD. A locally committed manifest can become stale after the commit that updates it and is not release evidence by itself.
+
 下一轮执行入口仍以 `docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/` 的未完成任务和当前工作树为准；审计附件中的旧 HEAD 仅作为历史基线，不代表当前实现 HEAD。
 
 不要再 claim 上一版 `T00–T54` / `A00–A49` 为已验收完成。上一版 declared-done 已与 acceptance 分离；`A43`/`A44`/`A45`/`A48` 必须保持 reopen，直到对应 Live Lane 真正通过。
