@@ -92,4 +92,12 @@ describe("W2 Compactor Head-to-head Gate", () => {
     expect(disk.publicationClaim).toBe(false);
     expect(disk.usedWalkthroughConstants).toBe(false);
   });
+
+  it("locks the live primary comparison contract to B2 versus B0", () => {
+    const source = readFileSync("tests/live-gate/paired-w2-live.ts", "utf8");
+    expect(source).toContain("primaryCandidateArm: \"B2\"");
+    expect(source).toContain("row.b2.probeInputTokens");
+    expect(source).toContain("row.b1.quality");
+    expect(source).toContain("row.f0.quality");
+  });
 });

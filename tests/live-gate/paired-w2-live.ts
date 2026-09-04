@@ -790,6 +790,8 @@ export async function runLivePairedW2(opts: {
     completed.map((row) => row.b0.closedLoopSuccess),
     completed.map((row) => row.b2.closedLoopSuccess),
   );
+  const diagnosticQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b1.quality));
+  const containmentQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.f0.quality));
   const constraintB0 = completed.reduce((sum, row) => sum + row.b0.constraintViolation, 0);
   const constraintB1 = completed.reduce((sum, row) => sum + row.b2.constraintViolation, 0);
 
@@ -925,13 +927,15 @@ export async function runLivePairedW2(opts: {
       update,
       abstention,
       closedLoop,
-      constraintViolations: { B0: constraintB0, B1: constraintB1 },
+      constraintViolations: { B0: constraintB0, B2: constraintB1 },
+      diagnostics: { baselineArm: "B0", candidateArm: "B1", quality: diagnosticQuality },
+      containment: { baselineArm: "B0", arm: "F0", quality: containmentQuality },
       margin: 0.02,
     },
     efficiency: {
       tokenMedianRelativeDelta,
       costPerSuccessRelativeDelta,
-      overflowRecovery: { B0: overflowB0, B1: overflowB1 },
+      overflowRecovery: { B0: overflowB0, B2: overflowB2 },
       overflowQuality,
       realizedNetMedian,
       budgetMismatchRate,
