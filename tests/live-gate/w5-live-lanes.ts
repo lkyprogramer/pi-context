@@ -915,16 +915,18 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       autoCompact: true,
       work: async (rpc) => {
         providerStarted = true;
+        const compact1Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(80_000)}`, 3 * 60_000);
-        history.push({ phase: "compact-1", ok: inspectCompactions(arm.sessionFile).length >= 1, compactCount: inspectCompactions(arm.sessionFile).length });
+        history.push({ phase: "compact-1", ok: inspectCompactions(arm.sessionFile).length > compact1Before, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
         history.push({ phase: "temporal-update", ok: /\bversion\s*7\b/i.test(lastAssistantText(arm.sessionFile)) && !/\bversion\s*6\b/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
+        const compact2Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Grow before compact 2.\n${filler(80_000)}`, 3 * 60_000);
         history.push({ phase: "grow-before-compact-2", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
-        history.push({ phase: "compact-2", ok: inspectCompactions(arm.sessionFile).length >= 2, compactCount: inspectCompactions(arm.sessionFile).length });
+        history.push({ phase: "compact-2", ok: inspectCompactions(arm.sessionFile).length > compact2Before, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
       },
     });
@@ -954,10 +956,11 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       work: async (rpc) => {
         history.push({ phase: "restart-before-compact-3", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
+        const compact3Before = inspectCompactions(arm.sessionFile).length;
         await rpc.promptAndWait(`Add more history before compact 3.\n${filler(80_000)}`, 3 * 60_000);
         history.push({
           phase: "compact-3",
-          ok: inspectCompactions(arm.sessionFile).length >= 3,
+          ok: inspectCompactions(arm.sessionFile).length > compact3Before,
           compactCount: inspectCompactions(arm.sessionFile).length,
           summary: inspectCompactions(arm.sessionFile).at(-1)?.summary.slice(0, 400),
         });
