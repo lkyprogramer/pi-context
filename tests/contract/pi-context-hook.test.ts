@@ -16,10 +16,18 @@ function fixturePiMessages() {
 
 describe("Pi context hook", () => {
   it("exposes explicit workspace, input, and cursor callback contracts", () => {
+    const cursor = {
+      workspaceId: "ws_" + "a".repeat(40),
+      sessionId: "session",
+      leafId: null,
+      lineageHash: "a".repeat(64),
+      modelKey: "provider/model",
+      thinkingLevel: "off",
+    };
     const result = callbackContractFixture(
       { workspaceId: "ws", sessionId: "session", leafId: null },
-      { operationId: "op", cursor: {} as never, content: [], capturedAt: 0 },
-      { cursor: {} as never },
+      { operationId: "op", cursor, content: [], capturedAt: 0 },
+      { cursor },
     );
     expect(result.value.sessionId).toBe("session");
   });
