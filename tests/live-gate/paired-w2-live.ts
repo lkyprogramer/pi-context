@@ -886,6 +886,10 @@ export async function runLivePairedW2(opts: {
   const abstention = pairedOrZero(plannedMetric((row) => row.b0.abstention), plannedMetric((row) => row.b2.abstention));
   const closedLoop = pairedOrZero(plannedMetric((row) => row.b0.closedLoopSuccess), plannedMetric((row) => row.b2.closedLoopSuccess));
   const completeCaseQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b2.quality));
+  const worstCaseQuality = pairedOrZero(
+    rows.map((row) => row.b0.ok ? row.b0.quality : 1),
+    rows.map((row) => row.b2.ok ? row.b2.quality : 0),
+  );
   const diagnosticQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.b1.quality));
   const containmentQuality = pairedOrZero(completed.map((row) => row.b0.quality), completed.map((row) => row.f0.quality));
   const constraintB0 = completed.reduce((sum, row) => sum + row.b0.constraintViolation, 0);
@@ -939,6 +943,7 @@ export async function runLivePairedW2(opts: {
     const error = row[arm].error;
     return typeof error === "string" && isLiveTimeoutError(error) ? [{ id: row.id, arm, error }] : [];
   }));
+  const retried = rows.reduce((count, row) => count + (["b0", "b1", "b2", "f0"] as const).reduce((sum, arm) => sum + (row[arm].attempts.some((attempt) => attempt.attempt > 1) ? 1 : 0), 0), 0);
   const commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: opts.repoRoot, encoding: "utf8" }).trim();
 
   const families: ScenarioFamily[] = ["tool-heavy", "constraint", "temporal-update", "branch", "overflow"];
@@ -1011,6 +1016,7 @@ export async function runLivePairedW2(opts: {
       attempted: rows.length,
       scored: completed.length,
       failed: infraExcluded.length,
+      retried,
       expectedPairs,
       completedPairs: completed.length,
       armFailures: infraExcluded,
@@ -1042,7 +1048,8 @@ export async function runLivePairedW2(opts: {
       update,
       abstention,
       closedLoop,
-      completeCase: { ci: completeCaseQuality },
+      completeCase: { n: completed.length, ci: completeCaseQuality },
+      worstCase: { n: rows.length, ci: worstCaseQuality },
       constraintViolations: { B0: constraintB0, B2: constraintB1 },
       diagnostics: { baselineArm: "B0", candidateArm: "B1", quality: diagnosticQuality },
       containment: { baselineArm: "B0", arm: "F0", quality: containmentQuality },
