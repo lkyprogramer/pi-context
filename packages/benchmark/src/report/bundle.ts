@@ -102,6 +102,12 @@ export function verifyRunBundle(input: ImmutableRunBundle, rescore?: (bundle: Om
   return input;
 }
 
+/** Verifies the sealed object and the exact serialized bytes written to disk. */
+export function verifyRunBundleBytes(input: ImmutableRunBundle, artifactBytes: string, rescore?: (bundle: Omit<RunBundle, "signal">) => GateDecision): ImmutableRunBundle {
+  if (typeof artifactBytes !== "string") fail("PCR_BUNDLE_INPUT_INVALID", { field: "artifactBytes" });
+  return verifyRunBundle(input, rescore, artifactBytes);
+}
+
 function walkPaths(value: unknown): void {
   if (typeof value === "string") {
     if (value.startsWith("/") || /^[A-Za-z]:[\\/]/u.test(value)) {

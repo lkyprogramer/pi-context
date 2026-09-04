@@ -17,6 +17,7 @@ import {
   sealRunBundle,
   verifyRawRunBundle,
   verifyRunBundle,
+  verifyRunBundleBytes,
   writeArmArtifactDir,
   type RunBundle,
 } from "@pcr/benchmark";
@@ -96,6 +97,10 @@ describe("immutable run bundle", () => {
       expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
     );
     expect(() => verifyRunBundle({ ...sealed, artifactBytesSha256: "e".repeat(64) })).toThrowError(
+      expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
+    );
+    const serialized = JSON.stringify({ bundle: sealed.bundle, decision: sealed.decision });
+    expect(() => verifyRunBundleBytes(sealed, serialized)).toThrowError(
       expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
     );
     const withPath = sealRunBundle({ ...sample(), runId: "/tmp/abs-run" }, decision);

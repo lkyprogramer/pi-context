@@ -234,6 +234,7 @@ export {
   scrubSecretsWithProvenance,
   verifyRawRunBundle,
   verifyRunBundle,
+  verifyRunBundleBytes,
   type BundleVerifyErrorCode,
   type ImmutableRunBundle,
   type RawRunBundle,
