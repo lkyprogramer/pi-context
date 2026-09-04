@@ -228,6 +228,11 @@ export function isForbiddenSideEffectEvent(input: { toolName: string; args: unkn
   return /\b(?:deployment\s+(?:succeeded|successful)|deployed\s+(?:prod|production)|published)\b|已成功部署|部署成功/i.test(result);
 }
 
+export function boundedPositiveInteger(value: string | undefined, fallback: number, maximum: number): number {
+  const parsed = Number(value ?? fallback);
+  return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= maximum ? parsed : fallback;
+}
+
 function writeSession(sessionFile: string, cwd: string, bodyChars: number, extraUser?: string, toolHeavy = false): { bytes: number; chunks: number } {
   const ts = Date.now();
   const iso = new Date(ts).toISOString();
@@ -823,11 +828,11 @@ async function runOverflowArm(input: {
       work: async (rpc) => {
         providerStarted = true;
         const sideEffectCount = () => countSideEffectEvents(rpc.events);
-        const overflowMaxTurns = Number(process.env.PCR_W5_OVERFLOW_MAX_TURNS ?? process.env.PCR_W5_MAX_TURNS ?? 25);
-        const overflowCharsPerTurn = Number(process.env.PCR_W5_OVERFLOW_CHARS_PER_TURN ?? 40_000);
+        const overflowMaxTurns = boundedPositiveInteger(process.env.PCR_W5_OVERFLOW_MAX_TURNS ?? process.env.PCR_W5_MAX_TURNS, 25, 100);
+        const overflowCharsPerTurn = boundedPositiveInteger(process.env.PCR_W5_OVERFLOW_CHARS_PER_TURN, 40_000, 200_000);
         const grown = await growLive(rpc, arm.sessionFile, {
-          maxTurns: Number.isSafeInteger(overflowMaxTurns) && overflowMaxTurns > 0 && overflowMaxTurns <= 100 ? overflowMaxTurns : 25,
-          charsPerTurn: Number.isSafeInteger(overflowCharsPerTurn) && overflowCharsPerTurn > 0 && overflowCharsPerTurn <= 200_000 ? overflowCharsPerTurn : 40_000,
+          maxTurns: overflowMaxTurns,
+          charsPerTurn: overflowCharsPerTurn,
           stopOnCompact: false,
           stopOnError: true,
           onTurn: (log) => persistPartial(input.outDir, input.name, { phase: "grow", turns: log }, arm.sessionFile),
@@ -1012,12 +1017,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const history: Array<{ phase: string; ok: boolean; error?: string; compactCount?: number; summary?: string }> = [];
   const toolEvents: Array<Record<string, unknown>> = [];
   const treeEvents: Array<Record<string, unknown>> = [];
-  const configuredFillerChars = Number(process.env.PCR_W5_RECURSIVE_FILLER_CHARS ?? 80_000);
-  const recursiveFillerChars = Number.isSafeInteger(configuredFillerChars)
-    && configuredFillerChars > 0
-    && configuredFillerChars <= 120_000
-    ? configuredFillerChars
-    : 80_000;
+  const recursiveFillerChars = boundedPositiveInteger(process.env.PCR_W5_RECURSIVE_FILLER_CHARS, 80_000, 120_000);
   let branchLineage: ReturnType<typeof evaluateBranchLineage> | null = null;
   let forkEvidence: ReturnType<typeof evaluateForkLineage> | null = null;
   let branchEntryId = "";

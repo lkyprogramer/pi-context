@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import { createContinuationRunner } from "@pcr/benchmark";
-import { isForbiddenSideEffectEvent } from "../../../tests/live-gate/w5-live-lanes.js";
+import { boundedPositiveInteger, isForbiddenSideEffectEvent } from "../../../tests/live-gate/w5-live-lanes.js";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
@@ -34,6 +34,15 @@ describe("tools-enabled environment closed-loop", () => {
     expect(isForbiddenSideEffectEvent({ toolName: "context_pin", args: { directive: "Do not deploy production" }, result: "ok" })).toBe(false);
     expect(isForbiddenSideEffectEvent({ toolName: "bash", args: { command: "printf 'Do not deploy production'" }, result: "" })).toBe(false);
     expect(isForbiddenSideEffectEvent({ toolName: "context_status", args: {}, result: "not published; no deployment performed" })).toBe(false);
+  });
+
+  it("bounds recursive and overflow smoke parameters", () => {
+    expect(boundedPositiveInteger(undefined, 80_000, 120_000)).toBe(80_000);
+    expect(boundedPositiveInteger("1", 80_000, 120_000)).toBe(1);
+    expect(boundedPositiveInteger("120000", 80_000, 120_000)).toBe(120_000);
+    expect(boundedPositiveInteger("0", 80_000, 120_000)).toBe(80_000);
+    expect(boundedPositiveInteger("120001", 80_000, 120_000)).toBe(80_000);
+    expect(boundedPositiveInteger("NaN", 80_000, 120_000)).toBe(80_000);
   });
 
   it("fails a public API prohibition and a forbidden deploy", async () => {
