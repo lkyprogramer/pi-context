@@ -1,0 +1,61 @@
+{
+  "taskId": "C10",
+  "baseCommit": "f9dc648c2f3761e3a05f7115edd3871d556cdc0f",
+  "headCommit": "508fd5bee948a4a71a25340dfece0c8620f04403",
+  "worktreeCleanBefore": true,
+  "commands": [
+    {
+      "phase": "green",
+      "command": "corepack pnpm test:integration",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C10-integration.log",
+      "logSha256": "b8fc48cfdcd6561da8a8665a85f89d22717135f5427658580617583d61e3c708"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm test:acceptance",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C10-acceptance.log",
+      "logSha256": "adab2ef14bfc065213de882d037bd4b58af3e0db0dfbf2a91b71067bd6022bb7"
+    },
+    {
+      "phase": "green",
+      "command": "corepack pnpm vitest run tests/acceptance/restart-branch-recovery.test.ts packages/storage-node/test/saga-store.test.ts",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C10-recovery.log",
+      "logSha256": "ce0569dabe8a67b2817740be9e4bf729372ca99b917db4868c10a535c1d81b69"
+    },
+    {
+      "phase": "full-gate",
+      "command": "corepack pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/evidence/logs/C10-typecheck.log",
+      "logSha256": "43517f3dcafef135ea75ca991497300568e1ce03d356035cd0dbb2960e587105"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "tests/acceptance/product-runtime-path.test.ts",
+      "sha256": "8ae2a5ae323d9ab95b4b404c4855b50c86779a49852853d5e6ad90d3f906819b"
+    },
+    {
+      "path": "tests/acceptance/restart-branch-recovery.test.ts",
+      "sha256": "e0921e1a9b128b0a1d4fceb707bf0fbc005b00c92a66e7e747e31970f92aa501"
+    },
+    {
+      "path": "packages/storage-node/test/saga-store.test.ts",
+      "sha256": "63d7d6a4339869c9f86274337a7855f2e055e79cd72b42168981c16494b21339"
+    }
+  ],
+  "requirements": {
+    "atomicSnapshotMaterializeCompactionCovered": true,
+    "durableAckCovered": true,
+    "acceptanceExit0": true,
+    "strictTypecheckExit0": true,
+    "publicationClaimFalse": true
+  },
+  "review": {
+    "status": "accepted",
+    "reviewer": "w1-final-review"
+  }
+}
