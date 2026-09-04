@@ -14,3 +14,4 @@ coverage
 artifacts/runs/live-compact/
 artifacts/runs/live-verification/
 artifacts/runs/w2-live-native/
+artifacts/runs/rc/raw-bundle.tar.gz
