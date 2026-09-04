@@ -21,7 +21,7 @@ function walk(dir) {
   }
 }
 walk(source);
-const SECRET = /(?:sk-(?:live|t\d+|ff)[A-Za-z0-9][A-Za-z0-9_-]*|Bearer\s+[A-Za-z0-9._-]{20,})/giu;
+const SECRET = /(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{8,}|sk-(?:live|t\d+|ff)(?:-[A-Za-z0-9_-]+)?|Bearer\s+[A-Za-z0-9._-]{20,})/giu;
 const entries = files.sort().map((path) => {
   const original = readFileSync(path, "utf8");
   const text = original.replace(SECRET, "[redacted]");
@@ -35,7 +35,9 @@ const entries = files.sort().map((path) => {
 });
 const scan = spawnSync(process.execPath, [join(root, "scripts/release/secret-scan.mjs"), staging], { encoding: "utf8" });
 if (scan.status !== 0) throw new Error("PCR_RC_SECRET_SCAN_FAILED");
-const manifest = { format: "pcr-rc-bundle-v1", commit: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(), files: entries, secretScan: JSON.parse(scan.stdout) };
+const scanReport = JSON.parse(scan.stdout);
+delete scanReport.root;
+const manifest = { format: "pcr-rc-bundle-v1", commit: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(), files: entries, secretScan: scanReport };
 manifest.digest = createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
 writeFileSync(join(out, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(JSON.stringify({ manifest: join(out, "manifest.json"), digest: manifest.digest, files: entries.length }, null, 2));
