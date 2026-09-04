@@ -235,9 +235,11 @@ export {
   verifyRawRunBundle,
   verifyRunBundle,
   verifyRunBundleBytes,
+  verifyArtifactManifest,
   type BundleVerifyErrorCode,
   type ImmutableRunBundle,
   type RawRunBundle,
+  type ArtifactHashManifest,
   type RunEpochIdentity,
 } from "./report/bundle.js";
 export {

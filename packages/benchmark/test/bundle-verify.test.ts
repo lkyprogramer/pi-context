@@ -18,6 +18,7 @@ import {
   verifyRawRunBundle,
   verifyRunBundle,
   verifyRunBundleBytes,
+  verifyArtifactManifest,
   writeArmArtifactDir,
   type RunBundle,
 } from "@pcr/benchmark";
@@ -103,6 +104,10 @@ describe("immutable run bundle", () => {
     const bytes = writes.get(bundlePath!)!.toString("utf8");
     expect(manifest.artifactBytesSha256).toBe(hashArtifactBytes(bytes));
     expect(manifest.canonicalJsonSha256).toMatch(/^[a-f0-9]{64}$/u);
+    expect(verifyArtifactManifest(bytes, manifest)).toEqual(manifest);
+    expect(() => verifyArtifactManifest(`${bytes} `, manifest)).toThrowError(
+      expect.objectContaining({ code: "PCR_BUNDLE_TAMPERED" }),
+    );
     expect(report).toMatch(/^[a-f0-9]{64}$/u);
   });
 

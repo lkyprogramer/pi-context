@@ -41,6 +41,11 @@ export interface ImmutableRunBundle {
   artifactBytesSha256: string;
 }
 
+export interface ArtifactHashManifest {
+  artifactBytesSha256: string;
+  canonicalJsonSha256: string;
+}
+
 export function hashArtifactBytes(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
 }
@@ -106,6 +111,19 @@ export function verifyRunBundle(input: ImmutableRunBundle, rescore?: (bundle: Om
 export function verifyRunBundleBytes(input: ImmutableRunBundle, artifactBytes: string, rescore?: (bundle: Omit<RunBundle, "signal">) => GateDecision): ImmutableRunBundle {
   if (typeof artifactBytes !== "string") fail("PCR_BUNDLE_INPUT_INVALID", { field: "artifactBytes" });
   return verifyRunBundle(input, rescore, artifactBytes);
+}
+
+export function verifyArtifactManifest(artifactBytes: string, manifest: ArtifactHashManifest): ArtifactHashManifest {
+  if (typeof artifactBytes !== "string") fail("PCR_BUNDLE_INPUT_INVALID", { field: "artifactBytes" });
+  if (!manifest || typeof manifest !== "object") fail("PCR_BUNDLE_INPUT_INVALID", { field: "manifest" });
+  const artifactHash = hashArtifactBytes(artifactBytes);
+  let parsed: unknown;
+  try { parsed = JSON.parse(artifactBytes); } catch { fail("PCR_BUNDLE_TAMPERED", { field: "artifactBytes" }); }
+  const canonicalHash = hashRunBundle(parsed);
+  if (manifest.artifactBytesSha256 !== artifactHash || manifest.canonicalJsonSha256 !== canonicalHash) {
+    fail("PCR_BUNDLE_TAMPERED", { field: "manifest" });
+  }
+  return Object.freeze({ artifactBytesSha256: artifactHash, canonicalJsonSha256: canonicalHash });
 }
 
 function walkPaths(value: unknown): void {
