@@ -994,6 +994,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     argsHash: sha(JSON.stringify(event.args ?? event.input ?? "")),
     isError: event.isError === true || event.error !== undefined,
   }));
+  const branchNavigationObserved = toolEventEvidence.some((event) => /branch|navigate|tree/i.test(event.toolName));
   const report = {
     lane: "recursive-long-horizon",
     liveProvider: providerStarted,
@@ -1002,8 +1003,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     threeCompacts: compactions.length >= 3,
     branched: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
     restarted: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
-    branchPointerVerified: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
-    restartContinuityVerified: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
+    branchPointerVerified: branchNavigationObserved && history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
+    restartContinuityVerified: branchNavigationObserved && history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     sideEffectGuard: summaries.length > 0 && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
     toolEvents: toolEventEvidence,
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
@@ -1012,7 +1013,8 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
       && summaries.length > 0
       && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text))
       && toolEventEvidence.length > 0
-      && !toolEvents.some((event) => /deploy|production|发布|部署/i.test(JSON.stringify(event))),
+      && !toolEvents.some((event) => /deploy|production|发布|部署/i.test(JSON.stringify(event)))
+      && branchNavigationObserved,
   };
   persistReport(outDir, report, [{ name: "pcr", file: arm.sessionFile }]);
   rmSync(root, { recursive: true, force: true });
