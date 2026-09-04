@@ -52,7 +52,7 @@ delete scanReport.root;
 const archive = join(out, "raw-bundle.tar.gz");
 freezeDirectories(staging);
 const tarPath = `${archive}.tmp`;
-const packed = spawnSync("tar", ["-cf", tarPath, "-C", staging, "."], { encoding: "utf8", env: { ...process.env, TZ: "UTC" } });
+const packed = spawnSync("tar", ["--format=ustar", "--uid", "0", "--gid", "0", "--uname", "root", "--gname", "root", "--no-xattrs", "--no-acls", "-cf", tarPath, "-C", staging, "."], { encoding: "utf8", env: { ...process.env, TZ: "UTC" } });
 if (packed.status !== 0) throw new Error(packed.stderr || "PCR_RC_ARCHIVE_FAILED");
 const gzipped = spawnSync("gzip", ["-n", "-c", tarPath], { encoding: null });
 if (gzipped.status !== 0 || !gzipped.stdout) throw new Error(gzipped.stderr?.toString() || "PCR_RC_GZIP_FAILED");
