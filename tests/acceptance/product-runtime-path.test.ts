@@ -324,6 +324,24 @@ describe("product runtime SQLite/FTS/CAS path", () => {
       const details = (result as { compaction?: { details?: { reducerRevisions?: string[] } } } | undefined)?.compaction?.details;
       const snapshotLine = details?.reducerRevisions?.find((item) => item.startsWith("snapshot:"));
       expect(snapshotLine).toMatch(/^snapshot:[a-f0-9]{64}$/u);
+      const repeat = await beforeCompact!(
+        {
+          reason: "threshold",
+          preparation: {
+            tokensBefore: 8000,
+            firstKeptEntryId: "entry-keep",
+            allow: true,
+            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7" }],
+          },
+        },
+        {
+          abort() {}, cwd: manager.getCwd(), sessionManager: manager,
+          model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
+          workspaceId: cursor.workspaceId, sessionId: manager.getSessionId(),
+        },
+      );
+      const repeatLine = (repeat as { compaction?: { details?: { reducerRevisions?: string[] } } } | undefined)?.compaction?.details?.reducerRevisions?.find((item) => item.startsWith("snapshot:"));
+      expect(repeatLine).toBe(snapshotLine);
     } finally {
       await (session as unknown as { dispose?: () => void }).dispose?.();
     }
