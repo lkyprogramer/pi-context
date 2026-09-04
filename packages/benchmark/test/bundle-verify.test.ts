@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -83,6 +84,28 @@ describe("immutable run bundle", () => {
       hashArtifactBytes('{ "value": 1, "whitespace": "stable" }'),
     );
     expect(hashRunBundle({ value: 2, whitespace: "stable" })).not.toBe(canonical);
+  });
+
+  it("verifies paired report manifests instead of accepting arm-only evidence", () => {
+    const root = mkdtempSync(join(tmpdir(), "pcr-paired-report-"));
+    try {
+      const report = { runId: "paired-test", sample: { completedPairs: 1 } };
+      const reportBytes = `${JSON.stringify(report)}\n`;
+      const byteHash = createHash("sha256").update(reportBytes, "utf8").digest("hex");
+      const canonicalHash = createHash("sha256").update(JSON.stringify(report), "utf8").digest("hex");
+      writeFileSync(join(root, "report.json"), reportBytes);
+      writeFileSync(join(root, "run-manifest.json"), JSON.stringify({
+        artifactBytesSha256: byteHash,
+        canonicalJsonSha256: canonicalHash,
+        files: { "report.json": byteHash },
+      }));
+      const verifier = join(process.cwd(), "scripts/benchmark/verify_run_bundle.py");
+      expect(execFileSync("python3", [verifier, root], { encoding: "utf8" })).toContain("ok");
+      writeFileSync(join(root, "report.json"), `${reportBytes} `);
+      expect(() => execFileSync("python3", [verifier, root], { encoding: "utf8", stdio: "pipe" })).toThrow();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("writes manifest hashes that verify the canonical bundle bytes", async () => {

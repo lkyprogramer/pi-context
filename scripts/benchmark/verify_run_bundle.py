@@ -97,15 +97,18 @@ def verify(path: Path) -> None:
                 return
             verify_payload(json.loads(bundle.read_text()))
             return
-        if raw.is_file():
-            verify_payload(json.loads(raw.read_text()))
-            return
         report = path / "report.json"
         run_manifest = path / "run-manifest.json"
         if report.is_file() or run_manifest.is_file():
             if not report.is_file() or not run_manifest.is_file():
                 fail("PCR_PUBLICATION_RUN_MISSING")
             verify_report_manifest(report, run_manifest)
+            # Continue to verify retained arm evidence when present.
+        if raw.is_file():
+            verify_payload(json.loads(raw.read_text()))
+            return
+        if report.is_file() and not arms.is_dir() and not (path / "pairs").is_dir():
+            return
         if arms.is_dir():
             children = [child for child in arms.iterdir() if child.is_dir()]
             if not children:
