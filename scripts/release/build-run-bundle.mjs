@@ -29,9 +29,11 @@ function freezeDirectories(dir) {
   utimesSync(dir, 0, 0);
 }
 const SECRET = /(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{8,}|sk-(?:live|t\d+|ff)(?:-[A-Za-z0-9_-]+)?|Bearer\s+[A-Za-z0-9._-]{20,})/giu;
+const PII = [/\/(?:Users|home)\/[A-Za-z0-9._-]+(?:\/[^\s"']+)+/gu, /\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/gu, /\b(?:\d{1,3}\.){3}\d{1,3}\b/gu];
 const entries = files.sort().map((path) => {
   const original = readFileSync(path, "utf8");
-  const text = original.replace(SECRET, "[redacted]");
+  let text = original.replace(SECRET, "[redacted]");
+  for (const pattern of PII) text = text.replace(pattern, "[redacted]");
   SECRET.lastIndex = 0;
   const rel = relative(root, path);
   const staged = join(staging, rel);
@@ -54,7 +56,8 @@ const gzipped = spawnSync("gzip", ["-n", "-c", tarPath], { encoding: null });
 if (gzipped.status !== 0 || !gzipped.stdout) throw new Error(gzipped.stderr?.toString() || "PCR_RC_GZIP_FAILED");
 writeFileSync(archive, gzipped.stdout);
 unlinkSync(tarPath);
-const manifest = { format: "pcr-rc-bundle-v1", commit: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(), files: entries, secretScan: scanReport };
+const archiveBytes = readFileSync(archive);
+const manifest = { format: "pcr-rc-bundle-v1", commit: spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim(), files: entries, archive: { bytes: archiveBytes.byteLength, sha256: createHash("sha256").update(archiveBytes).digest("hex") }, secretScan: scanReport };
 manifest.digest = createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
 writeFileSync(join(out, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(JSON.stringify({ manifest: join(out, "manifest.json"), archive, digest: manifest.digest, files: entries.length }, null, 2));
