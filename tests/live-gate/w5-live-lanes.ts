@@ -557,8 +557,7 @@ async function runNaturalFamily(input: {
     arm: "B2",
     hostCompactionCount: pcrCompactions.filter((row) => row.fromHook !== true).length,
     hostCompactReason: null,
-    materializationBounded: pcrCompactions.some((row) => row.fromHook === true)
-      || (latestTokens(pcrTurns) !== null && latestTokens(pcrTurns)! <= NATURAL_THRESHOLD_TOKENS),
+    materializationBounded: pcrCompactions.some((row) => row.fromHook === true),
     inputTokens: latestTokens(pcrTurns),
     effectiveInputUpperBound: NATURAL_THRESHOLD_TOKENS,
     overflowObserved: pcrTurns.some((row) => row.overflow === true),
@@ -707,6 +706,7 @@ async function runOverflowArm(input: {
     false,
   );
   const attempts: Array<Record<string, unknown>> = [];
+  let recoveryReport: Record<string, unknown> | null = null;
   let providerStarted = false;
   try {
     await withRpc({
@@ -750,7 +750,7 @@ async function runOverflowArm(input: {
           return;
         }
         const recovery = await runForcedOverflowRecovery({
-          force: () => ({ phase: "force", ok: false, error: "context_length_exceeded", sideEffectCount: 0 }),
+          force: () => ({ phase: "force", ok: false, error: String(attempts.find((row) => row.phase === "overflow-prompt")?.error ?? "context_length_exceeded"), sideEffectCount: 0 }),
           compact: async () => {
             const before = lastAssistantUsage(arm.sessionFile).inputTokens;
             const compacted = await rpc.compact();
@@ -761,9 +761,10 @@ async function runOverflowArm(input: {
             const before = lastAssistantUsage(arm.sessionFile).inputTokens;
             await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
             const after = lastAssistantUsage(arm.sessionFile).inputTokens;
-            return { phase: "retry", ok: true, outputHash: sha(`${after ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`), tokensAfter: after ?? undefined, sideEffectCount: 0, error: before !== null && after !== null && after >= before ? "tokens-not-decreased" : undefined };
+            return { phase: "retry", ok: true, outputHash: sha(`${after ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`), tokensAfter: after ?? undefined, sideEffectCount: 0, error: before !== null && after !== null && after >= before ? "tokens-not-decreased" : undefined, tokensDropped: before !== null && after !== null && after < before };
           },
         });
+        recoveryReport = { prevention: recovery.prevention, recovery: recovery.recovery };
         attempts.push(...recovery.attempts.map((row) => ({ ...row, compactHash: row.outputHash ?? null })));
         persistPartial(input.outDir, input.name, { phase: "retry", attempts }, arm.sessionFile);
       },
@@ -783,6 +784,7 @@ async function runOverflowArm(input: {
     attempts,
     overflowObserved,
     usedManualCompactAsOverflow,
+    recovery: recoveryReport,
   };
 }
 

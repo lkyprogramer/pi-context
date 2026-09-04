@@ -29,6 +29,11 @@ describe("W5 natural / overflow / recursive / fault / performance / gate", () =>
       materializationBounded: true, inputTokens: 190_000, effectiveInputUpperBound: 183_808,
       overflowObserved: false, behaviorComplete: true,
     }).reasons).toContain("input-above-bound");
+    expect(evaluateNaturalPressureArm({
+      arm: "B2", hostCompactionCount: 0, hostCompactReason: null,
+      materializationBounded: true, inputTokens: 183_808, effectiveInputUpperBound: 183_808,
+      overflowObserved: false, behaviorComplete: true,
+    }).ok).toBe(false);
   });
   it("rejects no-trigger, early trigger, and keepRecent on natural threshold", async () => {
     expect((await runNaturalThreshold({ tokensBefore: 190_000, compactReason: "threshold", triggered: false })).ok).toBe(false);

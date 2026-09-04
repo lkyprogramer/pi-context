@@ -171,7 +171,7 @@ export function evaluateNaturalPressureArm(input: NaturalPressureArmInput): Natu
   if (input.arm !== "B2") failInput("arm");
   if (input.hostCompactionCount !== 0) reasons.push("unexpected-host-compaction");
   if (!input.materializationBounded) reasons.push("materialization-unbounded");
-  if (input.inputTokens === null || input.inputTokens > input.effectiveInputUpperBound) reasons.push("input-above-bound");
+  if (input.inputTokens === null || input.inputTokens >= input.effectiveInputUpperBound) reasons.push("input-above-bound");
   return Object.freeze({
     arm: "B2",
     state: reasons.length === 0 ? "bounded-materialized" : "failed",
