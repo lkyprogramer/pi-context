@@ -15,7 +15,7 @@ import { evaluateNaturalPressureArm } from "../src/performance/lanes.js";
 describe("W5 natural / overflow / recursive / fault / performance / gate", () => {
   it("uses arm-specific natural pressure completion states", () => {
     expect(evaluateNaturalPressureArm({
-      arm: "B0", hostCompactionCount: 1, hostCompactReason: "threshold",
+      arm: "B0", hostCompactionCount: 1, hostCompactReason: null, hostCompactTokensBefore: 184_000,
       materializationBounded: false, inputTokens: 184_000, effectiveInputUpperBound: 183_808,
       overflowObserved: false, behaviorComplete: true,
     })).toMatchObject({ ok: true, state: "host-auto-compacted" });

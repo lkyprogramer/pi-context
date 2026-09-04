@@ -199,6 +199,10 @@ export {
   type PerformanceLaneSample,
   type PerformanceReport,
   type RouteWindow,
+  evaluateNaturalPressureArm,
+  type NaturalPressureArm,
+  type NaturalPressureArmInput,
+  type NaturalPressureArmResult,
 } from "./performance/lanes.js";
 export {
   compareCheckpointMetadata,

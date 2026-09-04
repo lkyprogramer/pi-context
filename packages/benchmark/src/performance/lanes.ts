@@ -16,6 +16,7 @@ export interface NaturalPressureArmInput {
   arm: NaturalPressureArm;
   hostCompactionCount: number;
   hostCompactReason: CompactReason | null;
+  hostCompactTokensBefore?: number | null;
   materializationBounded: boolean;
   inputTokens: number | null;
   effectiveInputUpperBound: number;
@@ -157,7 +158,9 @@ export function evaluateNaturalPressureArm(input: NaturalPressureArmInput): Natu
   if (input.overflowObserved) reasons.push("overflow");
   if (!input.behaviorComplete) reasons.push("behavior-incomplete");
   if (input.arm === "B0") {
-    if (input.hostCompactionCount < 1 || input.hostCompactReason !== "threshold") reasons.push("host-auto-compact-missing");
+    const thresholdCompaction = input.hostCompactReason === "threshold"
+      || (typeof input.hostCompactTokensBefore === "number" && input.hostCompactTokensBefore >= input.effectiveInputUpperBound);
+    if (input.hostCompactionCount < 1 || !thresholdCompaction) reasons.push("host-auto-compact-missing");
     return Object.freeze({
       arm: "B0",
       state: reasons.length === 0 ? "host-auto-compacted" : "failed",
