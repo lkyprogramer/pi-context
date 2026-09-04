@@ -95,9 +95,10 @@ export interface LiveArmResult {
 export interface LivePairRow {
   id: string;
   family: ScenarioFamily;
-  seed: number;
+  replicateIndex: number;
   seedMode: SeedMode;
   sampling: BoundReplicate["sampling"];
+  samplingSource: "provider-response" | "provider-seed-unavailable";
   sameCut: boolean;
   expectedFirstKeptId: string;
   b0: LiveArmResult;
@@ -680,9 +681,10 @@ async function runPair(item: W2Case, extensionPath: string, seed: number, artifa
   return {
     id: item.id,
     family: item.family,
-    seed,
+    replicateIndex: seed,
     seedMode: bound.seedMode,
     sampling: bound.sampling,
+    samplingSource: bound.seedMode === "provider-sampling" ? "provider-response" : "provider-seed-unavailable",
     sameCut: Boolean(b0.firstKeptEntryId && b0.firstKeptEntryId === b1.firstKeptEntryId),
     expectedFirstKeptId: frozen.expectedFirstKeptId,
     b0,
@@ -768,7 +770,7 @@ export async function runLivePairedW2(opts: {
       const labeled: LivePairRow = {
         ...row,
         id: pairId,
-        seed,
+        replicateIndex: seed,
         runEpochHash,
       };
       rows.push(labeled);
@@ -988,9 +990,10 @@ export async function runLivePairedW2(opts: {
     pairs: rows.map((row) => ({
       id: row.id,
       family: row.family,
-      seed: row.seed,
+      replicateIndex: row.replicateIndex,
       seedMode: row.seedMode,
       sampling: row.sampling,
+      samplingSource: row.samplingSource,
       sameCut: row.sameCut,
       expectedFirstKeptId: row.expectedFirstKeptId,
       b0: slimArm(row.b0, [findSecret(row.id)]),
