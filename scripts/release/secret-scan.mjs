@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { lstatSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const SECRET = /(?:sk-[A-Za-z0-9][A-Za-z0-9_-]{8,}|sk-(?:live|t\d+|ff)(?:-[A-Za-z0-9_-]+)?|Bearer\s+[A-Za-z0-9._-]{20,})/giu;
@@ -8,7 +8,8 @@ function files(root) {
   const out = [];
   for (const name of readdirSync(root)) {
     const path = join(root, name);
-    const stat = statSync(path);
+    const stat = lstatSync(path);
+    if (stat.isSymbolicLink()) throw new Error(`PCR_SECRET_SCAN_SYMLINK_FORBIDDEN:${path}`);
     if (stat.isDirectory()) out.push(...files(path));
     else if (stat.size <= 8 * 1024 * 1024) out.push(path);
   }
