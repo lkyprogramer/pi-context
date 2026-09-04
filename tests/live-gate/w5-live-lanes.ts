@@ -997,7 +997,9 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const toolEventEvidence = toolEvents.map((event) => ({
     type: String(event.type ?? ""),
     toolName: String(event.toolName ?? event.name ?? ""),
+    toolCallId: String(event.toolCallId ?? event.id ?? ""),
     argsHash: sha(canonical(event.args ?? event.input ?? "")),
+    resultHash: sha(canonical(event.result ?? event.partialResult ?? "")),
     isError: event.isError === true || event.error !== undefined,
   })).filter((event, index, all) => all.findIndex((candidate) => canonical(candidate) === canonical(event)) === index)
     .map((event, ordinal) => ({ ordinal, ...event }));
