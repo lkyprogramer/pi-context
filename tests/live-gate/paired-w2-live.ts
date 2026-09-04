@@ -24,6 +24,7 @@ import {
 import { scoreToolPairsFromSession } from "../../packages/benchmark/src/continuation/runner.js";
 import {
   collectPerArmRawEvidence,
+  hashRunBundle,
   keepFailedArmEvidence,
   workspaceManifestSha256,
   writeArmArtifactDir,
@@ -997,6 +998,9 @@ export async function runLivePairedW2(opts: {
   const reportPath = join(outDir, "report.json");
   writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
   const digest = createHash("sha256").update(JSON.stringify(report)).digest("hex");
+  const reportBytes = `${JSON.stringify(report, null, 2)}\n`;
+  const reportArtifactBytesSha256 = createHash("sha256").update(reportBytes, "utf8").digest("hex");
+  const reportCanonicalJsonSha256 = hashRunBundle(report);
   const gateDecision = {
     gate: "w2-compactor",
     decision,
@@ -1028,6 +1032,8 @@ export async function runLivePairedW2(opts: {
           "report.json": digest,
           "gate-decision.json": createHash("sha256").update(JSON.stringify(gateDecision)).digest("hex"),
         },
+        artifactBytesSha256: reportArtifactBytesSha256,
+        canonicalJsonSha256: reportCanonicalJsonSha256,
       },
       null,
       2,

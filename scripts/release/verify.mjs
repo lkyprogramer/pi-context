@@ -20,6 +20,11 @@ if (existsSync(unrun)) fail("PCR_PUBLICATION_RUN_MISSING");
 if (!existsSync(publication)) fail("PCR_PUBLICATION_RUN_MISSING");
 
 const manifest = JSON.parse(readFileSync(publication, "utf8"));
+for (const field of ["artifactBytesSha256", "canonicalJsonSha256"]) {
+  if (typeof manifest[field] !== "string" || !/^[a-f0-9]{64}$/u.test(manifest[field])) {
+    fail(`PCR_PUBLICATION_HASH_MISSING:${field}`);
+  }
+}
 if (manifest.publicationClaim === true) fail("PCR_PUBLICATION_CLAIM_WITHOUT_LIVE");
 if (manifest.status === "unrun" || (manifest.completedPairs ?? 0) < 300) fail("PCR_PUBLICATION_RUN_MISSING");
 

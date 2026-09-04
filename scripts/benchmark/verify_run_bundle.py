@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -35,6 +36,24 @@ def verify_payload(payload: dict) -> None:
             fail(f"PCR_BUNDLE_RAW_MISSING:{key}")
 
 
+def canonical_json(payload: object) -> str:
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def verify_hashed_bundle(bundle_path: Path, manifest_path: Path) -> None:
+    raw = bundle_path.read_bytes()
+    payload = json.loads(raw)
+    if not isinstance(payload, dict) or "bundle" not in payload or "decision" not in payload:
+        fail("PCR_BUNDLE_RAW_MISSING:bundle")
+    manifest = json.loads(manifest_path.read_text())
+    byte_hash = hashlib.sha256(raw).hexdigest()
+    canonical_hash = hashlib.sha256(canonical_json(payload).encode("utf-8")).hexdigest()
+    if manifest.get("artifactBytesSha256") != byte_hash:
+        fail("PCR_BUNDLE_TAMPERED:artifactBytesSha256")
+    if manifest.get("canonicalJsonSha256") != canonical_hash:
+        fail("PCR_BUNDLE_TAMPERED:canonicalJsonSha256")
+
+
 def verify_arm_dir(arm_dir: Path) -> None:
     session = arm_dir / "session.jsonl"
     if not session.is_file():
@@ -53,9 +72,13 @@ def verify_arm_dir(arm_dir: Path) -> None:
 def verify(path: Path) -> None:
     if path.is_dir():
         bundle = path / "bundle.json"
+        manifest = path / "manifest.json"
         raw = path / "raw.json"
         arms = path / "arms"
         if bundle.is_file():
+            if manifest.is_file():
+                verify_hashed_bundle(bundle, manifest)
+                return
             verify_payload(json.loads(bundle.read_text()))
             return
         if raw.is_file():
