@@ -990,7 +990,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     restarted: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     sideEffectGuard: summaries.length > 0 && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
     correctionVerified: history.some((row) => row.phase === "temporal-update" && row.ok),
-    oracleComplete: ["temporal-update", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
+    oracleComplete: ["compact-1", "temporal-update", "grow-before-compact-2", "compact-2", "branch-after-compact-2", "restart-before-compact-3", "compact-3", "recall-needed", "recall-not-needed"].every((phase) => history.some((row) => row.phase === phase && row.ok))
       && compactions.length >= 3
       && summaries.length > 0
       && summaries.every((text) => !/\b(?:we|i)\s+deployed\b|\bdeployment\s+(?:succeeded|successful)\b|\bdeployed\s+(?:prod|production)\b|已成功部署|部署成功/i.test(text)),
