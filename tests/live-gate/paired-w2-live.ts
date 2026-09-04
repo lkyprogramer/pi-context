@@ -12,6 +12,7 @@ import {
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createRuntimeCursor } from "../../packages/core/src/identity/stable-identity.js";
 import type { EvaluationUsageLayers, ReplicateProvenance } from "../../packages/contracts/src/index.js";
 import { estimateTextTokens } from "../../packages/kernel/src/budget/token-counter.js";
@@ -745,7 +746,12 @@ export async function runLivePairedW2(opts: {
   if (modelLimits.maxTokens !== LIVE_RESERVE_TOKENS) {
     throw new Error(`expected unmodified maxTokens=${LIVE_RESERVE_TOKENS}, got ${modelLimits.maxTokens}`);
   }
-  const outDir = opts.outDir ?? join(opts.repoRoot, "artifacts/runs/w2-live-native", profile);
+  const canonicalGateDir = join(opts.repoRoot, "artifacts/runs/w2-v4-live/paired-gate");
+  const requestedOutDir = opts.outDir;
+  if (profile === "gate" && requestedOutDir && requestedOutDir !== canonicalGateDir) {
+    throw new Error(`gate profile output must be ${canonicalGateDir}`);
+  }
+  const outDir = requestedOutDir ?? (profile === "gate" ? canonicalGateDir : join(opts.repoRoot, "artifacts/runs/w2-live-native", profile));
   mkdirSync(outDir, { recursive: true });
   const rows: LivePairRow[] = loadResumedRows(outDir, runEpochHash);
   const done = new Set(rows.map((row) => row.id));
@@ -1049,6 +1055,25 @@ export async function runLivePairedW2(opts: {
     )}\n`,
   );
   return { reportPath, decision, report };
+}
+
+if (process.argv[1]?.endsWith("paired-w2-live.ts")) {
+  if (process.env.PCR_LIVE !== "1") {
+    throw new Error("PCR_LIVE=1 is required for the authoritative live runner");
+  }
+  const profile = process.env.PCR_W2_LIVE_PROFILE;
+  if (profile !== "one" && profile !== "smoke" && profile !== "spec-smoke" && profile !== "gate") {
+    throw new Error("PCR_W2_LIVE_PROFILE must be one, smoke, spec-smoke, or gate");
+  }
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
+  const defaultOutDir = join(repoRoot, "artifacts/runs/w2-v4-live/paired-gate");
+  const requestedOutDir = process.env.PCR_W2_LIVE_OUT_DIR?.trim();
+  if (profile === "gate" && requestedOutDir && requestedOutDir !== defaultOutDir) {
+    throw new Error(`gate profile output must be ${defaultOutDir}`);
+  }
+  const outDir = requestedOutDir || defaultOutDir;
+  const result = await runLivePairedW2({ repoRoot, profile, outDir });
+  process.stdout.write(`${JSON.stringify({ reportPath: result.reportPath, decision: result.decision }, null, 2)}\n`);
 }
 
 function findSecret(id: string): string {
