@@ -12,6 +12,8 @@ W5 continuation additionally records the interrupted Pi live runs in `artifacts/
 
 C30 bundle hardening is committed as `ed8d701`: raw `session.jsonl` files are included, structured message content is redacted, post-redaction 8MiB overflow fails closed, archive member paths match manifest paths, and artifact symlinks are rejected. The local RC manifest was regenerated at that code HEAD and is intentionally stale after subsequent documentation commits; the final release job must regenerate it against the release checkout HEAD. It remains an uncommitted release artifact by design. Node `v22.19.0` `typecheck` passed and `test:packed` passed 19/19.
 
+The retained paired-gate report now has recomputed artifact and canonical hashes, and `scripts/benchmark/verify_run_bundle.py` accepts that manifest. It still records 280/300 completed pairs and remains diagnostic evidence; the C24 fresh `w2-v4-live` authority run is still pending.
+
 The post-fix bounded v14 recursive smoke reached a terminal report and verified fork/branch pointer/correction evidence, but restart continuity and three-compaction criteria remained false. A subsequent v15 smoke verified cross-session restart continuity and branch lineage; Provider correction/compaction assertions still failed. Both are retained as fail-closed evidence, not a C27/C28 acceptance result.
 
 下一轮执行入口仍以 `docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/` 的未完成任务和当前工作树为准；审计附件中的旧 HEAD 仅作为历史基线，不代表当前实现 HEAD。
