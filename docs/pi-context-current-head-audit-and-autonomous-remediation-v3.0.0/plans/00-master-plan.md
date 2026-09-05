@@ -1,6 +1,6 @@
 # pi-context Current-HEAD Remediation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Every step is tracked with checkbox syntax.
+> **Scope:** This document governs the release/audit remediation lane. Routine development follows the repository root `AGENTS.md`; it does not require a separate worktree or Evidence v3 for every small change.
 
 **Goal:** 把当前不可编译、评测主臂错误且发布链未闭环的 Alpha，推进到可复算的 RC 决策点。
 
@@ -17,7 +17,7 @@
 - 不允许通过降低门槛、删除 timeout 或混用旧 commit 结果过门。
 - B2 vs B0 是 Product Adoption 主比较；B1 仅诊断。
 - Live 与 Hermetic Finding 分开关闭。
-- 任务 Evidence 必须通过 `scripts/taskctl.py`。
+- 发布/审计任务的 Evidence 必须通过 `scripts/taskctl.py`；普通开发使用定向测试和模块级验证即可。
 
 ## DAG
 
