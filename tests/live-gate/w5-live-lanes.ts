@@ -25,6 +25,11 @@ export const NATURAL_THRESHOLD_TOKENS = LIVE_CONTEXT_WINDOW - LIVE_RESERVE_TOKEN
 
 export type W5LiveProfile = "natural" | "overflow" | "recursive" | "recursive-auto" | "long-horizon" | "all";
 
+function promptTimeoutMs(): number {
+  const raw = Number(process.env.PCR_W5_PROMPT_TIMEOUT_MS ?? 3 * 60_000);
+  return Number.isSafeInteger(raw) && raw >= 5_000 && raw <= 10 * 60_000 ? raw : 3 * 60_000;
+}
+
 export type W5LiveErrorCode =
   | "PCR_LIVE_PROVIDER_UNAVAILABLE"
   | "PCR_W5_KEEP_RECENT_LOWERED"
@@ -623,7 +628,7 @@ async function runNaturalFamily(input: {
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
           onTurn: (log) => persistPartial(input.outDir, `${input.family}-native`, { turns: log }, native.sessionFile),
         });
-        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
+        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", promptTimeoutMs());
         nativeContinuation = "asked";
         return grown;
       },
@@ -649,7 +654,7 @@ async function runNaturalFamily(input: {
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
           onTurn: (log) => persistPartial(input.outDir, `${input.family}-pcr`, { turns: log }, pcr.sessionFile),
         });
-        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
+        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", promptTimeoutMs());
         pcrContinuation = "asked";
         return grown;
       },
@@ -858,7 +863,7 @@ async function runOverflowArm(input: {
         const overflowed = grown.some((row) => row.overflow === true);
         if (!overflowed) {
           try {
-            await rpc.promptAndWait(filler(40_000 * 4), 3 * 60_000);
+            await rpc.promptAndWait(filler(40_000 * 4), promptTimeoutMs());
             attempts.push({ phase: "overflow-prompt", ok: true });
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
@@ -895,7 +900,7 @@ async function runOverflowArm(input: {
           },
           retry: async () => {
             const before = lastAssistantUsage(arm.sessionFile).inputTokens;
-            await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", 3 * 60_000);
+            await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", promptTimeoutMs());
             const after = lastAssistantUsage(arm.sessionFile).inputTokens;
             return { phase: "retry", ok: true, outputHash: sha(`${after ?? ""}:${inspectCompactions(arm.sessionFile).at(-1)?.summary ?? ""}`), tokensAfter: after ?? undefined, sideEffectCount: sideEffectCount(), error: before !== null && after !== null && after >= before ? "tokens-not-decreased" : undefined, tokensDropped: before !== null && after !== null && after < before };
           },
@@ -1051,14 +1056,14 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));
         const compact1Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(recursiveFillerChars)}`, 3 * 60_000);
+        await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(recursiveFillerChars)}`, promptTimeoutMs());
         history.push({ phase: "compact-1", ok: inspectCompactions(arm.sessionFile).length > compact1Before, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
-        await rpc.promptAndWait("改为 version 7. Do not deploy production.", 3 * 60_000);
+        await rpc.promptAndWait("改为 version 7. Do not deploy production.", promptTimeoutMs());
         history.push({ phase: "temporal-update", ok: /\bversion\s*7\b/i.test(lastAssistantText(arm.sessionFile)) && !/\bversion\s*6\b/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact2Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Grow before compact 2.\n${filler(recursiveFillerChars)}`, 3 * 60_000);
+        await rpc.promptAndWait(`Grow before compact 2.\n${filler(recursiveFillerChars)}`, promptTimeoutMs());
         history.push({ phase: "grow-before-compact-2", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         history.push({ phase: "compact-2", ok: inspectCompactions(arm.sessionFile).length > compact2Before, compactCount: inspectCompactions(arm.sessionFile).length });
@@ -1098,7 +1103,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         const sessionFile = (state.data as { sessionFile?: unknown } | undefined)?.sessionFile;
         if (typeof sessionFile !== "string" || sessionFile === arm.sessionFile) throw new Error("fork did not create a new session");
         arm.sessionFile = sessionFile;
-        await rpc.promptAndWait("Park the previous front. New branch: recall whether version 7 is active. Do not merge sibling-branch.", 3 * 60_000);
+        await rpc.promptAndWait("Park the previous front. New branch: recall whether version 7 is active. Do not merge sibling-branch.", promptTimeoutMs());
         const branchedEntries = readFileSync(arm.sessionFile, "utf8").trim().split("\n").flatMap((line) => {
           try { return [JSON.parse(line) as Record<string, unknown>]; } catch { return []; }
         });
@@ -1130,7 +1135,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && branchLineage.ok });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Add more history before compact 3.\n${filler(recursiveFillerChars)}`, 3 * 60_000);
+        await rpc.promptAndWait(`Add more history before compact 3.\n${filler(recursiveFillerChars)}`, promptTimeoutMs());
         history.push({
           phase: "compact-3",
           ok: inspectCompactions(arm.sessionFile).length > compact3Before,
@@ -1138,10 +1143,10 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
           summary: inspectCompactions(arm.sessionFile).at(-1)?.summary.slice(0, 400),
         });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
-        await rpc.promptAndWait("What version is currently active? Reply with the version string only.", 3 * 60_000);
+        await rpc.promptAndWait("What version is currently active? Reply with the version string only.", promptTimeoutMs());
         history.push({ phase: "recall-needed", ok: /^\s*version\s*7\s*$/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
-        await rpc.promptAndWait("Should we merge sibling-branch now? Answer yes or no.", 3 * 60_000);
+        await rpc.promptAndWait("Should we merge sibling-branch now? Answer yes or no.", promptTimeoutMs());
         history.push({ phase: "recall-not-needed", ok: /^\s*(?:no|否|不)\s*[.!]?\s*$/i.test(lastAssistantText(arm.sessionFile)) });
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));

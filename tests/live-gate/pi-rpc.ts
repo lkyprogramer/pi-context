@@ -86,6 +86,10 @@ export class PiRpc {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
+        if (command.type === "prompt") {
+          this.exitError = new Error(`Prompt RPC timed out after ${timeoutMs}ms`);
+          this.process?.kill("SIGTERM");
+        }
         reject(new Error(`Timeout waiting for ${String(command.type)} after ${timeoutMs}ms. ${this.stderr.slice(-800)}`));
       }, timeoutMs);
       this.pending.set(id, {
@@ -116,6 +120,10 @@ export class PiRpc {
       timer = setTimeout(() => reject(new Error(`prompt did not settle in ${timeoutMs}ms`)), timeoutMs);
       let cursor = this.events.length;
       poll = setInterval(() => {
+        if (this.exitError) {
+          reject(this.exitError);
+          return;
+        }
         while (cursor < this.events.length) {
           const event = this.events[cursor];
           cursor += 1;
@@ -129,9 +137,17 @@ export class PiRpc {
       }, 50);
     });
     try {
-      await this.request({ type: "prompt", message }, 30_000);
-      await settled;
+      const accepted = this.request({ type: "prompt", message }, Math.min(30_000, timeoutMs)).then((response) => {
+        if (response.success !== true) throw new Error(response.error ?? "prompt rejected");
+      });
+      // Observe both promises immediately: settlement can time out before ACK.
+      await Promise.all([accepted, settled]);
       return collected;
+    } catch (error) {
+      this.exitError = error instanceof Error ? error : new Error(String(error));
+      this.rejectAll(this.exitError);
+      this.process?.kill("SIGTERM");
+      throw error;
     } finally {
       if (timer) clearTimeout(timer);
       if (poll) clearInterval(poll);

@@ -18,6 +18,8 @@ At the current Node `v22.19.0`, the local validation gates also passed: `test:un
 
 The post-fix bounded v14 recursive smoke reached a terminal report and verified fork/branch pointer/correction evidence, but restart continuity and three-compaction criteria remained false. A subsequent v15 smoke verified cross-session restart continuity and branch lineage; Provider correction/compaction assertions still failed. Both are retained as fail-closed evidence, not a C27/C28 acceptance result.
 
+W5 live diagnostic prompts now honor `PCR_W5_PROMPT_TIMEOUT_MS` (5 seconds to 10 minutes, default 3 minutes), and the Pi RPC request timeout is capped by the same per-prompt budget. This keeps bounded smoke runs interruptible; a 3-turn overflow smoke with a 5-second budget terminated in about 31 seconds with the expected fail-closed `PCR_W5_OVERFLOW_NOT_OBSERVED` result. This is a diagnostic timeout control, not evidence that the real Provider overflow behavior passed.
+
 下一轮执行入口仍以 `docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/` 的未完成任务和当前工作树为准；审计附件中的旧 HEAD 仅作为历史基线，不代表当前实现 HEAD。
 
 不要再 claim 上一版 `T00–T54` / `A00–A49` 为已验收完成。上一版 declared-done 已与 acceptance 分离；`A43`/`A44`/`A45`/`A48` 必须保持 reopen，直到对应 Live Lane 真正通过。
