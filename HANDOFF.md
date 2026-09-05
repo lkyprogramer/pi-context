@@ -14,6 +14,8 @@ C30 bundle hardening is committed as `ed8d701`: raw `session.jsonl` files are in
 
 The retained paired-gate report now has recomputed artifact and canonical hashes, and `scripts/benchmark/verify_run_bundle.py` accepts that manifest. It still records 280/300 completed pairs and remains diagnostic evidence; the C24 fresh `w2-v4-live` authority run is still pending.
 
+At the current Node `v22.19.0`, the local validation gates also passed: `test:unit` 167 files/790 tests, `test:contract` 10 files/38 tests, `test:integration` 13 files/31 tests, `test:acceptance` 22 files/64 tests, and `test:publication` 10 files/43 tests. These results validate the implementation and contracts; they do not upgrade the incomplete live run or create a publication claim.
+
 The post-fix bounded v14 recursive smoke reached a terminal report and verified fork/branch pointer/correction evidence, but restart continuity and three-compaction criteria remained false. A subsequent v15 smoke verified cross-session restart continuity and branch lineage; Provider correction/compaction assertions still failed. Both are retained as fail-closed evidence, not a C27/C28 acceptance result.
 
 下一轮执行入口仍以 `docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/` 的未完成任务和当前工作树为准；审计附件中的旧 HEAD 仅作为历史基线，不代表当前实现 HEAD。
