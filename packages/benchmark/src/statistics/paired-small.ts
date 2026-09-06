@@ -108,6 +108,68 @@ export function pairedMeanDifference(pairs: readonly MeanPair[]): PairedMeanRepo
   };
 }
 
+export function summarizePairedSuccess(
+  rows: readonly { clusterId: string; baseline: boolean; candidate: boolean }[],
+  options: { bootstrapSamples: number; seed: number },
+): {
+  pairs: number;
+  clusters: number;
+  meanDelta: number;
+  discordance: Discordance;
+  ci95: [number, number] | null;
+} {
+  if (!Array.isArray(rows) || rows.length === 0) failInput("rows");
+  if (!options || typeof options !== "object") failInput("options");
+  if (!Number.isSafeInteger(options.bootstrapSamples) || options.bootstrapSamples < 1) failInput("bootstrapSamples");
+  if (!Number.isSafeInteger(options.seed)) failInput("seed");
+  const pairs: MeanPair[] = rows.map((row, index) => {
+    if (!row || typeof row !== "object") failInput(`rows[${index}]`);
+    if (typeof row.clusterId !== "string" || row.clusterId.length === 0) failInput(`rows[${index}].clusterId`);
+    if (typeof row.baseline !== "boolean") failInput(`rows[${index}].baseline`);
+    if (typeof row.candidate !== "boolean") failInput(`rows[${index}].candidate`);
+    return {
+      caseId: `${row.clusterId}:${index}`,
+      clusterId: row.clusterId,
+      baseline: row.baseline ? 1 : 0,
+      candidate: row.candidate ? 1 : 0,
+    };
+  });
+  const report = pairedMeanDifference(pairs);
+  const binary: BinarySuccessPair[] = rows.map((row, index) => ({
+    caseId: `${row.clusterId}:${index}`,
+    clusterId: row.clusterId,
+    baseline: row.baseline,
+    candidate: row.candidate,
+  }));
+  let ci95: [number, number] | null = null;
+  if (report.clusters >= 2) {
+    const resampled = resampleClusterMeans({
+      pairs,
+      seed: options.seed,
+      draws: options.bootstrapSamples,
+    });
+    const sorted = [...resampled.samples].sort((a, b) => a - b);
+    ci95 = [quantile(sorted, 0.025), quantile(sorted, 0.975)];
+  }
+  return {
+    pairs: report.pairs,
+    clusters: report.clusters,
+    meanDelta: report.meanDiff,
+    discordance: discordance(binary),
+    ci95,
+  };
+}
+
+function quantile(sorted: readonly number[], q: number): number {
+  if (sorted.length === 0) return 0;
+  const index = (sorted.length - 1) * q;
+  const low = Math.floor(index);
+  const high = Math.ceil(index);
+  if (low === high) return sorted[low]!;
+  const weight = index - low;
+  return sorted[low]! * (1 - weight) + sorted[high]! * weight;
+}
+
 export function resampleClusterMeans(input: {
   pairs: readonly MeanPair[];
   seed: number;

@@ -24,6 +24,12 @@ export interface RecoveryCoverage {
   rate: number | null;
 }
 
+export function recoveryCountsFromSummary(summary: RecoverySummary): { recoveryTested: number; recoveryPassed: number } {
+  if (!summary || typeof summary !== "object") failInput("summary");
+  if (summary.status === "not-tested") return { recoveryTested: 0, recoveryPassed: 0 };
+  return { recoveryTested: summary.attempted, recoveryPassed: summary.passed };
+}
+
 export type RecoveryErrorCode = "PCR_RECOVERY_INPUT_INVALID";
 
 export class RecoveryScorerError extends TypeError {
@@ -77,6 +83,61 @@ export function scoreArtifactCoverage(input: {
     missing,
     ok: missing.length === 0,
   };
+}
+
+export interface RecoveryCaseResult {
+  eligible: boolean;
+  attempted: boolean;
+  exactBytesMatch: boolean | null;
+  wrongScopeDenied: boolean | null;
+}
+
+export interface RecoverySummary {
+  eligible: number;
+  attempted: number;
+  passed: number;
+  passRate: number | null;
+  status: "not-tested" | "partial" | "passed" | "failed";
+}
+
+export function summarizeRecovery(rows: readonly RecoveryCaseResult[]): RecoverySummary {
+  if (!Array.isArray(rows)) failInput("rows");
+  let eligible = 0;
+  let attempted = 0;
+  let passed = 0;
+  let failedAttempt = false;
+  for (const [index, row] of rows.entries()) {
+    if (!row || typeof row !== "object") failInput(`rows[${index}]`);
+    if (typeof row.eligible !== "boolean") failInput(`rows[${index}].eligible`);
+    if (typeof row.attempted !== "boolean") failInput(`rows[${index}].attempted`);
+    if (row.exactBytesMatch !== null && typeof row.exactBytesMatch !== "boolean") {
+      failInput(`rows[${index}].exactBytesMatch`);
+    }
+    if (row.wrongScopeDenied !== null && typeof row.wrongScopeDenied !== "boolean") {
+      failInput(`rows[${index}].wrongScopeDenied`);
+    }
+    if (!row.eligible) continue;
+    eligible += 1;
+    if (!row.attempted) continue;
+    attempted += 1;
+    const ok = row.exactBytesMatch === true && row.wrongScopeDenied === true;
+    if (ok) passed += 1;
+    else failedAttempt = true;
+  }
+  if (eligible === 0) {
+    return { eligible: 0, attempted: 0, passed: 0, passRate: null, status: "not-tested" };
+  }
+  if (attempted === 0) {
+    return { eligible, attempted: 0, passed: 0, passRate: null, status: "partial" };
+  }
+  const passRate = passed / attempted;
+  if (failedAttempt) {
+    return { eligible, attempted, passed, passRate, status: "failed" };
+  }
+  if (attempted < eligible) {
+    return { eligible, attempted, passed, passRate, status: "partial" };
+  }
+  return { eligible, attempted, passed, passRate, status: "passed" };
 }
 
 export function scoreRecoveryCoverage(input: {

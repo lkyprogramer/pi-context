@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { scoreArtifactCoverage, scoreRecoveryCoverage } from "../../src/scoring/recovery.js";
+import { scoreArtifactCoverage, scoreRecoveryCoverage, summarizeRecovery, recoveryCountsFromSummary } from "../../src/scoring/recovery.js";
 
 describe("artifact and recovery coverage", () => {
   it("scores artifacts from the workspace witness rather than a failed reader probe", () => {
@@ -62,5 +62,34 @@ describe("artifact and recovery coverage", () => {
       eligible: 1,
       trials: [{ recovered: true }],
     }).rate).toBe(1);
+  });
+
+  it("passes only eligible attempted exact-byte and wrong-scope cases", () => {
+    const passed = summarizeRecovery([
+      { eligible: true, attempted: true, exactBytesMatch: true, wrongScopeDenied: true },
+      { eligible: true, attempted: true, exactBytesMatch: true, wrongScopeDenied: true },
+    ]);
+    expect(passed).toMatchObject({ eligible: 2, attempted: 2, passed: 2, status: "passed", passRate: 1 });
+    expect(summarizeRecovery([])).toMatchObject({ eligible: 0, attempted: 0, status: "not-tested", passRate: null });
+    expect(summarizeRecovery([
+      { eligible: true, attempted: false, exactBytesMatch: null, wrongScopeDenied: null },
+    ]).status).toBe("partial");
+    expect(summarizeRecovery([
+      { eligible: true, attempted: true, exactBytesMatch: true, wrongScopeDenied: false },
+    ]).status).toBe("failed");
+    expect(recoveryCountsFromSummary({
+      eligible: 5,
+      attempted: 5,
+      passed: 5,
+      passRate: 1,
+      status: "passed",
+    })).toEqual({ recoveryTested: 5, recoveryPassed: 5 });
+    expect(recoveryCountsFromSummary({
+      eligible: 5,
+      attempted: 0,
+      passed: 0,
+      passRate: null,
+      status: "not-tested",
+    })).toEqual({ recoveryTested: 0, recoveryPassed: 0 });
   });
 });

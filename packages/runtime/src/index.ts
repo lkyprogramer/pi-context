@@ -31,8 +31,10 @@ export {
   declaredInputSemantics,
   logicalInput,
   totalTaskUsage,
+  type InputSemantics,
   type RequestUsage as TaskRequestUsage,
   type RequestUsageLedger,
+  type RequestUsagePhase,
   type TaskUsageTotal,
 } from "./telemetry/request-usage.js";
 export * from "./compaction/full-state.js";
