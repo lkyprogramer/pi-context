@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 
 import { createProductionReducers, createReducerRegistry } from "@pcr/core";
 import { createRetrievalTools } from "@pcr/pi-adapter";
+import { observationTextFromContent, tryDecodeObservation } from "@pcr/runtime";
 
 export class W1VerticalError extends TypeError {
   constructor(code, details = {}) {
@@ -109,10 +110,15 @@ export async function runW1Vertical(input) {
     evidenceId: admitted[0].evidenceId,
     ...(input.signal === undefined ? {} : { signal: input.signal }),
   });
+  const decoded = tryDecodeObservation(page.bytes);
+  const recoveredText = decoded
+    ? observationTextFromContent(decoded.content)
+    : Buffer.from(page.bytes).toString("utf8");
   return {
     rawHash,
     visibleTokens,
-    exactReadHash: page.sha256,
+    exactReadHash: sha256(recoveredText),
+    envelopeSha256: page.sha256,
     searchRank: found.hits[0]?.rank ?? Number.POSITIVE_INFINITY,
   };
 }

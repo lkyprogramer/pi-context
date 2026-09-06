@@ -60,8 +60,10 @@ describe("Pi tool_result order", () => {
       const original = service.ingest.bind(service);
       service.ingest = async (input) => {
         events.push("blob-before-project");
+        expect(JSON.stringify(input.content)).toContain("full");
         const projected = await original(input);
         events.push("projected");
+        expect(JSON.stringify(projected.visibleContent)).toContain("full");
         return projected;
       };
       bindToolResultCapture(harness.host, {
@@ -81,7 +83,6 @@ describe("Pi tool_result order", () => {
       });
       expect(events[0]).toBe("blob-before-project");
       expect(events).toContain("projected");
-      expect(JSON.stringify(result)).not.toContain("full");
       expect(result.errors).toEqual([]);
     } finally {
       await saga.close();

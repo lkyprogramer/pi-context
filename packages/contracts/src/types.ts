@@ -83,7 +83,24 @@ export interface HostToolCallRefBlock {
   type: "tool-call-ref";
   ref: string;
 }
-export type HostContentBlock = HostTextBlock | HostPointerBlock | HostImageRefBlock | HostToolCallRefBlock;
+export interface HostImageBlock {
+  type: "image";
+  mimeType: string;
+  data: string;
+}
+export interface HostBypassBlock {
+  type: "bypass";
+  originalType: string;
+  payload: unknown;
+  reason: string;
+}
+export type HostContentBlock =
+  | HostTextBlock
+  | HostPointerBlock
+  | HostImageRefBlock
+  | HostToolCallRefBlock
+  | HostImageBlock
+  | HostBypassBlock;
 
 export interface HostMessage {
   hostMessageId: string;

@@ -110,11 +110,13 @@ function sourceClassFor(role: HostMessage["role"]): SourceClass {
 
 function isHostBlock(value: unknown): value is HostContentBlock {
   if (!value || typeof value !== "object") return false;
-  const block = value as { type?: unknown; text?: unknown; ref?: unknown };
+  const block = value as { type?: unknown; text?: unknown; ref?: unknown; mimeType?: unknown; data?: unknown; reason?: unknown };
   if (block.type === "text") return typeof block.text === "string";
   if (block.type === "pointer" || block.type === "image-ref" || block.type === "tool-call-ref") {
     return typeof block.ref === "string" && block.ref.length > 0;
   }
+  if (block.type === "image") return typeof block.mimeType === "string" && typeof block.data === "string";
+  if (block.type === "bypass") return typeof block.reason === "string";
   return false;
 }
 

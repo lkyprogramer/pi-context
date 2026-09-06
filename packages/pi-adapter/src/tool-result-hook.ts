@@ -4,7 +4,7 @@ import type {
   ToolResultEvent,
 } from "@earendil-works/pi-coding-agent";
 import { domainHash, type RuntimeCursor } from "@pcr/contracts";
-import type { ObservationService, ProjectedToolResult, ToolObservation } from "@pcr/runtime";
+import { toHostVisibleContent, type ObservationService, type ProjectedToolResult, type ToolObservation } from "@pcr/runtime";
 
 import { toolResultSourceClass } from "../../kernel/src/security/tool-taxonomy.js";
 
@@ -72,14 +72,7 @@ function sourceClass(toolName: string): ToolObservation["sourceClass"] {
 }
 
 function asContent(event: ToolResultEvent): ToolObservation["content"] {
-  return Array.isArray(event.content)
-    ? event.content.map((block) => {
-      if (block && block.type === "text" && typeof block.text === "string") {
-        return { type: "text" as const, text: block.text };
-      }
-      return { type: "text" as const, text: "" };
-    })
-    : [];
+  return toHostVisibleContent(Array.isArray(event.content) ? event.content : []);
 }
 
 function validateDependencies(input: ToolResultHookDependencies): void {

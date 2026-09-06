@@ -16,6 +16,7 @@ import { createRuntimeCursor } from "@pcr/core";
 import { registerToolResultHook } from "@pcr/pi-adapter";
 import {
   createObservationService,
+  decodeObservation,
   type ObservationService,
   type ProjectedToolResult,
 } from "@pcr/runtime";
@@ -103,6 +104,14 @@ async function openHarness(options: {
     },
   });
   const blobs = options.wrapBlobs?.(rawBlobs) ?? rawBlobs;
+  let lastRawBlobId: ProjectedToolResult["rawBlobId"] | undefined;
+  const trackedBlobs = {
+    put: async (...args: Parameters<typeof blobs.put>) => {
+      lastRawBlobId = await blobs.put(...args);
+      return lastRawBlobId;
+    },
+    read: blobs.read.bind(blobs),
+  };
   const database = await openWorkspaceSqliteStore({
     dataRoot: root,
     workspaceId: cursor.workspaceId,
@@ -122,7 +131,7 @@ async function openHarness(options: {
         const mapKey = JSON.stringify(next);
         let service = services.get(mapKey);
         if (!service) {
-          service = createObservationService({ cursor: next, blobs, saga });
+          service = createObservationService({ cursor: next, blobs: trackedBlobs, saga });
           services.set(mapKey, service);
         }
         return service;
@@ -189,6 +198,9 @@ async function openHarness(options: {
     saga,
     session: session as unknown as ToolResultSession,
     failures,
+    get lastRawBlobId() {
+      return lastRawBlobId;
+    },
     async close() {
       await saga.close();
       await database.close();
@@ -217,11 +229,10 @@ async function invokeRealPiToolResultEvent(input: {
   } as ToolResultEvent;
   const hostVisible = await owned.session._extensionRunner.emitToolResult(event);
   const visibleText = JSON.stringify(hostVisible?.content ?? "");
-  const blobMatch = visibleText.match(/blob_[a-f0-9]{64}/u);
   return {
     harness: owned,
     result: {
-      receipt: { blobRef: blobMatch?.[0] as ProjectedToolResult["rawBlobId"] | undefined },
+      receipt: { blobRef: owned.lastRawBlobId },
       visible: { content: visibleText },
       hostVisible,
     },
@@ -238,8 +249,9 @@ describe("T13 Real Pi tool_result ingress", () => {
     });
     const { harness, result } = invoked;
     try {
-      expect(await harness.blobStore.read(result.receipt.blobRef!)).toEqual(Buffer.from(SECRET));
-      expect(result.visible.content).not.toContain(SECRET);
+      const raw = await harness.blobStore.read(result.receipt.blobRef!);
+      expect(decodeObservation(raw).content).toEqual([{ type: "text", text: SECRET }]);
+      expect(result.visible.content).toContain(SECRET);
     } finally {
       await harness.close();
     }
@@ -310,7 +322,8 @@ describe("T13 Real Pi tool_result ingress", () => {
       const first = await service.ingest(input);
       const second = await service.ingest(input);
       expect(second).toEqual(first);
-      expect(await harness.blobStore.read(first.rawBlobId)).toEqual(Buffer.from(SECRET));
+      expect(decodeObservation(await harness.blobStore.read(first.rawBlobId)).content)
+        .toEqual([{ type: "text", text: SECRET }]);
     } finally {
       await harness.close();
     }
@@ -415,12 +428,14 @@ describe("T13 Real Pi tool_result ingress", () => {
       isError: false,
     });
     try {
-      expect(first.result.visible.content).not.toContain(SECRET);
-      expect(second.result.visible.content).not.toContain(SECRET);
-      expect(first.result.visible.content).toMatch(/\[pcr observation pointer\] ctx:\/\/observation\/blob_[a-f0-9]{64}/u);
-      expect(second.result.visible.content).toMatch(/\[pcr observation pointer\] ctx:\/\/observation\/blob_[a-f0-9]{64}/u);
-      expect(await first.harness.blobStore.read(first.result.receipt.blobRef!)).toEqual(Buffer.from(SECRET));
-      expect(await second.harness.blobStore.read(second.result.receipt.blobRef!)).toEqual(Buffer.from(SECRET));
+      expect(first.result.visible.content).toContain(SECRET);
+      expect(second.result.visible.content).toContain(SECRET);
+      expect(first.result.visible.content).not.toContain("ctx://observation");
+      expect(second.result.visible.content).not.toContain("ctx://observation");
+      expect(decodeObservation(await first.harness.blobStore.read(first.result.receipt.blobRef!)).content)
+        .toEqual([{ type: "text", text: SECRET }]);
+      expect(decodeObservation(await second.harness.blobStore.read(second.result.receipt.blobRef!)).content)
+        .toEqual([{ type: "text", text: SECRET }]);
     } finally {
       await first.harness.close();
       await second.harness.close();

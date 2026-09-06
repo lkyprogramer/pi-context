@@ -1,0 +1,69 @@
+{
+  "taskId": "T03",
+  "baseCommit": "38d3135",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/runtime/src/index.ts",
+      "reason": "Export ObservationEnvelope helpers from the runtime barrel used by composition-root and tests."
+    },
+    {
+      "path": "packages/runtime/package.json",
+      "reason": "Strict typecheck must include observation-envelope.test.ts."
+    },
+    {
+      "path": "packages/core/src/budget/pricer.ts",
+      "reason": "HostContentBlock now includes image and bypass blocks that materialization already prices."
+    },
+    {
+      "path": "tests/helpers/product-harness.ts",
+      "reason": "The next provider request must come from a real host tool execution, not emit-only."
+    },
+    {
+      "path": "tests/tasks/t13.test.ts",
+      "reason": "CAS raw is now an ObservationEnvelope; short visible results keep the original text."
+    },
+    {
+      "path": "tests/contract/pi-tool-result-order.test.ts",
+      "reason": "Ingest order still writes CAS first; short visible content is no longer a pointer."
+    },
+    {
+      "path": "scripts/gates/w1-vertical.mjs",
+      "reason": "Exact reader must distinguish envelope bytes from a plain text page when hashing recovered content."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/runtime/test/observation-envelope.test.ts tests/acceptance/tool-result-flow.test.ts tests/tasks/t13.test.ts tests/acceptance/ancestor-evidence.test.ts tests/tasks/t23.test.ts tests/acceptance/w1-vertical.test.ts tests/contract/pi-tool-result-order.test.ts packages/pi-adapter/test/message-codec.test.ts packages/core/test/budget/envelope-pricing.test.ts",
+      "exit": 0,
+      "tests": "36 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "decode(encode) preserves image blocks; empty text and image have different envelope hashes",
+    "long bash views include reducer key text plus a readable evidence id instead of a pointer-only payload",
+    "short results stay verbatim and are not replaced by ctx://observation pointers",
+    "unknown blocks use bypass rather than deletion; undefined/NaN fail closed",
+    "CAS stores the ObservationEnvelope; context_read of a full envelope omits details secrets",
+    "retrieval tools are not ingested again",
+    "a real failed bash tool result appears in a later controlled-host provider request"
+  ],
+  "uncovered": [
+    "packages/contracts/src/v2.ts needed no field change; the envelope is a runtime codec over existing observation content",
+    "Partial-range context_read still returns raw envelope JSON slices; UTF-8 paging of envelope vs content is T06",
+    "Live models are T12 only; product path used the controlled host with contextWindow 200192"
+  ],
+  "hashes": {
+    "packages/runtime/src/observation-envelope.ts": "ad7cb5815b1dec01a85a3eec7fb2c7162330c2fd54553d24b9da0ba839e03a11",
+    "packages/runtime/test/observation-envelope.test.ts": "29717f295b87d4b390d478463ff988b22e7ad798b4e79c0b3bcd532625007a13",
+    "packages/runtime/src/observation-service.ts": "d840fbf59be7fd814ec87978c25db39afae998c5b53991f368de334f60a3a589",
+    "packages/pi-adapter/src/tool-result-hook.ts": "91fa7ddde1a54ace4e09467b51cb10786b95d3b70be50c1183987f47612118b6",
+    "apps/pi-context-runtime/src/composition-root.ts": "4402f80993044c752741ae03f5c8f8e094a5c293e707e1405bfb78cd8f5128cf",
+    "tests/acceptance/tool-result-flow.test.ts": "716349e5df8252ada50c6cdc9b620d4f210cd71451b6edc4119063fea7b9361e"
+  }
+}

@@ -4,6 +4,7 @@ export * from "./session-registry.js";
 export * from "./saga/index.js";
 export * from "./user-turn-service.js";
 export * from "./observation-service.js";
+export * from "./observation-envelope.js";
 export * from "./evidence-service.js";
 export * from "./directive-service.js";
 export * from "./continuity-service.js";

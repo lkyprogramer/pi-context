@@ -4,10 +4,14 @@ import {
   domainHash,
   isBlobId,
   type ActionAuthority,
-  type HostContentBlock,
   type RuntimeCursor,
 } from "@pcr/contracts";
 
+import {
+  encodeObservation,
+  OBSERVATION_FORMAT,
+  toHostVisibleContent,
+} from "./observation-envelope.js";
 import type { BlobStore, ProjectedToolResult, ToolObservation } from "./ports.js";
 import type { SagaJournal } from "./saga/contracts.js";
 
@@ -75,25 +79,31 @@ function sameIdentity(left: RuntimeCursor, right: RuntimeCursor): boolean {
     && left.sessionId === right.sessionId;
 }
 
-function rawToolBytes(content: ToolObservation["content"]): Buffer {
-  if (!Array.isArray(content)) failInput("input.content");
-  const text = content
-    .filter((block): block is Extract<HostContentBlock, { type: "text" }> => (
-      !!block && block.type === "text" && typeof block.text === "string"
-    ))
-    .map((block) => block.text)
-    .join("");
-  return Buffer.from(text, "utf8");
+function envelopeBytes(value: ToolObservation): Buffer {
+  if (!Array.isArray(value.content)) failInput("input.content");
+  return Buffer.from(encodeObservation({
+    format: OBSERVATION_FORMAT,
+    toolCallId: value.toolCallId,
+    toolName: value.toolName,
+    content: value.content,
+    details: value.details ?? null,
+    isError: value.isError === true,
+  }));
 }
 
-function projectVisible(rawBlobId: string, operationId: string, observationId: string, isError: boolean): ProjectedToolResult {
+function projectVisible(
+  value: ToolObservation,
+  rawBlobId: string,
+  operationId: string,
+  observationId: string,
+): ProjectedToolResult {
   return {
     operationId,
     observationId,
     rawBlobId: rawBlobId as ProjectedToolResult["rawBlobId"],
     evidenceIds: [],
-    visibleContent: [{ type: "text", text: `[pcr observation pointer] ctx://observation/${rawBlobId}` }],
-    isError,
+    visibleContent: toHostVisibleContent(value.content),
+    isError: value.isError === true,
     reducer: { id: REDUCER.id, revision: REDUCER.revision },
   };
 }
@@ -137,7 +147,7 @@ class DefaultObservationService implements ObservationService {
     if (!AUTHORITIES.has(value.authority)) failInput("input.authority");
     if (!Number.isSafeInteger(value.capturedAt) || value.capturedAt < 0) failInput("input.capturedAt");
     if (value.signal !== undefined && !(value.signal instanceof AbortSignal)) failInput("input.signal");
-    const bytes = rawToolBytes(value.content);
+    const bytes = envelopeBytes(value);
     const sourceContentHash = createHash("sha256").update(bytes).digest("hex");
     const observationId = `obs_${domainHash("observation-id", {
       operationId: value.operationId,
@@ -158,7 +168,7 @@ class DefaultObservationService implements ObservationService {
       configFingerprint: this.#configFingerprint,
       ...(value.signal === undefined ? {} : { signal: value.signal }),
     });
-    return projectVisible(rawBlobId, value.operationId, observationId, value.isError === true);
+    return projectVisible(value, rawBlobId, value.operationId, observationId);
   }
 
   async acknowledge(operationId: string, hostMessageId: string): Promise<void> {

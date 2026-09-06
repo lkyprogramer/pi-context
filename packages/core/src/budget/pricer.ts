@@ -117,6 +117,14 @@ export function estimateMessageTokens(message: HostMessage): number {
         failInput("message.content[].ref");
       }
       tokens += estimateTextTokens(block.ref);
+    } else if (block.type === "image") {
+      if (typeof block.mimeType !== "string" || typeof block.data !== "string") {
+        failInput("message.content[].image");
+      }
+      tokens += 765;
+    } else if (block.type === "bypass") {
+      if (typeof block.reason !== "string") failInput("message.content[].bypass");
+      tokens += estimateTextTokens(block.reason);
     } else {
       failInput("message.content[].type");
     }

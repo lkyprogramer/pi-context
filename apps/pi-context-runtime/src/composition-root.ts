@@ -51,6 +51,10 @@ import {
   createEvidenceService,
   createPointerCheck,
   createObservationService,
+  DEFAULT_OBSERVATION_VIEW_BUDGET_TOKENS,
+  presentExactObservationPage,
+  renderObservationView,
+  toHostVisibleContent,
   createRecoveryService,
   createRuntimeSession,
   createRuntimeSessionRegistry,
@@ -602,7 +606,17 @@ function evidenceWithView(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor):
   return {
     admit: (input) => inner.admit(input),
     search: (query) => inner.search({ ...query, view }),
-    read: (req) => inner.read({ ...req, view }),
+    async read(req) {
+      const page = await inner.read({ ...req, view });
+      const presented = presentExactObservationPage(page);
+      if (presented.kind !== "envelope") return page;
+      return {
+        ...page,
+        bytes: presented.bytes,
+        byteLength: presented.bytes.byteLength,
+        range: { start: 0, endExclusive: presented.bytes.byteLength },
+      };
+    },
   };
 }
 
@@ -798,35 +812,61 @@ export function registerProductionUserTurnRuntime(
                 async ingest(input: ToolObservation): Promise<ProjectedToolResult> {
                   const projected = await inner.ingest(input);
                   const text = observationText(input.content);
-                  const reducers = createReducerRegistry({
-                    cursor: input.cursor,
-                    reducers: createProductionReducers(),
-                  });
-                  const reduced = await reducers.reduce({
-                    observation: input,
-                    text,
-                    rawBlobId: projected.rawBlobId,
-                    cursor: input.cursor,
-                    ...(input.signal === undefined ? {} : { signal: input.signal }),
-                  });
+                  let reducedText = text;
+                  let reducerId = projected.reducer.id;
+                  let facts: unknown = [{ kind: "note", value: text.length > 0 ? text : "observation" }];
+                  try {
+                    const reducers = createReducerRegistry({
+                      cursor: input.cursor,
+                      reducers: createProductionReducers(),
+                    });
+                    const reduced = await reducers.reduce({
+                      observation: input,
+                      text,
+                      rawBlobId: projected.rawBlobId,
+                      cursor: input.cursor,
+                      ...(input.signal === undefined ? {} : { signal: input.signal }),
+                    });
+                    reducedText = reduced.visibleText;
+                    reducerId = reduced.reducer.id;
+                    facts = reduced.facts;
+                  } catch {
+                    reducedText = text;
+                  }
                   const admitted = await owner.evidence(input.cursor).admit({
                     cursor: input.cursor,
                     operationId: projected.operationId,
                     observationId: projected.observationId,
                     rawBlobId: projected.rawBlobId,
-                    reducer: { id: reduced.reducer.id, revision: "1" },
+                    reducer: { id: reducerId, revision: "1" },
                     sourceClass: input.sourceClass,
-                    facts: evidenceFacts(reduced.facts, text),
+                    facts: evidenceFacts(facts, text),
                     observedAt: input.capturedAt,
                     visibleText: text,
                     toolCallId: input.toolCallId,
                     ...(input.signal === undefined ? {} : { signal: input.signal }),
                   });
                   owner.pointersByCursor.set(sessionIdentityKey(input.cursor), admitted.map((record) => ({ ref: record.evidenceId, kind: record.kind })));
+                  const view = renderObservationView({
+                    original: {
+                      format: "pcr-observation-v1",
+                      toolCallId: input.toolCallId,
+                      toolName: input.toolName,
+                      content: input.content,
+                      details: input.details ?? null,
+                      isError: input.isError === true,
+                    },
+                    reducedText,
+                    evidenceId: admitted[0]?.evidenceId ?? "",
+                    budgetTokens: DEFAULT_OBSERVATION_VIEW_BUDGET_TOKENS,
+                    estimate: estimateTextTokens,
+                  });
                   return Object.freeze({
                     ...projected,
                     evidenceIds: admitted.map((record) => record.evidenceId),
-                    reducer: { id: reduced.reducer.id, revision: "1" },
+                    visibleContent: toHostVisibleContent(view.content),
+                    isError: input.isError === true,
+                    reducer: { id: reducerId, revision: "1" },
                   });
                 },
                 acknowledge: (operationId, hostMessageId) => inner.acknowledge(operationId, hostMessageId),

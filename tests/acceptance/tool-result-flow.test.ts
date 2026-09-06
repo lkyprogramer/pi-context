@@ -15,7 +15,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { RuntimeCursor } from "@pcr/contracts";
 import { createRuntimeCursor } from "@pcr/core";
 import { registerToolResultHook } from "@pcr/pi-adapter";
-import { createObservationService } from "@pcr/runtime";
+import { createObservationService, decodeObservation } from "@pcr/runtime";
+import { createProductHarness } from "../helpers/product-harness.js";
 import {
   createEncryptedBlobStore,
   createWorkspaceBlobKeyLease,
@@ -82,11 +83,8 @@ function completedStream(text: string) {
   };
 }
 
-function blobIdFromVisible(content: unknown): string {
-  const text = JSON.stringify(content);
-  const match = text.match(/blob_[a-f0-9]{64}/u);
-  if (!match) throw new Error(`visible tool result did not carry a blob pointer: ${text}`);
-  return match[0];
+function visibleText(content: unknown): string {
+  return JSON.stringify(content ?? "");
 }
 
 async function createSession(factory: ExtensionFactory, existing?: { root: string; manager: SessionManager }) {
@@ -167,11 +165,22 @@ describe("real Pi tool_result flow", () => {
       database,
       async verifyBlob(scope, ref) { await blobs.read(scope, ref, { start: 0, endExclusive: 0 }); },
     });
+    let blobRef = "";
     const { session } = await createSession((pi) => {
       registerToolResultHook(pi, {
         cursor: (ctx) => piCursor(ctx.sessionManager as SessionManager),
         service(next) {
-          return createObservationService({ cursor: next, blobs, saga });
+          return createObservationService({
+            cursor: next,
+            blobs: {
+              async put(scope, bytes) {
+                blobRef = await blobs.put(scope, bytes);
+                return blobRef as never;
+              },
+              read: blobs.read.bind(blobs),
+            },
+            saga,
+          });
         },
         clock: { now: () => 1_700_000_000_013 },
         onHardFailure() {},
@@ -189,10 +198,13 @@ describe("real Pi tool_result flow", () => {
         isError: false,
         details: undefined,
       } as ToolResultEvent);
-      const visible = JSON.stringify(hostVisible?.content ?? "");
-      expect(visible).not.toContain(SECRET);
-      const blobRef = blobIdFromVisible(hostVisible?.content);
-      expect(await blobs.read(piCursor(manager), blobRef as never)).toEqual(Buffer.from(SECRET));
+      const visible = visibleText(hostVisible?.content);
+      expect(visible).toContain(SECRET);
+      expect(visible).not.toContain("ctx://observation");
+      expect(blobRef).toMatch(/^blob_[a-f0-9]{64}$/u);
+      const envelope = decodeObservation(await blobs.read(piCursor(manager), blobRef as never));
+      expect(envelope.content).toEqual([{ type: "text", text: SECRET }]);
+      expect(envelope.toolName).toBe("bash");
     } finally {
       await saga.close();
       await database.close();
@@ -205,7 +217,6 @@ describe("real Pi tool_result flow", () => {
     const { session } = await createSession((pi) => {
       registerProductExtension(pi as never);
     }, { root, manager });
-    const cursor = piCursor(manager);
     try {
       const hostVisible = await (session as unknown as {
         _extensionRunner: { emitToolResult(event: ToolResultEvent): Promise<{ content?: unknown }> };
@@ -218,9 +229,9 @@ describe("real Pi tool_result flow", () => {
         isError: false,
         details: undefined,
       } as ToolResultEvent);
-      const visible = JSON.stringify(hostVisible?.content ?? "");
-      expect(visible).not.toContain(SECRET);
-      expect(visible).toMatch(/blob_[a-f0-9]{64}/u);
+      const visible = visibleText(hostVisible?.content);
+      expect(visible).toContain(SECRET);
+      expect(visible).not.toContain("ctx://observation");
       expect(root.length).toBeGreaterThan(0);
     } finally {
       await (session as unknown as { dispose?: () => void }).dispose?.();
@@ -286,6 +297,131 @@ describe("real Pi tool_result flow", () => {
     } finally {
       await saga.close();
       await database.close();
+    }
+  });
+
+  it("preserves an image block instead of replacing it with empty text", async () => {
+    const root = dataRoot();
+    const manager = SessionManager.inMemory(root);
+    const cursor = piCursor(manager);
+    const key = Buffer.alloc(32, 17);
+    const blobs = createEncryptedBlobStore({
+      dataRoot: root,
+      workspaceId: cursor.workspaceId,
+      maxBlobBytes: 4096,
+      keys: {
+        async current() { return createWorkspaceBlobKeyMaterial("acceptance-t03-image", key); },
+        async get(_workspaceId, keyId) {
+          return keyId === "acceptance-t03-image" ? createWorkspaceBlobKeyLease(key) : null;
+        },
+      },
+    });
+    const database = await openWorkspaceSqliteStore({
+      dataRoot: root,
+      workspaceId: cursor.workspaceId,
+      busyTimeoutMs: 1_000,
+    });
+    const saga = await openWorkspaceSagaJournal({
+      database,
+      async verifyBlob(scope, ref) { await blobs.read(scope, ref, { start: 0, endExclusive: 0 }); },
+    });
+    let blobRef = "";
+    const image = { type: "image" as const, mimeType: "image/png", data: "c3ludGhldGlj" };
+    const { session } = await createSession((pi) => {
+      registerToolResultHook(pi, {
+        cursor: (ctx) => piCursor(ctx.sessionManager as SessionManager),
+        service(next) {
+          return createObservationService({
+            cursor: next,
+            blobs: {
+              async put(scope, bytes) {
+                blobRef = await blobs.put(scope, bytes);
+                return blobRef as never;
+              },
+              read: blobs.read.bind(blobs),
+            },
+            saga,
+          });
+        },
+        clock: { now: () => 1_700_000_000_013 },
+        onHardFailure() {},
+      });
+    }, { root, manager });
+    try {
+      const hostVisible = await (session as unknown as {
+        _extensionRunner: { emitToolResult(event: ToolResultEvent): Promise<{ content?: unknown }> };
+      })._extensionRunner.emitToolResult({
+        type: "tool_result",
+        toolCallId: "c-image",
+        toolName: "read",
+        input: {},
+        content: [image],
+        isError: false,
+        details: undefined,
+      } as ToolResultEvent);
+      expect(visibleText(hostVisible?.content)).toContain("c3ludGhldGlj");
+      const envelope = decodeObservation(await blobs.read(piCursor(manager), blobRef as never));
+      expect(envelope.content).toEqual([image]);
+    } finally {
+      await saga.close();
+      await database.close();
+    }
+  });
+
+  it("does not ingest retrieval tool results a second time", async () => {
+    const root = dataRoot();
+    const manager = SessionManager.inMemory(root);
+    let ingested = 0;
+    const { session } = await createSession((pi) => {
+      registerToolResultHook(pi, {
+        cursor: (ctx) => piCursor(ctx.sessionManager as SessionManager),
+        service() {
+          return {
+            async ingest() {
+              ingested += 1;
+              throw new Error("retrieval must not be ingested");
+            },
+            async acknowledge() {},
+          };
+        },
+        clock: { now: () => 1_700_000_000_013 },
+        onHardFailure() {},
+      });
+    }, { root, manager });
+    const page = [{ type: "text" as const, text: "evidence page" }];
+    const hostVisible = await (session as unknown as {
+      _extensionRunner: { emitToolResult(event: ToolResultEvent): Promise<{ content?: unknown }> };
+    })._extensionRunner.emitToolResult({
+      type: "tool_result",
+      toolCallId: "c-read",
+      toolName: "context_read",
+      input: { evidenceId: "ev_deadbeef" },
+      content: page,
+      isError: false,
+      details: undefined,
+    } as ToolResultEvent);
+    expect(ingested).toBe(0);
+    expect(hostVisible?.content).toEqual(page);
+  });
+
+  it("puts a failed tool name and exit into the next provider request", async () => {
+    const harness = await createProductHarness();
+    try {
+      harness.scriptToolResult("bash", {
+        content: [{
+          type: "text",
+          text: `${Array.from({ length: 80 }, (_, index) => `noise ${index}`).join("\n")}\nerror: FAILED UserServiceTest\nexit code 1`,
+        }],
+        isError: true,
+        details: { exitCode: 1 },
+      });
+      await harness.runToolTurn("bash", { command: "npm test" });
+      await harness.prompt("What failed in the previous tool result?");
+      const seen = JSON.stringify(harness.requests());
+      expect(seen).toContain("UserServiceTest");
+      expect(seen).toContain("exit");
+    } finally {
+      await harness.close();
     }
   });
 });

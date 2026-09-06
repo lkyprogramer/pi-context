@@ -37,6 +37,7 @@ export interface ProductHarnessHost extends ProductHarness {
   setResponse(value: ControlledHostResponse): void;
   setAssistantText(text: string): void;
   writes(): number;
+  scriptToolResult(name: string, result: ScriptedToolResult): void;
 }
 
 interface OpenHostInput {
@@ -47,6 +48,12 @@ interface OpenHostInput {
 interface PendingToolTurn {
   name: string;
   args: Record<string, unknown>;
+}
+
+interface ScriptedToolResult {
+  content: Array<{ type: "text"; text: string } | { type: "image"; mimeType: string; data: string }>;
+  isError?: boolean;
+  details?: unknown;
 }
 
 function assistantMessage(input: {
@@ -123,6 +130,7 @@ async function openHost(existing?: OpenHostInput) {
   let writes = 0;
   const registeredTools = new Set<string>(["write_once"]);
   const productTools = new Set(["context_search", "context_read", "context_recall", "context_status", "context_pin"]);
+  const scriptedResults = new Map<string, ScriptedToolResult>();
   let hostRegisterTool: ((tool: unknown) => void) | undefined;
   const loader = new DefaultResourceLoader({
     cwd: root,
@@ -212,6 +220,9 @@ async function openHost(existing?: OpenHostInput) {
     writes() {
       return writes;
     },
+    scriptToolResult(name: string, result: ScriptedToolResult) {
+      scriptedResults.set(name, result);
+    },
     setResponse(value: ControlledHostResponse) {
       response = value;
       failures = 0;
@@ -239,6 +250,11 @@ async function openHost(existing?: OpenHostInput) {
           description: `Harness tool ${name}`,
           parameters: { type: "object", additionalProperties: true } as never,
           async execute(_id: string, args: Record<string, unknown>) {
+            const scripted = scriptedResults.get(name);
+            if (scripted) {
+              scriptedResults.delete(name);
+              return scripted;
+            }
             return { content: [{ type: "text", text: JSON.stringify(args ?? {}) }], details: {} };
           },
         });
@@ -320,6 +336,9 @@ export async function createProductHarness(input?: OpenHostInput & { disposeRoot
     },
     writes() {
       return state.current.writes();
+    },
+    scriptToolResult(name, result) {
+      state.current.scriptToolResult(name, result);
     },
   };
   return harness;
