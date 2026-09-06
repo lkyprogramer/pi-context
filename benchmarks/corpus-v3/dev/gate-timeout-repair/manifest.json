@@ -1,0 +1,35 @@
+{
+  "caseId": "gate-timeout-repair",
+  "clusterId": "codex-session-01a06f89",
+  "corpusId": "pcr-corpus-v3",
+  "split": "dev",
+  "workspaceSnapshot": {
+    "tests/live-gate/paired-w2.live.ts": "import { dirname, join } from \"node:path\";\nimport { fileURLToPath } from \"node:url\";\nimport { describe, expect, it } from \"vitest\";\nimport { runLivePairedW2, type LiveProfile } from \"./paired-w2-live.js\";\n\nconst repoRoot = join(dirname(fileURLToPath(import.meta.url)), \"../..\");\n\nfunction profileFromEnv(): LiveProfile {\n  const value = process.env.PCR_W2_LIVE_PROFILE;\n  if (value === \"one\" || value === \"smoke\" || value === \"spec-smoke\" || value === \"gate\") return value;\n  return \"spec-smoke\";\n}\n\ndescribe(\"live paired W2 vs Pi Native compact\", () => {\n  it(\n    \"runs the same-cut live Native pairing and writes a W2 report\",\n    async () => {\n      const profile = profileFromEnv();\n      const result = await runLivePairedW2({ repoRoot, profile });\n      expect(result.reportPath).toContain(profile === \"gate\" ? \"w2-v4-live/paired-gate\" : \"w2-live-native\");\n      expect(result.report.livePiNative).toBe(true);\n      expect(result.report.publicationClaim).toBe(false);\n      expect(result.report.model).toEqual(\n        expect.objectContaining({ maxTokens: 16384, maxTokensUnmodified: true, contextWindow: 200192 }),\n      );\n    },\n    180 * 60_000,\n  );\n});\n"
+  },
+  "oracle": {
+    "sourceWitnesses": [
+      {
+        "ref": "source-287",
+        "expected": "180 * 60_000"
+      },
+      {
+        "ref": "source-295",
+        "expected": "PCR_RUN_EPOCH_MISMATCH"
+      }
+    ]
+  },
+  "hiddenContinuation": {
+    "userPrompt": "解释之前整批测试为何中断，续跑时应保留哪些已有证据？",
+    "environmentAssertions": [
+      {
+        "kind": "file_sha256",
+        "path": "tests/live-gate/paired-w2.live.ts",
+        "expected": "aff1af667e1fa7d8e2d7fb34589b39f3ef3dd4c4c99e4b7e64b19fe294d12fae"
+      }
+    ]
+  },
+  "sourceWitness": {
+    "origin": "codex-development-normalized:01a06f89-d749-75b0-8111-19eaa4381260:279-352",
+    "sha256": "a635afa18da922f64baf2deda0fefbfe730d806872aef5f9fe109cfca087629e"
+  }
+}

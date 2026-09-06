@@ -11,9 +11,30 @@ import {
   runRecursivePins,
 } from "@pcr/benchmark";
 import { evaluateNaturalPressureArm } from "../src/performance/lanes.js";
-import { boundedPositiveInteger } from "../../../tests/live-gate/w5-live-lanes.js";
+import { boundedPositiveInteger, naturalBehaviorComplete, observedInputBound, driveAutomaticPressure } from "../../../tests/live-gate/w5-live-lanes.js";
 
 describe("W5 natural / overflow / recursive / fault / performance / gate", () => {
+  it("requires an actual correct natural continuation and all-turn logical input evidence", () => {
+    expect(naturalBehaviorComplete("asked")).toBe(false);
+    expect(naturalBehaviorComplete('{"deploy":true,"version":6}')).toBe(false);
+    expect(naturalBehaviorComplete('{"deploy":false,"version":7}')).toBe(false);
+    expect(naturalBehaviorComplete('{"deploy":false,"version":6}')).toBe(true);
+    expect(observedInputBound([{ ok: true, requestLogicalInputTokens: 1000 }, { phase: "continuation", ok: true, requestLogicalInputTokens: 190000 }], 183808)).toEqual({ complete: true, max: 190000, bounded: false });
+    expect(observedInputBound([{ ok: true, requestLogicalInputTokens: null }], 183808).bounded).toBe(false);
+    expect(observedInputBound([{ ok: true, requestLogicalInputTokens: 1000 }, { ok: false }], 183808).bounded).toBe(false);
+    expect(observedInputBound([{ ok: true, requestLogicalInputTokens: 1000 }], 183808).bounded).toBe(true);
+  });
+
+  it("grows until an automatic checkpoint and stops at the turn budget", async () => {
+    let turns = 0;
+    let checkpoints = 0;
+    await driveAutomaticPressure({ maxTurns: 5, checkpointCount: () => checkpoints,
+      async promptTurn() { if (++turns === 3) checkpoints++; } });
+    expect(turns).toBe(3);
+    await expect(driveAutomaticPressure({ maxTurns: 2, checkpointCount: () => 0,
+      async promptTurn() {} })).rejects.toThrow("PCR_AUTOMATIC_COMPACTION_NOT_OBSERVED");
+  });
+
   it("bounds natural pressure parameters", () => {
     expect(boundedPositiveInteger("100", 40, 100)).toBe(100);
     expect(boundedPositiveInteger("101", 40, 100)).toBe(40);

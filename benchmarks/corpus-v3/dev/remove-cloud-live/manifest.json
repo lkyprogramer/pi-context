@@ -1,0 +1,35 @@
+{
+  "caseId": "remove-cloud-live",
+  "clusterId": "codex-session-01a06f89",
+  "corpusId": "pcr-corpus-v3",
+  "split": "dev",
+  "workspaceSnapshot": {
+    "scripts/run-live-paired-w2.mjs": "#!/usr/bin/env node\nimport { spawnSync } from \"node:child_process\";\nimport { dirname, join } from \"node:path\";\nimport { fileURLToPath } from \"node:url\";\n\nconst root = join(dirname(fileURLToPath(import.meta.url)), \"..\");\nconst vitest = join(root, \"node_modules/.bin/vitest\");\nconst result = spawnSync(vitest, [\"run\", \"--workspace\", \"vitest.live-paired-w2.workspace.ts\"], {\n  stdio: \"inherit\",\n  cwd: root,\n  env: process.env,\n});\nprocess.exit(result.status ?? 1);\n"
+  },
+  "oracle": {
+    "sourceWitnesses": [
+      {
+        "ref": "source-430",
+        "expected": "disabled_manually"
+      },
+      {
+        "ref": "source-409",
+        "expected": "live-benchmark"
+      }
+    ]
+  },
+  "hiddenContinuation": {
+    "userPrompt": "哪些云端任务被停用，哪些本地运行入口应继续保留？",
+    "environmentAssertions": [
+      {
+        "kind": "file_sha256",
+        "path": "scripts/run-live-paired-w2.mjs",
+        "expected": "bdfbfb00934cf1070a2800e4dc2c4a2ba2e7571002ca54194b0c0ef4292aafdd"
+      }
+    ]
+  },
+  "sourceWitness": {
+    "origin": "codex-development-normalized:01a06f89-d749-75b0-8111-19eaa4381260:404-443",
+    "sha256": "8261cd2e74ce345d0b636424786fdc7799c5a562ade3609ad4bf5194ac2312d7"
+  }
+}

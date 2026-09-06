@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -11,10 +12,11 @@ import {
   writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntimeCursor } from "../../packages/core/src/identity/stable-identity.js";
 import type { EvaluationUsageLayers, ReplicateProvenance } from "../../packages/contracts/src/index.js";
+import { isBlobId } from "../../packages/contracts/src/ids.js";
 import { estimateTextTokens } from "../../packages/kernel/src/budget/token-counter.js";
 import {
   assertProductArmText,
@@ -48,6 +50,7 @@ import { evaluateW2Gate, median, pairedBootstrapCi, relativeDelta } from "../w2-
 import { PiRpc } from "./pi-rpc.js";
 import { withTransportRetry, type RetryAttempt } from "./rpc-client.js";
 import { resolvePiCli } from "./pi-resolve.js";
+import { replayUserIngress } from "./replay-user-ingress.js";
 import {
   LIVE_KEEP_RECENT_TOKENS,
   LIVE_MODEL,
@@ -125,6 +128,7 @@ export function computeRunEpochHash(input: {
     scorerSha256: sourceSha256("tests/w2-gate/scorer.ts"),
     corpusSha256: sourceSha256("tests/w2-gate/corpus.ts"),
     sessionShapeSha256: sourceSha256("tests/live-gate/w1-session-jsonl.ts"),
+    replayIngressSha256: sourceSha256("tests/live-gate/replay-user-ingress.ts"),
     model: LIVE_MODEL,
     provider: LIVE_PROVIDER,
     contextWindow: input.modelLimits.contextWindow,
@@ -370,6 +374,7 @@ export async function recoverExactLiveArm(input: {
     return scoreExactRecovery({
       blobs: {
         async read(scope, blobId) {
+          if (!isBlobId(blobId)) throw new TypeError("PCR_LIVE_RECOVERY_BLOB_ID_INVALID");
           const deny = scope.workspaceId !== cursor.workspaceId || scope.sessionId !== cursor.sessionId;
           return blobs.read({
             workspaceId: cursor.workspaceId,
@@ -377,7 +382,7 @@ export async function recoverExactLiveArm(input: {
             leafId: deny ? null : cursor.leafId,
             lineageHash: deny ? "a".repeat(64) : cursor.lineageHash,
             modelKey: cursor.modelKey,
-          }, blobId as `blob_${string}`);
+          }, blobId);
         },
       },
       workspaceId: cursor.workspaceId,
@@ -530,6 +535,15 @@ async function runArm(opts: {
   };
   try {
     armInFlight += 1;
+    if (plan.fromHook) {
+      try {
+        await replayUserIngress(opts.sessionFile, opts.cwd);
+        attempts.push({ attempt: 1, ok: true, stage: "replay-user-ingress" });
+      } catch (error) {
+        attempts.push({ attempt: 1, ok: false, stage: "replay-user-ingress", error: error instanceof Error ? error.message : String(error) });
+        throw error;
+      }
+    }
     await rpc.start();
     await transport("set-auto-compaction", () => rpc.request({ type: "set_auto_compaction", enabled: false }, 15_000));
     try {
@@ -544,6 +558,9 @@ async function runArm(opts: {
     }
     const compact = plan.compact ? await transport("compact", () => rpc.compact()) : {};
     const compactLatencyMs = Date.now() - started;
+    if (plan.compact && inspectCompaction(opts.sessionFile).fromExtension !== plan.fromHook) {
+      throw new Error(`PCR_LIVE_COMPACTION_PATH_MISMATCH:${opts.arm}`);
+    }
     await transport("closed-loop-probe", () => rpc.promptAndWait(closedLoopProbe(opts.item)));
     const compaction = inspectCompaction(opts.sessionFile);
     const probe = lastAssistant(opts.sessionFile);
@@ -628,7 +645,7 @@ async function runArm(opts: {
       recoveryCount: 0,
       crossScopeDenied: false,
       toolPairViolation: 1,
-      attempts: [],
+      attempts: Object.freeze([...attempts]),
     };
   } finally {
     armInFlight = Math.max(0, armInFlight - 1);
@@ -636,14 +653,27 @@ async function runArm(opts: {
   }
 }
 
-function persistArmHome(home: { arm: LiveFourArmId; cwd: string; sessionFile: string }, result: LiveArmResult, artifactDir: string): void {
+export function persistArmHome(home: { arm: LiveFourArmId; cwd: string; sessionFile: string }, result: Pick<LiveArmResult, "ok" | "error">, artifactDir: string): void {
   mkdirSync(artifactDir, { recursive: true });
+  const storeRoot = join(dirname(home.sessionFile), ".context-runtime");
+  const retainedStore = join(artifactDir, "runtime-store");
+  if (existsSync(storeRoot)) {
+    mkdirSync(retainedStore, { mode: 0o700 });
+    cpSync(storeRoot, retainedStore, {
+      recursive: true,
+      filter: (source) => !relative(storeRoot, source).split(sep).some((part) => part === "keys" || part === "spool"),
+    });
+    writeFileSync(join(artifactDir, "runtime-store-sanitized.sha256"), `${workspaceManifestSha256(retainedStore)}\n`);
+  } else if (result.ok && (home.arm === "B1" || home.arm === "B2")) {
+    throw new Error(`PCR_LIVE_STORE_MISSING:${home.arm}`);
+  }
   try {
     const raw = collectPerArmRawEvidence({
       arm: home.arm,
       failed: !result.ok,
       sessionFile: home.sessionFile,
       cwd: home.cwd,
+      storeRoot: existsSync(storeRoot) ? storeRoot : home.cwd,
       stderr: result.error ?? "",
     });
     keepFailedArmEvidence(raw);
@@ -652,7 +682,8 @@ function persistArmHome(home: { arm: LiveFourArmId; cwd: string; sessionFile: st
     if (result.ok) throw error;
     if (existsSync(home.sessionFile)) copyFileSync(home.sessionFile, join(artifactDir, "session.jsonl"));
     writeFileSync(join(artifactDir, "workspace.sha256"), `${workspaceManifestSha256(home.cwd)}\n`);
-    writeFileSync(join(artifactDir, "store.sha256"), `${workspaceManifestSha256(home.cwd)}\n`);
+    writeFileSync(join(artifactDir, "store.sha256"), existsSync(storeRoot) ? `${workspaceManifestSha256(storeRoot)}\n` : "UNAVAILABLE\n");
+    writeFileSync(join(artifactDir, "stderr.txt"), result.error ?? "");
     writeFileSync(join(artifactDir, "FAILED"), "retained\n");
     writeFileSync(join(artifactDir, "raw.json"), `${JSON.stringify({ arm: home.arm, failed: true, retained: true })}\n`);
   }
@@ -1090,7 +1121,7 @@ export async function runLivePairedW2(opts: {
   const reportBytes = `${JSON.stringify(report, null, 2)}\n`;
   const digest = createHash("sha256").update(reportBytes, "utf8").digest("hex");
   const reportArtifactBytesSha256 = createHash("sha256").update(reportBytes, "utf8").digest("hex");
-  const reportCanonicalJsonSha256 = hashRunBundle(report);
+  const reportCanonicalJsonSha256 = hashRunBundle(JSON.parse(reportBytes));
   const gateDecision = {
     gate: "w2-compactor",
     decision,

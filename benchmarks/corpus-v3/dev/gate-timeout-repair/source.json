@@ -1,0 +1,154 @@
+{
+  "sourceKind": "codex-development-normalized",
+  "sourceRange": [
+    279,
+    352
+  ],
+  "sourceRangeSha256": "f0555a8165c00a93389f93bfa7a7631adba6e718f5b0793ffc258697c0de07f4",
+  "normalization": "message/tool-call/result records; omit reasoning and final summaries; redact tokens/email/user paths",
+  "entries": [
+    {
+      "sourceLine": 279,
+      "sourceType": "message",
+      "sourceSha256": "c36cf40725ac993eef682fd03683078c21a94a5046e3cbd01e10ecab46c8b20a",
+      "entryId": "source-279"
+    },
+    {
+      "sourceLine": 283,
+      "sourceType": "message",
+      "sourceSha256": "2e52247f21e1f2bf04a2a968aaca6cbb9a77a7609910d30a6f969e5a67e27c27",
+      "entryId": "source-283"
+    },
+    {
+      "sourceLine": 284,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "b96944b0b5c54f87a928b38f041426da7b76274972bec3d8ad2a9ffb01e31774",
+      "entryId": "source-284"
+    },
+    {
+      "sourceLine": 287,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "e9c8f00c6142222d78d2cee3a82adc45f081a9af555b2f38659383385ecf7d90",
+      "entryId": "source-287"
+    },
+    {
+      "sourceLine": 291,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "b5955e5b63c2240feb7c5ef3aa14293756d1479f3eefba966f304cda5ade14d0",
+      "entryId": "source-291"
+    },
+    {
+      "sourceLine": 295,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "5436fdb5cee0a34131289e264ad056198cfa0d2ed8369d5854c74dcfd4f3a972",
+      "entryId": "source-295"
+    },
+    {
+      "sourceLine": 299,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "3d883ea7b74f325c7aedd2855ee3b82fac9ce2c44ef8ffe20062b91f78c1dd6c",
+      "entryId": "source-299"
+    },
+    {
+      "sourceLine": 302,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "c5ab9a7c647292f1e67d174e4dd35a3106ccaa993ae195184da47059a699be52",
+      "entryId": "source-302"
+    },
+    {
+      "sourceLine": 307,
+      "sourceType": "message",
+      "sourceSha256": "895d9a0a8d3c7d195efa8974075f83949fc73344f0ab0ca1fa937cad6f79adcf",
+      "entryId": "source-307"
+    },
+    {
+      "sourceLine": 308,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "d345459c94a1cb266daf9b4c254bd01f9905724c517303e79ef061bc8bf44aa2",
+      "entryId": "source-308"
+    },
+    {
+      "sourceLine": 311,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "d6546424bb90fe9137b0b8c6c6b1c3e7f946f9dc1e8fb3746019dcf2b9bd44ed",
+      "entryId": "source-311"
+    },
+    {
+      "sourceLine": 316,
+      "sourceType": "message",
+      "sourceSha256": "6b3cb8ee62c65f1e6bcde709ff78897fe034c09895793bae7e33dde13454c9dc",
+      "entryId": "source-316"
+    },
+    {
+      "sourceLine": 317,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "ad9eeb5193f1dc0f01fa5d241c68d084f5f3574b8642f9f76daa5c9fe4da31c5",
+      "entryId": "source-317"
+    },
+    {
+      "sourceLine": 320,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "fad299dbb50890f8d64fe8c81b30d5709000fbe7ffe19d7d6870a56f8df5f5dd",
+      "entryId": "source-320"
+    },
+    {
+      "sourceLine": 322,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "537361dc04d0267bf83abf739a148c49770a22bce18d6e120b6caf20a79c3102",
+      "entryId": "source-322"
+    },
+    {
+      "sourceLine": 325,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "26f05a4307dcce4d112cfd3ca8395384ceb997afb9776ec53dfabfa394912a53",
+      "entryId": "source-325"
+    },
+    {
+      "sourceLine": 329,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "e1c5bab9f32d6168a4aceb1f1bad47dc8558005b6054280886ba949feae57ee9",
+      "entryId": "source-329"
+    },
+    {
+      "sourceLine": 332,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "443a1f94142aad75b3783f70becca2e8acdc6c6c45215ee3a996a7a1a9606434",
+      "entryId": "source-332"
+    },
+    {
+      "sourceLine": 336,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "3f34c64b0e491aca525a97fdf0bbd47dda40127ff80290262cfe1ee728cf05c2",
+      "entryId": "source-336"
+    },
+    {
+      "sourceLine": 339,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "e6e234b7ca3eb63a432b7ff98816369ff2253ae2704c861e28b2caceff8bab0c",
+      "entryId": "source-339"
+    },
+    {
+      "sourceLine": 343,
+      "sourceType": "custom_tool_call",
+      "sourceSha256": "53f845e2ca35c3016d56d6cb6a10553f19d1a3c913245cfaa5750e56c4a817ce",
+      "entryId": "source-343"
+    },
+    {
+      "sourceLine": 346,
+      "sourceType": "custom_tool_call_output",
+      "sourceSha256": "a343598eb12f1e6af65e08a7e0f86f71ac2cc0c397f0983ba86a7f5f44df2453",
+      "entryId": "source-346"
+    },
+    {
+      "sourceLine": 349,
+      "sourceType": "message",
+      "sourceSha256": "ad87e7b7d1a52bb39625a17e9ba945267f3713ad1bedef803fecf96484061762",
+      "entryId": "source-349"
+    }
+  ],
+  "workspaceSnapshotKind": "git-head-reference-files; not a reconstructed historical working tree",
+  "workspaceCommit": "ba25c24b4fe4ad05744b336d087f39ea645a3347",
+  "runtimeStore": "unavailable: original tool was Codex, not PCR",
+  "evaluationUse": "development-only; same source-session cluster; not independent holdout",
+  "publicationClaim": false
+}

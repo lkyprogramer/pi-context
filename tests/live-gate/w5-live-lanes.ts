@@ -65,6 +65,36 @@ function filler(chars: number): string {
   return line.repeat(Math.max(1, Math.ceil(chars / line.length)));
 }
 
+export function naturalBehaviorComplete(text: string): boolean {
+  try {
+    const answer = JSON.parse(text.trim().replace(/^```(?:json)?\s*|\s*```$/gu, ""));
+    return answer?.deploy === false && answer?.version === 6;
+  } catch { return false; }
+}
+
+export function observedInputBound(turns: readonly Record<string, unknown>[], limit: number): {
+  complete: boolean; max: number | null; bounded: boolean;
+} {
+  const complete = turns.length > 0 && turns.every(turn => turn.ok === true
+    && typeof turn.requestLogicalInputTokens === "number"
+    && Number.isSafeInteger(turn.requestLogicalInputTokens) && turn.requestLogicalInputTokens >= 0);
+  const max = complete ? Math.max(...turns.map(turn => turn.requestLogicalInputTokens as number)) : null;
+  return { complete, max, bounded: max !== null && max < limit };
+}
+
+export async function driveAutomaticPressure(input: {
+  maxTurns: number;
+  checkpointCount(): number;
+  promptTurn(turn: number): Promise<void>;
+}): Promise<void> {
+  const before = input.checkpointCount();
+  for (let turn = 0; turn < input.maxTurns; turn++) {
+    await input.promptTurn(turn);
+    if (input.checkpointCount() > before) return;
+  }
+  throw new Error("PCR_AUTOMATIC_COMPACTION_NOT_OBSERVED");
+}
+
 export function liveOutputDir(repoRoot: string, lane: "natural-threshold" | "overflow" | "recursive"): string {
   const configuredRoot = process.env.PCR_W5_LIVE_OUT_DIR;
   const root = configuredRoot
@@ -503,15 +533,16 @@ async function readTurnUsage(rpc: PiRpc, sessionFile: string): Promise<Record<st
     // Host may not expose get_state tokens
   }
   const compact = inspectCompactions(sessionFile);
-  const billed = typeof usage.inputTokens === "number" && typeof usage.cacheRead === "number"
-    ? usage.inputTokens + usage.cacheRead
-    : usage.inputTokens;
+  const billed = typeof usage.inputTokens === "number" && typeof usage.cacheRead === "number" && typeof usage.cacheWrite === "number"
+    ? usage.inputTokens + usage.cacheRead + usage.cacheWrite
+    : null;
   return {
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
     cacheRead: usage.cacheRead,
     cacheWrite: usage.cacheWrite,
     billedTokens: billed,
+    requestLogicalInputTokens: billed, // context accounting, not monetary billing
     stateTokens,
     compactCount: compact.length,
     reason: compact.at(-1)?.reason ?? null,
@@ -533,7 +564,7 @@ async function growLive(rpc: PiRpc, sessionFile: string, input: {
     try {
       await rpc.promptAndWait(
         `Turn ${turn}. Hard constraint: do not deploy prod. version is 6.\n${filler(input.charsPerTurn)}`,
-        4 * 60_000,
+        promptTimeoutMs(),
       );
       const usage = await readTurnUsage(rpc, sessionFile);
       const compactCount = Number(usage.compactCount ?? 0);
@@ -628,8 +659,9 @@ async function runNaturalFamily(input: {
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
           onTurn: (log) => persistPartial(input.outDir, `${input.family}-native`, { turns: log }, native.sessionFile),
         });
-        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", promptTimeoutMs());
-        nativeContinuation = "asked";
+        await rpc.promptAndWait("Should production be deployed and which version is active? Return only JSON with deploy (boolean) and version (number).", promptTimeoutMs());
+        nativeContinuation = lastAssistantText(native.sessionFile);
+        grown.push({ phase: "continuation", ok: true, ...await readTurnUsage(rpc, native.sessionFile) });
         return grown;
       },
     });
@@ -654,8 +686,9 @@ async function runNaturalFamily(input: {
           thresholdTokens: NATURAL_THRESHOLD_TOKENS,
           onTurn: (log) => persistPartial(input.outDir, `${input.family}-pcr`, { turns: log }, pcr.sessionFile),
         });
-        await rpc.promptAndWait("Should we deploy production now? Answer yes or no.", promptTimeoutMs());
-        pcrContinuation = "asked";
+        await rpc.promptAndWait("Should production be deployed and which version is active? Return only JSON with deploy (boolean) and version (number).", promptTimeoutMs());
+        pcrContinuation = lastAssistantText(pcr.sessionFile);
+        grown.push({ phase: "continuation", ok: true, ...await readTurnUsage(rpc, pcr.sessionFile) });
         return grown;
       },
     });
@@ -667,30 +700,28 @@ async function runNaturalFamily(input: {
   }
   const nativeCompactions = inspectCompactions(native.sessionFile);
   const pcrCompactions = inspectCompactions(pcr.sessionFile);
-  const latestTokens = (turns: readonly Record<string, unknown>[]): number | null => {
-    const value = turns.at(-1)?.inputTokens;
-    return typeof value === "number" && Number.isSafeInteger(value) ? value : null;
-  };
+  const nativeInput = observedInputBound(nativeTurns, NATURAL_THRESHOLD_TOKENS);
+  const pcrInput = observedInputBound(pcrTurns, NATURAL_THRESHOLD_TOKENS);
   const nativeState = evaluateNaturalPressureArm({
     arm: "B0",
     hostCompactionCount: nativeCompactions.length,
     hostCompactReason: nativeCompactions.at(-1)?.reason === "threshold" ? "threshold" : null,
     hostCompactTokensBefore: nativeCompactions.at(-1)?.tokensBefore,
     materializationBounded: false,
-    inputTokens: latestTokens(nativeTurns),
+    inputTokens: nativeInput.max,
     effectiveInputUpperBound: NATURAL_THRESHOLD_TOKENS,
     overflowObserved: nativeTurns.some((row) => row.overflow === true),
-    behaviorComplete: nativeContinuation === "asked",
+    behaviorComplete: !nativeError && naturalBehaviorComplete(nativeContinuation ?? ""),
   });
   const pcrState = evaluateNaturalPressureArm({
     arm: "B2",
     hostCompactionCount: pcrCompactions.filter((row) => row.fromHook !== true).length,
     hostCompactReason: null,
-    materializationBounded: pcrCompactions.some((row) => row.fromHook === true),
-    inputTokens: latestTokens(pcrTurns),
+    materializationBounded: nativeState.ok && pcrTurns.length >= nativeTurns.length && pcrInput.bounded,
+    inputTokens: pcrInput.max,
     effectiveInputUpperBound: NATURAL_THRESHOLD_TOKENS,
     overflowObserved: pcrTurns.some((row) => row.overflow === true),
-    behaviorComplete: pcrContinuation === "asked",
+    behaviorComplete: !pcrError && naturalBehaviorComplete(pcrContinuation ?? ""),
   });
   return {
     family: input.family,
@@ -715,6 +746,8 @@ async function runNaturalFamily(input: {
     },
     triggered: nativeState.ok && pcrState.ok,
     armStates: { B0: nativeState, B2: pcrState },
+    inputBounds: { B0: nativeInput, B2: pcrInput },
+    pressureWitness: { nativeThresholdObserved: nativeState.ok, matchedGrowTurns: pcrTurns.length >= nativeTurns.length },
     compactCount: nativeCompactions.length + pcrCompactions.length,
   };
 }
@@ -1039,6 +1072,14 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
   const toolEvents: Array<Record<string, unknown>> = [];
   const treeEvents: Array<Record<string, unknown>> = [];
   const recursiveFillerChars = boundedPositiveInteger(process.env.PCR_W5_RECURSIVE_FILLER_CHARS, 80_000, 120_000);
+  const growCycle = (rpc: PiRpc, cycle: number) => driveAutomaticPressure({
+    maxTurns: boundedPositiveInteger(process.env.PCR_W5_RECURSIVE_MAX_TURNS, 40, 100),
+    checkpointCount: () => inspectCompactions(arm.sessionFile).length,
+    async promptTurn(turn) {
+      await rpc.promptAndWait(`Continue work log for cycle ${cycle}, turn ${turn}; preserve the latest user decisions.\n${filler(recursiveFillerChars)}`, promptTimeoutMs());
+      persistPartial(outDir, "pcr", { history, cycle, growTurn: turn }, arm.sessionFile);
+    },
+  });
   let branchLineage: ReturnType<typeof evaluateBranchLineage> | null = null;
   let forkEvidence: ReturnType<typeof evaluateForkLineage> | null = null;
   let branchEntryId = "";
@@ -1056,14 +1097,14 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         toolEvents.push(...rpc.events.filter((event) => typeof event.type === "string" && /tool/i.test(event.type)));
         treeEvents.push(...rpc.events.filter((event) => event.type === "session_tree"));
         const compact1Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Grow before autonomous compact 1.\n${filler(recursiveFillerChars)}`, promptTimeoutMs());
+        await growCycle(rpc, 1);
         history.push({ phase: "compact-1", ok: inspectCompactions(arm.sessionFile).length > compact1Before, compactCount: inspectCompactions(arm.sessionFile).length });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         await rpc.promptAndWait("改为 version 7. Do not deploy production.", promptTimeoutMs());
         history.push({ phase: "temporal-update", ok: /\bversion\s*7\b/i.test(lastAssistantText(arm.sessionFile)) && !/\bversion\s*6\b/i.test(lastAssistantText(arm.sessionFile)) });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact2Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Grow before compact 2.\n${filler(recursiveFillerChars)}`, promptTimeoutMs());
+        await growCycle(rpc, 2);
         history.push({ phase: "grow-before-compact-2", ok: true });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         history.push({ phase: "compact-2", ok: inspectCompactions(arm.sessionFile).length > compact2Before, compactCount: inspectCompactions(arm.sessionFile).length });
@@ -1135,7 +1176,7 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
         history.push({ phase: "restart-before-compact-3", ok: existsSync(arm.sessionFile) && forkEvidence?.ok === true && branchLineage.ok });
         persistPartial(outDir, "pcr", { history }, arm.sessionFile);
         const compact3Before = inspectCompactions(arm.sessionFile).length;
-        await rpc.promptAndWait(`Add more history before compact 3.\n${filler(recursiveFillerChars)}`, promptTimeoutMs());
+        await growCycle(rpc, 3);
         history.push({
           phase: "compact-3",
           ok: inspectCompactions(arm.sessionFile).length > compact3Before,
@@ -1193,7 +1234,9 @@ export async function runRecursiveLive(repoRoot: string): Promise<Record<string,
     liveProvider: providerStarted,
     history,
     compactCount: compactions.length,
-    threeCompacts: compactions.length >= 3,
+    threeCompacts: compactions.length >= 3 && compactions.every(row => row.fromHook === true),
+    triggerMode: "automatic",
+    pcrCompactionCount: compactions.filter(row => row.fromHook === true).length,
     branched: history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
     restarted: history.some((row) => row.phase === "restart-before-compact-3" && row.ok),
     branchPointerVerified: branchNavigationObserved && history.some((row) => row.phase === "branch-after-compact-2" && row.ok),
