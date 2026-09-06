@@ -1,6 +1,6 @@
 {
   "identity": {
-    "sourceSetSha256": "8899d4db5db402c41d1884167500267925a2866fe927d27c445d006960ee401b",
+    "sourceSetSha256": "ee8e48f384a04040941ae6760c4bfa2ea69c47701342c541863867f4a80150ea",
     "hostPatchSha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
     "modelFingerprint": "openclaw/Qwen3.8-27B-WORK",
     "corpusSha256": "5a65894d85972f82bf47454beb2206bf27c8384d7c9eb972c6855d8d5ccf029a",
