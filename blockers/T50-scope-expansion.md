@@ -1,4 +1,6 @@
-# T50 Scope Expansion Approval
+# T50 Scope Expansion Approval (retired)
+
+Retired on 2026-09-06: cloud live/nightly workflows, `live-env.mjs`, and their dedicated test have been removed. The text below is historical scope, not a current implementation requirement. Live validation is run locally with explicit authorization; credentials are not synchronized to GitHub.
 
 ## Requested Paths
 
