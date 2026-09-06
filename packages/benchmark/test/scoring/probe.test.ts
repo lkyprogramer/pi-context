@@ -16,7 +16,9 @@ describe("probe-only scorer", () => {
   it("does not score a yes as a merge decision and skips summaries", () => {
     expect(normalizeProbeAnswer("yes merge it", "yes-no")).toBe("yes");
     expect(scoreProbe({ expected: "merge", observed: "yes", family: "yes-no" }).ok).toBe(false);
-    expect(scoreProbe({ expected: "7", observed: "checkpoint v2 abc", family: "version" }).skipped).toBe(true);
+    expect(scoreProbe({ expected: "7", observed: "checkpoint v2 abc", family: "version" }).ok).toBe(false);
+    expect(scoreProbe({ expected: "7", observed: "checkpoint v2 abc", family: "version" }).skipped).toBe(false);
+    expect(scoreProbe({ expected: "7", observed: "checkpoint v2 abc", family: "version" }).bucket).not.toBe("summary");
   });
 
   it("fails tool calls, empty answers, and wrong files", () => {
@@ -40,5 +42,34 @@ describe("probe-only scorer", () => {
       family: "yes-no",
     }).ok).toBe(false);
     expect(normalizeProbeAnswer("Don't forget to deploy production", "deploy")).not.toBe("must-not-deploy");
+  });
+
+  it("accepts a sourced refusal but rejects contradictory permission",()=>{
+    expect(scoreProbe({family:"yes-no",expected:"no",
+      observed:"No. The checkpoint v2 says the public API must not change."}).ok).toBe(true);
+    expect(scoreProbe({family:"yes-no",expected:"no",
+      observed:"No. Actually, yes, you may modify the public API now."}).ok).toBe(false);
+  });
+
+  it("does not first-match a later version number in mixed state text", () => {
+    expect(scoreProbe({
+      expected: "7",
+      observed: "state was 6 then the file still says 2",
+      family: "version",
+    }).bucket).toBe("ambiguous");
+    expect(scoreProbe({
+      expected: "7",
+      observed: JSON.stringify({ answer: "7", kind: "requested-target" }),
+      family: "version",
+    }).ok).toBe(true);
+  });
+
+  it("leaves a missing full answer unscorable", () => {
+    expect(scoreProbe({
+      expected: "7",
+      observed: "version 7",
+      family: "version",
+      fullAnswer: false,
+    })).toMatchObject({ ok: false, bucket: "unscorable", skipped: false });
   });
 });

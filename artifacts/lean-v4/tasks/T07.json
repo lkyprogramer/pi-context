@@ -1,0 +1,60 @@
+{
+  "taskId": "T07",
+  "baseCommit": "a4baaf5",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/benchmark/src/index.ts",
+      "reason": "Export recovery coverage and paired-small statistics from the benchmark barrel."
+    },
+    {
+      "path": "packages/benchmark/package.json",
+      "reason": "Strict typecheck must include recovery.ts, paired-small.ts, and their tests."
+    },
+    {
+      "path": "tests/live-gate/scorer-regression.test.ts",
+      "reason": "checkpoint v2 citations are no longer a summary skip; an explicit version 7 in a final answer scores as 7."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/scoring/probe.test.ts",
+      "exit": 0,
+      "tests": "8 passed"
+    },
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/scoring/probe.test.ts packages/benchmark/test/scoring/recovery.test.ts packages/benchmark/test/statistics/paired.test.ts tests/live-gate/scorer-regression.test.ts",
+      "exit": 0,
+      "tests": "17 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "Sourced refusal citing checkpoint v2 passes; contradictory later permission is ambiguous/fail",
+    "Summary word markers no longer skip a final answer; skipped stays false",
+    "Mixed version numbers without a unique explicit version are ambiguous, not first-digit match",
+    "JSON {answer, kind:requested-target} is accepted; missing fullAnswer is unscorable",
+    "Tool-call, empty, wrong-file, and don't-forget probes still fail",
+    "ArtifactCoverage is independent of reader probe failure",
+    "eligible=0 or tested=0 recovery is not-tested with rate null, never 1",
+    "All-zero pair meanDiff is distinguishable from a minority severe regression",
+    "Cluster resampling uses means, not a median CI"
+  ],
+  "uncovered": [
+    "The original 16 summary-marked live arms were not replayed as a full answer corpus; only representative sourced-refusal and mixed-version cases were added",
+    "Old report.json bytes were not rewritten; T08/T12 produce a new scorerRevision report",
+    "Live models are T12 only"
+  ],
+  "hashes": {
+    "packages/benchmark/src/scoring/probe.ts": "2a2fe44ac968160cb4f9f17dd25bc42729def7653c609150c61eaf1234c59516",
+    "packages/benchmark/src/scoring/recovery.ts": "a76e9e0740775c1fa5dbf7f4ccb720cc464d2bd33b22ef0d7b6696033c210913",
+    "packages/benchmark/src/statistics/paired-small.ts": "68d53445a1866fb61dd316a181ed6b0755d2c3ca0af7a2febd7f3cd72c24cb08",
+    "packages/benchmark/test/scoring/probe.test.ts": "fcf29695f5d143543f670a2d5363b1f938c4d91d21ae56b413fadd883b9779ee",
+    "packages/benchmark/test/scoring/recovery.test.ts": "8a30ec4809331b096f44b0b489bae15c611507aa734fde861b1afb9e1dfab60e",
+    "packages/benchmark/test/statistics/paired.test.ts": "93fe2321c008b9a3d77e58dff5f58749ada56034b60afafd87fcf184f4bd526b"
+  }
+}

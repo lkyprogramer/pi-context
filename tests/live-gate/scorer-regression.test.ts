@@ -73,7 +73,7 @@ describe("probe-only live scorer regression", () => {
       expected: "7",
       observed: "checkpoint v2 deadbeef version 7",
       family: "version",
-    })).toMatchObject({ ok: false, skipped: true, bucket: "summary" });
+    })).toMatchObject({ ok: true, skipped: false, bucket: "ok", normalized: "7" });
     expect(scoreProbe({
       expected: "no",
       observed: "Don't forget to merge sibling-branch",

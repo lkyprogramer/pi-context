@@ -152,8 +152,30 @@ export {
   scoreProbe,
   type ProbeErrorCode,
   type ProbeFamily,
+  type ProbeParseBucket,
   type ProbeScore,
 } from "./scoring/probe.js";
+export {
+  RecoveryScorerError,
+  scoreArtifactCoverage,
+  scoreRecoveryCoverage,
+  type ArtifactCoverage,
+  type ArtifactOracle,
+  type RecoveryCoverage,
+  type RecoveryErrorCode,
+  type RecoveryTrial,
+} from "./scoring/recovery.js";
+export {
+  PairedSmallError,
+  discordance,
+  pairedMeanDifference,
+  resampleClusterMeans,
+  type BinarySuccessPair,
+  type Discordance,
+  type MeanPair,
+  type PairedMeanReport,
+  type PairedSmallErrorCode,
+} from "./statistics/paired-small.js";
 export {
   EconomicsPairError,
   pairPreservingCost,

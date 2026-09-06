@@ -8,7 +8,9 @@ export type ProbeParseBucket =
   | "wrong-file"
   | "unknown"
   | "unparseable"
-  | "mismatch";
+  | "mismatch"
+  | "unscorable"
+  | "ambiguous";
 
 export type ProbeErrorCode = "PCR_PROBE_DEPENDENCY_MISSING" | "PCR_PROBE_INPUT_INVALID";
 
@@ -40,7 +42,6 @@ export interface ProbeScore {
   bucket: ProbeParseBucket;
 }
 
-const SUMMARY_MARKERS = [/checkpoint v2/i, /compaction summary/i, /^summary:/i];
 const TOOL_CALL_MARKERS = [
   /<tool_call\b/i,
   /<\/tool_call>/i,
@@ -66,6 +67,27 @@ function stripMarkdown(text: string): string {
   return text.replace(/[*_`]+/gu, " ").replace(/\s+/gu, " ").trim();
 }
 
+function unique(values: readonly string[]): string[] {
+  return [...new Set(values)];
+}
+
+function parseStructuredAnswer(text: string): { answer: string; kind?: string } | undefined {
+  const match = text.match(/\{[\s\S]*\}/u);
+  if (!match) return undefined;
+  try {
+    const parsed = JSON.parse(match[0]) as { answer?: unknown; kind?: unknown };
+    if (!parsed || typeof parsed !== "object" || typeof parsed.answer !== "string" || parsed.answer.length === 0) {
+      return undefined;
+    }
+    return {
+      answer: parsed.answer,
+      ...(typeof parsed.kind === "string" ? { kind: parsed.kind } : {}),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 function leadingPolarity(text: string): "yes" | "no" | undefined {
   const trimmed = stripMarkdown(text);
   if (/^(?:yes|true|affirmative)(?:$|[^A-Za-z0-9])/iu.test(trimmed) || /^是(?:$|[^\p{L}])/u.test(trimmed)) {
@@ -82,15 +104,38 @@ function actionRefusal(text: string): boolean {
   return ACTION_REFUSAL.test(trimmed) || CJK_ACTION_REFUSAL.test(trimmed);
 }
 
+function contradictoryYesNo(text: string): boolean {
+  const polarity = leadingPolarity(text);
+  const permission = /(?:actually|however|but)\s*,?\s*(?:yes\b|you may\b)/iu.test(text)
+    || /you may (?:modify|change|merge|deploy)/iu.test(text)
+    || /可以(?:修改|变更|合并|部署)|允许(?:修改|变更|合并|部署)/u.test(text);
+  if (polarity === "no" && permission) return true;
+  if (polarity === "yes" && actionRefusal(text) && /(?:actually|however)\s*,?\s*no\b/iu.test(text)) return true;
+  return false;
+}
+
+function explicitVersions(text: string): string[] {
+  return unique([...text.matchAll(/\bversion\s*[:=]?\s*(\d+(?:\.\d+)*)\b/giu)].map((match) => match[1]!));
+}
+
+function bareNumbers(text: string): string[] {
+  return unique([...text.matchAll(/\b(\d+(?:\.\d+)*)\b/gu)].map((match) => match[1]!));
+}
+
 export function normalizeProbeAnswer(text: string, family: ProbeFamily): string {
   if (typeof text !== "string") failInput("text");
-  const trimmed = stripMarkdown(text);
+  const structured = parseStructuredAnswer(text);
+  const trimmed = stripMarkdown(structured?.answer ?? text);
   if (family === "version") {
     const tainted = trimmed.match(/\b(\d+(?:\.\d+)*)-tu-\d+\b/iu);
     if (tainted) return tainted[0].toLowerCase();
-    const match = trimmed.match(/\bversion\s*[:=]?\s*(\d+(?:\.\d+)*)\b/iu)
-      ?? trimmed.match(/\b(\d+(?:\.\d+)*)\b/u);
-    return match?.[1] ?? trimmed.toLowerCase();
+    if (structured) return trimmed;
+    const explicit = explicitVersions(trimmed);
+    if (explicit.length === 1) return explicit[0]!;
+    if (explicit.length > 1) return trimmed.toLowerCase();
+    const numbers = bareNumbers(trimmed);
+    if (numbers.length === 1) return numbers[0]!;
+    return trimmed.toLowerCase();
   }
   if (family === "yes-no") {
     const polarity = leadingPolarity(trimmed);
@@ -110,7 +155,7 @@ export function normalizeProbeAnswer(text: string, family: ProbeFamily): string 
 }
 
 function fail(family: ProbeFamily, bucket: ProbeParseBucket, normalized = ""): ProbeScore {
-  return { ok: false, skipped: bucket === "summary", normalized, family, bucket };
+  return { ok: false, skipped: false, normalized, family, bucket };
 }
 
 function basename(path: string): string {
@@ -122,6 +167,7 @@ export function scoreProbe(input: {
   expected: string;
   observed: string;
   family: ProbeFamily;
+  fullAnswer?: boolean;
 }): ProbeScore {
   if (!input || typeof input !== "object") failMissing("input");
   if (typeof input.expected !== "string" || input.expected.length === 0) failInput("expected");
@@ -129,15 +175,23 @@ export function scoreProbe(input: {
   if (typeof input.family !== "string") failInput("family");
   const families: ProbeFamily[] = ["version", "yes-no", "path", "error", "deploy"];
   if (!families.includes(input.family)) failInput("family");
+  if (input.fullAnswer === false) return fail(input.family, "unscorable");
   if (input.observed.trim().length === 0) return fail(input.family, "non-answer");
-  if (SUMMARY_MARKERS.some((marker) => marker.test(input.observed))) {
-    return fail(input.family, "summary");
-  }
   if (TOOL_CALL_MARKERS.some((marker) => marker.test(input.observed))) {
     return fail(input.family, "tool-call", input.observed.trim().slice(0, 80));
   }
   if (NON_ANSWER_MARKERS.some((marker) => marker.test(stripMarkdown(input.observed)))) {
     return fail(input.family, "non-answer", input.observed.trim().slice(0, 80));
+  }
+  if (input.family === "yes-no" && contradictoryYesNo(input.observed)) {
+    return fail(input.family, "ambiguous", stripMarkdown(input.observed).slice(0, 80));
+  }
+  if (input.family === "version") {
+    const explicit = explicitVersions(stripMarkdown(input.observed));
+    const numbers = bareNumbers(stripMarkdown(input.observed));
+    if (explicit.length > 1 || (explicit.length === 0 && numbers.length > 1)) {
+      return fail(input.family, "ambiguous", stripMarkdown(input.observed).slice(0, 80));
+    }
   }
   const expected = normalizeProbeAnswer(input.expected, input.family);
   const observed = normalizeProbeAnswer(input.observed, input.family);
