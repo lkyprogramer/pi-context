@@ -11,12 +11,20 @@ coverage
 .env
 .venv
 *.tsbuildinfo
-artifacts/runs/live-compact/
-artifacts/runs/live-verification/
-artifacts/runs/w2-live-native/
-artifacts/runs/rc/raw-bundle.tar.gz
+**/*.pid
+**/.task-state.json
 
-# Local originals retained; publish only the credential-redacted evidence archive.
-/artifacts/runs/w2-v4-live/paired-gate/pairs/
+# Live / local evidence — keep on disk, never publish.
+# Already-tracked files on origin/main stay tracked; untracked dumps stay local.
+artifacts/runs/
+**/pairs-sanitized.tar.gz
+**/pairs-archive-manifest.json
+**/pairs-partial.json
+**/rows-partial.json
+
+docs/**/evidence/local-scan/
+docs/**/evidence/repo/
+docs/**/evidence/logs/
+
 # Unexecuted local orchestration draft; not an implementation or verification record.
 /.workflow/pi-context-current-head-remediation-continuation/
