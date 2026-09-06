@@ -40,6 +40,16 @@ export interface OpenWorkspaceEvidenceFtsIndexInput {
   database: WorkspaceSqliteEvidenceStore;
 }
 
+interface SearchCacheVersion {
+  readonly dataVersion: number;
+  readonly totalChanges: number;
+}
+
+interface CachedSearch {
+  readonly key: string;
+  readonly hits: readonly SearchHit[];
+}
+
 function failInput(field: string): never {
   throw new EvidenceFtsError("PCR_FTS_INPUT_INVALID", { field });
 }
@@ -76,6 +86,29 @@ export function compileSafeFtsQuery(text: string): string {
     .join(" AND ");
 }
 
+function searchCacheKey(
+  cursor: RuntimeCursor,
+  text: string,
+  limit: number,
+  version: SearchCacheVersion,
+): string {
+  return JSON.stringify([
+    cursor.workspaceId,
+    cursor.sessionId,
+    cursor.leafId,
+    cursor.lineageHash,
+    cursor.modelKey,
+    text,
+    limit,
+    version.dataVersion,
+    version.totalChanges,
+  ]);
+}
+
+function copySearchHits(hits: readonly SearchHit[]): SearchHit[] {
+  return hits.map((hit) => ({ ...hit }));
+}
+
 function mapStorageError(error: unknown): EvidenceFtsError {
   if (error instanceof EvidenceFtsError) return error;
   if (error instanceof StorageNodeError) {
@@ -95,6 +128,7 @@ function mapStorageError(error: unknown): EvidenceFtsError {
 class WorkspaceEvidenceFtsIndex implements EvidenceFtsIndex {
   readonly #database: WorkspaceSqliteAccess;
   #closed = false;
+  #latestSearch: CachedSearch | undefined;
 
   constructor(database: WorkspaceSqliteAccess) {
     this.#database = database;
@@ -114,6 +148,7 @@ class WorkspaceEvidenceFtsIndex implements EvidenceFtsIndex {
         db.prepare("DELETE FROM evidence_fts WHERE evidence_id = ?").run(record.evidenceId);
         db.prepare("INSERT INTO evidence_fts(evidence_id, body) VALUES (?, ?)").run(record.evidenceId, body);
       });
+      this.#latestSearch = undefined;
     } catch (error) {
       throw mapStorageError(error);
     }
@@ -133,7 +168,16 @@ class WorkspaceEvidenceFtsIndex implements EvidenceFtsIndex {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > MAX_LIMIT) failInput("query.limit");
     query.signal?.throwIfAborted();
     try {
-      return this.#database.read("search-evidence-fts", (db) => {
+      const version = this.#database.read("check-evidence-fts-version", (db) => {
+        const dataVersion = db.prepare("PRAGMA data_version").get() as { data_version: number };
+        const totalChanges = db.prepare("SELECT total_changes() AS total_changes").get() as {
+          total_changes: number;
+        };
+        return { dataVersion: dataVersion.data_version, totalChanges: totalChanges.total_changes };
+      });
+      const key = searchCacheKey(cursor, query.text, limit, version);
+      if (this.#latestSearch?.key === key) return copySearchHits(this.#latestSearch.hits);
+      const hits = this.#database.read("search-evidence-fts", (db) => {
         const rows = db.prepare(`
           SELECT
             evidence_fts.evidence_id AS evidence_id,
@@ -166,6 +210,8 @@ class WorkspaceEvidenceFtsIndex implements EvidenceFtsIndex {
           ...(typeof row.snippet === "string" && row.snippet.length > 0 ? { snippet: row.snippet } : {}),
         }));
       });
+      this.#latestSearch = { key, hits: copySearchHits(hits) };
+      return hits;
     } catch (error) {
       throw mapStorageError(error);
     }

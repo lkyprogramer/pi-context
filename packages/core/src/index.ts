@@ -70,6 +70,16 @@ export {
   type RecallLeasePort,
 } from "./retrieval/proactive.js";
 export {
+  DEFAULT_RETRIEVAL_BUDGETS,
+  boundDirectoryPointers,
+  boundRecallPage,
+  retrievalPageTokenEstimate,
+  type BoundedDirectory,
+  type BoundedRecallPage,
+  type BoundedRecallPageItem,
+  type DirectoryPointer,
+} from "./retrieval/bounded.js";
+export {
   BudgetError,
   computeEffectiveInput,
   createTokenPricer,
@@ -161,4 +171,3 @@ export {
   type RealizedNet,
   type RealizedNetSample,
 } from "./economics/index.js";
-

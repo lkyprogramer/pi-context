@@ -46,7 +46,11 @@ export function registerRuntimeTools(pi: ToolingExtensionAPI, runtime: ToolsRunt
     const registered = {
       ...tool,
       async execute(callId: string, args: ToolExecuteArgs, signal?: unknown, onUpdate?: unknown, ctx?: RuntimeToolCtx) {
-        return tool.execute(callId, args, signal, onUpdate, normalizeRuntimeToolContext(ctx));
+        const normalized = normalizeRuntimeToolContext(ctx);
+        return tool.execute(callId, args, signal, onUpdate, {
+          ...normalized,
+          ...(runtime.toolSchemaTokens ? { toolSchemaTokens: runtime.toolSchemaTokens() } : {}),
+        });
       },
     } as RuntimeTool;
     pi.registerTool(registered);

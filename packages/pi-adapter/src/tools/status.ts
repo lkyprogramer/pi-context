@@ -1,3 +1,4 @@
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { RuntimeCursor } from "@pcr/contracts";
 import type { EvidenceService } from "@pcr/runtime";
 
@@ -5,6 +6,11 @@ export interface RuntimeToolCtx {
   workspaceId?: string;
   sessionId?: string;
   channel?: "authenticated-user" | "untrusted-user" | "agent";
+  model?: { contextWindow: number; maxTokens?: number };
+  getContextUsage?(): { tokens: number | null; contextWindow: number } | undefined;
+  getSystemPrompt?(): string;
+  toolSchemaTokens?: number;
+  sessionManager?: Pick<ExtensionContext["sessionManager"], "getBranch">;
 }
 
 export interface ToolExecuteArgs {
@@ -57,6 +63,7 @@ export interface ToolsRuntime {
    * instead of snapshotting the registration-time placeholder.
    */
   resolve?(ctx?: RuntimeToolCtx): Promise<{ cursor: RuntimeCursor; evidence: EvidenceService }> | { cursor: RuntimeCursor; evidence: EvidenceService };
+  toolSchemaTokens?(): number;
   recalledEvidence?: Record<string, string>;
   evidenceWorkspace?: Record<string, string>;
   encryptionKey?: string;

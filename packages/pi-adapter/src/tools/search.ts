@@ -241,7 +241,7 @@ export function createSearchTool(input: CreateRetrievalToolsInput | ToolsRuntime
       },
       ["query"],
     ),
-    async execute(_callId, args, _a, _b, ctx: RuntimeToolCtx | undefined) {
+    async execute(_callId, args, signal, _b, ctx: RuntimeToolCtx | undefined) {
       const bound = await resolveRetrievalInput(input, ctx);
       if (ctx?.workspaceId && ctx.workspaceId !== bound.cursor.workspaceId) {
         throw new RetrievalToolsError("PCR_RETRIEVAL_SCOPE_DENIED");
@@ -250,6 +250,7 @@ export function createSearchTool(input: CreateRetrievalToolsInput | ToolsRuntime
         query: String(args.query ?? ""),
         limit: args.limit,
         timeoutMs: args.timeoutMs,
+        ...(signal instanceof AbortSignal ? { signal } : {}),
       });
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     },

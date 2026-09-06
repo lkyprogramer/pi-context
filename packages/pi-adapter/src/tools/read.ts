@@ -1,10 +1,10 @@
 import { objectParameters, type RuntimeTool, type RuntimeToolCtx, type ToolsRuntime } from "./status.js";
+import { pageByteBudget, pageBudgetExceeded, requireOffset } from "./page-budget.js";
 import {
   RetrievalToolsError,
   createRetrievalTools,
   resolveRetrievalInput,
   type CreateRetrievalToolsInput,
-  type ReadToolInput,
 } from "./search.js";
 
 const EVIDENCE_ID = /^ev_[a-f0-9]{8,}$/;
@@ -13,51 +13,58 @@ export function createReadTool(input: CreateRetrievalToolsInput | ToolsRuntime):
   return {
     name: "context_read",
     label: "Context Read",
-    description: "Exact byte-range read of scoped evidence with SHA-256 verification.",
+    description: "Read a budgeted UTF-8 evidence page with original SHA-256 verification. Continue with nextOffset as start; offsets are bytes.",
     parameters: objectParameters(
       {
         evidenceId: { type: "string", description: "Evidence id ev_[hex]" },
-        start: { type: "number", description: "Inclusive byte offset" },
-        endExclusive: { type: "number", description: "Exclusive byte offset" },
+        start: { type: "number", description: "Inclusive byte offset; defaults to zero" },
+        endExclusive: { type: "number", description: "Optional exclusive byte limit" },
+        maxTokens: { type: "number", description: "Optional response token cap; live headroom may reduce it" },
       },
       ["evidenceId"],
     ),
-    async execute(_callId, args, _a, _b, ctx: RuntimeToolCtx | undefined) {
-      const bound = await resolveRetrievalInput(input, ctx);
+    async execute(_callId, args, signal, _b, ctx: RuntimeToolCtx | undefined) {
       const evidenceId = String(args.evidenceId ?? "");
-      if (!EVIDENCE_ID.test(evidenceId)) {
-        throw Object.assign(new Error("invalid evidenceId"), { code: "PCR_INVALID_ID" });
+      if (!EVIDENCE_ID.test(evidenceId)) throw Object.assign(new Error("invalid evidenceId"), { code: "PCR_INVALID_ID" });
+      const start = requireOffset(args.start, 0);
+      const requestedEnd = args.endExclusive === undefined ? undefined : requireOffset(args.endExclusive, 0);
+      if (requestedEnd !== undefined && requestedEnd < start) throw Object.assign(new Error("invalid range"), { code: "PCR_INVALID_RANGE" });
+      const bound = await resolveRetrievalInput(input, ctx);
+      if (ctx?.workspaceId && ctx.workspaceId !== bound.cursor.workspaceId) throw new RetrievalToolsError("PCR_RETRIEVAL_SCOPE_DENIED");
+      const budget = pageByteBudget(ctx, args.maxTokens, start);
+      // Authenticated encryption still verifies the full blob; only the returned page is bounded.
+      const page = await createRetrievalTools(bound).read({ evidenceId, ...(signal instanceof AbortSignal ? { signal } : {}) });
+      const targetEnd = requestedEnd ?? page.byteLength;
+      if (targetEnd > page.byteLength || start > targetEnd) throw Object.assign(new Error("invalid range"), { code: "PCR_INVALID_RANGE" });
+      const serialize = (end: number) => JSON.stringify({
+        evidenceId: page.evidenceId,
+        byteLength: page.byteLength,
+        sha256: page.sha256,
+        verified: page.verified,
+        range: { start, endExclusive: end },
+        text: Buffer.from(page.bytes.subarray(start, end)).toString("utf8"),
+        nextOffset: end < targetEnd ? end : null,
+        remainingBytes: targetEnd - end,
+      });
+      // Decoding a partial multibyte character inserts U+FFFD and breaks the
+      // monotonic size assumption of byte-wise binary search. Search boundaries.
+      const boundaries = [start];
+      const maximumEnd = Math.min(targetEnd, start + budget);
+      for (let candidate = start + 1; candidate <= maximumEnd; candidate++) {
+        if (candidate === targetEnd || (page.bytes[candidate]! & 0xc0) !== 0x80) boundaries.push(candidate);
       }
-      if (ctx?.workspaceId && ctx.workspaceId !== bound.cursor.workspaceId) {
-        throw new RetrievalToolsError("PCR_RETRIEVAL_SCOPE_DENIED");
+      let low = 0;
+      let high = boundaries.length - 1;
+      if (Buffer.byteLength(serialize(boundaries[high]!), "utf8") <= budget) low = high;
+      while (low < high) {
+        const mid = Math.ceil((low + high) / 2);
+        if (Buffer.byteLength(serialize(boundaries[mid]!), "utf8") <= budget) low = mid;
+        else high = mid - 1;
       }
-      if (args.start != null && args.endExclusive != null && args.endExclusive < args.start) {
-        throw Object.assign(new Error("invalid range"), { code: "PCR_INVALID_RANGE" });
-      }
-      const request: ReadToolInput = { evidenceId };
-      if (args.start != null || args.endExclusive != null) {
-        request.range = {
-          start: args.start ?? 0,
-          endExclusive: args.endExclusive ?? Number.NaN,
-        };
-        if (!Number.isSafeInteger(request.range.endExclusive)) {
-          throw Object.assign(new Error("invalid range"), { code: "PCR_INVALID_RANGE" });
-        }
-      }
-      const page = await createRetrievalTools(bound).read(request);
-      return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            evidenceId: page.evidenceId,
-            byteLength: page.byteLength,
-            sha256: page.sha256,
-            verified: page.verified,
-            range: page.range,
-            text: Buffer.from(page.bytes).toString("utf8"),
-          }),
-        }],
-      };
+      const end = boundaries[low]!;
+      const text = serialize(end);
+      if ((end === start && start < targetEnd) || Buffer.byteLength(text, "utf8") > budget) pageBudgetExceeded(start);
+      return { content: [{ type: "text", text }] };
     },
   };
 }

@@ -17,6 +17,7 @@ interface ToolResultEventResult {
 
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
+const RETRIEVAL_TOOLS = new Set(["context_read", "context_recall", "context_search"]);
 
 export interface RuntimeSessionToolIngress {
   ingestToolResult(input: ToolObservation): Promise<ProjectedToolResult>;
@@ -130,6 +131,12 @@ export function registerToolResultHook(
       }
       if (typeof event.toolName !== "string" || event.toolName.length === 0) {
         throw new TypeError("PCR_PI_TOOL_RESULT_EVENT_INVALID");
+      }
+      // These bounded results already reference verified originals. Re-projecting them
+      // would hide the requested page and index our own recovery echoes.
+      if (RETRIEVAL_TOOLS.has(event.toolName)) {
+        return { content: event.content, details: event.details, isError: event.isError,
+          ...(event.usage === undefined ? {} : { usage: event.usage }) };
       }
       const cursor = snapshotCursor(dependencies.cursor(ctx));
       const capturedAt = dependencies.clock.now();

@@ -127,6 +127,17 @@ function parseMetadata(value: unknown): PersistedIngressMetadata | null {
   }
 }
 
+/** Read receipt provenance only from native user-entry sidecars, never message text. */
+export function persistedUserInputReceipt(entry: unknown): { entryId: string; metadata: PersistedIngressMetadata } | null {
+  const record = asRecord(entry);
+  if (record.type !== "message" || typeof record.id !== "string" || asRecord(record.message).role !== "user") return null;
+  const sidecar = asRecord(record.ingressMetadata);
+  if (!Object.hasOwn(sidecar, METADATA_NAMESPACE)) return null;
+  const metadata = parseMetadata(sidecar[METADATA_NAMESPACE]);
+  if (!metadata || metadata.cursor.sessionId !== metadata.originSessionId) throw new TypeError("PCR_PI_INPUT_METADATA_INVALID");
+  return { entryId: record.id, metadata };
+}
+
 function metadataFromReceipt(
   receipt: UserInputReceipt,
   inputId: string,

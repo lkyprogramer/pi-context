@@ -428,6 +428,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       throw Object.assign(new Error("PCR_RUNTIME_TOOLS_CURSOR_MISSING"), { code: "PCR_RUNTIME_TOOLS_CURSOR_MISSING" });
     },
     evidence: deferredEvidence,
+    toolSchemaTokens: () => estimateTextTokens(toolsJsonFromHost(pi, registeredTools)),
     claimed: true,
     resolve: ((ctx) => userTurns.resolveTools(ctx)) satisfies WorkspaceResolver<
       { workspaceId?: string; sessionId?: string },

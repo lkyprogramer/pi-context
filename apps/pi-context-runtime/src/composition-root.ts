@@ -7,6 +7,10 @@ import {
   type TokenUsageProvenance,
 } from "../../../packages/contracts/src/index.js";
 import {
+  DEFAULT_RETRIEVAL_BUDGETS,
+  boundDirectoryPointers,
+  boundRecallPage,
+  estimateTextTokens,
   createCacheReceipt,
   createCheckpointRenderer,
   createCheckpointVerifier,
@@ -26,6 +30,7 @@ import {
   type ContinuityRevision,
 } from "../../../packages/core/src/index.js";
 import {
+  persistedUserInputReceipt,
   registerToolResultHook,
   registerUserInputHook,
   type RegisteredUserInputHook,
@@ -33,7 +38,6 @@ import {
 import {
   assembleRuntimeSnapshot,
   buildFullCheckpointState,
-  collectCompactionSourceTexts,
   CompactionJournalError,
   createCompactionService,
   createLeaseService,
@@ -80,6 +84,7 @@ import {
   openWorkspaceStateStore,
   openWorkspaceRecallLeaseStore,
   type RecallLeaseStore,
+  type StoredDirectiveRecord,
   openWorkspaceUserTurnLedger,
   type EncryptedBlobStore,
   type LocalWorkspaceBlobKeyProvider,
@@ -88,12 +93,6 @@ import {
 } from "../../../packages/storage-node/src/index.js";
 import { createMemorySink, emitTelemetry } from "../../../packages/worker/src/telemetry/sink.js";
 import { claimPiContextOwner } from "./owner.js";
-import {
-  DEFAULT_RETRIEVAL_BUDGETS,
-  boundDirectoryPointers,
-  boundRecallPage,
-} from "../../../packages/kernel/src/retrieval/proactive.js";
-import { estimateTextTokens } from "../../../packages/kernel/src/budget/token-counter.js";
 
 export type PiRuntimeContext = Pick<ExtensionContext, "cwd" | "model" | "sessionManager" | "signal">;
 
@@ -1191,21 +1190,68 @@ export function registerProductionUserTurnRuntime(
       },
       compaction: {
         prepare: async (input) => {
-          const active = await resolver.active(cursor, input.signal);
-          if (active.length === 0) {
-            const seen = new Set<string>();
-            for (const rawText of collectCompactionSourceTexts(input.messagesToSummarize)) {
-              const digest = domainHash("compact-backfill", rawText);
-              if (seen.has(digest)) continue;
-              seen.add(digest);
-              await userTurn.capture({
-                operationId: `op_backfill_${digest.slice(0, 24)}`,
-                cursor,
-                rawText,
-                sourceClass: "authenticated-user",
-                capturedAt: input.now,
-                signal: input.signal,
-              });
+          // Projection completeness is independent of whether this leaf already has
+          // a directive. Verify the complete branch first, then atomically publish it.
+          if (ctx) {
+            const projected = new Map<string, StoredDirectiveRecord>();
+            const restoredTurns = new Set<string>();
+            const branchResolver = createDirectiveResolver({
+              cursor,
+              store: {
+                async list() { return [...projected.values()]; },
+                async put(record) { projected.set(record.directiveId, record); },
+              },
+            });
+            const extractor = createDirectiveExtractor({ cursor });
+            const segmenter = createClauseSegmenter({ cursor });
+            for (const entry of ctx.sessionManager.getBranch()) {
+              input.signal?.throwIfAborted();
+              const source = persistedUserInputReceipt(entry);
+              if (!source) continue;
+              if (source.metadata.cursor.workspaceId !== cursor.workspaceId) {
+                throw new TypeError("PCR_PI_INPUT_SESSION_MISMATCH");
+              }
+              const receipt = await owner.ledger.get(source.metadata.cursor, source.metadata.receiptId);
+              if (!receipt || !("hostMessageId" in receipt) || receipt.hostMessageId !== source.entryId
+                || receipt.rawTextHash !== source.metadata.rawTextHash) {
+                throw new TypeError("PCR_PI_INPUT_METADATA_INVALID");
+              }
+              if (receipt.sourceClass !== "authenticated-user") continue;
+              const userTurnId = cursorKey(receipt.cursor) === cursorKey(cursor)
+                ? `user_turn_${source.metadata.receiptId}`
+                : `user_turn_projection_${domainHash("branch-user-turn", { receiptId: source.metadata.receiptId, cursor })}`;
+              if (restoredTurns.has(userTurnId)) continue;
+              restoredTurns.add(userTurnId);
+              const raw = await owner.blobs.read(receipt.cursor, receipt.rawBlobId);
+              const rawText = new TextDecoder("utf-8", { fatal: true }).decode(raw);
+              const turn = { ...receipt, cursor, userTurnId };
+              for (const directive of extractor.extract(turn, segmenter.segment({ text: rawText, cursor }), input.signal)) {
+                await branchResolver.apply(directive, input.signal);
+              }
+            }
+            if (restoredTurns.size > 0) {
+              // Inputs captured on this leaf but not appended by Pi yet remain newer
+              // than the restored branch. Keep their existing polarity/status.
+              for (const record of await owner.state.listDirectives(cursor)) {
+                if (restoredTurns.has(record.userTurnId)) continue;
+                if (record.key && record.status === "active") {
+                  for (const [id, prior] of projected) {
+                    if (prior.key === record.key && prior.status === "active") {
+                      projected.set(id, { ...prior, status: "superseded", supersededBy: record.directiveId });
+                    }
+                  }
+                }
+                projected.set(record.directiveId, record);
+              }
+              input.signal?.throwIfAborted();
+              if (cursorKey(cursorFromContext(ctx)) !== cursorKey(cursor)) {
+                throw new ProductionCompositionError("PCR_PI_SESSION_SCOPE_CONFLICT");
+              }
+              const directives = [...projected.values()];
+              await owner.state.putDirectiveProjection(cursor, directives, directives.flatMap((record) => record.key ? [{
+                claimId: `cl_${record.directiveId}`, cursor, key: record.key,
+                polarity: record.polarity, status: record.status, value: record.value, authority: "inform" as const,
+              }] : []));
             }
           }
           const decision = await compaction.prepareCompaction(input);

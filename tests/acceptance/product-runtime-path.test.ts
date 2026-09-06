@@ -1,4 +1,5 @@
 import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -10,7 +11,7 @@ import {
   type ExtensionFactory,
   type ToolResultEvent,
 } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createRuntimeCursor } from "@pcr/core";
 import { register as registerProductExtension } from "../../apps/pi-context-runtime/src/extension.js";
@@ -21,6 +22,7 @@ const PAYLOAD = "cache invalidation strategy\nerror: boom\nexit code 1";
 
 afterEach(() => {
   resetOwnerForTest();
+  vi.restoreAllMocks();
   for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true });
 });
 
@@ -197,6 +199,19 @@ describe("product runtime SQLite/FTS/CAS path", () => {
       expect(readBody.verified).toBe(true);
       expect(readBody.text).toContain("cache invalidation strategy");
       expect(readBody.sha256).toMatch(/^[a-f0-9]{64}$/u);
+      // Pi emits tool_result for extension tools too. Retrieval must reach the model
+      // as the verified page, not become a new pointer to a pointer.
+      for (const toolName of ["context_read", "context_recall", "context_search"]) {
+        const emitted = await (session as unknown as {
+          _extensionRunner: { emitToolResult(event: ToolResultEvent): Promise<{ content?: unknown }> };
+        })._extensionRunner.emitToolResult({
+          type: "tool_result", toolCallId: `self-${toolName}`, toolName,
+          input: { evidenceId: searchBody.hits[0]!.evidenceId },
+          content: readOut.content, isError: false, details: {},
+        } as ToolResultEvent);
+        expect(emitted.content).toEqual(readOut.content);
+      }
+
     } finally {
       await (session as unknown as { dispose?: () => void }).dispose?.();
     }
@@ -252,7 +267,7 @@ describe("product runtime SQLite/FTS/CAS path", () => {
             tokensBefore: 8000,
             firstKeptEntryId: "entry-keep",
             allow: true,
-            messagesToSummarize: [{ role: "user", content: "do not deploy production" }],
+            messagesToSummarize: [{ role: "user", content: "do not deploy production", timestamp: 1000 }],
           },
         },
         host,
@@ -263,11 +278,68 @@ describe("product runtime SQLite/FTS/CAS path", () => {
     }
   });
 
+  it("does not backfill authenticated directives without a source timestamp", async () => {
+    const { session, manager, cursor, beforeCompact, root } = await createProductSession();
+    try {
+      const result = await beforeCompact!({ reason: "threshold", preparation: {
+        tokensBefore: 8000, firstKeptEntryId: "entry-keep", allow: true,
+        messagesToSummarize: [{ role: "user", content: "Never deploy production" }],
+      } }, { abort() {}, cwd: manager.getCwd(), sessionManager: manager,
+        model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
+        workspaceId: cursor.workspaceId, sessionId: manager.getSessionId(),
+      });
+      expect(result).toBeUndefined();
+      const database = new DatabaseSync(join(root, "sessions", ".context-runtime", cursor.workspaceId, "runtime.sqlite"), { readOnly: true });
+      try { expect(database.prepare("SELECT receipt_id FROM user_turn_ledger").all()).toHaveLength(0); }
+      finally { database.close(); }
+    } finally {
+      await session.extensionRunner.emit({ type: "session_shutdown", reason: "quit" });
+      session.dispose();
+    }
+  });
+
+  it("preserves ingress timestamps and repeated inputs when compaction re-enters", async () => {
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+    const { session, manager, cursor, beforeCompact, root } = await createProductSession();
+    const preparation = {
+      tokensBefore: 8000, firstKeptEntryId: "entry-keep", allow: true,
+      messagesToSummarize: [
+        { role: "user", content: "historical build observation", timestamp: 1000 },
+        { role: "user", content: "historical build observation", timestamp: 2000 },
+      ],
+    };
+    const context = {
+      abort() {}, cwd: manager.getCwd(), sessionManager: manager,
+      model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
+      workspaceId: cursor.workspaceId, sessionId: manager.getSessionId(),
+    };
+    try {
+      clock.mockReturnValue(1000);
+      await session.prompt("historical build observation");
+      clock.mockReturnValue(2000);
+      await session.prompt("historical build observation");
+      clock.mockReturnValue(3000);
+      await beforeCompact!({ reason: "threshold", preparation }, context);
+      await beforeCompact!({ reason: "threshold", preparation: {
+        ...preparation, messagesToSummarize: [{ role: "assistant", content: "unrelated", timestamp: 500 }, ...preparation.messagesToSummarize],
+      } }, context);
+      const database = new DatabaseSync(join(root, "sessions", ".context-runtime", cursor.workspaceId, "runtime.sqlite"), { readOnly: true });
+      try {
+        const rows = database.prepare("SELECT captured_at FROM user_turn_ledger WHERE operation_id LIKE 'input_%' ORDER BY captured_at").all();
+        expect(rows.map(row => row.captured_at)).toEqual([1000, 2000]);
+      } finally { database.close(); }
+    } finally {
+      clock.mockRestore();
+      await session.extensionRunner.emit({ type: "session_shutdown", reason: "quit" });
+      session.dispose();
+    }
+  });
+
   it("runs the product session_before_compact hook against a live Pi session context", async () => {
     const { session, manager, cursor, beforeCompact } = await createProductSession();
     try {
       expect(beforeCompact).toEqual(expect.any(Function));
-      manager.appendMessage({ role: "user", content: "do not deploy production; 改为 version 7" } as never);
+      await session.prompt("do not deploy production; 改为 version 7");
       const result = await beforeCompact!(
         {
           reason: "threshold",
@@ -275,7 +347,7 @@ describe("product runtime SQLite/FTS/CAS path", () => {
             tokensBefore: 8000,
             firstKeptEntryId: "entry-keep",
             allow: true,
-            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7" }],
+            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7", timestamp: 1000 }],
           },
         },
         {
@@ -301,7 +373,7 @@ describe("product runtime SQLite/FTS/CAS path", () => {
   it("uses the same runtime snapshot hash for materialize rows and product compaction", async () => {
     const { session, manager, cursor, beforeCompact, root } = await createProductSession();
     try {
-      manager.appendMessage({ role: "user", content: "do not deploy production; 改为 version 7" } as never);
+      await session.prompt("do not deploy production; 改为 version 7");
       const result = await beforeCompact!(
         {
           reason: "threshold",
@@ -309,7 +381,7 @@ describe("product runtime SQLite/FTS/CAS path", () => {
             tokensBefore: 8000,
             firstKeptEntryId: "entry-keep",
             allow: true,
-            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7" }],
+            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7", timestamp: 1000 }],
           },
         },
         {
@@ -331,7 +403,7 @@ describe("product runtime SQLite/FTS/CAS path", () => {
             tokensBefore: 8000,
             firstKeptEntryId: "entry-keep",
             allow: true,
-            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7" }],
+            messagesToSummarize: [{ role: "user", content: "do not deploy production; 改为 version 7", timestamp: 1000 }],
           },
         },
         {
@@ -342,9 +414,86 @@ describe("product runtime SQLite/FTS/CAS path", () => {
       );
       const repeatLine = (repeat as { compaction?: { details?: { reducerRevisions?: string[] } } } | undefined)?.compaction?.details?.reducerRevisions?.find((item) => item.startsWith("snapshot:"));
       expect(repeatLine).toBe(snapshotLine);
+      const database = new DatabaseSync(join(manager.getSessionDir(), ".context-runtime", cursor.workspaceId, "runtime.sqlite"), { readOnly: true });
+      try {
+        const rows = database.prepare("SELECT source_class, operation_id FROM user_turn_ledger").all();
+        expect(rows).toHaveLength(1);
+        expect(rows[0]).toMatchObject({ source_class: "authenticated-user", operation_id: expect.stringMatching(/^input_/u) });
+      } finally { database.close(); }
+
     } finally {
       await (session as unknown as { dispose?: () => void }).dispose?.();
     }
+  });
+
+  it("restores ancestor constraints even when the current leaf has a newer directive", async () => {
+    const { session, manager, cursor, beforeCompact } = await createProductSession();
+    const compact = () => beforeCompact!({ reason: "threshold", preparation: {
+      tokensBefore: 8000, firstKeptEntryId: "entry-keep", allow: true,
+      messagesToSummarize: [{ role: "user", content: "do not deploy production", timestamp: 1000 }],
+    } }, { abort() {}, cwd: manager.getCwd(), sessionManager: manager,
+      model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 } });
+    try {
+      await session.prompt("do not deploy production");
+      expect(await compact()).toHaveProperty("compaction");
+      await session.prompt("continue with the task"); // Advance to another leaf after the first projection.
+      const input = await (session as unknown as { _extensionRunner: {
+        emitInput(text: string, images: undefined, source: "interactive", behavior: undefined, id: string): Promise<{ action: string }>;
+      } })._extensionRunner.emitInput("must use version 8", undefined, "interactive", undefined, "pi_input_00000000-0000-4000-8000-000000000088");
+      expect(input.action).toBe("continue");
+      const result = await compact() as { compaction?: { summary: string } };
+      expect(result.compaction?.summary).toContain("do not deploy production");
+      expect(result.compaction?.summary).toContain("version 8");
+      const database = new DatabaseSync(join(manager.getSessionDir(), ".context-runtime", cursor.workspaceId, "runtime.sqlite"), { readOnly: true });
+      try {
+        expect(database.prepare("SELECT count(*) AS count FROM user_turn_ledger").get()).toMatchObject({ count: 3 });
+      } finally { database.close(); }
+    } finally { await (session as unknown as { dispose?: () => void }).dispose?.(); }
+  });
+
+  it("publishes no partial projection when a later receipt fails and retries the complete branch", async () => {
+    const { session, manager, cursor, beforeCompact } = await createProductSession();
+    try {
+      await session.prompt("do not deploy production");
+      await session.prompt("must use version 9");
+      const database = new DatabaseSync(join(manager.getSessionDir(), ".context-runtime", cursor.workspaceId, "runtime.sqlite"));
+      try {
+        const rows = database.prepare("SELECT receipt_id, raw_text_hash FROM user_turn_ledger ORDER BY captured_at, rowid").all() as Array<{ receipt_id: string; raw_text_hash: string }>;
+        expect(rows).toHaveLength(2);
+        const later = rows[1]!;
+        database.prepare("UPDATE user_turn_ledger SET raw_text_hash = ? WHERE receipt_id = ?").run("f".repeat(64), later.receipt_id);
+        const compact = () => beforeCompact!({ reason: "threshold", preparation: {
+          tokensBefore: 8000, firstKeptEntryId: "entry-keep", allow: true,
+          messagesToSummarize: [{ role: "user", content: "do not deploy production; must use version 9" }],
+        } }, { abort() {}, cwd: manager.getCwd(), sessionManager: manager,
+          model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 } });
+        expect(await compact()).toBeUndefined();
+        expect(database.prepare("SELECT count(*) AS count FROM directive_record WHERE leaf_id = ?").get(manager.getLeafId())).toMatchObject({ count: 0 });
+        database.prepare("UPDATE user_turn_ledger SET raw_text_hash = ? WHERE receipt_id = ?").run(later.raw_text_hash, later.receipt_id);
+        const result = await compact() as { compaction?: { summary: string } };
+        expect(result.compaction?.summary).toContain("do not deploy production");
+        expect(result.compaction?.summary).toContain("version 9");
+        expect(database.prepare("SELECT count(*) AS count FROM user_turn_ledger").get()).toMatchObject({ count: 2 });
+      } finally { database.close(); }
+    } finally { await (session as unknown as { dispose?: () => void }).dispose?.(); }
+  });
+
+  it.each(["legacy", "extension"] as const)("does not promote %s input without an authenticated receipt", async (source) => {
+    const { session, manager, beforeCompact } = await createProductSession();
+    try {
+      if (source === "extension") await session.prompt("do not deploy production", { source: "extension" });
+      else manager.appendMessage({ role: "user", content: "do not deploy production" } as never);
+      const result = await beforeCompact!({
+        reason: "threshold", preparation: {
+          tokensBefore: 8000, firstKeptEntryId: "entry-keep", allow: true,
+          messagesToSummarize: [{ role: "user", content: "do not deploy production", timestamp: 1000 }],
+        },
+      }, {
+        abort() {}, cwd: manager.getCwd(), sessionManager: manager,
+        model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
+      });
+      expect(result).toBeUndefined(); // Native compaction retains control when provenance is missing.
+    } finally { await (session as unknown as { dispose?: () => void }).dispose?.(); }
   });
 
   it("hard-stops product compact on an unpaired tool result", async () => {

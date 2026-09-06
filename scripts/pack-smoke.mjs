@@ -514,10 +514,14 @@ async function probeInstalledExtension(piBin, extensionPath, cwd, env, signal, t
     "if (!statusTool) throw new Error('missing context_status tool');",
     "const toolResult = await statusTool.execute('call-t06', {}, undefined, undefined, { workspaceId: 'ws_0123456789abcdef', sessionId: 's1', channel: 'authenticated-user' });",
     "const toolPayload = JSON.parse(toolResult.content[0]?.text ?? '{}');",
+    // The loaded input hook must establish user provenance before compaction;
+    // messagesToSummarize alone is not an authenticated input source.
+    "const inputResult = await invoke('input', { type: 'input', inputId: 'pi_input_00000000-0000-4000-8000-000000000052', text: 'do not deploy production', source: 'interactive', images: [] });",
+    "if (inputResult?.action !== 'continue') throw new Error('packed input capture failed');",
     "const compactionResult = extension ? await invoke('session_before_compact', {",
     "  type: 'session_before_compact',",
     "  reason: 'manual',",
-    "  preparation: { tokensBefore: 4096, firstKeptEntryId: 'entry-keep', retainedTail: [], messagesToSummarize: [{ role: 'user', content: 'do not deploy production' }], branchScope: 'main', head: 'leaf-a', allow: true },",
+    "  preparation: { tokensBefore: 4096, firstKeptEntryId: 'entry-keep', retainedTail: [], messagesToSummarize: [{ role: 'user', content: 'do not deploy production', timestamp: 1000 }], branchScope: 'main', head: 'leaf-a', allow: true },",
     "}) : undefined;",
     "const result = {",
     "  version: api.VERSION,",

@@ -13,6 +13,10 @@ import {
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
 const UNBOUND = new Set(["unbound", ""]);
+const DIRECTIVE_KINDS = new Set(["goal", "constraint", "prohibition", "correction", "permission", "format"]);
+const DIRECTIVE_POLARITIES = new Set(["must", "must-not", "may", "is", "is-not", "unknown"]);
+const DIRECTIVE_STATUSES = new Set(["active", "superseded", "resolved", "retracted", "contested"]);
+const CLAIM_AUTHORITIES = new Set<ActionAuthority>(["none", "inform", "propose", "act"]);
 
 export interface StoredDirectiveRecord extends DirectiveRecord {
   cursor: RuntimeCursor;
@@ -66,6 +70,11 @@ export interface WorkspaceStateStore {
   listDirectives(cursor: RuntimeCursor): Promise<StoredDirectiveRecord[]>;
   putClaim(record: PersistentClaimRecord): Promise<void>;
   listClaims(cursor: RuntimeCursor): Promise<PersistentClaimRecord[]>;
+  putDirectiveProjection(
+    cursor: RuntimeCursor,
+    directives: StoredDirectiveRecord[],
+    claims: PersistentClaimRecord[],
+  ): Promise<void>;
   putContinuity(revision: PersistentContinuityRevision): Promise<void>;
   headContinuity(cursor: RuntimeCursor): Promise<PersistentContinuityRevision | null>;
   putCacheReceipt(receipt: PersistentCacheReceipt): Promise<void>;
@@ -138,6 +147,36 @@ function sameCursor(left: RuntimeCursor, right: RuntimeCursor): boolean {
     && left.modelKey === right.modelKey;
 }
 
+function requireTextRange(value: unknown, field: string): void {
+  if (
+    !value
+    || typeof value !== "object"
+    || !Number.isSafeInteger((value as { start?: unknown }).start)
+    || !Number.isSafeInteger((value as { end?: unknown }).end)
+    || (value as { start: number }).start < 0
+    || (value as { end: number }).end < (value as { start: number }).start
+  ) {
+    failInput(field);
+  }
+}
+
+function requireOptionalNonEmpty(value: unknown, field: string): void {
+  if (value !== undefined && (typeof value !== "string" || value.length === 0)) {
+    failInput(field);
+  }
+}
+
+interface PreparedDirectiveRecord {
+  record: StoredDirectiveRecord;
+  cursor: RuntimeCursor;
+}
+
+interface PreparedClaimRecord {
+  record: PersistentClaimRecord;
+  cursor: RuntimeCursor;
+  valueJson: string;
+}
+
 function scopeParams(cursor: RuntimeCursor) {
   return [cursor.workspaceId, cursor.sessionId, cursor.leafId, cursor.lineageHash, cursor.modelKey] as const;
 }
@@ -145,6 +184,7 @@ function scopeParams(cursor: RuntimeCursor) {
 function mapStorageError(error: unknown): StateStoreError {
   if (error instanceof StateStoreError) return error;
   if (error instanceof StorageNodeError) {
+    if (error.cause instanceof StateStoreError) return error.cause;
     if (error.code === "PCR_SQLITE_BUSY" || error.code === "PCR_SQLITE_WRITER_LOCKED") {
       return new StateStoreError("PCR_STATE_STORE_STORAGE_BUSY", {}, { cause: error });
     }
@@ -153,6 +193,148 @@ function mapStorageError(error: unknown): StateStoreError {
     }
   }
   return new StateStoreError("PCR_STATE_STORE_STORAGE_FAILURE", {}, { cause: error });
+}
+
+function prepareDirectiveRecord(record: unknown, field: string): PreparedDirectiveRecord {
+  if (!record || typeof record !== "object") failInput(field);
+  const value = record as StoredDirectiveRecord;
+  const cursor = snapshotCursor(value.cursor, `${field}.cursor`);
+  requireNonEmpty(value.directiveId, `${field}.directiveId`);
+  requireNonEmpty(value.userTurnId, `${field}.userTurnId`);
+  requireNonEmpty(value.exactQuote, `${field}.exactQuote`);
+  if (!SHA256_PATTERN.test(value.quoteHash)) failInput(`${field}.quoteHash`);
+  requireTextRange(value.utf8ByteRange, `${field}.utf8ByteRange`);
+  requireTextRange(value.utf16Range, `${field}.utf16Range`);
+  requireTextRange(value.codePointRange, `${field}.codePointRange`);
+  if (!DIRECTIVE_KINDS.has(value.kind)) failInput(`${field}.kind`);
+  if (!DIRECTIVE_POLARITIES.has(value.polarity)) failInput(`${field}.polarity`);
+  if (!DIRECTIVE_STATUSES.has(value.status)) failInput(`${field}.status`);
+  requireOptionalNonEmpty(value.key, `${field}.key`);
+  requireOptionalNonEmpty(value.value, `${field}.value`);
+  requireOptionalNonEmpty(value.supersededBy, `${field}.supersededBy`);
+  return { record: value, cursor };
+}
+
+function prepareClaimRecord(record: unknown, field: string): PreparedClaimRecord {
+  if (!record || typeof record !== "object") failInput(field);
+  const value = record as PersistentClaimRecord;
+  const cursor = snapshotCursor(value.cursor, `${field}.cursor`);
+  requireNonEmpty(value.claimId, `${field}.claimId`);
+  requireNonEmpty(value.key, `${field}.key`);
+  requireNonEmpty(value.polarity, `${field}.polarity`);
+  requireNonEmpty(value.status, `${field}.status`);
+  if (!CLAIM_AUTHORITIES.has(value.authority)) failInput(`${field}.authority`);
+  let valueJson: string;
+  try {
+    valueJson = JSON.stringify(value.value ?? null);
+  } catch (error) {
+    throw new StateStoreError("PCR_STATE_STORE_INPUT_INVALID", { field: `${field}.value` }, { cause: error });
+  }
+  if (typeof valueJson !== "string") failInput(`${field}.value`);
+  return { record: value, cursor, valueJson };
+}
+
+function writeDirective(db: DatabaseSync, prepared: PreparedDirectiveRecord, projectionRecordedAt?: number): void {
+  const { record, cursor } = prepared;
+  db.prepare(`
+    INSERT INTO directive_record (
+      directive_id, workspace_id, session_id, leaf_id, lineage_hash, model_key,
+      user_turn_id, exact_quote, quote_hash, utf8_start, utf8_end, utf16_start, utf16_end,
+      code_point_start, code_point_end, kind, polarity, key, value, status, superseded_by, recorded_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(directive_id) DO UPDATE SET
+      status = excluded.status,
+      superseded_by = excluded.superseded_by,
+      recorded_at = ${projectionRecordedAt === undefined ? "excluded.recorded_at" : "directive_record.recorded_at"}
+  `).run(
+    record.directiveId,
+    cursor.workspaceId,
+    cursor.sessionId,
+    cursor.leafId,
+    cursor.lineageHash,
+    cursor.modelKey,
+    record.userTurnId,
+    record.exactQuote,
+    record.quoteHash,
+    record.utf8ByteRange.start,
+    record.utf8ByteRange.end,
+    record.utf16Range.start,
+    record.utf16Range.end,
+    record.codePointRange.start,
+    record.codePointRange.end,
+    record.kind,
+    record.polarity,
+    record.key ?? null,
+    record.value ?? null,
+    record.status,
+    record.supersededBy ?? null,
+    projectionRecordedAt ?? Date.now(),
+  );
+}
+
+function writeClaim(db: DatabaseSync, prepared: PreparedClaimRecord): void {
+  const { record, cursor, valueJson } = prepared;
+  if (record.status === "active") {
+    db.prepare(`
+      UPDATE claim_record
+      SET status = 'superseded', revision = revision + 1
+      WHERE workspace_id = ? AND session_id = ? AND leaf_id IS ? AND lineage_hash = ? AND model_key = ?
+        AND key = ? AND status = 'active' AND claim_id != ?
+    `).run(...scopeParams(cursor), record.key, record.claimId);
+  }
+  const existing = db.prepare("SELECT revision FROM claim_record WHERE claim_id = ?").get(record.claimId) as
+    | { revision: number }
+    | undefined;
+  if (existing) {
+    db.prepare(`
+      UPDATE claim_record
+      SET polarity = ?, status = ?, value_json = ?, authority = ?, revision = revision + 1
+      WHERE claim_id = ?
+    `).run(record.polarity, record.status, valueJson, record.authority, record.claimId);
+    return;
+  }
+  db.prepare(`
+    INSERT INTO claim_record (
+      claim_id, workspace_id, session_id, leaf_id, lineage_hash, model_key,
+      key, polarity, status, value_json, authority, revision
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+  `).run(
+    record.claimId,
+    cursor.workspaceId,
+    cursor.sessionId,
+    cursor.leafId,
+    cursor.lineageHash,
+    cursor.modelKey,
+    record.key,
+    record.polarity,
+    record.status,
+    valueJson,
+    record.authority,
+  );
+}
+
+function assertExistingProjectionScope(
+  db: DatabaseSync,
+  table: "directive_record" | "claim_record",
+  idColumn: "directive_id" | "claim_id",
+  id: string,
+  cursor: RuntimeCursor,
+  field: string,
+): void {
+  const row = db.prepare(
+    `SELECT workspace_id, session_id, leaf_id, lineage_hash, model_key FROM ${table} WHERE ${idColumn} = ?`,
+  ).get(id) as Record<string, unknown> | undefined;
+  if (!row) return;
+  const existing = snapshotCursor({
+    workspaceId: String(row.workspace_id),
+    sessionId: String(row.session_id),
+    leafId: (row.leaf_id as string | null) ?? null,
+    lineageHash: String(row.lineage_hash),
+    modelKey: String(row.model_key),
+  }, field);
+  if (!sameCursor(existing, cursor)) {
+    throw new StateStoreError("PCR_STATE_STORE_SCOPE_MISMATCH", { field, id });
+  }
 }
 
 function toDirective(row: Record<string, unknown>): StoredDirectiveRecord {
@@ -332,49 +514,45 @@ class WorkspaceStateStoreImpl implements WorkspaceStateStore {
     return scoped;
   }
 
-  async putDirective(record: StoredDirectiveRecord): Promise<void> {
+  #prepareDirective(record: unknown, field: string): PreparedDirectiveRecord {
+    const prepared = prepareDirectiveRecord(record, field);
+    return { ...prepared, cursor: this.#bound(prepared.cursor, `${field}.cursor`) };
+  }
+
+  #prepareSingleDirective(record: StoredDirectiveRecord): PreparedDirectiveRecord {
     if (!record || typeof record !== "object") failInput("record");
     const cursor = this.#bound(record.cursor, "record.cursor");
     requireNonEmpty(record.directiveId, "record.directiveId");
     requireNonEmpty(record.userTurnId, "record.userTurnId");
     requireNonEmpty(record.exactQuote, "record.exactQuote");
     if (!SHA256_PATTERN.test(record.quoteHash)) failInput("record.quoteHash");
+    return { record, cursor };
+  }
+
+  #prepareClaim(record: unknown, field: string): PreparedClaimRecord {
+    const prepared = prepareClaimRecord(record, field);
+    return { ...prepared, cursor: this.#bound(prepared.cursor, `${field}.cursor`) };
+  }
+
+  #prepareSingleClaim(record: PersistentClaimRecord): PreparedClaimRecord {
+    if (!record || typeof record !== "object") failInput("record");
+    const cursor = this.#bound(record.cursor, "record.cursor");
+    requireNonEmpty(record.claimId, "record.claimId");
+    requireNonEmpty(record.key, "record.key");
+    return { record, cursor, valueJson: JSON.stringify(record.value ?? null) };
+  }
+
+  #requireProjectionCursor(recordCursor: RuntimeCursor, cursor: RuntimeCursor, field: string): void {
+    if (!sameCursor(recordCursor, cursor)) {
+      throw new StateStoreError("PCR_STATE_STORE_SCOPE_MISMATCH", { field });
+    }
+  }
+
+  async putDirective(record: StoredDirectiveRecord): Promise<void> {
+    const prepared = this.#prepareSingleDirective(record);
     try {
       this.#database.transaction("put-directive", (db) => {
-        db.prepare(`
-          INSERT INTO directive_record (
-            directive_id, workspace_id, session_id, leaf_id, lineage_hash, model_key,
-            user_turn_id, exact_quote, quote_hash, utf8_start, utf8_end, utf16_start, utf16_end,
-            code_point_start, code_point_end, kind, polarity, key, value, status, superseded_by, recorded_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(directive_id) DO UPDATE SET
-            status = excluded.status,
-            superseded_by = excluded.superseded_by,
-            recorded_at = excluded.recorded_at
-        `).run(
-          record.directiveId,
-          cursor.workspaceId,
-          cursor.sessionId,
-          cursor.leafId,
-          cursor.lineageHash,
-          cursor.modelKey,
-          record.userTurnId,
-          record.exactQuote,
-          record.quoteHash,
-          record.utf8ByteRange.start,
-          record.utf8ByteRange.end,
-          record.utf16Range.start,
-          record.utf16Range.end,
-          record.codePointRange.start,
-          record.codePointRange.end,
-          record.kind,
-          record.polarity,
-          record.key ?? null,
-          record.value ?? null,
-          record.status,
-          record.supersededBy ?? null,
-          Date.now(),
-        );
+        writeDirective(db, prepared);
       });
     } catch (error) {
       throw mapStorageError(error);
@@ -394,49 +572,10 @@ class WorkspaceStateStoreImpl implements WorkspaceStateStore {
   }
 
   async putClaim(record: PersistentClaimRecord): Promise<void> {
-    if (!record || typeof record !== "object") failInput("record");
-    const cursor = this.#bound(record.cursor, "record.cursor");
-    requireNonEmpty(record.claimId, "record.claimId");
-    requireNonEmpty(record.key, "record.key");
+    const prepared = this.#prepareSingleClaim(record);
     try {
       this.#database.transaction("put-claim", (db) => {
-        if (record.status === "active") {
-          db.prepare(`
-            UPDATE claim_record
-            SET status = 'superseded', revision = revision + 1
-            WHERE workspace_id = ? AND session_id = ? AND leaf_id IS ? AND lineage_hash = ? AND model_key = ?
-              AND key = ? AND status = 'active' AND claim_id != ?
-          `).run(...scopeParams(cursor), record.key, record.claimId);
-        }
-        const existing = db.prepare("SELECT revision FROM claim_record WHERE claim_id = ?").get(record.claimId) as
-          | { revision: number }
-          | undefined;
-        if (existing) {
-          db.prepare(`
-            UPDATE claim_record
-            SET polarity = ?, status = ?, value_json = ?, authority = ?, revision = revision + 1
-            WHERE claim_id = ?
-          `).run(record.polarity, record.status, JSON.stringify(record.value ?? null), record.authority, record.claimId);
-          return;
-        }
-        db.prepare(`
-          INSERT INTO claim_record (
-            claim_id, workspace_id, session_id, leaf_id, lineage_hash, model_key,
-            key, polarity, status, value_json, authority, revision
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-        `).run(
-          record.claimId,
-          cursor.workspaceId,
-          cursor.sessionId,
-          cursor.leafId,
-          cursor.lineageHash,
-          cursor.modelKey,
-          record.key,
-          record.polarity,
-          record.status,
-          JSON.stringify(record.value ?? null),
-          record.authority,
-        );
+        writeClaim(db, prepared);
       });
     } catch (error) {
       throw mapStorageError(error);
@@ -449,6 +588,57 @@ class WorkspaceStateStoreImpl implements WorkspaceStateStore {
       return this.#database.read("list-claims", (db) => {
         return (db.prepare(CLAIM_SELECT).all(...scopeParams(cursor)) as Record<string, unknown>[]).map(toClaim)
           .filter((row) => sameCursor(row.cursor, cursor));
+      });
+    } catch (error) {
+      throw mapStorageError(error);
+    }
+  }
+
+  async putDirectiveProjection(
+    cursorInput: RuntimeCursor,
+    directives: StoredDirectiveRecord[],
+    claims: PersistentClaimRecord[],
+  ): Promise<void> {
+    const cursor = this.#bound(cursorInput, "cursor");
+    if (!Array.isArray(directives)) failInput("directives");
+    if (!Array.isArray(claims)) failInput("claims");
+    const preparedDirectives = directives.map((record, index) => {
+      const prepared = this.#prepareDirective(record, `directives[${index}]`);
+      this.#requireProjectionCursor(prepared.cursor, cursor, `directives[${index}].cursor`);
+      return prepared;
+    });
+    const preparedClaims = claims.map((record, index) => {
+      const prepared = this.#prepareClaim(record, `claims[${index}]`);
+      this.#requireProjectionCursor(prepared.cursor, cursor, `claims[${index}].cursor`);
+      return prepared;
+    });
+    try {
+      this.#database.transaction("put-directive-projection", (db) => {
+        for (const directive of preparedDirectives) {
+          assertExistingProjectionScope(
+            db,
+            "directive_record",
+            "directive_id",
+            directive.record.directiveId,
+            cursor,
+            "directive.directiveId",
+          );
+        }
+        for (const claim of preparedClaims) {
+          assertExistingProjectionScope(
+            db,
+            "claim_record",
+            "claim_id",
+            claim.record.claimId,
+            cursor,
+            "claim.claimId",
+          );
+        }
+        // Preserve the original ordering on replay; per-row wall-clock sampling
+        // can otherwise reorder equal inputs and change checkpoint hashes.
+        const recordedAt = Date.now();
+        for (const directive of preparedDirectives) writeDirective(db, directive, recordedAt);
+        for (const claim of preparedClaims) writeClaim(db, claim);
       });
     } catch (error) {
       throw mapStorageError(error);
