@@ -7,12 +7,18 @@ import { expect, it } from "vitest";
 import { splitProviderModel } from "../src/small-live.js";
 import {
   SmallRunnerError,
+  DEFAULT_SOURCE_SET_PATHS,
   appendResults,
   assertResumeIdentity,
   attemptFromScore,
   decideCanary,
   executePlannedPair,
   hashSourceSet,
+  ittUsageTotals,
+  mergeArtifactCoverage,
+  pairedEfficiency,
+  pairedSuccessFromAttempts,
+  parseRecoveryFixtureOutput,
   planPrimaryPairs,
   preflightSmallRun,
   primaryArmOrder,
@@ -26,9 +32,11 @@ import {
   validateScenario,
   verifySmallRun,
   type ArmExecutor,
+  type ArmRequestUsage,
   type PairAttempts,
   type RunIdentity,
   type Scenario,
+  type SmallRunRecord,
 } from "../src/small-runner.js";
 import { scoreRecoveryCoverage } from "../src/scoring/recovery.js";
 
@@ -55,6 +63,49 @@ function readerScenario(overrides: Partial<Scenario> = {}): Scenario {
     workspaceFiles: {},
     assertions: [],
     ...overrides,
+  };
+}
+
+function sampleUsage(overrides: Partial<ArmRequestUsage> = {}): ArmRequestUsage {
+  return {
+    requestId: "r1",
+    phase: "continuation",
+    input: 10,
+    cacheRead: 0,
+    cacheWrite: 0,
+    output: 4,
+    inputSemantics: "exclusive-cache",
+    elapsedMs: 12,
+    ...overrides,
+  };
+}
+
+function record(input: {
+  pairId?: string;
+  arm: "B0" | "B2";
+  status?: SmallRunRecord["attempt"]["status"];
+  success?: boolean;
+  usage?: ArmRequestUsage[];
+  wallTimeMs?: number;
+  compactWaitMs?: number;
+}): SmallRunRecord {
+  return {
+    pairId: input.pairId ?? "s1",
+    clusterId: "c1",
+    repeat: 0,
+    arm: input.arm,
+    attempt: {
+      status: input.status ?? "completed",
+      success: input.success ?? ((input.status ?? "completed") === "completed"),
+    },
+    fullAnswer: "7",
+    preview: "7",
+    stopReason: "end_turn",
+    usage: input.usage ?? [sampleUsage()],
+    monetaryCost: null,
+    cacheState: "cold",
+    wallTimeMs: input.wallTimeMs ?? 100,
+    compactWaitMs: input.compactWaitMs ?? 0,
   };
 }
 
@@ -262,7 +313,7 @@ it("runs isolated primary homes in planned order without sharing cwd", async () 
         fullAnswer: "{\"answer\":\"7\",\"kind\":\"requested-target\"}",
         preview: "{\"answer\":\"7\"}",
         stopReason: "end_turn",
-        usage: [{ requestId: "r1", input: 10, cacheRead: null, cacheWrite: null, output: 4, elapsedMs: 12 }],
+        usage: [sampleUsage()],
         toolCalls: [],
         cacheState: "cold",
         monetaryCost: null,
@@ -412,6 +463,17 @@ it("does not treat recovery n=0 as a pass", () => {
     medianTaskInputDelta: -0.50,
     medianWallTimeDelta: -0.30,
   })).toBe("inconclusive");
+  expect(() => parseRecoveryFixtureOutput("")).toThrow(/PCR_SMALL_RUNNER_INPUT_INVALID|recoveryRows/u);
+  expect(parseRecoveryFixtureOutput(JSON.stringify({
+    rows: Array.from({ length: 5 }, () => ({
+      eligible: true,
+      attempted: true,
+      exactBytesMatch: true,
+      wrongScopeDenied: true,
+    })),
+  }))).toHaveLength(5);
+  expect(pairedSuccessFromAttempts([]).ci95).toBeNull();
+  expect(mergeArtifactCoverage([]).status).toBe("not-tested");
 });
 
 it("does not raise the scorer when the model restates a different requirement", () => {
@@ -505,4 +567,52 @@ it("does not treat an assistant done claim as coding success", () => {
     },
   });
   expect(attempt.success).toBe(false);
+});
+
+it("does not treat compact wait as scored wall-time savings", () => {
+  const efficiency = pairedEfficiency([
+    record({ arm: "B0", wallTimeMs: 100, compactWaitMs: 1000 }),
+    record({ arm: "B2", wallTimeMs: 100, compactWaitMs: 1 }),
+  ]);
+  expect(efficiency.medianWallTimeDelta).toBe(0);
+  expect(efficiency.medianCompactWaitDelta).toBe(-0.999);
+});
+
+it("keeps failed-arm tokens in ITT totals and unknown semantics out of the median", () => {
+  const itt = ittUsageTotals([
+    record({
+      arm: "B0",
+      usage: [sampleUsage({ input: 100, cacheRead: 0, cacheWrite: 0 })],
+    }),
+    record({
+      arm: "B2",
+      status: "failed",
+      success: false,
+      usage: [sampleUsage({ input: 80, cacheRead: 0, cacheWrite: 0 })],
+    }),
+  ]);
+  expect(itt.B0.arms).toBe(1);
+  expect(itt.B2.arms).toBe(1);
+  expect(itt.B0.logicalInput).toBe(100);
+  expect(itt.B2.logicalInput).toBe(80);
+  const unknown = pairedEfficiency([
+    record({
+      arm: "B0",
+      usage: [sampleUsage({ inputSemantics: "unknown" })],
+    }),
+    record({
+      arm: "B2",
+      usage: [sampleUsage({ input: 8, cacheRead: 0, cacheWrite: 0 })],
+    }),
+  ]);
+  expect(unknown.medianTaskInputDelta).toBeNull();
+});
+
+it("includes product runtime sources in the default source set", () => {
+  expect(DEFAULT_SOURCE_SET_PATHS).toEqual(expect.arrayContaining([
+    "apps/pi-context-runtime/src/composition-root.ts",
+    "apps/pi-context-runtime/src/extension.ts",
+    "packages/pi-adapter/src/compaction-hook.ts",
+    "packages/runtime/src/observation-envelope.ts",
+  ]));
 });

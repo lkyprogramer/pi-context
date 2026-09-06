@@ -11,13 +11,31 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+import {
+  declaredInputSemantics,
+  totalTaskUsage,
+  type InputSemantics,
+  type RequestUsagePhase,
+  type TaskRequestUsage,
+} from "@pcr/runtime";
 
 import { createIsolatedArmHomes, type IsolatedArmHome } from "./arms/isolate.js";
 import { latinSquareOrder } from "./runner/replicate-policy.js";
 import { scoreProbe, type ProbeFamily, type ProbeScore } from "./scoring/probe.js";
-import { scoreRecoveryCoverage, type RecoveryCoverage } from "./scoring/recovery.js";
-import { createLiveArmExecutor, seedScenarioSession } from "./small-live.js";
+import {
+  recoveryCountsFromSummary,
+  scoreArtifactCoverage,
+  summarizeRecovery,
+  type ArtifactCoverage,
+  type ArtifactOracle,
+  type RecoveryCaseResult,
+  type RecoveryCoverage,
+  type RecoverySummary,
+} from "./scoring/recovery.js";
+import { createLiveArmExecutor, seedScenarioSession, writeSessionHeader } from "./small-live.js";
+import { summarizePairedSuccess, type Discordance } from "./statistics/paired-small.js";
 
 export type AttemptStatus = "completed" | "timeout" | "failed" | "not-run";
 export type PrimaryArm = "B0" | "B2";
@@ -118,6 +136,12 @@ export const DEFAULT_SOURCE_SET_PATHS = Object.freeze([
   "packages/benchmark/src/scoring/recovery.ts",
   "packages/benchmark/src/statistics/paired-small.ts",
   "packages/runtime/src/telemetry/request-usage.ts",
+  "packages/runtime/src/observation-envelope.ts",
+  "packages/pi-adapter/src/compaction-hook.ts",
+  "apps/pi-context-runtime/src/composition-root.ts",
+  "apps/pi-context-runtime/src/extension.ts",
+  "tests/helpers/production-recovery-fixtures.ts",
+  "tests/helpers/seed-scenario-session.ts",
   "scripts/eval-small.mjs",
   "scripts/credential-broker.mjs",
   "scripts/verify-small-run.mjs",
@@ -577,6 +601,238 @@ export function recoveryCounts(coverage: RecoveryCoverage): { recoveryTested: nu
   return { recoveryTested: coverage.tested, recoveryPassed: coverage.pass };
 }
 
+export const PAIRED_SUCCESS_BOOTSTRAP = Object.freeze({ bootstrapSamples: 399, seed: 20260906 });
+
+export function parseRecoveryFixtureOutput(stdout: string): RecoveryCaseResult[] {
+  if (typeof stdout !== "string" || stdout.trim().length === 0) failInput("recoveryRows");
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stdout.slice(stdout.indexOf("{")));
+  } catch {
+    failInput("recoveryRows");
+  }
+  const rows = parsed && typeof parsed === "object" && "rows" in parsed
+    ? (parsed as { rows: unknown }).rows
+    : parsed;
+  if (!Array.isArray(rows) || rows.length !== 5) failInput("recoveryRows");
+  return rows as RecoveryCaseResult[];
+}
+
+export function loadProductionRecoveryRows(cwd: string): RecoveryCaseResult[] {
+  const helper = resolve(cwd, "tests/helpers/production-recovery-fixtures.ts");
+  const jiti = resolve(cwd, "node_modules/.bin/jiti");
+  if (!existsSync(helper) || !existsSync(jiti)) failInput("recoveryFixtures");
+  const result = spawnSync(jiti, [helper], {
+    cwd,
+    encoding: "utf8",
+    timeout: 180_000,
+    env: process.env,
+  });
+  if (result.status !== 0) failInput("recoveryFixtures");
+  return parseRecoveryFixtureOutput(result.stdout);
+}
+
+export async function probeLiveArmRecoveryCase(input: {
+  cwd: string;
+  scenario: Scenario;
+  sessionFile: string;
+  workspaceDir: string;
+}): Promise<RecoveryCaseResult> {
+  const helper = resolve(input.cwd, "tests/helpers/live-arm-recovery.ts");
+  if (!existsSync(helper)) {
+    return { eligible: true, attempted: false, exactBytesMatch: null, wrongScopeDenied: null };
+  }
+  const mod = await import(pathToFileURL(helper).href) as {
+    probeLiveArmRecovery(input: {
+      sessionFile: string;
+      cwd: string;
+      seedText: string;
+    }): Promise<RecoveryCaseResult>;
+  };
+  const seedText = input.scenario.sourceEntries.find((entry) => entry.role === "tool")?.text ?? "";
+  return mod.probeLiveArmRecovery({
+    sessionFile: input.sessionFile,
+    cwd: input.workspaceDir,
+    seedText,
+  });
+}
+
+export function pairedSuccessFromAttempts(pairs: readonly PairAttempts[]): {
+  pairs: number;
+  clusters: number;
+  meanDelta: number;
+  discordance: Discordance;
+  ci95: [number, number] | null;
+} {
+  if (!Array.isArray(pairs)) failInput("pairs");
+  const rows = pairs
+    .filter((pair) => pair.B0.status !== "not-run" && pair.B2.status !== "not-run")
+    .map((pair) => ({
+      clusterId: pair.clusterId,
+      baseline: pair.B0.success,
+      candidate: pair.B2.success,
+    }));
+  if (rows.length === 0) {
+    return {
+      pairs: 0,
+      clusters: 0,
+      meanDelta: 0,
+      discordance: { bothPass: 0, baselineOnly: 0, candidateOnly: 0, bothFail: 0 },
+      ci95: null,
+    };
+  }
+  return summarizePairedSuccess(rows, PAIRED_SUCCESS_BOOTSTRAP);
+}
+
+export function scoreLiveArtifacts(input: {
+  scenario: Scenario;
+  workspaceDir: string;
+}): ArtifactCoverage {
+  const scenario = validateScenario(input.scenario);
+  if (typeof input.workspaceDir !== "string" || input.workspaceDir.length === 0) failInput("workspaceDir");
+  const oracle: ArtifactOracle[] = [];
+  const artifacts: Record<string, string> = {};
+  for (const assertion of scenario.assertions) {
+    if (assertion.kind === "file-equals") {
+      oracle.push({ path: assertion.path, expected: assertion.expected });
+      const path = join(input.workspaceDir, assertion.path);
+      if (existsSync(path)) artifacts[assertion.path] = readFileSync(path, "utf8");
+    } else if (assertion.kind === "file-unchanged") {
+      oracle.push({ path: assertion.path, sha256: assertion.originalSha256 });
+      const path = join(input.workspaceDir, assertion.path);
+      if (existsSync(path)) artifacts[assertion.path] = sha256Utf8(readFileSync(path, "utf8"));
+    }
+  }
+  return scoreArtifactCoverage({ artifacts, oracle });
+}
+
+export function mergeArtifactCoverage(rows: readonly ArtifactCoverage[]): ArtifactCoverage & {
+  status: "not-tested" | "passed" | "failed";
+} {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { covered: 0, total: 0, missing: [], ok: false, status: "not-tested" };
+  }
+  const missing = rows.flatMap((row) => row.missing);
+  const covered = rows.reduce((sum, row) => sum + row.covered, 0);
+  const total = rows.reduce((sum, row) => sum + row.total, 0);
+  const ok = missing.length === 0;
+  return { covered, total, missing, ok, status: ok ? "passed" : "failed" };
+}
+
+function compactionSummary(records: readonly SmallRunRecord[]): {
+  attempted: number;
+  withEntry: number;
+  fromHookTrue: number;
+  fromHookFalse: number;
+  cancelled: number;
+  tooSmall: number;
+  timeout: number;
+  rpc: number;
+  errors: Array<{
+    pairId: string;
+    arm: SmallArm;
+    piReason: CompactionPiReason | null;
+    error: string | null;
+    fromHook: boolean | null;
+    count: number;
+  }>;
+} {
+  let attempted = 0;
+  let withEntry = 0;
+  let fromHookTrue = 0;
+  let fromHookFalse = 0;
+  let cancelled = 0;
+  let tooSmall = 0;
+  let timeout = 0;
+  let rpc = 0;
+  const errors: Array<{
+    pairId: string;
+    arm: SmallArm;
+    piReason: CompactionPiReason | null;
+    error: string | null;
+    fromHook: boolean | null;
+    count: number;
+  }> = [];
+  for (const record of records) {
+    const compaction = record.compaction;
+    if (!compaction?.attempted) continue;
+    attempted += 1;
+    if ((compaction.count ?? 0) > 0) withEntry += 1;
+    if (compaction.fromHook === true) fromHookTrue += 1;
+    if (compaction.fromHook === false) fromHookFalse += 1;
+    if (compaction.piReason === "cancelled") cancelled += 1;
+    if (compaction.piReason === "too-small") tooSmall += 1;
+    if (compaction.piReason === "timeout") timeout += 1;
+    if (compaction.piReason === "rpc") rpc += 1;
+    if (compaction.ok !== true || compaction.error) {
+      errors.push({
+        pairId: record.pairId,
+        arm: record.arm,
+        piReason: compaction.piReason ?? null,
+        error: compaction.error ?? null,
+        fromHook: compaction.fromHook,
+        count: compaction.count,
+      });
+    }
+  }
+  return { attempted, withEntry, fromHookTrue, fromHookFalse, cancelled, tooSmall, timeout, rpc, errors };
+}
+
+function provenanceCounts(scenarios: readonly Scenario[]): Record<string, number> {
+  const counts: Record<string, number> = { "real-independent": 0, "adapted-real": 0, synthetic: 0 };
+  for (const scenario of scenarios) {
+    counts[scenario.provenance] = (counts[scenario.provenance] ?? 0) + 1;
+  }
+  return counts;
+}
+
+function canaryExtras(input: {
+  productRecovery: RecoverySummary;
+  liveArmRecovery: RecoverySummary | null;
+  artifact: ArtifactCoverage & { status: "not-tested" | "passed" | "failed" };
+  paired: ReturnType<typeof pairedSuccessFromAttempts>;
+  compaction: ReturnType<typeof compactionSummary>;
+  efficiency: ReturnType<typeof pairedEfficiency>;
+  itt: ReturnType<typeof ittUsageTotals>;
+  toolsEnabled: boolean;
+}): Record<string, string> {
+  const { productRecovery, liveArmRecovery, artifact, paired, compaction, efficiency, itt, toolsEnabled } = input;
+  return {
+    recoveryDefinition: "C1-product-hooks",
+    recoveryLiveArm: "false",
+    productRecoveryStatus: productRecovery.status,
+    productRecoveryEligible: String(productRecovery.eligible),
+    productRecoveryAttempted: String(productRecovery.attempted),
+    productRecoveryPassed: String(productRecovery.passed),
+    productRecoveryPassRate: productRecovery.passRate === null ? "null" : String(productRecovery.passRate),
+    liveArmRecoveryStatus: liveArmRecovery?.status ?? "not-tested",
+    liveArmRecoveryAttempted: String(liveArmRecovery?.attempted ?? 0),
+    liveArmRecoveryPassed: String(liveArmRecovery?.passed ?? 0),
+    artifactStatus: artifact.status,
+    artifactCovered: String(artifact.covered),
+    artifactTotal: String(artifact.total),
+    discordanceBothPass: String(paired.discordance.bothPass),
+    discordanceBaselineOnly: String(paired.discordance.baselineOnly),
+    discordanceCandidateOnly: String(paired.discordance.candidateOnly),
+    discordanceBothFail: String(paired.discordance.bothFail),
+    pairedSuccessMeanDelta: String(paired.meanDelta),
+    pairedSuccessClusters: String(paired.clusters),
+    pairedSuccessCi95: paired.ci95 === null ? "null" : `${paired.ci95[0]},${paired.ci95[1]}`,
+    compactionAttempted: String(compaction.attempted),
+    compactionWithEntry: String(compaction.withEntry),
+    compactionFromHookTrue: String(compaction.fromHookTrue),
+    compactionFromHookFalse: String(compaction.fromHookFalse),
+    compactionCancelled: String(compaction.cancelled),
+    compactionTooSmall: String(compaction.tooSmall),
+    medianTaskInputDelta: efficiency.medianTaskInputDelta === null ? "null" : String(efficiency.medianTaskInputDelta),
+    medianWallTimeDelta: efficiency.medianWallTimeDelta === null ? "null" : String(efficiency.medianWallTimeDelta),
+    medianCompactWaitDelta: efficiency.medianCompactWaitDelta === null ? "null" : String(efficiency.medianCompactWaitDelta),
+    ittB0LogicalInput: itt.B0.logicalInput === null ? "null" : String(itt.B0.logicalInput),
+    ittB2LogicalInput: itt.B2.logicalInput === null ? "null" : String(itt.B2.logicalInput),
+    toolsEnabled: String(toolsEnabled),
+  };
+}
+
 export function median(values: readonly number[]): number | null {
   if (!Array.isArray(values) || values.length === 0) return null;
   const sorted = [...values].filter((value) => typeof value === "number" && Number.isFinite(value)).sort((a, b) => a - b);
@@ -585,20 +841,34 @@ export function median(values: readonly number[]): number | null {
   return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
 }
 
+function toTaskUsage(row: ArmRequestUsage): TaskRequestUsage {
+  return {
+    requestId: row.requestId,
+    sessionId: row.sessionId ?? "session",
+    phase: row.phase,
+    input: row.input,
+    cacheRead: row.cacheRead,
+    cacheWrite: row.cacheWrite,
+    output: row.output,
+    inputSemantics: declaredInputSemantics(row.inputSemantics),
+    elapsedMs: row.elapsedMs ?? 0,
+  };
+}
+
+function scoredUsage(usage: readonly ArmRequestUsage[]): ArmRequestUsage[] {
+  return usage.filter((row) => row.phase !== "compact");
+}
+
 function taskInputTotal(usage: readonly ArmRequestUsage[]): number | null {
-  let total = 0;
-  for (const row of usage) {
-    if (row.input === null || !Number.isFinite(row.input)) return null;
-    total += row.input;
-    if (row.cacheRead !== null) total += row.cacheRead;
-    if (row.cacheWrite !== null) total += row.cacheWrite;
-  }
-  return total;
+  const scored = scoredUsage(usage);
+  if (scored.length === 0) return 0;
+  return totalTaskUsage(scored.map(toTaskUsage)).logicalInput;
 }
 
 export function pairedEfficiency(records: readonly SmallRunRecord[]): {
   medianTaskInputDelta: number | null;
   medianWallTimeDelta: number | null;
+  medianCompactWaitDelta: number | null;
 } {
   if (!Array.isArray(records)) failInput("records");
   const byPair = new Map<string, { B0?: SmallRunRecord; B2?: SmallRunRecord }>();
@@ -612,6 +882,7 @@ export function pairedEfficiency(records: readonly SmallRunRecord[]): {
   }
   const inputDeltas: number[] = [];
   const wallDeltas: number[] = [];
+  const compactDeltas: number[] = [];
   for (const pair of byPair.values()) {
     if (!pair.B0 || !pair.B2) continue;
     if (pair.B0.attempt.status !== "completed" || pair.B2.attempt.status !== "completed") continue;
@@ -623,11 +894,46 @@ export function pairedEfficiency(records: readonly SmallRunRecord[]): {
     if (pair.B0.wallTimeMs > 0 && pair.B2.wallTimeMs > 0) {
       wallDeltas.push((pair.B2.wallTimeMs - pair.B0.wallTimeMs) / pair.B0.wallTimeMs);
     }
+    const baselineWait = pair.B0.compactWaitMs ?? 0;
+    const candidateWait = pair.B2.compactWaitMs ?? 0;
+    if (baselineWait > 0) {
+      compactDeltas.push((candidateWait - baselineWait) / baselineWait);
+    }
   }
   return {
     medianTaskInputDelta: median(inputDeltas),
     medianWallTimeDelta: median(wallDeltas),
+    medianCompactWaitDelta: median(compactDeltas),
   };
+}
+
+export function ittUsageTotals(records: readonly SmallRunRecord[]): {
+  B0: { arms: number; wallTimeMs: number; compactWaitMs: number; logicalInput: number | null };
+  B2: { arms: number; wallTimeMs: number; compactWaitMs: number; logicalInput: number | null };
+} {
+  if (!Array.isArray(records)) failInput("records");
+  const empty = { arms: 0, wallTimeMs: 0, compactWaitMs: 0, logicalInput: 0 as number | null };
+  const totals = { B0: { ...empty }, B2: { ...empty } };
+  const usage: { B0: ArmRequestUsage[]; B2: ArmRequestUsage[] } = { B0: [], B2: [] };
+  for (const record of records) {
+    if (record.arm !== "B0" && record.arm !== "B2") continue;
+    if (record.attempt.status === "not-run") continue;
+    if (record.arm === "B0") {
+      totals.B0.arms += 1;
+      totals.B0.wallTimeMs += record.wallTimeMs;
+      totals.B0.compactWaitMs += record.compactWaitMs ?? 0;
+      usage.B0.push(...record.usage);
+    } else {
+      totals.B2.arms += 1;
+      totals.B2.wallTimeMs += record.wallTimeMs;
+      totals.B2.compactWaitMs += record.compactWaitMs ?? 0;
+      usage.B2.push(...record.usage);
+    }
+  }
+  for (const arm of ["B0", "B2"] as const) {
+    totals[arm].logicalInput = usage[arm].length === 0 ? 0 : totalTaskUsage(usage[arm].map(toTaskUsage)).logicalInput;
+  }
+  return totals;
 }
 
 export function loadHostPatchSha256(cwd: string, read: (path: string) => Uint8Array = (path) => readFileSync(path)): string {
@@ -679,11 +985,25 @@ export function preflightSmallRun(input: {
 
 export interface ArmRequestUsage {
   requestId: string;
+  sessionId?: string;
+  phase: RequestUsagePhase;
   input: number | null;
   cacheRead: number | null;
   cacheWrite: number | null;
   output: number | null;
-  elapsedMs: number;
+  inputSemantics: InputSemantics;
+  elapsedMs: number | null;
+}
+
+export type CompactionPiReason = "cancelled" | "too-small" | "timeout" | "rpc";
+
+export interface CompactionObservation {
+  attempted: boolean;
+  ok: boolean | null;
+  fromHook: boolean | null;
+  count: number;
+  error?: string | null;
+  piReason?: CompactionPiReason | null;
 }
 
 export interface ArmExecutionResult {
@@ -696,6 +1016,8 @@ export interface ArmExecutionResult {
   cacheState: CacheState;
   monetaryCost: number | null;
   wallTimeMs: number;
+  compactWaitMs?: number;
+  compaction?: CompactionObservation;
 }
 
 export interface ArmExecutor {
@@ -719,6 +1041,8 @@ export interface SmallRunRecord {
   monetaryCost: number | null;
   cacheState: CacheState;
   wallTimeMs: number;
+  compactWaitMs?: number;
+  compaction?: CompactionObservation;
 }
 
 export function resultPairKey(record: Pick<SmallRunRecord, "pairId" | "repeat" | "arm">): string {
@@ -894,6 +1218,7 @@ function emptyAttemptRecord(input: {
     monetaryCost: null,
     cacheState: "unknown",
     wallTimeMs: 0,
+    compactWaitMs: 0,
   };
 }
 
@@ -934,7 +1259,23 @@ export async function runLiveCanary(input: {
   const brokerUrl = env.PCR_BROKER_URL;
   const toolsEnabled = input.preflight.toolsEnabledAllowed;
   const docsPath = resolve(input.cwd, "docs/reports/lean-v4-result.md");
-  const write = (run: SmallRunManifest, extras: Record<string, string> = {}) => {
+  const write = (
+    run: SmallRunManifest,
+    extras: Record<string, string> = {},
+    fields: {
+      productRecovery?: RecoverySummary | null;
+      productRecoveryCases?: RecoveryCaseResult[];
+      liveArmRecovery?: RecoverySummary | null;
+      liveArmRecoveryCases?: RecoveryCaseResult[];
+      artifact?: ArtifactCoverage & { status: "not-tested" | "passed" | "failed" };
+      pairedSuccess?: ReturnType<typeof pairedSuccessFromAttempts>;
+      compaction?: ReturnType<typeof compactionSummary>;
+      efficiency?: ReturnType<typeof pairedEfficiency> & { itt: ReturnType<typeof ittUsageTotals> };
+      environment?: Record<string, unknown>;
+      provenanceCounts?: Record<string, number>;
+    } = {},
+  ) => {
+    const productRecovery = fields.productRecovery ?? null;
     const report = {
       schemaVersion: 1,
       purpose: "personal-canary-not-publication",
@@ -947,9 +1288,47 @@ export async function runLiveCanary(input: {
       publicationClaim: false,
       widelyBetterThanNative: false,
       sufficientToProve2pctNonInferiority: false,
-      platform: { os: process.platform, node: process.version },
-      isolationReason: input.preflight.isolationReason,
-      toolsEnabledAllowed: toolsEnabled,
+      environment: fields.environment ?? {
+        os: process.platform,
+        node: process.version,
+        isolationReason: input.preflight.isolationReason,
+        toolsEnabledAllowed: toolsEnabled,
+      },
+      provenanceCounts: fields.provenanceCounts ?? {},
+      reader: fields.pairedSuccess ?? null,
+      artifact: fields.artifact ?? null,
+      productRecovery: productRecovery === null ? null : {
+        definition: "C1-product-hooks",
+        liveArm: false,
+        ...productRecovery,
+        cases: fields.productRecoveryCases ?? [],
+      },
+      liveArmRecovery: fields.liveArmRecovery
+        ? {
+          definition: "C2-live-arm-after-compact",
+          liveArm: true,
+          ...fields.liveArmRecovery,
+          cases: fields.liveArmRecoveryCases ?? [],
+        }
+        : {
+          definition: "C2-live-arm-after-compact",
+          liveArm: true,
+          eligible: 0,
+          attempted: 0,
+          passed: 0,
+          passRate: null,
+          status: "not-tested",
+          cases: fields.liveArmRecoveryCases ?? [],
+        },
+      recovery: productRecovery === null ? null : {
+        uses: "C1-product-hooks",
+        liveArm: false,
+        note: "productRecovery is harness fixtures, not live-arm checkpoint recovery",
+        ...productRecovery,
+      },
+      pairedSuccess: fields.pairedSuccess ?? null,
+      compaction: fields.compaction ?? null,
+      efficiency: fields.efficiency ?? null,
       extras,
     };
     writeCanaryArtifacts({
@@ -959,6 +1338,9 @@ export async function runLiveCanary(input: {
       markdown: buildCanaryMarkdown(run, extras),
       docsPath,
     });
+    if (run.blockedReason) {
+      writeFileSync(resolve(input.outDir, "BLOCKED.md"), `${buildCanaryMarkdown(run, extras)}\n`);
+    }
   };
   const blocked = (reason: string): SmallRunManifest => {
     const run: SmallRunManifest = {
@@ -973,7 +1355,6 @@ export async function runLiveCanary(input: {
     };
     write(run);
     if (!existsSync(resolve(input.outDir, "results.jsonl"))) writeFileSync(resolve(input.outDir, "results.jsonl"), "");
-    writeFileSync(resolve(input.outDir, "BLOCKED.md"), `${buildCanaryMarkdown(run)}\n`);
     return run;
   };
   if (typeof brokerUrl !== "string" || !brokerUrl.startsWith("http://127.0.0.1")) {
@@ -1013,6 +1394,9 @@ export async function runLiveCanary(input: {
   write(running, { phase: "running" });
   const allRecords: SmallRunRecord[] = [];
   const pairs: PairAttempts[] = [];
+  const artifactRows: ArtifactCoverage[] = [];
+  const liveArmRecoveryCases: RecoveryCaseResult[] = [];
+  let liveArmProbed = false;
   let armRuns = 0;
   let halted = false;
   const workRoot = join(input.outDir, "work");
@@ -1045,12 +1429,21 @@ export async function runLiveCanary(input: {
     const seedWorkspaceDir = join(pairRoot, "seed-workspace");
     const seedSessionFile = join(pairRoot, "seed.jsonl");
     materializeWorkspace(seedWorkspaceDir, scenario.workspaceFiles);
-    seedScenarioSession({
-      sessionFile: seedSessionFile,
-      cwd: seedWorkspaceDir,
-      scenario,
-      providerModel: input.config.providerModel,
-    });
+    if (scenario.sourceEntries.some((entry) => entry.role === "tool")) {
+      writeSessionHeader({
+        sessionFile: seedSessionFile,
+        cwd: seedWorkspaceDir,
+        scenario,
+        providerModel: input.config.providerModel,
+      });
+    } else {
+      seedScenarioSession({
+        sessionFile: seedSessionFile,
+        cwd: seedWorkspaceDir,
+        scenario,
+        providerModel: input.config.providerModel,
+      });
+    }
     const executed = await executePlannedPair({
       scenario,
       planned: row,
@@ -1065,12 +1458,37 @@ export async function runLiveCanary(input: {
       appendResultLine(resultsPath, record);
     }
     pairs.push(executed.pair);
+    if (!liveArmProbed && scenario.mode === "reader" && scenario.sourceEntries.some((entry) => entry.role === "tool")) {
+      const b2Home = executed.homes.find((home) => home.arm === "B2");
+      const b2Record = executed.records.find((record) => record.arm === "B2");
+      if (b2Home && b2Record?.attempt.status === "completed" && b2Record.compaction?.attempted === true) {
+        liveArmRecoveryCases.push(await probeLiveArmRecoveryCase({
+          cwd: input.cwd,
+          scenario,
+          sessionFile: b2Home.sessionFile,
+          workspaceDir: b2Home.cwd,
+        }));
+        liveArmProbed = true;
+      }
+    }
+    if (scenario.mode === "coding") {
+      const candidate = executed.homes.find((home) => home.arm === "B2");
+      if (candidate && executed.pair.B2.status === "completed") {
+        artifactRows.push(scoreLiveArtifacts({ scenario, workspaceDir: candidate.cwd }));
+      }
+    }
     if (executed.halted) halted = true;
   }
   const summary = summarizeAttempts(pairs);
-  const recovery = scoreRecoveryCoverage({ eligible: 5, trials: [] });
-  const counts = recoveryCounts(recovery);
+  const productRecoveryCases = loadProductionRecoveryRows(input.cwd);
+  const productRecovery = summarizeRecovery(productRecoveryCases);
+  const counts = recoveryCountsFromSummary(productRecovery);
+  const liveArmRecovery = liveArmRecoveryCases.length === 0 ? null : summarizeRecovery(liveArmRecoveryCases);
+  const artifact = mergeArtifactCoverage(artifactRows);
+  const paired = pairedSuccessFromAttempts(pairs);
+  const compaction = compactionSummary(allRecords);
   const efficiency = pairedEfficiency(allRecords);
+  const itt = ittUsageTotals(allRecords);
   const decision = decideCanary({
     integrityFailures: halted ? 1 : 0,
     recoveryTested: counts.recoveryTested,
@@ -1091,11 +1509,32 @@ export async function runLiveCanary(input: {
     decision,
     summary,
   };
-  write(run, {
-    recoveryStatus: recovery.status,
-    medianTaskInputDelta: efficiency.medianTaskInputDelta === null ? "null" : String(efficiency.medianTaskInputDelta),
-    medianWallTimeDelta: efficiency.medianWallTimeDelta === null ? "null" : String(efficiency.medianWallTimeDelta),
-    toolsEnabled: String(toolsEnabled),
+  const extras = canaryExtras({
+    productRecovery,
+    liveArmRecovery,
+    artifact,
+    paired,
+    compaction,
+    efficiency,
+    itt,
+    toolsEnabled,
+  });
+  write(run, extras, {
+    productRecovery,
+    productRecoveryCases,
+    liveArmRecovery,
+    liveArmRecoveryCases,
+    artifact,
+    pairedSuccess: paired,
+    compaction,
+    efficiency: { ...efficiency, itt },
+    environment: {
+      os: process.platform,
+      node: process.version,
+      isolationReason: input.preflight.isolationReason,
+      toolsEnabledAllowed: toolsEnabled,
+    },
+    provenanceCounts: provenanceCounts(scenarios),
   });
   return run;
 }
@@ -1153,6 +1592,7 @@ export async function executePlannedPair(input: {
         monetaryCost: null,
         cacheState: "unknown",
         wallTimeMs: 0,
+        compactWaitMs: 0,
       });
       continue;
     }
@@ -1172,6 +1612,8 @@ export async function executePlannedPair(input: {
       monetaryCost: recordedMonetaryCost(executed.monetaryCost),
       cacheState: executed.cacheState,
       wallTimeMs: executed.wallTimeMs,
+      compactWaitMs: executed.compactWaitMs ?? 0,
+      ...(executed.compaction ? { compaction: executed.compaction } : {}),
     });
     if (executed.stopReason === "safety-stop") halt = true;
   }
