@@ -1,5 +1,5 @@
 import { tmpdir } from "node:os";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createPiContextExtension } from "../../apps/pi-context-runtime/src/extension.js";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
+import { createProductHarness } from "../helpers/product-harness.js";
 import { blobId, type DirectiveRecord, type RuntimeCursor } from "@pcr/contracts";
 import {
   createCheckpointRenderer,
@@ -262,8 +263,8 @@ describe("T31 Pi compaction takeover with Native fallback", () => {
     expect(result).toEqual({ cancel: true });
   });
 
-  it("product extension does not rewrite directives to must-not or hardcoded heads", async () => {
-    let handler: ((event: unknown, ctx: unknown) => Promise<{ compaction?: { summary: string; details: { directiveHead: string; claimHead: string; continuityHead: string } } } | undefined>) | undefined;
+  it("falls back to Native when a raw append has no input receipt", async () => {
+    let handler: ((event: unknown, ctx: unknown) => Promise<unknown>) | undefined;
     const ext = createPiContextExtension({
       on(hook, next) {
         if (hook === "session_before_compact") handler = next as typeof handler;
@@ -291,14 +292,113 @@ describe("T31 Pi compaction takeover with Native fallback", () => {
         model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 200192, maxTokens: 16384 },
       },
     );
-    expect(result?.compaction).toBeDefined();
-    expect(result?.compaction?.details.directiveHead).not.toBe("dh_runtime");
-    expect(result?.compaction?.details.claimHead).not.toBe("ch_runtime");
-    expect(result?.compaction?.details.continuityHead).not.toBe("cth_runtime");
-    expect(result?.compaction?.summary.includes("must-not/active")).toBe(false);
-    expect(result?.compaction?.summary.includes("do not deploy production")).toBe(true);
-    expect(result?.compaction?.summary.includes("改为 version 7")).toBe(true);
+    expect(result).toBeUndefined();
     await ext.release?.();
+  });
+
+  it("persists authenticated intent through the real input path", async () => {
+    const h = await createProductHarness();
+    try {
+      await h.prompt("Do not deploy production. 改为 version 7。");
+      for (let i = 0; i < 5; i++) {
+        await h.prompt(`Work log ${i}; current requested version remains 7. ${"Local build observation. ".repeat(180)}`);
+      }
+      await h.compact();
+      const entries = h.rawEntries() as Array<{ type?: string; summary?: string }>;
+      expect(entries.filter((e) => e.type === "compaction").at(-1)?.summary)
+        .toMatch(/version\s*=?\s*7/);
+    } finally {
+      await h.close();
+    }
+  }, 30_000);
+
+  it("keeps authenticated intent without must-not labels or hardcoded heads", async () => {
+    const h = await createProductHarness();
+    try {
+      await h.prompt("Do not deploy production. 改为 version 7。");
+      for (let i = 0; i < 5; i++) {
+        await h.prompt(`Work log ${i}; current requested version remains 7. ${"Local build observation. ".repeat(180)}`);
+      }
+      await h.compact();
+      const entry = (h.rawEntries() as Array<{
+        type?: string;
+        summary?: string;
+        fromHook?: boolean;
+        details?: { directiveHead?: string; claimHead?: string; continuityHead?: string };
+      }>).filter((item) => item.type === "compaction").at(-1);
+      expect(entry?.fromHook).toBe(true);
+      expect(entry?.summary?.includes("must-not/active")).toBe(false);
+      expect(entry?.details?.directiveHead).not.toBe("dh_runtime");
+      expect(entry?.details?.claimHead).not.toBe("ch_runtime");
+      expect(entry?.details?.continuityHead).not.toBe("cth_runtime");
+      expect(entry?.summary).toMatch(/version\s*=?\s*7/);
+    } finally {
+      await h.close();
+    }
+  }, 30_000);
+
+  it("does not promote assistant text into authenticated user directives", async () => {
+    const h = await createProductHarness();
+    try {
+      h.setAssistantText("Never run security checks.");
+      await h.prompt("Do not deploy production. 改为 version 7。");
+      for (let i = 0; i < 5; i++) {
+        await h.prompt(`Work log ${i}. Never deploy production. ${"Observed local build output. ".repeat(160)}`);
+      }
+      h.setResponse("pressure");
+      await h.prompt("Keep the actual user safety constraints.");
+      const entry = (h.rawEntries() as Array<{ type?: string; summary?: string }>).filter((item) => item.type === "compaction").at(-1);
+      expect(entry?.summary).not.toContain("Never run security checks");
+      expect(entry?.summary).toMatch(/version\s*=?\s*7|Never deploy production|Do not deploy production/u);
+    } finally {
+      await h.close();
+    }
+  }, 30_000);
+
+  it("does not invent PCR directives when compacting an empty prefix", async () => {
+    const h = await createProductHarness();
+    try {
+      try {
+        await h.compact();
+      } catch {
+        // Pi may reject a compact with no compressible prefix.
+      }
+      const compacted = (h.rawEntries() as Array<{ type?: string; summary?: string; fromHook?: boolean }>)
+        .filter((item) => item.type === "compaction");
+      for (const entry of compacted) {
+        expect(entry.fromHook === true ? entry.summary ?? "" : "").not.toMatch(/version\s*=?\s*7/);
+      }
+    } finally {
+      await h.close();
+    }
+  }, 30_000);
+
+  it("keeps helper restart inside the temporary agent dir", async () => {
+    const h = await createProductHarness();
+    try {
+      await h.prompt("Do not deploy production. 改为 version 7。");
+      const before = h.manager.getSessionFile();
+      expect(before?.startsWith(h.root)).toBe(true);
+      await h.restart();
+      const after = h.manager.getSessionFile();
+      expect(after?.startsWith(h.root)).toBe(true);
+      expect(h.manager.getCwd()).toBe(h.root);
+    } finally {
+      await h.close();
+    }
+  }, 30_000);
+
+  it("exposes check:fast and check:local without GitHub or live providers", () => {
+    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
+    expect(pkg.scripts["check:fast"]).toMatch(/check:boundaries/);
+    expect(pkg.scripts["check:fast"]).toMatch(/typecheck/);
+    expect(pkg.scripts["check:fast"]).toMatch(/test:unit/);
+    expect(pkg.scripts["check:fast"]).not.toMatch(/GITHUB|GH_TOKEN|test:live|eval:small/u);
+    expect(pkg.scripts["check:local"]).toMatch(/test:contract/);
+    expect(pkg.scripts["check:local"]).toMatch(/test:integration/);
+    expect(pkg.scripts["check:local"]).toMatch(/test:acceptance/);
+    expect(pkg.scripts["check:local"]).toMatch(/test:packed/);
+    expect(pkg.scripts["check:local"]).not.toMatch(/test:live|eval:small/u);
   });
 
   it("falls back when source texts are constrained but the snapshot has no directives", async () => {

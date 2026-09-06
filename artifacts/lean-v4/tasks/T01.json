@@ -1,0 +1,64 @@
+{
+  "taskId": "T01",
+  "baseCommit": "bb7aea1b88f6645fb8e4f0b930a4087630e7a679",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "tests/compat/pi-version-contract.test.ts",
+      "reason": "Caller asserted the duplicated min/current CI axis that T01 collapses."
+    },
+    {
+      "path": "tests/ci/protection.test.ts",
+      "reason": "Caller forbade continue-on-error in required.yml; advisory protection must be listed separately."
+    },
+    {
+      "path": "reference/ci-matrix.yml",
+      "reason": "Lock file still listed min as a blocking lane after collapsing the duplicate matrix axis."
+    },
+    {
+      "path": "scripts/ci/verify-protection.mjs",
+      "reason": "CLI previously called GitHub whenever invoked; check:fast/local must remain tokenless."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run tests/tasks/t31.test.ts",
+      "exit": 0,
+      "tests": "15 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/acceptance/controlled-host-compaction.test.ts --config vitest.acceptance.config.ts",
+      "exit": 0,
+      "tests": "6 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    },
+    {
+      "command": "pnpm test:packed",
+      "exit": 0,
+      "tests": "19 passed"
+    }
+  ],
+  "assertions": [
+    "raw append without receipt falls back to Native",
+    "session.prompt persists version 7 through real compaction",
+    "assistant text cannot impersonate user directives",
+    "empty prefix compact does not invent PCR version=7",
+    "helper restart stays in temporary agent dir",
+    "check:fast has no GitHub or live provider",
+    "strict packed install still loads patched host and rejects stock Pi"
+  ],
+  "uncovered": [
+    "GitHub Branch Protection remains unverified; advisory job reports it and is not a product gate",
+    "createProductHarness still uses the current full-runtime register() path; T11 must switch default to ingress"
+  ],
+  "hashes": {
+    "tests/helpers/product-harness.ts": "3b7ba70cb596fecae98a3816717ed634f1a0113782a37318176e149a301359d4",
+    "tests/tasks/t31.test.ts": "62205e97c3f4f76c18b98e81cdda4a96a83296e893067e18e0fcabbe6d19872f",
+    "tests/acceptance/controlled-host-compaction.test.ts": "44bd6bff6e1cd77ae8b7b741063c6cb9b803945cd55afdc4855486aad0c63c40",
+    "package.json": "7862f32b2469e0c9ddc5ef4a78d24e0f77081c8596db44e680d4f8bbc88f813c"
+  }
+}

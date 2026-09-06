@@ -83,9 +83,10 @@ describe("Pi public API boundary", () => {
     expect(loadToolchainLock().patchedHost).toBe("0.84.4+pcr-ingress-metadata-v1");
   });
 
-  it("keeps the compatibility workflow covering min/current/latest lanes", () => {
+  it("keeps the compatibility workflow covering current/latest lanes without duplicating min", () => {
     const workflow = readFileSync(".github/workflows/compatibility.yml", "utf8");
-    expect(workflow).toMatch(/lane: \[min, current\]/);
+    expect(workflow).toMatch(/lane: \[current\]/);
+    expect(workflow).not.toMatch(/lane: \[min, current\]/);
     expect(workflow).toMatch(/lane: latest/);
     const matrix = readFileSync("reference/ci-matrix.yml", "utf8");
     expect(matrix).toMatch(/min: "0\.84\.4"/);

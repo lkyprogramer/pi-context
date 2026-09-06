@@ -15,7 +15,6 @@ modes:
   - tui
 packedInstall: true
 blockingLanes:
-  - min
   - current
 advisoryLanes:
   - latest

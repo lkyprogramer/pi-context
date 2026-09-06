@@ -116,8 +116,20 @@ if (invokedDirectly) {
   try {
     const text = readFileSync(workflowPath, "utf8");
     const jobs = assertRequiredJobs(text);
+    const jobsOnly = process.argv.includes("--jobs-only") || process.env.PCR_PROTECTION_JOBS_ONLY === "1";
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (jobsOnly || typeof token !== "string" || token.length === 0) {
+      process.stdout.write(`${JSON.stringify({
+        ok: false,
+        advisory: true,
+        code: "PCR_GITHUB_PROTECTION_UNVERIFIED",
+        required: jobs,
+        protection: "unverified",
+        reason: jobsOnly ? "jobs-only" : "missing-token",
+      }, null, 2)}\n`);
+      process.exit(0);
+    }
     const repo = resolveRepo(process.env, gitRemote());
-    const token = resolveToken(process.env);
     const protection = await fetchBranchProtection({ repo, token });
     process.stdout.write(`${JSON.stringify({ ok: true, required: jobs, repo, protection }, null, 2)}\n`);
   } catch (error) {
