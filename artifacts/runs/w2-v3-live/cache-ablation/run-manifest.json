@@ -1,0 +1,217 @@
+{
+  "schemaVersion": 3,
+  "runId": "w2-v3-cache-ablation",
+  "lane": "cache-metadata-ablation",
+  "status": "completed",
+  "publicationClaim": false,
+  "generatedAt": "2026-09-04T17:59:52.754Z",
+  "startedAt": "2026-09-04T17:59:52.754Z",
+  "completedAt": "2026-09-04T18:00:18.875Z",
+  "commit": "5ed63c4e3643201bd8e637945ca514dbbb41e503",
+  "dirty": true,
+  "provider": {
+    "name": "openclaw",
+    "model": "openclaw/Qwen3.8-27B-WORK",
+    "modelConfigSha256": "f9d547544fe88a7e1677b37db6f9c10d6e4b05d887f706c715e6839c538699e9",
+    "cacheMetadataContract": "provider-usage"
+  },
+  "environment": {
+    "nodeVersion": "v22.19.0",
+    "expectedNode": "v22.19.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "piCli": "/Users/luo/Documents/github/pi-context/node_modules/@earendil-works/pi-coding-agent/dist/cli.js",
+    "extensionPath": "/Users/luo/Documents/github/pi-context/apps/pi-context-runtime/dist/extension.js",
+    "liveRequested": true
+  },
+  "protocol": {
+    "coldThenWarm": true,
+    "serialArms": true,
+    "sameProvider": true,
+    "sameModel": true,
+    "qualityGateBeforeCostRanking": true,
+    "layoutArms": [
+      "full-metadata",
+      "short-ref",
+      "no-heads",
+      "directory-first"
+    ]
+  },
+  "blocker": {
+    "code": "PCR_CACHE_COST_UNAVAILABLE",
+    "message": "Provider did not expose a complete price/cache-discount snapshot; monetary cost remains null."
+  },
+  "qualityHardGate": true,
+  "winner": null,
+  "samples": [
+    {
+      "arm": "full-metadata",
+      "quality": 1,
+      "cacheReadTokens": 838,
+      "cacheWriteTokens": 0,
+      "uncachedInputTokens": 240,
+      "eligiblePrefixTokens": null,
+      "firstDifferentSection": "active-turn",
+      "billedCost": null,
+      "metricSources": {
+        "cacheReadTokens": "provider",
+        "cacheWriteTokens": "provider",
+        "uncachedInputTokens": "provider",
+        "eligiblePrefixTokens": "unavailable",
+        "billedCost": "unavailable"
+      },
+      "requests": [
+        {
+          "phase": "cold",
+          "inputTokens": 842,
+          "outputTokens": 390,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 842,
+          "providerUsageAvailable": true,
+          "assistantText": "Hi! It looks like you've sent me some structured text with metadata, identifiers, and directives, but I don't see an actual question or task for me to work on.\n\nHow can I help you today? If you have a coding task, a file to examine, or a question, feel free to let me know.",
+          "error": null
+        },
+        {
+          "phase": "warm",
+          "inputTokens": 240,
+          "outputTokens": 38,
+          "cacheReadTokens": 838,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 240,
+          "providerUsageAvailable": true,
+          "assistantText": "KEEP_STAGING_WINDOW",
+          "error": null
+        }
+      ],
+      "qualityReason": "warm assistant preserved KEEP_STAGING_WINDOW and did not suggest deployment"
+    },
+    {
+      "arm": "short-ref",
+      "quality": 1,
+      "cacheReadTokens": 804,
+      "cacheWriteTokens": 0,
+      "uncachedInputTokens": 251,
+      "eligiblePrefixTokens": null,
+      "firstDifferentSection": "active-turn",
+      "billedCost": null,
+      "metricSources": {
+        "cacheReadTokens": "provider",
+        "cacheWriteTokens": "provider",
+        "uncachedInputTokens": "provider",
+        "eligiblePrefixTokens": "unavailable",
+        "billedCost": "unavailable"
+      },
+      "requests": [
+        {
+          "phase": "cold",
+          "inputTokens": 482,
+          "outputTokens": 268,
+          "cacheReadTokens": 326,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 482,
+          "providerUsageAvailable": true,
+          "assistantText": "It looks like you've pasted a structured metadata/directive block, but there's no actual question or coding task for me to work on.\n\nIf you'd like help with something in the current workspace (`/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/pcr-cache-ablation-run-Li2kOz/short-ref/workspace`), just let me know what you need — reading files, editing code, running commands, etc.",
+          "error": null
+        },
+        {
+          "phase": "warm",
+          "inputTokens": 251,
+          "outputTokens": 37,
+          "cacheReadTokens": 804,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 251,
+          "providerUsageAvailable": true,
+          "assistantText": "KEEP_STAGING_WINDOW",
+          "error": null
+        }
+      ],
+      "qualityReason": "warm assistant preserved KEEP_STAGING_WINDOW and did not suggest deployment"
+    },
+    {
+      "arm": "no-heads",
+      "quality": 1,
+      "cacheReadTokens": 767,
+      "cacheWriteTokens": 0,
+      "uncachedInputTokens": 180,
+      "eligiblePrefixTokens": null,
+      "firstDifferentSection": "active-turn",
+      "billedCost": null,
+      "metricSources": {
+        "cacheReadTokens": "provider",
+        "cacheWriteTokens": "provider",
+        "uncachedInputTokens": "provider",
+        "eligiblePrefixTokens": "unavailable",
+        "billedCost": "unavailable"
+      },
+      "requests": [
+        {
+          "phase": "cold",
+          "inputTokens": 445,
+          "outputTokens": 237,
+          "cacheReadTokens": 326,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 445,
+          "providerUsageAvailable": true,
+          "assistantText": "Acknowledged. The exact quote is preserved and visible:\n\n**KEEP_STAGING_WINDOW**\n\nSnapshot `0123456789ab`, continuity `revision-0001`, evidence `blob_0123456789ab`, runbook `blob_abcdef012345` — noted. Awaiting next directive.",
+          "error": null
+        },
+        {
+          "phase": "warm",
+          "inputTokens": 180,
+          "outputTokens": 30,
+          "cacheReadTokens": 767,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 180,
+          "providerUsageAvailable": true,
+          "assistantText": "KEEP_STAGING_WINDOW",
+          "error": null
+        }
+      ],
+      "qualityReason": "warm assistant preserved KEEP_STAGING_WINDOW and did not suggest deployment"
+    },
+    {
+      "arm": "directory-first",
+      "quality": 1,
+      "cacheReadTokens": 804,
+      "cacheWriteTokens": 0,
+      "uncachedInputTokens": 166,
+      "eligiblePrefixTokens": null,
+      "firstDifferentSection": "active-turn",
+      "billedCost": null,
+      "metricSources": {
+        "cacheReadTokens": "provider",
+        "cacheWriteTokens": "provider",
+        "uncachedInputTokens": "provider",
+        "eligiblePrefixTokens": "unavailable",
+        "billedCost": "unavailable"
+      },
+      "requests": [
+        {
+          "phase": "cold",
+          "inputTokens": 482,
+          "outputTokens": 259,
+          "cacheReadTokens": 326,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 482,
+          "providerUsageAvailable": true,
+          "assistantText": "Acknowledged. The exact quote is preserved and visible:\n\n**KEEP_STAGING_WINDOW**\n\nCold probe complete. Ready for next instruction.",
+          "error": null
+        },
+        {
+          "phase": "warm",
+          "inputTokens": 166,
+          "outputTokens": 61,
+          "cacheReadTokens": 804,
+          "cacheWriteTokens": 0,
+          "uncachedInputTokens": 166,
+          "providerUsageAvailable": true,
+          "assistantText": "KEEP_STAGING_WINDOW",
+          "error": null
+        }
+      ],
+      "qualityReason": "warm assistant preserved KEEP_STAGING_WINDOW and did not suggest deployment"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,138 @@
+{
+  "lane": "natural-threshold",
+  "liveProvider": true,
+  "providerStarted": true,
+  "keepRecentTokens": 20000,
+  "reserveTokens": 16384,
+  "contextWindow": 200192,
+  "triggerThreshold": 183808,
+  "manualCompact": false,
+  "families": [
+    {
+      "family": "large-turn",
+      "providerStarted": true,
+      "triggered": false,
+      "armStates": {
+        "B0": {
+          "arm": "B0",
+          "state": "failed",
+          "ok": false,
+          "reasons": [
+            "host-auto-compact-missing"
+          ]
+        },
+        "B2": {
+          "arm": "B2",
+          "state": "failed",
+          "ok": false,
+          "reasons": [
+            "materialization-unbounded"
+          ]
+        }
+      },
+      "compactCount": 0,
+      "native": {
+        "turns": [
+          {
+            "turn": 0,
+            "ok": true,
+            "inputTokens": 2767,
+            "outputTokens": 597,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "billedTokens": 2767,
+            "stateTokens": null,
+            "compactCount": 0,
+            "reason": null,
+            "tokensBefore": null
+          }
+        ],
+        "compactions": [],
+        "continuation": "asked"
+      },
+      "pcr": {
+        "turns": [
+          {
+            "turn": 0,
+            "ok": true,
+            "inputTokens": 2777,
+            "outputTokens": 415,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "billedTokens": 2777,
+            "stateTokens": null,
+            "compactCount": 0,
+            "reason": null,
+            "tokensBefore": null
+          }
+        ],
+        "compactions": [],
+        "continuation": "asked"
+      }
+    },
+    {
+      "family": "tool-heavy",
+      "providerStarted": true,
+      "triggered": false,
+      "armStates": {
+        "B0": {
+          "arm": "B0",
+          "state": "failed",
+          "ok": false,
+          "reasons": [
+            "host-auto-compact-missing"
+          ]
+        },
+        "B2": {
+          "arm": "B2",
+          "state": "failed",
+          "ok": false,
+          "reasons": [
+            "materialization-unbounded"
+          ]
+        }
+      },
+      "compactCount": 0,
+      "native": {
+        "turns": [
+          {
+            "turn": 0,
+            "ok": true,
+            "inputTokens": 6276,
+            "outputTokens": 271,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "billedTokens": 6276,
+            "stateTokens": null,
+            "compactCount": 0,
+            "reason": null,
+            "tokensBefore": null
+          }
+        ],
+        "compactions": [],
+        "continuation": "asked"
+      },
+      "pcr": {
+        "turns": [
+          {
+            "turn": 0,
+            "ok": true,
+            "inputTokens": 6286,
+            "outputTokens": 499,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "billedTokens": 6286,
+            "stateTokens": null,
+            "compactCount": 0,
+            "reason": null,
+            "tokensBefore": null
+          }
+        ],
+        "compactions": [],
+        "continuation": "asked"
+      }
+    }
+  ],
+  "triggered": false,
+  "compactCount": 0
+}

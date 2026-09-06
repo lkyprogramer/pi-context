@@ -1,0 +1,160 @@
+{
+  "baseCommit": "ba25c24b4fe4ad05744b336d087f39ea645a3347",
+  "source": "integrated working tree, not a commit or release",
+  "publicationClaim": false,
+  "files": {
+    "apps/pi-context-runtime/src/composition-root.ts": "4f3784fcd97982a5c9bfbe8c2b354aeabfde6221b8d241669af77236d2f91b03",
+    "apps/pi-context-runtime/src/extension.ts": "4bee013409e030af41f28d6cff6f828ecff5775d0d4ef4a79d404fa85ad64bc3",
+    "packages/core/package.json": "f7e47ae1ea80ae93bfbf60312cc64bf5abecfc430fd7f20e5bf72a038091dbb2",
+    "packages/core/src/index.ts": "2d130b3217fd5cf7c34ad1b81d722e640061b9d29a9f330c0b48355d929c8a37",
+    "packages/pi-adapter/package.json": "7d1e66b1ae515a053b8e51ae73c19364126ff7e3b5e68832cadfd10a81a88f42",
+    "packages/pi-adapter/src/commands/context.ts": "fb15632413e8bcfcf4031ca886c186e200c9a2b9e22de29c1e01bec388c65f5e",
+    "packages/pi-adapter/src/tool-result-hook.ts": "bdcab1feed48a4d31661371b489db36121b7fe9a0c681256a2afa262c7c238b3",
+    "packages/pi-adapter/src/tools/read.ts": "0af78318faa7cab530dd69893991e733476821c3bbf2b6a5892247bd6f88bb41",
+    "packages/pi-adapter/src/tools/recall.ts": "48c5ed6c6468638d51b19b80dc4f9be06fee34a7f3e4008be684ddd53fdef36e",
+    "packages/pi-adapter/src/tools/search.ts": "02940dda2db53aea8d389a8de1cd4c071cb343fb62c8c3a3ef3385a99cb996f9",
+    "packages/pi-adapter/src/tools/status.ts": "ba8dbaf19ba698319ecd91e1612a6fdac1a2f2e9da644171d78191f9045182dd",
+    "packages/pi-adapter/src/user-input-hook.ts": "aa231186bdfcbc02f18c9880ac20cb33113abe7c54566066f1ae5b7ef70f6006",
+    "packages/storage-node/package.json": "963913ae7a963670e0f3f466395ae74c9afc4fccc68646b2869902f1991f5c1c",
+    "packages/storage-node/src/fts-index.ts": "9808ad51eccb802d074cc8ee6207d930a2b8a214348d40f3a0d7e3c3708f645c",
+    "packages/storage-node/src/state-store.ts": "44f42270e8f36dabfda5f3c402e8afcbabd2940579fae32aa25a62d32a680b57",
+    "scripts/pack-smoke.mjs": "9f87b96a5ecedb9e16b66695aeec16e1ffa3dc21344b1ab766a5619b758fcfe3",
+    "tests/acceptance/product-runtime-path.test.ts": "d4e406cac88a2e79d617ad14216994475587f86dc9dcf287236e3df8db58e1ee",
+    "tests/acceptance/recursive-state.test.ts": "6eb2dfc42ce399660ed1f3c847b09d8c440d0d11368ca60cd1874dfdffb84224",
+    "docs/RETRIEVAL-AND-RECOVERY.md": "44fe6d2e12c83ff7f37ebdd88278803886d560c1b13ba40b3f02ae9822464013",
+    "packages/core/src/retrieval/bounded.ts": "b397ce002cf18ab97ac5f5ea3933dcaafacbae78e40e63d0457107d9ea52e708",
+    "packages/core/test/retrieval/bounded.test.ts": "0cb0e1436f4d75f967959ef0c8b4c3240762a8eba205c164803cc272f4275687",
+    "packages/pi-adapter/src/tools/page-budget.ts": "5fe21e16db4bfc6e67f34c88a021dba1fe5e4bace362fca023c4c59e02890948",
+    "packages/pi-adapter/test/read-pages.test.ts": "b27d93aaa26ba98bb9480b04ddb7db37f8acb8f5afe4c02831f0c1545620f70c",
+    "packages/storage-node/test/fts-index-cache.test.ts": "a9f34f0cc2ef6e87fcc6c8a115eec8b4312e710ed65375225eccd56150c48f65",
+    "packages/storage-node/test/state-store-projection.test.ts": "f5dbedcebba84addf93a3e8f67ead7585bccba1f9ebe4457091fb8e8c582e9d5"
+  },
+  "checks": [
+    {
+      "check": "typecheck",
+      "argv": [
+        "pnpm",
+        "--workspace-concurrency=1",
+        "--filter",
+        "@pcr/core",
+        "--filter",
+        "@pcr/runtime",
+        "--filter",
+        "@pcr/pi-adapter",
+        "--filter",
+        "@pcr/storage-node",
+        "--filter",
+        "pi-context-runtime",
+        "typecheck"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 10.13,
+      "log": "typecheck.log",
+      "logSha256": "2370acce1324351c8b8467fbfcd1e5eca02eaf4077fcb8e1c6a5024c7e122a1a"
+    },
+    {
+      "check": "integrated-test-types",
+      "argv": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--strict",
+        "--skipLibCheck",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--target",
+        "ES2022",
+        "--types",
+        "node",
+        "tests/acceptance/product-runtime-path.test.ts",
+        "tests/acceptance/controlled-host-compaction.test.ts",
+        "tests/acceptance/recursive-state.test.ts"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 1.933,
+      "log": "integrated-test-types.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "unit",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.unit.config.ts",
+        "packages/pi-adapter/test/read-pages.test.ts",
+        "packages/pi-adapter/test/runtime-tools.test.ts",
+        "packages/core/test/retrieval/bounded.test.ts",
+        "packages/storage-node/test/state-store-projection.test.ts",
+        "packages/storage-node/test/fts-index-cache.test.ts",
+        "packages/runtime/test/state-store.test.ts",
+        "packages/runtime/test/runtime-snapshot.test.ts",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 2.898,
+      "log": "unit.log",
+      "logSha256": "d1159eec8ad6df7e0bb7cbfaa4a5d54193719c492a00de6f99f9b241b9b710bc"
+    },
+    {
+      "check": "packed",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.packed.config.ts",
+        "tests/acceptance/packed-install.test.ts",
+        "-t",
+        "npm packs",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 7.803,
+      "log": "packed.log",
+      "logSha256": "7cbcf08eb2c05051053cf18ac38d6008a08f33a74312ed1cecd1c9069a96966e"
+    },
+    {
+      "check": "boundaries",
+      "argv": [
+        "node",
+        "scripts/check-package-boundaries.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.069,
+      "log": "boundaries.log",
+      "logSha256": "c98ff0f96a0a73e210d9d3400b50ddcdd5b6cbc0c314e27457b4ccd0adc9e0ac"
+    },
+    {
+      "check": "diff-check",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.066,
+      "log": "diff-check.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "acceptanceObserved": {
+    "execution": "preceding tool call in this task, main working tree",
+    "files": [
+      "tests/acceptance/product-runtime-path.test.ts",
+      "tests/acceptance/controlled-host-compaction.test.ts",
+      "tests/acceptance/recursive-state.test.ts"
+    ],
+    "passed": 21,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "gateReportSha256Before": "7567257fe3885f8b2f3564de772fd5b36ad18ab21b43635c394f7af61a324283",
+  "gateReportSha256After": "7567257fe3885f8b2f3564de772fd5b36ad18ab21b43635c394f7af61a324283",
+  "backup": "/tmp/pi-context-posthorse-opt-20260905/tmp/pre-integration"
+}

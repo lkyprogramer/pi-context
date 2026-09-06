@@ -1,0 +1,195 @@
+{
+  "lane": "recursive-long-horizon",
+  "liveProvider": true,
+  "history": [
+    {
+      "phase": "compact-1",
+      "ok": false,
+      "compactCount": 0
+    },
+    {
+      "phase": "temporal-update",
+      "ok": false
+    },
+    {
+      "phase": "grow-before-compact-2",
+      "ok": true
+    },
+    {
+      "phase": "compact-2",
+      "ok": false,
+      "compactCount": 0
+    },
+    {
+      "phase": "branch-after-compact-2",
+      "ok": true
+    },
+    {
+      "phase": "restart-before-compact-3",
+      "ok": true
+    },
+    {
+      "phase": "compact-3",
+      "ok": false,
+      "compactCount": 0
+    },
+    {
+      "phase": "recall-needed",
+      "ok": false
+    },
+    {
+      "phase": "recall-not-needed",
+      "ok": true
+    }
+  ],
+  "compactCount": 0,
+  "threeCompacts": false,
+  "branched": true,
+  "restarted": true,
+  "branchPointerVerified": true,
+  "restartContinuityVerified": true,
+  "sideEffectGuard": false,
+  "forbiddenSideEffectObserved": false,
+  "toolEvents": [
+    {
+      "ordinal": 0,
+      "type": "tool_execution_start",
+      "toolName": "context_pin",
+      "toolCallId": "QiYbh5fh4IRelzJNn3OrEnPoOE5C26VP",
+      "argsHash": "fd57e811b26274e79f65eedd7415ef62caf08a3456a5521f9ba9942a4122a5be",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 1,
+      "type": "tool_execution_start",
+      "toolName": "context_status",
+      "toolCallId": "fSamzSTkD3NWT8OcEMEYoSBWCssVRm6u",
+      "argsHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 2,
+      "type": "tool_execution_end",
+      "toolName": "context_pin",
+      "toolCallId": "QiYbh5fh4IRelzJNn3OrEnPoOE5C26VP",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "d783bfc72096107b50ceb311f35fb458f564bc65f730da6067666fdcdbadd738",
+      "isError": true,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 3,
+      "type": "tool_execution_end",
+      "toolName": "context_status",
+      "toolCallId": "fSamzSTkD3NWT8OcEMEYoSBWCssVRm6u",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "8c6f7c3cdeee2262088f076c41ac90ff6329e206c22461db726afde1f3809dce",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 4,
+      "type": "tool_execution_start",
+      "toolName": "context_pin",
+      "toolCallId": "hnuBYFWzS6APYjecl17Fx5g0SmegSt79",
+      "argsHash": "51aaf88a81a1e4b8fde64613aca68def6cc2abb4647cee32e33a2399bb9e50ed",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 5,
+      "type": "tool_execution_end",
+      "toolName": "context_pin",
+      "toolCallId": "hnuBYFWzS6APYjecl17Fx5g0SmegSt79",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "6865ed287e9f1aa82497cffbbe67b1978f93d6ecd6cbe011ba2bb652bd03376a",
+      "isError": true,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 6,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "NO979oc7GysstpeaIAEnC6Vfoo2c4IUW",
+      "argsHash": "e448111f4931326401ebf9deaba11d8c32d7dc624f3442f443246025a2d6945a",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 7,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "NO979oc7GysstpeaIAEnC6Vfoo2c4IUW",
+      "argsHash": "e448111f4931326401ebf9deaba11d8c32d7dc624f3442f443246025a2d6945a",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 8,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "NO979oc7GysstpeaIAEnC6Vfoo2c4IUW",
+      "argsHash": "e448111f4931326401ebf9deaba11d8c32d7dc624f3442f443246025a2d6945a",
+      "resultHash": "a8c2a318bb4183d8a6b18e780986a9d4f7c83c3abd9e3a24ecdfa1538ef4c695",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 9,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "NO979oc7GysstpeaIAEnC6Vfoo2c4IUW",
+      "argsHash": "e448111f4931326401ebf9deaba11d8c32d7dc624f3442f443246025a2d6945a",
+      "resultHash": "353088e8e25079595eab3ddf7444bb2f465f0df4e979ac20fdfbac7738773eee",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 10,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "NO979oc7GysstpeaIAEnC6Vfoo2c4IUW",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "7dc05c36bcdf85b03ec1ac0ff1cfe60cc27c85da5ce22c9a2810ab2c18742e8b",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    }
+  ],
+  "treeEvents": [],
+  "branchLineage": {
+    "branchId": "18640273",
+    "branchParentId": "f9355067",
+    "parentExists": true,
+    "isSibling": true,
+    "restartHeadPresent": true,
+    "ok": true
+  },
+  "forkEvidence": {
+    "parentSessionMatches": true,
+    "parentExists": true,
+    "sourceSiblingExists": true,
+    "branchPresent": true,
+    "activeHeadPresent": true,
+    "ok": true
+  },
+  "correctionVerified": false,
+  "oracleComplete": false
+}

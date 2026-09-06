@@ -1,0 +1,71 @@
+{
+  "createdAt": "2026-09-06T01:37:00.347339+00:00",
+  "candidateBaseCommit": "ba25c24b4fe4ad05744b336d087f39ea645a3347",
+  "validatedSnapshot": "/tmp/pi-context-gate-20260905-2215",
+  "validationScope": "Frozen candidate; not the final commit HEAD. sourceSetSha256 hashes compact sorted JSON of source-manifest.files (UTF-8).",
+  "sourceManifestSha256": "59c8e15077c0597f50b3f851dad1cbbf6f1eb9087473d83ddfc93007a9e447fd",
+  "sourceSetSha256": "4559bd184885094f535a04bccb9e12dac722cb2bbf83527bf3623ee425580b39",
+  "recordedSourceFiles": 628,
+  "samePathCommittedMatches": 627,
+  "relocations": [
+    {
+      "sourcePath": "scripts/run-supplement-live.sh",
+      "archivePath": "artifacts/runs/local-supplement-20260905/run-supplement-live.sh.txt",
+      "sha256": "622445b5c69caedd24f96a8a36c4afdeed4cb3809b4e979b0d6571a79668d0f5"
+    }
+  ],
+  "mismatches": [],
+  "codeCommits": [
+    {
+      "commit": "b34959556d2fdb52cd3976feb3cf5066baed5b3c",
+      "subject": "chore(ci): remove provider-backed cloud live workflows"
+    },
+    {
+      "commit": "db31f928ae937309d9d2716dc99e84e88f5fc857",
+      "subject": "feat(runtime): bound retrieval and restore authenticated branch state"
+    },
+    {
+      "commit": "b5b26e9eec4486d6ea627a389f89035be43345b4",
+      "subject": "fix(live-gate): replay ingress and retain verifiable arm evidence"
+    }
+  ],
+  "archiveCommit": "The commit that adds this manifest; resolve with git log -1 --format=%H -- artifacts/runs/posthorse-300-gate-20260905-2210/closeout-manifest.json",
+  "checks": [
+    {
+      "command": "node scripts/release/verify-w2-live.mjs",
+      "cwd": "/private/tmp/pi-context-gate-20260905-2215",
+      "exitCode": 0,
+      "observed": {
+        "ok": true,
+        "pairs": 300,
+        "decision": "keep-pi-native"
+      }
+    },
+    {
+      "command": "pnpm exec vitest run --config vitest.unit.config.ts packages/core/test/retrieval/bounded.test.ts packages/pi-adapter/test/read-pages.test.ts packages/storage-node/test/fts-index-cache.test.ts packages/storage-node/test/state-store-projection.test.ts packages/benchmark/test/w5-lanes.test.ts",
+      "exitCode": 0,
+      "passed": 33
+    },
+    {
+      "command": "python3 tests/scripts/test_300_gate_launcher.py",
+      "exitCode": 0,
+      "passed": 3
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "credentialScan": {
+    "scope": "Exact configured Provider key and eligible local .env credential values; plaintext candidates and every submitted tar member. Does not assert absence of all possible secrets.",
+    "candidateFilesScanned": 210,
+    "tarMembersScanned": 12635,
+    "matches": 0
+  },
+  "decision": "keep-pi-native",
+  "hardGatePass": false,
+  "publicationClaim": false,
+  "reportSha256": "2fb72ab5f8fa1f44da27fc57e8078d64f689ffa1283e1fced98b57b54094005d",
+  "originalReportPath": "/private/tmp/pi-context-gate-20260905-2215/artifacts/runs/w2-v4-live/paired-gate/report.json",
+  "archiveWhitespacePolicy": "Historical raw logs and changes.patch are retained byte-for-byte. Full cached diff --check reports output-format trailing whitespace/blank EOF lines in those evidence files; non-artifact source/document check passes."
+}

@@ -1,9 +1,11 @@
 {
   "runId": "w2-live-native-gate",
   "profile": "gate",
+  "artifactBytesSha256": "925156facdc95b68b27d3a7616f903f034d969ccfca1e291e5456ca63276883d",
+  "canonicalJsonSha256": "bdd9b58f1ea1b35f354b9ebebd09b07064d4bd8016473ca546bf4ed8c45081d2",
   "generatedAt": "2026-09-03T04:06:46.877Z",
   "files": {
-    "report.json": "98ccb7b13f2bdfb275cfc6e5682e5b8d44d0a9629e2c874c9549d19552651b16",
+    "report.json": "925156facdc95b68b27d3a7616f903f034d969ccfca1e291e5456ca63276883d",
     "gate-decision.json": "e124b1220855027dfd2e0b56ca91241f16c1d3fb58081dc1ce95d5e22fbf48d1"
   }
 }

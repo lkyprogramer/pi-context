@@ -1,0 +1,10 @@
+{
+  "status": "development-cases-only",
+  "sourceKind": "codex-development-normalized",
+  "caseCount": 2,
+  "sourceClusters": 1,
+  "split": "dev",
+  "independentHoldout": false,
+  "publicationClaim": false,
+  "c22Complete": false
+}

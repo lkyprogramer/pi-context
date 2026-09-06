@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 3,
+  "kind": "supplemental-local-validation",
+  "generatedAt": "2026-09-05T08:52:21.537369+00:00",
+  "baseCommit": "ba25c24b4fe4ad05744b336d087f39ea645a3347",
+  "candidatePatchSha256": "abb8841a5dd097bf77308a4797f55be271a7c1e49ebeeccc77eda660592707b1",
+  "sourceSnapshotSha256": "d8731a4d59581426ae7928d264f2803ae5bc36633fb6b296c90194d0a9a60961",
+  "node": "v22.19.0",
+  "review": {
+    "status": "accepted",
+    "scope": "backfill identity/authority and controlled Host tests, W5 measurement/driver; excludes pending target-provider results"
+  },
+  "publicationClaim": false,
+  "targetProviderStatus": "queued-after-existing-gate",
+  "c22Status": "development-normalized-cases-only; independent real-trace holdout missing",
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/gate-v3.test.ts packages/benchmark/test/w5-lanes.test.ts packages/benchmark/test/statistics.test.ts packages/benchmark/test/bundle-verify.test.ts packages/benchmark/test/replicate-policy.test.ts packages/benchmark/test/corpus-v3.test.ts packages/benchmark/test/closed-loop.test.ts packages/runtime/test/proactive-recall.test.ts packages/storage-node/test/recall-lease-store.test.ts --config vitest.unit.config.ts",
+      "exitCode": 0,
+      "logPath": "logs/unit-baseline.log",
+      "logSha256": "499fa1e67ea4a0fd4258a6517c7943368154b5449818ac85d702c7bfb00468fd"
+    },
+    {
+      "command": "pnpm exec vitest run tests/acceptance/controlled-host-compaction.test.ts tests/acceptance/product-runtime-path.test.ts tests/acceptance/materialized-recall.test.ts --config vitest.acceptance.config.ts",
+      "exitCode": 0,
+      "logPath": "logs/acceptance-sealed.log",
+      "logSha256": "8bc717349fedecdad80a3c4cf3e7dc738d2c406b06ac07f645a39f4e73998ec4"
+    },
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/w5-lanes.test.ts packages/benchmark/test/closed-loop.test.ts --config vitest.unit.config.ts",
+      "exitCode": 0,
+      "logPath": "logs/w5-final.log",
+      "logSha256": "8414273485828d75bb3cdcf6d5366c22e6163cf7bd8086568eeb1e4862ef8a3a"
+    },
+    {
+      "command": "pnpm test:contract",
+      "exitCode": 0,
+      "logPath": "logs/contract.log",
+      "logSha256": "5dd2bec97e0916920ba0a141f473e720dc912e6f7ae541ca91d48ba069dd75c4"
+    },
+    {
+      "command": "pnpm exec vitest run tests/fault/overflow-lane.test.ts tests/fault/recursive-restart.test.ts tests/fault/compaction-ack-recovery.test.ts tests/integration/snapshot-consistency.test.ts packages/storage-node/test/saga-store.test.ts --config vitest.integration.config.ts",
+      "exitCode": 0,
+      "logPath": "logs/recovery-integration.log",
+      "logSha256": "7ab07ae80fb6f83c4b43ba5517e795ed43a3053a3a81047eaa26623457165dd0"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "logPath": "logs/typecheck-sealed.log",
+      "logSha256": "395afddecd19b7c14f035151c5f3825eaf3f60ca6c90f3798a4403c22ef723c6"
+    },
+    {
+      "command": "npm_config_cache=/tmp/pi-context-supplement-npm-cache pnpm exec vitest run tests/release/clean-install.test.ts --config vitest.packed.config.ts",
+      "exitCode": 0,
+      "logPath": "logs/packed-final-green.log",
+      "logSha256": "e41df72b5f4367fbb08a6a862ebce20d9003e2a6e04a9b5d775b2625d2db72e8"
+    },
+    {
+      "command": "pnpm exec vitest run tests/acceptance/product-runtime-path.test.ts -t 'preserves source timestamps' --config vitest.acceptance.config.ts",
+      "exitCode": 1,
+      "logPath": "logs/backfill-identity-red.log",
+      "logSha256": "677b92d24c4a06aae6a9c65a8103c8321ecf94523bd9787e5ebbeed957b94eaf"
+    }
+  ],
+  "notes": [
+    "Unit baseline covered nine selected files; later W5 final rechecks updated helpers.",
+    "Integration selection executed four files; saga-store is excluded by that lane configuration.",
+    "Full packed 19/19 passed before final timestamp hardening; final affected clean-install test passed afterward.",
+    "No current HEAD publication claim; candidate source changes are bound by patch and source hashes."
+  ]
+}

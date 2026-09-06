@@ -1,0 +1,65 @@
+{
+  "benchmark": "fts-latest-query-cache",
+  "generatedAt": "2026-09-05T10:09:37.901Z",
+  "execution": {
+    "processId": 31373,
+    "node": "v22.19.0",
+    "mode": "local-single-process-no-live"
+  },
+  "configuration": {
+    "evidenceCount": 200,
+    "warmupIterations": 20,
+    "measuredIterations": 1000,
+    "queryText": "repeated cache benchmark phrase",
+    "queryLimit": 100
+  },
+  "cached": {
+    "warmup": {
+      "elapsedMs": 1.484166,
+      "resultChecksum": 2480,
+      "sql": {
+        "cachedFullFtsSql": 1,
+        "uncachedFullFtsSql": 0,
+        "cachedVersionSql": 20,
+        "uncachedVersionSql": 0
+      }
+    },
+    "measured": {
+      "elapsedMs": 11.847417,
+      "resultChecksum": 124000,
+      "sql": {
+        "cachedFullFtsSql": 0,
+        "uncachedFullFtsSql": 0,
+        "cachedVersionSql": 1000,
+        "uncachedVersionSql": 0
+      }
+    }
+  },
+  "uncached": {
+    "warmup": {
+      "elapsedMs": 21.186375,
+      "resultChecksum": 2480,
+      "sql": {
+        "cachedFullFtsSql": 0,
+        "uncachedFullFtsSql": 20,
+        "cachedVersionSql": 0,
+        "uncachedVersionSql": 20
+      }
+    },
+    "measured": {
+      "elapsedMs": 1020.948667,
+      "resultChecksum": 124000,
+      "sql": {
+        "cachedFullFtsSql": 0,
+        "uncachedFullFtsSql": 1000,
+        "cachedVersionSql": 0,
+        "uncachedVersionSql": 1000
+      }
+    }
+  },
+  "improvement": {
+    "elapsedMsSaved": 1009.10125,
+    "elapsedPercent": 98.8395678075752,
+    "fullFtsSqlAvoided": 1000
+  }
+}

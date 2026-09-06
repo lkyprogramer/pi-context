@@ -1,0 +1,525 @@
+{
+  "lane": "recursive-long-horizon",
+  "liveProvider": true,
+  "history": [
+    {
+      "phase": "compact-1",
+      "ok": false,
+      "compactCount": 0
+    },
+    {
+      "phase": "temporal-update",
+      "ok": true
+    },
+    {
+      "phase": "grow-before-compact-2",
+      "ok": true
+    },
+    {
+      "phase": "compact-2",
+      "ok": false,
+      "compactCount": 0
+    },
+    {
+      "phase": "branch-after-compact-2",
+      "ok": true
+    },
+    {
+      "phase": "restart-before-compact-3",
+      "ok": false
+    },
+    {
+      "phase": "compact-3",
+      "ok": false,
+      "compactCount": 0
+    },
+    {
+      "phase": "recall-needed",
+      "ok": false
+    },
+    {
+      "phase": "recall-not-needed",
+      "ok": true
+    }
+  ],
+  "compactCount": 0,
+  "threeCompacts": false,
+  "branched": true,
+  "restarted": false,
+  "branchPointerVerified": true,
+  "restartContinuityVerified": false,
+  "sideEffectGuard": false,
+  "forbiddenSideEffectObserved": false,
+  "toolEvents": [
+    {
+      "ordinal": 0,
+      "type": "tool_execution_start",
+      "toolName": "context_pin",
+      "toolCallId": "2Fs3jujaJBjldgIghanwvnFEgq5m3Hvp",
+      "argsHash": "ca14e670444fea7135d346128f21628cc062a3aa1a378f17950187ad267d5b60",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 1,
+      "type": "tool_execution_start",
+      "toolName": "context_status",
+      "toolCallId": "hK4cR8kMNlIe1cxrwhYpXPuGGQDYb990",
+      "argsHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 2,
+      "type": "tool_execution_end",
+      "toolName": "context_pin",
+      "toolCallId": "2Fs3jujaJBjldgIghanwvnFEgq5m3Hvp",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "40dcba56d4c04d110f16101b783b2627ef1c18c4fcf04941e4122b9d5f97e5ce",
+      "isError": true,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 3,
+      "type": "tool_execution_end",
+      "toolName": "context_status",
+      "toolCallId": "hK4cR8kMNlIe1cxrwhYpXPuGGQDYb990",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "af0294d4d93ed2b766e3f2d4ee7911fe36b40c1a947dcf67859138771f19faea",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 4,
+      "type": "tool_execution_start",
+      "toolName": "context_pin",
+      "toolCallId": "GHVOIhAYTvsnaqOkt5P2aUrZMcGyXOW4",
+      "argsHash": "8def75d9623d5bc062e3cc14aa2404cdaa010cf9de51f0410634eed80ba4f865",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 5,
+      "type": "tool_execution_end",
+      "toolName": "context_pin",
+      "toolCallId": "GHVOIhAYTvsnaqOkt5P2aUrZMcGyXOW4",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "7a3872ff7b7e75b6d94d90db15220f4cc5ce47b2fb3ed8b0b7a88cc7241f1dc9",
+      "isError": true,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 6,
+      "type": "tool_execution_start",
+      "toolName": "write",
+      "toolCallId": "MvFhzb75ylrcZTqPDQoRgLWdb2aB571x",
+      "argsHash": "12f8e03ae50b11c485201240ad588d7783912f3fb57d14530c8cf08cfbc2d013",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 7,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "OyDrmYhf2hFSUC7cTS2d71DSdzEd1XXT",
+      "argsHash": "c583595541e2d61b86442b9113896acc05d107add6df941cd1ec31cbb5e03914",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 8,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "OyDrmYhf2hFSUC7cTS2d71DSdzEd1XXT",
+      "argsHash": "c583595541e2d61b86442b9113896acc05d107add6df941cd1ec31cbb5e03914",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 9,
+      "type": "tool_execution_end",
+      "toolName": "write",
+      "toolCallId": "MvFhzb75ylrcZTqPDQoRgLWdb2aB571x",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "275e511993ae1a961a552c9a6b8819e151b3b97fa593675b2184c49d3d761417",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 10,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "OyDrmYhf2hFSUC7cTS2d71DSdzEd1XXT",
+      "argsHash": "c583595541e2d61b86442b9113896acc05d107add6df941cd1ec31cbb5e03914",
+      "resultHash": "0856c8e538ad2592283ad61a45a8613fa5e11486713e99a72856dd46e50e64b3",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 11,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "OyDrmYhf2hFSUC7cTS2d71DSdzEd1XXT",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "5a999545b05f1bd8128d7300b9d911be5174d38f786afed63301715d5c717397",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 12,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "xRUxYFndykwtTa8LYUrnm6FpYonQQ2UI",
+      "argsHash": "45ddd1536776699fdd2fd07288309d749afd63257ea1b2461882687f34f7b5e0",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 13,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "xRUxYFndykwtTa8LYUrnm6FpYonQQ2UI",
+      "argsHash": "45ddd1536776699fdd2fd07288309d749afd63257ea1b2461882687f34f7b5e0",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 14,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "xRUxYFndykwtTa8LYUrnm6FpYonQQ2UI",
+      "argsHash": "45ddd1536776699fdd2fd07288309d749afd63257ea1b2461882687f34f7b5e0",
+      "resultHash": "14cf414b2ca8ee3fb6904c8b5b6a3f858988b12bb800e763d4db278384b7f23a",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 15,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "xRUxYFndykwtTa8LYUrnm6FpYonQQ2UI",
+      "argsHash": "45ddd1536776699fdd2fd07288309d749afd63257ea1b2461882687f34f7b5e0",
+      "resultHash": "1776d06aa94fa582fe8b3feaed16f72e3cd62ec76ec1fc65a6c597b33d41b53d",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 16,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "xRUxYFndykwtTa8LYUrnm6FpYonQQ2UI",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "93476f06a616ba556bb7f2a8e7e1ebbac2362850433a942ed958cd69a38588b5",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 17,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "92INMODz3sPNVw3PZirh64oMM4AwAi9V",
+      "argsHash": "16ece4f7ceda69306b97e21ee321e2f24f499a9093622b7694eb4aecb16da102",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 18,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "92INMODz3sPNVw3PZirh64oMM4AwAi9V",
+      "argsHash": "16ece4f7ceda69306b97e21ee321e2f24f499a9093622b7694eb4aecb16da102",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 19,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "92INMODz3sPNVw3PZirh64oMM4AwAi9V",
+      "argsHash": "16ece4f7ceda69306b97e21ee321e2f24f499a9093622b7694eb4aecb16da102",
+      "resultHash": "e619f00ef642b32194fa75242b7d52e69d9d952bd854da2bb5b9a10dd127f99c",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 20,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "92INMODz3sPNVw3PZirh64oMM4AwAi9V",
+      "argsHash": "16ece4f7ceda69306b97e21ee321e2f24f499a9093622b7694eb4aecb16da102",
+      "resultHash": "6fb4c2f96074134518dee745167a65e2fd9474562a560ec7593831f98de3c026",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 21,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "92INMODz3sPNVw3PZirh64oMM4AwAi9V",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "d066f541fcc8c0322d54e83ba3ff31f0018d40d7df2cbe6eccfad731c85cc5b0",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 22,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "xDU1FhF1P6p7TvVgibURrniHwdhDwFXr",
+      "argsHash": "a6b496ad6eee81012240b1a615f0013dda721c53a4dbf6fc3cf06135d3464a63",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 23,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "xDU1FhF1P6p7TvVgibURrniHwdhDwFXr",
+      "argsHash": "a6b496ad6eee81012240b1a615f0013dda721c53a4dbf6fc3cf06135d3464a63",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 24,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "xDU1FhF1P6p7TvVgibURrniHwdhDwFXr",
+      "argsHash": "a6b496ad6eee81012240b1a615f0013dda721c53a4dbf6fc3cf06135d3464a63",
+      "resultHash": "24875ad8d066a6dea7c68f9f32286cce100f442c115714f00106e8687fbc797f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 25,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "xDU1FhF1P6p7TvVgibURrniHwdhDwFXr",
+      "argsHash": "a6b496ad6eee81012240b1a615f0013dda721c53a4dbf6fc3cf06135d3464a63",
+      "resultHash": "2ef8e2270998f27d23de4c4ccb8734b8af5b88aa1d3fa4f11e7d800ba660247b",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 26,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "xDU1FhF1P6p7TvVgibURrniHwdhDwFXr",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "fe089ef766e48d032d0ad044fbb2d2839c4c5ad4c465dda8c951cdfaedefb3f1",
+      "isError": true,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 27,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "M7CM2A9pz2UquleWfomZJefCKBt8FKHy",
+      "argsHash": "8c90f105ca2fae4e8330ccdf68836e1a5180143b47e1cbcbaa7c69134c369d82",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 28,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "M7CM2A9pz2UquleWfomZJefCKBt8FKHy",
+      "argsHash": "8c90f105ca2fae4e8330ccdf68836e1a5180143b47e1cbcbaa7c69134c369d82",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 29,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "M7CM2A9pz2UquleWfomZJefCKBt8FKHy",
+      "argsHash": "8c90f105ca2fae4e8330ccdf68836e1a5180143b47e1cbcbaa7c69134c369d82",
+      "resultHash": "fa40b3d3edc6a4f055f8971d63cfd9d05e48f23930a4cf69060824e4f218efa4",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 30,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "M7CM2A9pz2UquleWfomZJefCKBt8FKHy",
+      "argsHash": "8c90f105ca2fae4e8330ccdf68836e1a5180143b47e1cbcbaa7c69134c369d82",
+      "resultHash": "ec956fb1ef4456815d97229c31135ee480effc078406f41f2fc2ef96d23164d5",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 31,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "M7CM2A9pz2UquleWfomZJefCKBt8FKHy",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "77ac7fe7c77ed573f7a0e22fc402b10c047d18c9a5b49710350bdb92cac63ac6",
+      "isError": true,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 32,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "pKv2LJxkscNOW6dPTRod10hGw3Gnf3Za",
+      "argsHash": "a9277d4a18fb9c5d6d9aa67918e15b391192529f7c6c4411f7fef4c23a35cc4a",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 33,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "pKv2LJxkscNOW6dPTRod10hGw3Gnf3Za",
+      "argsHash": "a9277d4a18fb9c5d6d9aa67918e15b391192529f7c6c4411f7fef4c23a35cc4a",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 34,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "pKv2LJxkscNOW6dPTRod10hGw3Gnf3Za",
+      "argsHash": "a9277d4a18fb9c5d6d9aa67918e15b391192529f7c6c4411f7fef4c23a35cc4a",
+      "resultHash": "2c832c8444d5fd0d5dc898fbb6494b5113799b500e913a28cd85e5ac3bd48c94",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 35,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "pKv2LJxkscNOW6dPTRod10hGw3Gnf3Za",
+      "argsHash": "a9277d4a18fb9c5d6d9aa67918e15b391192529f7c6c4411f7fef4c23a35cc4a",
+      "resultHash": "99dd79f50cd01404b96629dbb5d8b0ce1a4b31e45ed5c3f5e6d19d0e1ff9190e",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 36,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "pKv2LJxkscNOW6dPTRod10hGw3Gnf3Za",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "cc6c627efae145074bc9916f753c314e91a2acf7834dd0835e96520db4fc5efb",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 37,
+      "type": "tool_execution_start",
+      "toolName": "bash",
+      "toolCallId": "iRYFQn8WCoxEneV3hE3jCnXYGzMHMn7H",
+      "argsHash": "fb4a70b6d4827e549302723cb64946334349909726300372954cc603a82cecab",
+      "resultHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 38,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "iRYFQn8WCoxEneV3hE3jCnXYGzMHMn7H",
+      "argsHash": "fb4a70b6d4827e549302723cb64946334349909726300372954cc603a82cecab",
+      "resultHash": "8d5706cde045094a27e62ca6e2450d5961a1af1ef704c626199cb1aec16b908f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 39,
+      "type": "tool_execution_update",
+      "toolName": "bash",
+      "toolCallId": "iRYFQn8WCoxEneV3hE3jCnXYGzMHMn7H",
+      "argsHash": "fb4a70b6d4827e549302723cb64946334349909726300372954cc603a82cecab",
+      "resultHash": "714030d125d8dc8c8ef6ff7a0b56acdbf8696fee846f4231db29da334354fb41",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    },
+    {
+      "ordinal": 40,
+      "type": "tool_execution_end",
+      "toolName": "bash",
+      "toolCallId": "iRYFQn8WCoxEneV3hE3jCnXYGzMHMn7H",
+      "argsHash": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126",
+      "resultHash": "1e64aa6bb4a34d70e8fe7547ee5740e01ad68873533106d6b42933509690642f",
+      "isError": false,
+      "forbiddenSideEffect": false,
+      "evidenceComplete": true
+    }
+  ],
+  "treeEvents": [],
+  "branchLineage": {
+    "branchId": "d9dafb59",
+    "branchParentId": "7cbf0aab",
+    "parentExists": true,
+    "isSibling": false,
+    "restartHeadPresent": true,
+    "ok": false
+  },
+  "forkEvidence": {
+    "parentSessionMatches": true,
+    "parentExists": true,
+    "sourceSiblingExists": true,
+    "branchPresent": true,
+    "activeHeadPresent": true,
+    "ok": true
+  },
+  "correctionVerified": true,
+  "oracleComplete": false
+}

@@ -14,9 +14,17 @@ coverage
 **/*.pid
 **/.task-state.json
 
-# Live / local evidence — keep on disk, never publish.
-# Already-tracked files on origin/main stay tracked; untracked dumps stay local.
-artifacts/runs/
+# Raw live dumps stay local. Analysis reports (report.json, gate-decision,
+# run/source/closeout manifests, REPORT.md) are tracked.
+artifacts/runs/live-compact/
+artifacts/runs/live-verification/
+artifacts/runs/w2-live-native/
+artifacts/runs/rc/raw-bundle.tar.gz
+artifacts/runs/**/session.jsonl
+artifacts/runs/**/*.partial.json
+artifacts/runs/**/logs/
+artifacts/runs/**/nohup*.log
+artifacts/runs/**/pairs/
 **/pairs-sanitized.tar.gz
 **/pairs-archive-manifest.json
 **/pairs-partial.json
