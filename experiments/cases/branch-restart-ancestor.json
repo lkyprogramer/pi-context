@@ -1,0 +1,29 @@
+{
+  "id": "branch-restart-ancestor",
+  "clusterId": "reader-branch-restart",
+  "provenance": "synthetic",
+  "mode": "reader",
+  "prompt": "Restart之后仍应记住祖先工具结果中的token。返回JSON {\"answer\":\"token\",\"kind\":\"observed-state\"}。",
+  "sourceEntries": [
+    {
+      "id": "t1",
+      "role": "tool",
+      "text": "observed token=alpha-ancestor-token-7f3c2e"
+    },
+    {
+      "id": "u1",
+      "role": "user",
+      "text": "重启会话后再读祖先。"
+    }
+  ],
+  "oracle": {
+    "kind": "observed-state",
+    "expected": "alpha-ancestor-token-7f3c2e",
+    "sourceEntryId": "t1",
+    "sourceSha256": "3203bf1ec72f1b6340f44ad46479b1e23a62d88d61f3b888b5779e1cd26ce2dd"
+  },
+  "workspaceFiles": {
+    "notes.txt": "restart-required\n"
+  },
+  "assertions": []
+}

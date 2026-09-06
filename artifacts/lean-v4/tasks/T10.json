@@ -1,0 +1,47 @@
+{
+  "taskId": "T10",
+  "baseCommit": "32f53a6",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/benchmark/package.json",
+      "reason": "Strict typecheck must include small-corpus.test.ts."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/small-corpus.test.ts",
+      "exit": 0,
+      "tests": "5 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/acceptance/ancestor-evidence.test.ts --config vitest.acceptance.config.ts",
+      "exit": 0,
+      "tests": "3 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "observed-state coding tasks without workspace files throw PCR_SCENARIO_STATE_UNWITNESSED",
+    "requested-target cannot be labeled 已部署",
+    "12 synthetic cases load with 12 independent clusters; duplicate clusterIds do not inflate the count",
+    "Broken public-api-repair fails node --test; repairing sum.js passes export signature and tests",
+    "An assistant 'done' claim does not make a broken workspace succeed",
+    "Production-hook recovery covers text, utf8, image, append, and restart"
+  ],
+  "uncovered": [
+    "All 12 cases are provenance=synthetic; no real-independent holdout was added",
+    "personal-canary.json scenarioFiles remain empty until T12",
+    "Java repair is scored by file-equals, not javac"
+  ],
+  "hashes": {
+    "packages/benchmark/src/small-runner.ts": "db97e6aab3430ca05dda7671d1ababbdf86ff084430ec31e7103a26a77d5bed6",
+    "packages/benchmark/test/small-corpus.test.ts": "714c6307af6374dc9a6658e7d4b66ad5820e425058dd072c8b26ab178d1133e3",
+    "tests/helpers/product-harness.ts": "01225765bcad4b14cdb8307b82999a8abcf8c030286bf1da89c0ce364eed524d",
+    "tests/acceptance/ancestor-evidence.test.ts": "a8599ef1bbe625b115b0f6b4db84a6a85faa9d1bc5ff6bb86b875f3e32a1af31"
+  }
+}

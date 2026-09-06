@@ -1,0 +1,22 @@
+{
+  "id": "log-distant-error",
+  "clusterId": "reader-log-distant",
+  "provenance": "synthetic",
+  "mode": "reader",
+  "prompt": "从日志里定位真正导致失败的原因，不要只看最后一行。返回JSON {\"answer\":\"简短原因\",\"kind\":\"observed-state\"}。",
+  "sourceEntries": [
+    {
+      "id": "t1",
+      "role": "tool",
+      "text": "ok line 0\nok line 1\nok line 2\nok line 3\nok line 4\nok line 5\nok line 6\nok line 7\nok line 8\nok line 9\nok line 10\nok line 11\nok line 12\nok line 13\nok line 14\nok line 15\nok line 16\nok line 17\nok line 18\nok line 19\nok line 20\nok line 21\nok line 22\nok line 23\nok line 24\nok line 25\nok line 26\nok line 27\nok line 28\nok line 29\nok line 30\nok line 31\nok line 32\nok line 33\nok line 34\nok line 35\nok line 36\nok line 37\nok line 38\nok line 39\nok line 40\nok line 41\nok line 42\nok line 43\nok line 44\nok line 45\nok line 46\nok line 47\nok line 48\nok line 49\nok line 50\nok line 51\nok line 52\nok line 53\nok line 54\nok line 55\nok line 56\nok line 57\nok line 58\nok line 59\nok line 60\nok line 61\nok line 62\nok line 63\nok line 64\nok line 65\nok line 66\nok line 67\nok line 68\nok line 69\nok line 70\nok line 71\nok line 72\nok line 73\nok line 74\nok line 75\nok line 76\nok line 77\nok line 78\nok line 79\nCaused by: ECONNREFUSED 127.0.0.1:5432 while opening students\nok tail 0\nok tail 1\nok tail 2\nok tail 3\nok tail 4\nok tail 5\nok tail 6\nok tail 7\nok tail 8\nok tail 9\nok tail 10\nok tail 11\nok tail 12\nok tail 13\nok tail 14\nok tail 15\nok tail 16\nok tail 17\nok tail 18\nok tail 19\nok tail 20\nok tail 21\nok tail 22\nok tail 23\nok tail 24\nok tail 25\nok tail 26\nok tail 27\nok tail 28\nok tail 29\nok tail 30\nok tail 31\nok tail 32\nok tail 33\nok tail 34\nok tail 35\nok tail 36\nok tail 37\nok tail 38\nok tail 39\nok tail 40\nok tail 41\nok tail 42\nok tail 43\nok tail 44\nok tail 45\nok tail 46\nok tail 47\nok tail 48\nok tail 49\nok tail 50\nok tail 51\nok tail 52\nok tail 53\nok tail 54\nok tail 55\nok tail 56\nok tail 57\nok tail 58\nok tail 59\nok tail 60\nok tail 61\nok tail 62\nok tail 63\nok tail 64\nok tail 65\nok tail 66\nok tail 67\nok tail 68\nok tail 69\nok tail 70\nok tail 71\nok tail 72\nok tail 73\nok tail 74\nok tail 75\nok tail 76\nok tail 77\nok tail 78\nok tail 79"
+    }
+  ],
+  "oracle": {
+    "kind": "observed-state",
+    "expected": "ECONNREFUSED",
+    "sourceEntryId": "t1",
+    "sourceSha256": "d385b3212bc789141b456fcb7e4f09e2ae834e35b2b90be9667196b36aac2793"
+  },
+  "workspaceFiles": {},
+  "assertions": []
+}

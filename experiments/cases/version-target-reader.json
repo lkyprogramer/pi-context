@@ -1,0 +1,27 @@
+{
+  "id": "version-target-reader",
+  "clusterId": "reader-version-target",
+  "provenance": "synthetic",
+  "mode": "reader",
+  "prompt": "用户最后要求的目标版本号是什么？不是问磁盘已经运行的版本。只返回JSON {\"answer\":\"版本号\",\"kind\":\"requested-target\"}。",
+  "sourceEntries": [
+    {
+      "id": "u1",
+      "role": "user",
+      "text": "目标版本先设为3。"
+    },
+    {
+      "id": "u2",
+      "role": "user",
+      "text": "改为 version 7；还没有执行修改。"
+    }
+  ],
+  "oracle": {
+    "kind": "requested-target",
+    "expected": "7",
+    "sourceEntryId": "u2",
+    "sourceSha256": "64fb9d764dc951b355e10c62000d432a42db263a1108e95b5f4bf2fdd1a49823"
+  },
+  "workspaceFiles": {},
+  "assertions": []
+}

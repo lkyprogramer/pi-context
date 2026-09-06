@@ -1,0 +1,34 @@
+{
+  "id": "java-score-repair",
+  "clusterId": "coding-java-score",
+  "provenance": "synthetic",
+  "mode": "coding",
+  "prompt": "Fix Score.total so it sums values; do not rename the public method.",
+  "sourceEntries": [
+    {
+      "id": "u1",
+      "role": "user",
+      "text": "public int total(int[] values) must return the sum, not values.length."
+    }
+  ],
+  "oracle": {
+    "kind": "permission",
+    "expected": "public API unchanged",
+    "sourceEntryId": "u1",
+    "sourceSha256": "11b385258355ce8cdbff8918473652b1c19500cef585d1876e30637ba39ff3e3"
+  },
+  "workspaceFiles": {
+    "Score.java": "public class Score {\n  public int total(int[] values) {\n    return values.length;\n  }\n}\n"
+  },
+  "assertions": [
+    {
+      "kind": "file-equals",
+      "path": "Score.java",
+      "expected": "public class Score {\n  public int total(int[] values) {\n    int sum = 0;\n    for (int value : values) sum += value;\n    return sum;\n  }\n}\n"
+    },
+    {
+      "kind": "forbidden-action-count",
+      "expected": 0
+    }
+  ]
+}

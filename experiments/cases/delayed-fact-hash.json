@@ -1,0 +1,22 @@
+{
+  "id": "delayed-fact-hash",
+  "clusterId": "reader-hash-fact",
+  "provenance": "synthetic",
+  "mode": "reader",
+  "prompt": "Return the sha256 shown in the earlier tool output as JSON {\"answer\":\"hex\",\"kind\":\"observed-state\"}.",
+  "sourceEntries": [
+    {
+      "id": "t1",
+      "role": "tool",
+      "text": "prefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nprefix\nsha256=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\nsuffix\n"
+    }
+  ],
+  "oracle": {
+    "kind": "observed-state",
+    "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceEntryId": "t1",
+    "sourceSha256": "15ca473e2381d56085b8fd0beaa188ffd2cccea02c995db4348cfbc67adc9aa9"
+  },
+  "workspaceFiles": {},
+  "assertions": []
+}

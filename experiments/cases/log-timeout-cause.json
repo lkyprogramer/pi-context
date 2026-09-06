@@ -1,0 +1,22 @@
+{
+  "id": "log-timeout-cause",
+  "clusterId": "reader-log-timeout",
+  "provenance": "synthetic",
+  "mode": "reader",
+  "prompt": "What failed in the log? Return JSON {\"answer\":\"...\",\"kind\":\"observed-state\"}.",
+  "sourceEntries": [
+    {
+      "id": "t1",
+      "role": "tool",
+      "text": "metric=0\nmetric=1\nmetric=2\nmetric=3\nmetric=4\nmetric=5\nmetric=6\nmetric=7\nmetric=8\nmetric=9\nmetric=10\nmetric=11\nmetric=12\nmetric=13\nmetric=14\nmetric=15\nmetric=16\nmetric=17\nmetric=18\nmetric=19\nmetric=20\nmetric=21\nmetric=22\nmetric=23\nmetric=24\nmetric=25\nmetric=26\nmetric=27\nmetric=28\nmetric=29\nmetric=30\nmetric=31\nmetric=32\nmetric=33\nmetric=34\nmetric=35\nmetric=36\nmetric=37\nmetric=38\nmetric=39\nmetric=40\nmetric=41\nmetric=42\nmetric=43\nmetric=44\nmetric=45\nmetric=46\nmetric=47\nmetric=48\nmetric=49\nmetric=50\nmetric=51\nmetric=52\nmetric=53\nmetric=54\nmetric=55\nmetric=56\nmetric=57\nmetric=58\nmetric=59\nERROR deadline exceeded after 180000ms for context_read\nlater: retry scheduled\n"
+    }
+  ],
+  "oracle": {
+    "kind": "observed-state",
+    "expected": "deadline exceeded",
+    "sourceEntryId": "t1",
+    "sourceSha256": "a8edafb2e61561de999f41fe5716c26c14cb660067d9576be84c2ca094ecd27e"
+  },
+  "workspaceFiles": {},
+  "assertions": []
+}

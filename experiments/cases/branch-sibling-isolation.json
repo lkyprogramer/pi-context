@@ -1,0 +1,29 @@
+{
+  "id": "branch-sibling-isolation",
+  "clusterId": "reader-branch-sibling",
+  "provenance": "synthetic",
+  "mode": "reader",
+  "prompt": "当前分支不应读到兄弟分支的beta token。返回JSON {\"answer\":\"alpha-ancestor-token-7f3c2e\",\"kind\":\"observed-state\"}。",
+  "sourceEntries": [
+    {
+      "id": "t1",
+      "role": "tool",
+      "text": "current branch token=alpha-ancestor-token-7f3c2e"
+    },
+    {
+      "id": "t2",
+      "role": "tool",
+      "text": "sibling-only token=beta-sibling-token-9a1b0d"
+    }
+  ],
+  "oracle": {
+    "kind": "observed-state",
+    "expected": "alpha-ancestor-token-7f3c2e",
+    "sourceEntryId": "t1",
+    "sourceSha256": "7c7ab5c612bb905ee3ab60fd27c50cc26deab3871c6f67a5a900095c588c02ed"
+  },
+  "workspaceFiles": {
+    "branch.txt": "alpha\n"
+  },
+  "assertions": []
+}

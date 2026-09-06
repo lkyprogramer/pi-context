@@ -38,6 +38,7 @@ export interface ProductHarnessHost extends ProductHarness {
   setAssistantText(text: string): void;
   writes(): number;
   scriptToolResult(name: string, result: ScriptedToolResult): void;
+  toolTexts(): string[];
 }
 
 interface OpenHostInput {
@@ -340,6 +341,29 @@ export async function createProductHarness(input?: OpenHostInput & { disposeRoot
     scriptToolResult(name, result) {
       state.current.scriptToolResult(name, result);
     },
+    toolTexts() {
+      return toolTextsFromEntries(harness.rawEntries());
+    },
   };
   return harness;
+}
+
+function toolTextsFromEntries(entries: readonly unknown[]): string[] {
+  const texts: string[] = [];
+  for (const entry of entries) {
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as { type?: string; message?: { role?: unknown; content?: unknown } };
+    if (record.type !== "message" || !record.message) continue;
+    const role = record.message.role;
+    const isTool = role === "toolResult" || role === "tool" || role === "tool-result";
+    const blocks = Array.isArray(record.message.content) ? record.message.content : [];
+    for (const block of blocks) {
+      if (!block || typeof block !== "object") continue;
+      const item = block as { type?: unknown; text?: unknown };
+      if (typeof item.text === "string" && (isTool || item.type === "toolResult" || item.type === "tool_result")) {
+        texts.push(item.text);
+      }
+    }
+  }
+  return texts;
 }

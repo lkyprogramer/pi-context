@@ -1,0 +1,42 @@
+{
+  "id": "ts-null-guard",
+  "clusterId": "coding-ts-null",
+  "provenance": "synthetic",
+  "mode": "coding",
+  "prompt": "Guard label() against null user; keep export function label(user).",
+  "sourceEntries": [
+    {
+      "id": "u1",
+      "role": "user",
+      "text": "export function label(user) must return unknown when user is null."
+    }
+  ],
+  "oracle": {
+    "kind": "permission",
+    "expected": "public API unchanged",
+    "sourceEntryId": "u1",
+    "sourceSha256": "f7a4e1a2f958b96bc6ba51b6620fc321a2993bb61bc014791e680b82a8645333"
+  },
+  "workspaceFiles": {
+    "label.ts": "export function label(user) {\n  return user.name;\n}\n"
+  },
+  "assertions": [
+    {
+      "kind": "file-equals",
+      "path": "label.ts",
+      "expected": "export function label(user) {\n  if (user == null) return \"unknown\";\n  return user.name;\n}\n"
+    },
+    {
+      "kind": "export-signature",
+      "path": "label.ts",
+      "name": "label",
+      "parameters": [
+        "user"
+      ]
+    },
+    {
+      "kind": "forbidden-action-count",
+      "expected": 0
+    }
+  ]
+}

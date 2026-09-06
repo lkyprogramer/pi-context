@@ -1,0 +1,22 @@
+{
+  "id": "delayed-fact-utf8",
+  "clusterId": "reader-utf8-fact",
+  "provenance": "synthetic",
+  "mode": "reader",
+  "prompt": "工具结果里的精确文件名是什么？返回JSON {\"answer\":\"文件名\",\"kind\":\"observed-state\"}。",
+  "sourceEntries": [
+    {
+      "id": "t1",
+      "role": "tool",
+      "text": "noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise noise 文件=学员成绩-2026.xlsx pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad pad"
+    }
+  ],
+  "oracle": {
+    "kind": "observed-state",
+    "expected": "学员成绩-2026.xlsx",
+    "sourceEntryId": "t1",
+    "sourceSha256": "63fec817f7dac28aa8f275c957c403a7fcf280f3b339dc84d979fe329a6d4a4b"
+  },
+  "workspaceFiles": {},
+  "assertions": []
+}

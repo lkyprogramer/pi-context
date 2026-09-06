@@ -110,4 +110,34 @@ describe("ancestor evidence visibility", () => {
       await primary.close();
     }
   }, 120_000);
+
+  it("recovers text, utf8, image, appended, and restarted originals through production tools", async () => {
+    const harness = await createProductHarness();
+    const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    try {
+      await harness.runToolTurn("log_note", { text: "ERROR ECONNREFUSED while opening students" });
+      expect(await searchSession(harness, "ECONNREFUSED")).toContain("ECONNREFUSED");
+
+      await harness.runToolTurn("utf8_note", { text: "文件=学员成绩-2026.xlsx" });
+      expect(await searchSession(harness, "学员成绩")).toContain("学员成绩-2026.xlsx");
+
+      harness.scriptToolResult("shot", {
+        content: [{ type: "image", mimeType: "image/png", data: png }],
+        details: { path: "shot.png" },
+      });
+      await harness.runToolTurn("shot", { path: "shot.png" });
+      const imageText = harness.toolTexts().join("\n");
+      expect(imageText.length).toBeGreaterThan(0);
+
+      await harness.prompt("Append another user turn after the originals.");
+      expect(await searchSession(harness, "ECONNREFUSED")).toContain("ECONNREFUSED");
+
+      await harness.restart();
+      await harness.prompt("Resume recovery after restart.");
+      expect(await searchSession(harness, "学员成绩")).toContain("学员成绩-2026.xlsx");
+      expect(await searchSession(harness, "ECONNREFUSED")).toContain("ECONNREFUSED");
+    } finally {
+      await harness.close();
+    }
+  }, 120_000);
 });
