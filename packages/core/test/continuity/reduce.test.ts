@@ -32,6 +32,19 @@ describe("continuity reduction", () => {
     expect(changed.revisionId).not.toBe(opened.revisionId);
   });
 
+  it("does not hash host abort-signal leftovers on the session cursor", () => {
+    const bound = { ...cursor(), signal: undefined };
+    const empty = emptyContinuityRevision(bound);
+    expect(empty.cursor).toEqual({
+      workspaceId: bound.workspaceId,
+      sessionId: bound.sessionId,
+      leafId: bound.leafId,
+      lineageHash: bound.lineageHash,
+      modelKey: bound.modelKey,
+    });
+    expect("signal" in empty.cursor).toBe(false);
+  });
+
   it("fails closed instead of no-op on an illegal complete", () => {
     const bound = cursor();
     expect(() => reduceContinuityRevision(emptyContinuityRevision(bound), {

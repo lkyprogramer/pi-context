@@ -134,21 +134,27 @@ function serializeHostTools(tools: readonly HostToolInfo[]): string {
 }
 
 function toolsJsonFromHost(pi: HostExtensionAPI, registered: readonly HostToolInfo[]): string {
+  const byName = new Map<string, HostToolInfo>();
+  for (const tool of registered) byName.set(tool.name, tool);
   try {
     const fromHost = typeof pi.getAllTools === "function" ? pi.getAllTools() : undefined;
-    if (Array.isArray(fromHost) && fromHost.length > 0) return serializeHostTools(fromHost);
+    if (Array.isArray(fromHost)) {
+      for (const tool of fromHost) {
+        if (tool && typeof tool.name === "string" && tool.name.length > 0) byName.set(tool.name, tool);
+      }
+    }
   } catch {
     // Pi throws until the extension runtime is initialized.
   }
   try {
     const active = typeof pi.getActiveTools === "function" ? pi.getActiveTools() : undefined;
-    if (Array.isArray(active) && active.length > 0) {
-      const byName = new Map(registered.map((tool) => [tool.name, tool]));
+    if (Array.isArray(active)) {
       return serializeHostTools(active.map((name) => byName.get(name) ?? { name }));
     }
   } catch {
     // Same load-time guard as getAllTools.
   }
+  if (byName.size > 0) return serializeHostTools([...byName.values()]);
   return serializeHostTools(registered);
 }
 

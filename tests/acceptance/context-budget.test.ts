@@ -239,4 +239,177 @@ describe("product context I_eff envelope", () => {
     expect(reduced.messages.length).toBeLessThan(compact.messages.length);
     await extension.release?.();
   });
+
+  it("counts two materializations as two requests and does not treat missing usage as zero", async () => {
+    const root = mkdtempSync(join(tmpdir(), "pcr-budget-task-"));
+    roots.push(root);
+    const runtime = registerProductionUserTurnRuntime({
+      on() {},
+      registerTool() {},
+      registerCommand() {},
+      hasTool() { return false; },
+    } as never, { dataRoot: () => root });
+    const manager = SessionManager.inMemory(root);
+    const ctx = {
+      cwd: root,
+      sessionManager: manager,
+      model: {
+        provider: "openclaw",
+        id: "Qwen3.8-27B-WORK",
+        contextWindow: 3_200,
+        maxTokens: 1_000,
+      },
+    };
+    await runtime.ensure(ctx as never);
+    const derived = derivePiSessionContext(ctx as never, { create: createRuntimeCursor });
+    const session = await runtime.openSession(derived);
+    const message = {
+      hostMessageId: "u-task",
+      role: "user" as const,
+      timestamp: 1,
+      sourceClass: "authenticated-user" as const,
+      content: [{ type: "text" as const, text: "now" }],
+    };
+    await session.materialize({
+      operationId: "op-task-1",
+      cursor: derived,
+      canonicalMessages: [message],
+      currentContextWindow: 3_200,
+      maxOutputTokens: 1_000,
+      reason: "normal",
+      now: 1,
+    });
+    await session.materialize({
+      operationId: "op-task-2",
+      cursor: derived,
+      canonicalMessages: [message],
+      currentContextWindow: 3_200,
+      maxOutputTokens: 1_000,
+      reason: "normal",
+      now: 2,
+    });
+    const task = await runtime.lastTaskUsage(derived.workspaceId);
+    expect(task?.totalRequests).toBe(2);
+    expect(task?.logicalInput).toBeNull();
+    expect(task?.output).toBeNull();
+    await runtime.close();
+  });
+
+  it("does not attach previous request cache tokens to a later view", async () => {
+    const root = mkdtempSync(join(tmpdir(), "pcr-budget-next-view-"));
+    roots.push(root);
+    const runtime = registerProductionUserTurnRuntime({
+      on() {},
+      registerTool() {},
+      registerCommand() {},
+      hasTool() { return false; },
+    } as never, { dataRoot: () => root });
+    const manager = SessionManager.inMemory(root);
+    const ctx = {
+      cwd: root,
+      sessionManager: manager,
+      model: {
+        provider: "openclaw",
+        id: "Qwen3.8-27B-WORK",
+        contextWindow: 3_200,
+        maxTokens: 1_000,
+      },
+    };
+    await runtime.ensure(ctx as never);
+    const derived = derivePiSessionContext(ctx as never, { create: createRuntimeCursor });
+    const session = await runtime.openSession(derived);
+    const first = await session.materialize({
+      operationId: "op-prev",
+      cursor: derived,
+      canonicalMessages: [{
+        hostMessageId: "u-prev",
+        role: "user",
+        timestamp: 1,
+        sourceClass: "authenticated-user",
+        content: [{ type: "text", text: "now" }],
+      }],
+      currentContextWindow: 3_200,
+      maxOutputTokens: 1_000,
+      providerUsage: {
+        cacheReadTokens: 40,
+        cacheWriteTokens: 7,
+        inputTokens: 12,
+        outputTokens: 3,
+      },
+      reason: "normal",
+      now: 1,
+    });
+    const next = await session.materialize({
+      operationId: "op-next",
+      cursor: derived,
+      canonicalMessages: [{
+        hostMessageId: "u-next",
+        role: "user",
+        timestamp: 2,
+        sourceClass: "authenticated-user",
+        content: [{ type: "text", text: "later" }],
+      }],
+      currentContextWindow: 3_200,
+      maxOutputTokens: 1_000,
+      reason: "normal",
+      now: 2,
+    });
+    const usage = await runtime.lastRequestUsage(derived.workspaceId);
+    const task = await runtime.lastTaskUsage(derived.workspaceId);
+    expect(first.viewId).not.toBe(next.viewId);
+    expect(usage?.viewId).toBe(next.viewId);
+    expect(usage?.cacheReadTokens).toBe(0);
+    expect(task?.totalRequests).toBe(2);
+    expect(task?.logicalInput).toBeNull();
+    await runtime.close();
+  });
+
+  it("uses getActiveTools rather than getAllTools for host-path I_eff", async () => {
+    const root = mkdtempSync(join(tmpdir(), "pcr-budget-active-tools-"));
+    roots.push(root);
+    let handler: ((event: { messages: unknown[] }, ctx: unknown) => Promise<{ messages: unknown[] }>) | undefined;
+    let active = ["bash"];
+    const huge = Array.from({ length: 80 }, (_, index) => ({
+      name: `tool_${index}`,
+      description: "x".repeat(2_000),
+      parameters: {
+        type: "object",
+        properties: { q: { type: "string", description: "x".repeat(2_000) } },
+      },
+    }));
+    const extension = createPiContextExtension({
+      on(hook, next) {
+        if (hook === "context") handler = next as typeof handler;
+      },
+      registerTool() {},
+      registerCommand() {},
+      hasTool() { return false; },
+      getAllTools() {
+        return huge;
+      },
+      getActiveTools() {
+        return active;
+      },
+    });
+    const manager = SessionManager.inMemory(root);
+    const history = Array.from({ length: 30 }, (_, index) => ({
+      role: "user",
+      content: `turn ${index} ${"history ".repeat(40)}`,
+      timestamp: index,
+    }));
+    const ctx = {
+      abort() {},
+      cwd: root,
+      sessionManager: manager,
+      model: { provider: "openclaw", id: "Qwen3.8-27B-WORK", contextWindow: 50_000, maxTokens: 1_000 },
+      getSystemPrompt() {
+        return "agent";
+      },
+    };
+    const compact = await handler!({ messages: history }, ctx);
+    active = huge.map((tool) => tool.name);
+    const reduced = await handler!({ messages: history }, ctx);
+    expect(reduced.messages.length).toBeLessThan(compact.messages.length);
+    await extension.release?.();
+  });
 });

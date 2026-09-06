@@ -1,0 +1,71 @@
+{
+  "taskId": "T05",
+  "baseCommit": "f1c7829",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/runtime/src/index.ts",
+      "reason": "Export TaskRequestUsage helpers without clashing with telemetry/usage RequestUsage."
+    },
+    {
+      "path": "packages/runtime/package.json",
+      "reason": "Strict typecheck must include request-usage.test.ts."
+    },
+    {
+      "path": "packages/core/src/continuity/reduce.ts",
+      "reason": "PiSessionContext may carry enumerable signal:undefined; hashing that cursor as a continuity snapshot fails closed."
+    },
+    {
+      "path": "packages/core/test/continuity/reduce.test.ts",
+      "reason": "Regression that extra abort-signal leftovers are stripped before snapshot hash."
+    },
+    {
+      "path": "tests/acceptance/context-hook.test.ts",
+      "reason": "Caller expected last-assistant session entries to be copied onto the next view; T05 forbids that."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/runtime/test/request-usage.test.ts",
+      "exit": 0,
+      "tests": "5 passed"
+    },
+    {
+      "command": "pnpm exec vitest run packages/runtime/test/request-usage.test.ts packages/core/test/continuity/reduce.test.ts tests/acceptance/context-budget.test.ts tests/acceptance/context-hook.test.ts",
+      "exit": 0,
+      "tests": "18 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "exclusive-cache logicalInput is input+cacheRead+cacheWrite; inclusive-cache is input; missing cacheRead is null",
+    "same requestId streaming updates overwrite and do not sum",
+    "unknown is distinct from 0; missing output keeps total output null with knownOutput visible",
+    "unsent requestIds are not billed; session totals do not mix after a session switch",
+    "materialize binds providerUsage to the initiating request, not last-assistant session entries",
+    "two materializes count as two requests; missing provider usage stays null on the task ledger",
+    "I_eff uses getActiveTools schemas rather than the full getAllTools catalog",
+    "continuity snapshot hashing strips host abort-signal leftovers from the session cursor",
+    "inputSemantics stays unknown unless declared; field names are not used to guess exclusive vs inclusive cache"
+  ],
+  "uncovered": [
+    "packages/runtime/src/usage.ts does not exist; last-request envelope remains packages/runtime/src/telemetry/usage.ts reconcileUsage, which still zero-fills missing cache/output for lastRequestUsage",
+    "Provider inputSemantics is not declared by the current OpenClaw adapter, so task logicalInput stays null until a host states exclusive-cache or inclusive-cache",
+    "Live models are T12 only"
+  ],
+  "hashes": {
+    "packages/runtime/src/telemetry/request-usage.ts": "52e65191d7adeb901d9cd9eebf95129d469312a9dc3406149e544e0bc0d3073d",
+    "packages/runtime/test/request-usage.test.ts": "293bc88812f7d5a1293bbf941a3332ace4cda51f647bdfb1b17c810606563530",
+    "packages/runtime/src/index.ts": "7603457f79f0ed40dbc34e1eb902d9f5cf8e10948dafbf6606bde71a45e8dcdf",
+    "packages/pi-adapter/src/context-hook.ts": "bd7dd1b34bfbcb28db95262531686a4e2003aa35f0eb883d0061c9e4ae43e9b5",
+    "apps/pi-context-runtime/src/extension.ts": "2e51842edc92726e4ae442c3376df9b35f6c3220ebd1d8cfc58fc65db29cbdb6",
+    "apps/pi-context-runtime/src/composition-root.ts": "881db8f0f78bef9a81f1fdb9831d7680b15f68aa78a423f4f091c5a073b0bd3f",
+    "packages/core/src/continuity/reduce.ts": "0316c04e125c027251fdb9ce3f9d51635e512b49f5e7d45d687fd4f76efa2824",
+    "tests/acceptance/context-budget.test.ts": "77e584ed9b389e8a3e31882e4bd70f475f2f871c91e0e6507c11d745c8463cfa",
+    "tests/acceptance/context-hook.test.ts": "7ef6dd9a001074b68246c4ed8934e27128bcbc976c0af549485d2d8108f36a45"
+  }
+}

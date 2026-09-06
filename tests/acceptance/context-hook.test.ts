@@ -80,7 +80,7 @@ describe("context hook acceptance", () => {
     expect(result.messages.some((item) => item && typeof item === "object" && "usage" in item)).toBe(false);
   });
 
-  it("reads cacheRead/cacheWrite from sessionManager.getEntries() assistant usage", async () => {
+  it("does not attach last-assistant session entries to a later request view", async () => {
     const bound = createRuntimeCursor({
       workspacePath: "/tmp/pcr-accept-cache-entries",
       sessionId: "session-cache",
@@ -134,29 +134,38 @@ describe("context hook acceptance", () => {
         },
       }),
     );
+    const ctx = {
+      abort() {},
+      workspaceId: bound.workspaceId,
+      sessionId: bound.sessionId,
+      leafId: bound.leafId,
+      lineageHash: bound.lineageHash,
+      modelKey: bound.modelKey,
+      now: 1,
+      currentContextWindow: 200_192,
+      maxOutputTokens: 16_384,
+      sessionManager: {
+        getEntries() {
+          return [{
+            type: "message",
+            message: {
+              role: "assistant",
+              usage: { cacheRead: 40, cacheWrite: 7, input: 12, output: 3 },
+            },
+          }];
+        },
+      },
+    };
+    await handler!(
+      { messages: [{ role: "user", content: "now", timestamp: 1 }] },
+      ctx,
+    );
+    expect(captured).toBeUndefined();
     await handler!(
       { messages: [{ role: "user", content: "now", timestamp: 1 }] },
       {
-        abort() {},
-        workspaceId: bound.workspaceId,
-        sessionId: bound.sessionId,
-        leafId: bound.leafId,
-        lineageHash: bound.lineageHash,
-        modelKey: bound.modelKey,
-        now: 1,
-        currentContextWindow: 200_192,
-        maxOutputTokens: 16_384,
-        sessionManager: {
-          getEntries() {
-            return [{
-              type: "message",
-              message: {
-                role: "assistant",
-                usage: { cacheRead: 40, cacheWrite: 7, input: 12, output: 3 },
-              },
-            }];
-          },
-        },
+        ...ctx,
+        providerUsage: { cacheReadTokens: 40, cacheWriteTokens: 7, inputTokens: 12, outputTokens: 3 },
       },
     );
     expect(captured).toEqual({

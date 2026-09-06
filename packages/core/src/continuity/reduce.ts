@@ -52,7 +52,7 @@ export function emptyContinuityRevision(cursor: RuntimeCursor): ContinuityRevisi
     revisionId: "",
     parentRevisionId: null,
     contentHash: "",
-    cursor,
+    cursor: snapshotContinuityCursor(cursor),
     taskFronts: { active: [], parked: [], completed: [], superseded: [] },
     nextSafeActions: [],
   });
@@ -119,6 +119,7 @@ export function finalizeRevision(parentRevisionId: string | null, draft: Continu
   const revisionId = `cr_${domainHash("continuity", fingerprint).slice(0, 24)}`;
   const next: ContinuityRevision = {
     ...draft,
+    cursor: snapshotContinuityCursor(draft.cursor),
     parentRevisionId,
     revisionId,
     nextSafeActions: deriveActions(draft),

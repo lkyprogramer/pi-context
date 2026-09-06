@@ -243,6 +243,7 @@ function asNonNegativeInt(value: unknown): number | undefined {
   return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
 }
 
+/** Parse last-assistant usage for diagnostics. Do not attach it to a later request view. */
 export function cacheTokensFromSessionEntries(entries: readonly unknown[]): {
   cacheReadTokens?: number;
   cacheWriteTokens?: number;
@@ -282,17 +283,14 @@ export function cacheTokensFromSessionEntries(entries: readonly unknown[]): {
 function mergeProviderUsage(
   ctx: ContextHookCtx,
 ): { usage: ContextHookCtx["providerUsage"]; sources: ProviderUsageSources } {
-  const entries = typeof ctx.sessionManager?.getEntries === "function" ? ctx.sessionManager.getEntries() : [];
-  const fromEntries = cacheTokensFromSessionEntries(entries);
-  const merged = { ...fromEntries, ...(ctx.providerUsage ?? {}) };
+  const merged = { ...(ctx.providerUsage ?? {}) };
   const sources: ProviderUsageSources = {};
-  for (const key of Object.keys(fromEntries) as ProviderUsageField[]) sources[key] = "assistant-entry";
-  for (const key of Object.keys(ctx.providerUsage ?? {}) as ProviderUsageField[]) {
-    const value = ctx.providerUsage?.[key];
-    if (asNonNegativeInt(value) !== undefined) sources[key] = "host";
-  }
   for (const [key, source] of Object.entries(ctx.providerUsageSources ?? {})) {
     if (source === "host" || source === "assistant-entry") sources[key as ProviderUsageField] = source;
+  }
+  for (const key of Object.keys(ctx.providerUsage ?? {}) as ProviderUsageField[]) {
+    const value = ctx.providerUsage?.[key];
+    if (asNonNegativeInt(value) !== undefined) sources[key] = sources[key] ?? "host";
   }
   return {
     usage: Object.keys(merged).length === 0 ? undefined : merged,

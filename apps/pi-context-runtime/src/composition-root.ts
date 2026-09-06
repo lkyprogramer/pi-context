@@ -83,6 +83,11 @@ import {
   type UserTurnService,
 } from "../../../packages/runtime/src/index.js";
 import {
+  createRequestUsageLedger,
+  declaredInputSemantics,
+  type RequestUsageLedger,
+} from "../../../packages/runtime/src/telemetry/request-usage.js";
+import {
   createEncryptedBlobStore,
   openLocalWorkspaceBlobKeyProvider,
   openWorkspaceCandidateRepository,
@@ -234,7 +239,7 @@ export function derivePiSessionContext(
       field: "identity.result",
     });
   }
-  return Object.freeze({ ...cursor, signal: ctx.signal });
+  return Object.freeze(ctx.signal === undefined ? { ...cursor } : { ...cursor, signal: ctx.signal });
 }
 
 function validateResources(value: ProductionSessionResources): ProductionSessionResources {
@@ -398,6 +403,7 @@ export interface ProductionUserTurnRuntime {
     estimateBucket: ReturnType<typeof estimateErrorBucket>;
     tokenProvenance: TokenUsageProvenance;
   }) | undefined>;
+  lastTaskUsage(workspaceId?: string): Promise<ReturnType<RequestUsageLedger["total"]> | undefined>;
   lastPointers(): ReadonlyArray<{ ref: string; kind: string }>;
   ensure(ctx: ExtensionContext): Promise<void>;
   openSession(ctx: PiSessionContext): Promise<RuntimeSession>;
@@ -468,6 +474,9 @@ interface WorkspaceUserTurnOwner {
     estimateBucket: ReturnType<typeof estimateErrorBucket>;
     tokenProvenance: TokenUsageProvenance;
   };
+  lastTaskSessionId?: string;
+  requestSeq: number;
+  readonly taskUsage: RequestUsageLedger;
   readonly telemetry: ReturnType<typeof createMemorySink>;
   service(cursor: RuntimeCursor): UserTurnService;
   observation(cursor: RuntimeCursor): ObservationService;
@@ -739,6 +748,8 @@ export function registerProductionUserTurnRuntime(
           viewsBySession: new Map(),
           evidenceRepository: repository,
           telemetry: createMemorySink(),
+          taskUsage: createRequestUsageLedger(),
+          requestSeq: 0,
           evidence(candidate) {
             const key = sessionIdentityKey(candidate);
             let service = evidences.get(key);
@@ -1151,6 +1162,7 @@ export function registerProductionUserTurnRuntime(
       toolResult: { ingest: (input) => observation.ingest(input) },
       materialization: {
         async materialize(request) {
+          const startedAt = Date.now();
           const viewCursor = request.cursor;
           const requestRoutes = {
             [viewCursor.modelKey]: {
@@ -1346,6 +1358,22 @@ export function registerProductionUserTurnRuntime(
             outputHash: view.outputHash,
             estimateBucket: estimateErrorBucket(serializedInputTokens, actual ?? serializedInputTokens),
           };
+          const tokenOrNull = (value: unknown): number | null => (
+            typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null
+          );
+          owner.lastTaskSessionId = viewCursor.sessionId;
+          owner.requestSeq += 1;
+          owner.taskUsage.upsert({
+            requestId: `${request.operationId}:${owner.requestSeq}`,
+            sessionId: viewCursor.sessionId,
+            phase: request.reason === "overflow-retry" ? "retry" : "continuation",
+            input: tokenOrNull(request.providerUsage?.inputTokens),
+            cacheRead: tokenOrNull(request.providerUsage?.cacheReadTokens),
+            cacheWrite: tokenOrNull(request.providerUsage?.cacheWriteTokens),
+            output: tokenOrNull(request.providerUsage?.outputTokens),
+            inputSemantics: declaredInputSemantics(undefined),
+            elapsedMs: Math.max(0, Date.now() - startedAt),
+          });
           emitTelemetry({
             name: "pcr.usage",
             timestamp: request.now,
@@ -1610,6 +1638,14 @@ export function registerProductionUserTurnRuntime(
         : (owners.size === 1 ? [...owners.values()][0] : undefined);
       if (!opening) return undefined;
       return (await opening).lastUsage;
+    },
+    async lastTaskUsage(workspaceId?: string) {
+      const opening = workspaceId
+        ? owners.get(workspaceId)
+        : (owners.size === 1 ? [...owners.values()][0] : undefined);
+      if (!opening) return undefined;
+      const owner = await opening;
+      return owner.taskUsage.total(owner.lastTaskSessionId);
     },
     async lastSnapshotHash(workspaceId?: string) {
       const opening = workspaceId
