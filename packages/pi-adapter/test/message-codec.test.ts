@@ -24,6 +24,20 @@ describe("message codec", () => {
     expect(codec.unwrap(envelope)).toEqual(raw);
   });
 
+  it("binds toolCall.id from raw content without synthesizing text", () => {
+    const codec = createMessageCodec({ cursor: cursor() });
+    const raw = {
+      role: "assistant",
+      timestamp: 3,
+      content: [{ type: "toolCall", id: "c-raw", name: "bash", arguments: { command: "true" } }],
+    };
+    const envelope = codec.wrap({ cursor: cursor(), raw });
+    expect(envelope.normalized.toolCallId).toBe("c-raw");
+    expect(envelope.normalized.content).toEqual([]);
+    expect(envelope.opaqueBlocks).toContainEqual(raw.content[0]);
+    expect(JSON.stringify(envelope.normalized.content)).not.toContain("bash");
+  });
+
   it("keeps compactionSummary.summary in opaque blocks for envelope pricing", () => {
     const codec = createMessageCodec({ cursor: cursor() });
     const raw = { role: "compactionSummary", summary: "do not deploy prod", tokensBefore: 6000 };

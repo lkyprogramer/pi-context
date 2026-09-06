@@ -1,0 +1,37 @@
+{
+  "taskId": "T04",
+  "baseCommit": "84718d3",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/core/test/materialization/dedup.test.ts packages/pi-adapter/test/message-codec.test.ts tests/acceptance/active-tool-batch.test.ts",
+      "exit": 0,
+      "tests": "14 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "Active messages with distinct hostMessageIds are kept even when tool results are identical",
+    "Same hostMessageId can be deduped; same-text users with different ids are not merged",
+    "Orphan tool results throw PCR_ACTIVE_TOOL_BATCH_ORPHAN instead of being dropped",
+    "A too-small budget throws PCR_UNREPAIRABLE_ACTIVE_TURN rather than omitting the active batch",
+    "Message codec binds toolCall.id from raw content without synthesizing text",
+    "Two real Pi tool calls with the same OK output both appear in a later provider request"
+  ],
+  "uncovered": [
+    "History/directive derived projections still collapse by content hash, which is required by existing directive tests",
+    "Live models are T12 only"
+  ],
+  "hashes": {
+    "packages/core/src/materialization/dedup.ts": "f9e5f22f147005462ad5e96ed420662add8b470810dab3fc1b122ce99c9bad4c",
+    "packages/core/src/materialization/materializer.ts": "f5e886ce2ffd81bee3615be57aed0780b0f1de44de056e4cbcfd57b40eb565ba",
+    "packages/core/test/materialization/dedup.test.ts": "4d83d919ff1419ea4b74e735ea4a740ddbd415ff33229e66476894f262d99eb4",
+    "packages/pi-adapter/src/message-codec.ts": "6f8ac0ac0b2dd6f307bd601ceea069b407d99b6211873d66467af35b78227374",
+    "tests/acceptance/active-tool-batch.test.ts": "dae74b7ba388916dc032a4dffa2e2ae30ecae3e7e48cb6cfd0abfe0daa7ad214"
+  }
+}

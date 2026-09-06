@@ -10,7 +10,7 @@ import {
 
 import { BudgetError, snapshotBudgetCursor, type TokenPricer } from "../budget/pricer.js";
 import { CacheError, type CacheReceiptService } from "./cache.js";
-import { dedupMaterializationMessages } from "./dedup.js";
+import { dedupMaterializationMessages, DedupError } from "./dedup.js";
 import { CACHE_LAYOUT_VERSION, SectionError, type PlanSectionInput, type SectionPlan, type SectionPlanner } from "./sections.js";
 
 const ZONE_ORDER: readonly CacheZone[] = [
@@ -222,7 +222,15 @@ export function createMaterializer(input: CreateMaterializerInput): Materializer
       if (start < 0) failInput("request.canonicalMessages");
       const suffix = request.canonicalMessages.slice(start);
       const history = request.canonicalMessages.slice(0, start);
-      const owned = dedupMaterializationMessages(snapshot.directives, history, suffix);
+      let owned: ReturnType<typeof dedupMaterializationMessages>;
+      try {
+        owned = dedupMaterializationMessages(snapshot.directives, history, suffix);
+      } catch (error) {
+        if (error instanceof DedupError) {
+          throw new MaterializerError("PCR_UNREPAIRABLE_ACTIVE_TURN", { reason: error.code, ...error.details });
+        }
+        throw error;
+      }
       const sectionInput: PlanSectionInput[] = [
         { kind: "runtime-preamble", messages: [preambleMessage(requestCursor)] },
         { kind: "hard-directives", messages: owned.directives },

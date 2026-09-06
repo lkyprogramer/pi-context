@@ -80,6 +80,138 @@ describe("directive / history / active-turn dedup", () => {
     expect(owned.history.map((item) => item.hostMessageId)).toEqual(["a1", "t1"]);
   });
 
+  it("retains separate active calls and identical results",()=>{
+    const active:HostMessage[]=[
+      {hostMessageId:"a1",role:"assistant",timestamp:1,sourceClass:"agent-derived",content:[]},
+      {hostMessageId:"r1",role:"tool-result",toolCallId:"c1",timestamp:2,sourceClass:"untrusted-tool",content:[{type:"text",text:"OK"}]},
+      {hostMessageId:"a2",role:"assistant",timestamp:3,sourceClass:"agent-derived",content:[]},
+      {hostMessageId:"r2",role:"tool-result",toolCallId:"c2",timestamp:4,sourceClass:"untrusted-tool",content:[{type:"text",text:"OK"}]}];
+    expect(dedupMaterializationMessages([],[],active).active.map(m=>m.hostMessageId))
+      .toEqual(["a1","r1","a2","r2"]);
+  });
+
+  it("dedupes the same hostMessageId when it is injected twice", () => {
+    const first: HostMessage = {
+      hostMessageId: "r1",
+      role: "tool-result",
+      timestamp: 1,
+      sourceClass: "untrusted-tool",
+      toolCallId: "c1",
+      content: [{ type: "text", text: "OK" }],
+    };
+    const assistant: HostMessage = {
+      hostMessageId: "a1",
+      role: "assistant",
+      timestamp: 0,
+      sourceClass: "agent-derived",
+      toolCallId: "c1",
+      content: [],
+    };
+    const owned = dedupMaterializationMessages([], [], [assistant, first, first]);
+    expect(owned.active.map((item) => item.hostMessageId)).toEqual(["a1", "r1"]);
+  });
+
+  it("does not merge same-text user turns with different ids", () => {
+    const owned = dedupMaterializationMessages([], [], [
+      user("continue", "u-early"),
+      user("continue", "u-late"),
+    ]);
+    expect(owned.active.map((item) => item.hostMessageId)).toEqual(["u-early", "u-late"]);
+  });
+
+  it("keeps distinct image and empty toolCall ids", () => {
+    const owned = dedupMaterializationMessages([], [], [
+      {
+        hostMessageId: "a1",
+        role: "assistant",
+        timestamp: 1,
+        sourceClass: "agent-derived",
+        content: [],
+      },
+      {
+        hostMessageId: "img-1",
+        role: "tool-result",
+        timestamp: 2,
+        sourceClass: "untrusted-tool",
+        toolCallId: "c1",
+        content: [{ type: "image", mimeType: "image/png", data: "aa" }],
+      },
+      {
+        hostMessageId: "a2",
+        role: "assistant",
+        timestamp: 3,
+        sourceClass: "agent-derived",
+        content: [],
+      },
+      {
+        hostMessageId: "img-2",
+        role: "tool-result",
+        timestamp: 4,
+        sourceClass: "untrusted-tool",
+        toolCallId: "c2",
+        content: [{ type: "image", mimeType: "image/png", data: "aa" }],
+      },
+    ]);
+    expect(owned.active.map((item) => item.hostMessageId)).toEqual(["a1", "img-1", "a2", "img-2"]);
+  });
+
+  it("rejects an orphan tool result instead of deleting the action", () => {
+    expect(() => dedupMaterializationMessages([], [], [
+      {
+        hostMessageId: "r-orphan",
+        role: "tool-result",
+        timestamp: 1,
+        sourceClass: "untrusted-tool",
+        toolCallId: "missing",
+        content: [{ type: "text", text: "OK" }],
+      },
+    ])).toThrow(/PCR_ACTIVE_TOOL_BATCH_ORPHAN/);
+  });
+
+  it("does not drop an active tool batch when the budget is too small", async () => {
+    const bound = cursor();
+    const pricer = createTokenPricer({
+      cursor: bound,
+      routes: {
+        [bound.modelKey]: {
+          modelKey: bound.modelKey,
+          contextWindow: 80,
+          maxOutputTokens: 70,
+          providerReservedTokens: 0,
+        },
+      },
+    });
+    const rows: CacheReceiptRecord[] = [];
+    const store: CacheReceiptStore = {
+      async put(receipt) { rows.push(receipt); },
+      async head() { return rows.at(-1) ?? null; },
+    };
+    const materializer = createMaterializer({
+      cursor: bound,
+      pricer,
+      planner: createSectionPlanner({ cursor: bound, pricer }),
+      cache: createCacheReceipt({ cursor: bound, store }),
+    });
+    const blob = "OK ".repeat(400);
+    await expect(materializer.materialize(
+      {
+        cursor: bound,
+        canonicalMessages: [
+          user("run both", "u1"),
+          { hostMessageId: "a1", role: "assistant", timestamp: 2, sourceClass: "agent-derived", content: [] },
+          { hostMessageId: "r1", role: "tool-result", toolCallId: "c1", timestamp: 3, sourceClass: "untrusted-tool", content: [{ type: "text", text: blob }] },
+          { hostMessageId: "a2", role: "assistant", timestamp: 4, sourceClass: "agent-derived", content: [] },
+          { hostMessageId: "r2", role: "tool-result", toolCallId: "c2", timestamp: 5, sourceClass: "untrusted-tool", content: [{ type: "text", text: blob }] },
+        ],
+        currentContextWindow: 80,
+        maxOutputTokens: 70,
+        reason: "normal",
+        now: 1,
+      },
+      { cursor: bound, directives: [], continuity: [] },
+    )).rejects.toMatchObject({ code: "PCR_UNREPAIRABLE_ACTIVE_TURN" });
+  });
+
   it("materializes the latest user last without duplicate content hashes", async () => {
     const bound = cursor();
     const pricer = createTokenPricer({

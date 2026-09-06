@@ -108,6 +108,20 @@ function sourceClassFor(role: HostMessage["role"]): SourceClass {
   return "agent-derived";
 }
 
+function toolCallIdFromRaw(cloned: Record<string, unknown>, opaque: unknown[]): string | undefined {
+  if (typeof cloned.toolCallId === "string" && cloned.toolCallId.length > 0) return cloned.toolCallId;
+  const sources = [
+    ...(Array.isArray(cloned.content) ? cloned.content : []),
+    ...opaque,
+  ];
+  for (const block of sources) {
+    if (!block || typeof block !== "object") continue;
+    const record = block as { type?: unknown; id?: unknown };
+    if (record.type === "toolCall" && typeof record.id === "string" && record.id.length > 0) return record.id;
+  }
+  return undefined;
+}
+
 function isHostBlock(value: unknown): value is HostContentBlock {
   if (!value || typeof value !== "object") return false;
   const block = value as { type?: unknown; text?: unknown; ref?: unknown; mimeType?: unknown; data?: unknown; reason?: unknown };
@@ -168,9 +182,7 @@ export function createMessageCodec(input: CreateMessageCodecInput): MessageCodec
       if (cloned.details !== undefined) opaque.push({ type: "details", details: cloned.details });
       if (cloned.metadata !== undefined) opaque.push({ type: "metadata", metadata: cloned.metadata });
       if (cloned.image !== undefined) opaque.push({ type: "image", image: cloned.image });
-      const toolCallId = typeof cloned.toolCallId === "string" && cloned.toolCallId.length > 0
-        ? cloned.toolCallId
-        : undefined;
+      const toolCallId = toolCallIdFromRaw(cloned, opaque);
       const hostMessageId = `hm_${domainHash("pi-message", {
         cursor,
         entryId: event.entryId ?? null,
