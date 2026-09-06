@@ -15,3 +15,8 @@ artifacts/runs/live-compact/
 artifacts/runs/live-verification/
 artifacts/runs/w2-live-native/
 artifacts/runs/rc/raw-bundle.tar.gz
+
+# Local originals retained; publish only the credential-redacted evidence archive.
+/artifacts/runs/w2-v4-live/paired-gate/pairs/
+# Unexecuted local orchestration draft; not an implementation or verification record.
+/.workflow/pi-context-current-head-remediation-continuation/
