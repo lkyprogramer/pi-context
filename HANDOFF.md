@@ -2,6 +2,16 @@
 
 ## 当前任务
 
+### lean-v4 T12 canary (2026-09-06)
+
+T01–T12 已在本仓库落地。T12 对 `experiments/personal-canary.json` 跑了一次 `PCR_LIVE=1` 产品 Pi RPC canary（Node `v22.19.0`，模型 `openclaw/Qwen3.8-27B-WORK`，contextWindow 200192）。父进程凭据代理必须保持异步 `spawn`：`spawnSync` 会冻住 broker 事件循环，Pi 请求停在 Recv-Q。
+
+Live 结果（`artifacts/lean-v4/`，勿把 `work/` 提交）：48 条主臂 ITT 全在；reader 32 条 `completed` 且 scorer 通过；coding 16 条因 Darwin 上 agent 仍可读宿主配置而为 `not-run` / `isolation-unproven`。`primaryCompletePairs=16/24`，`ittPairs=24`，`monetaryCost=null`，`recovery` n=0 → `decision=inconclusive`，`publicationClaim=false`，`widelyBetterThanNative=false`。这不足以证明 2% 非劣，默认保持 ingress / Pi Native。
+
+复算：`node scripts/verify-small-run.mjs artifacts/lean-v4`。Live `sourceSetSha256=8899d4db…` 绑定当时源码；其后为避免 `--preflight` 覆盖 `docs/reports/lean-v4-result.md` 又改了 `small-runner.ts`，新 source-set 不得续跑该 rows。
+
+不要自行 publish / deploy；push 需用户明确授权。
+
 ### v3 W5 continuation (2026-09-04)
 
 当前代码已完成 C19/C20/C24 的增量修复（transport attempt 记录、planned/complete-case/worst-case 统计、corpus/session source binding、partial rows fail-closed、权威 live verifier）；C25–C28 也已有实现与定向测试。真实 Provider live evidence、Evidence v3 和 C24 300-pair gate 仍未完成；发布决策继续保持 `keep-pi-native` / `publicationClaim=false`。按用户要求，300 gate 延后至全部开发任务完成后执行一次。代码 HEAD 以接手时 `git rev-parse HEAD` 为准，本文件不硬编码易漂移的 commit。

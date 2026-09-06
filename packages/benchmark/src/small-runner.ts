@@ -6,6 +6,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { createRequire } from "node:module";
@@ -15,6 +16,8 @@ import { fileURLToPath } from "node:url";
 import { createIsolatedArmHomes, type IsolatedArmHome } from "./arms/isolate.js";
 import { latinSquareOrder } from "./runner/replicate-policy.js";
 import { scoreProbe, type ProbeFamily, type ProbeScore } from "./scoring/probe.js";
+import { scoreRecoveryCoverage, type RecoveryCoverage } from "./scoring/recovery.js";
+import { createLiveArmExecutor, seedScenarioSession } from "./small-live.js";
 
 export type AttemptStatus = "completed" | "timeout" | "failed" | "not-run";
 export type PrimaryArm = "B0" | "B2";
@@ -110,10 +113,14 @@ export const SCORER_REVISION = "lean-v4-t07-probe";
 export const HOST_PATCH_PATH = "patches/@earendil-works__pi-coding-agent@0.84.4.patch";
 export const DEFAULT_SOURCE_SET_PATHS = Object.freeze([
   "packages/benchmark/src/small-runner.ts",
+  "packages/benchmark/src/small-live.ts",
   "packages/benchmark/src/scoring/probe.ts",
   "packages/benchmark/src/scoring/recovery.ts",
   "packages/benchmark/src/statistics/paired-small.ts",
   "packages/runtime/src/telemetry/request-usage.ts",
+  "scripts/eval-small.mjs",
+  "scripts/credential-broker.mjs",
+  "scripts/verify-small-run.mjs",
   "package.json",
   "pnpm-lock.yaml",
   HOST_PATCH_PATH,
@@ -489,6 +496,10 @@ export interface CanaryConfig {
   host?: { patchSha256?: string; piVersion?: string; nodeVersion?: string };
   arms?: string[];
   maxMonetaryCost?: number | null;
+  maxPrimaryArmRuns?: number;
+  maxTotalRequests?: number;
+  singleRequestTimeoutMs?: number;
+  armTimeoutMs?: number;
 }
 
 function parseCanaryConfig(text: string): CanaryConfig {
@@ -509,7 +520,114 @@ function parseCanaryConfig(text: string): CanaryConfig {
     failInput("independentTasksRequired");
   }
   if (!Array.isArray(config.scenarioFiles)) failInput("scenarioFiles");
+  if (config.maxPrimaryArmRuns !== undefined && (!Number.isSafeInteger(config.maxPrimaryArmRuns) || config.maxPrimaryArmRuns < 1)) {
+    failInput("maxPrimaryArmRuns");
+  }
+  if (config.maxTotalRequests !== undefined && (!Number.isSafeInteger(config.maxTotalRequests) || config.maxTotalRequests < 1)) {
+    failInput("maxTotalRequests");
+  }
+  if (config.singleRequestTimeoutMs !== undefined && (!Number.isSafeInteger(config.singleRequestTimeoutMs) || config.singleRequestTimeoutMs < 1)) {
+    failInput("singleRequestTimeoutMs");
+  }
+  if (config.armTimeoutMs !== undefined && (!Number.isSafeInteger(config.armTimeoutMs) || config.armTimeoutMs < 1)) {
+    failInput("armTimeoutMs");
+  }
   return config;
+}
+
+export function probeFamilyFor(scenario: Scenario): ProbeFamily {
+  const checked = validateScenario(scenario);
+  if (checked.oracle.kind === "permission") return "deploy";
+  if (checked.oracle.kind === "requested-target" && /^\d+(?:\.\d+)*$/u.test(checked.oracle.expected)) return "version";
+  if (checked.oracle.kind === "observed-state" && /error|timeout|cause/iu.test(checked.id)) return "error";
+  return "path";
+}
+
+export function scoreArmResult(input: {
+  scenario: Scenario;
+  executed: ArmExecutionResult;
+  workspaceDir: string;
+}): Attempt {
+  if (!input || typeof input !== "object") failInput("input");
+  const scenario = validateScenario(input.scenario);
+  if (!input.executed || typeof input.executed !== "object") failInput("executed");
+  if (input.executed.status === "not-run") return { status: "not-run", success: false };
+  if (input.executed.stopReason === "safety-stop") {
+    return { status: input.executed.status === "completed" ? "failed" : input.executed.status, success: false };
+  }
+  if (scenario.mode === "coding") {
+    const asserted = evaluateScenarioAssertions({ workspaceDir: input.workspaceDir, scenario });
+    return {
+      status: input.executed.status,
+      success: input.executed.status === "completed" && asserted.ok,
+    };
+  }
+  const score = scoreRecordedAnswer({
+    expected: scenario.oracle.expected,
+    family: probeFamilyFor(scenario),
+    fullAnswer: input.executed.fullAnswer,
+    preview: input.executed.preview,
+  });
+  return attemptFromScore(input.executed.status, score, input.executed.fullAnswer);
+}
+
+export function recoveryCounts(coverage: RecoveryCoverage): { recoveryTested: number; recoveryPassed: number } {
+  if (!coverage || typeof coverage !== "object") failInput("coverage");
+  if (coverage.status === "not-tested") return { recoveryTested: 0, recoveryPassed: 0 };
+  return { recoveryTested: coverage.tested, recoveryPassed: coverage.pass };
+}
+
+export function median(values: readonly number[]): number | null {
+  if (!Array.isArray(values) || values.length === 0) return null;
+  const sorted = [...values].filter((value) => typeof value === "number" && Number.isFinite(value)).sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+}
+
+function taskInputTotal(usage: readonly ArmRequestUsage[]): number | null {
+  let total = 0;
+  for (const row of usage) {
+    if (row.input === null || !Number.isFinite(row.input)) return null;
+    total += row.input;
+    if (row.cacheRead !== null) total += row.cacheRead;
+    if (row.cacheWrite !== null) total += row.cacheWrite;
+  }
+  return total;
+}
+
+export function pairedEfficiency(records: readonly SmallRunRecord[]): {
+  medianTaskInputDelta: number | null;
+  medianWallTimeDelta: number | null;
+} {
+  if (!Array.isArray(records)) failInput("records");
+  const byPair = new Map<string, { B0?: SmallRunRecord; B2?: SmallRunRecord }>();
+  for (const record of records) {
+    if (record.arm !== "B0" && record.arm !== "B2") continue;
+    const key = `${record.pairId}#${record.repeat}`;
+    const current = byPair.get(key) ?? {};
+    if (record.arm === "B0") current.B0 = record;
+    else current.B2 = record;
+    byPair.set(key, current);
+  }
+  const inputDeltas: number[] = [];
+  const wallDeltas: number[] = [];
+  for (const pair of byPair.values()) {
+    if (!pair.B0 || !pair.B2) continue;
+    if (pair.B0.attempt.status !== "completed" || pair.B2.attempt.status !== "completed") continue;
+    const baselineInput = taskInputTotal(pair.B0.usage);
+    const candidateInput = taskInputTotal(pair.B2.usage);
+    if (baselineInput !== null && candidateInput !== null && baselineInput > 0) {
+      inputDeltas.push((candidateInput - baselineInput) / baselineInput);
+    }
+    if (pair.B0.wallTimeMs > 0 && pair.B2.wallTimeMs > 0) {
+      wallDeltas.push((pair.B2.wallTimeMs - pair.B0.wallTimeMs) / pair.B0.wallTimeMs);
+    }
+  }
+  return {
+    medianTaskInputDelta: median(inputDeltas),
+    medianWallTimeDelta: median(wallDeltas),
+  };
 }
 
 export function loadHostPatchSha256(cwd: string, read: (path: string) => Uint8Array = (path) => readFileSync(path)): string {
@@ -538,7 +656,10 @@ export function preflightSmallRun(input: {
     sourceSetSha256: hashSourceSet(sourcePaths.map((path) => resolve(cwd, path))),
     hostPatchSha256,
     modelFingerprint: config.providerModel,
-    corpusSha256: sha256Utf8(JSON.stringify(config.scenarioFiles)),
+    corpusSha256: sha256Utf8(JSON.stringify(config.scenarioFiles.map((rel) => {
+      const path = resolve(cwd, rel);
+      return { path: rel, sha256: existsSync(path) ? sha256Utf8(readFileSync(path, "utf8")) : "missing" };
+    }))),
     configSha256: sha256Utf8(configText),
     scorerRevision: SCORER_REVISION,
   };
@@ -719,6 +840,266 @@ export function writeRunArtifacts(dir: string, run: SmallRunManifest, reportMark
   writeFileSync(resolve(dir, "report.md"), body.endsWith("\n") ? body : `${body}\n`);
 }
 
+export function writeCanaryArtifacts(input: {
+  dir: string;
+  run: SmallRunManifest;
+  report: Record<string, unknown>;
+  markdown: string;
+  docsPath?: string;
+}): void {
+  if (!input || typeof input !== "object") failInput("input");
+  writeRunArtifacts(input.dir, input.run, input.markdown);
+  writeFileSync(resolve(input.dir, "report.json"), `${JSON.stringify(input.report, null, 2)}\n`);
+  if (typeof input.docsPath === "string" && input.docsPath.length > 0) {
+    mkdirSync(dirname(input.docsPath), { recursive: true });
+    writeFileSync(input.docsPath, input.markdown.endsWith("\n") ? input.markdown : `${input.markdown}\n`);
+  }
+}
+
+function materializeWorkspace(dir: string, files: Record<string, string>): void {
+  mkdirSync(dir, { recursive: true });
+  for (const [rel, text] of Object.entries(files)) {
+    const path = join(dir, rel);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, text);
+  }
+}
+
+export function loadCanaryScenarios(cwd: string, scenarioFiles: readonly string[]): Scenario[] {
+  if (!Array.isArray(scenarioFiles) || scenarioFiles.length === 0) failInput("scenarioFiles");
+  return scenarioFiles.map((rel, index) => {
+    if (typeof rel !== "string" || rel.length === 0) failInput(`scenarioFiles[${index}]`);
+    const path = resolve(cwd, rel);
+    if (!existsSync(path)) failInput(`scenarioFiles[${index}]`);
+    return validateScenario(JSON.parse(readFileSync(path, "utf8")) as unknown);
+  });
+}
+
+function emptyAttemptRecord(input: {
+  scenario: Scenario;
+  planned: PlannedPair;
+  arm: PrimaryArm;
+  stopReason: string;
+}): SmallRunRecord {
+  return {
+    pairId: input.scenario.id,
+    clusterId: input.scenario.clusterId,
+    repeat: input.planned.repeat,
+    arm: input.arm,
+    attempt: { status: "not-run", success: false },
+    fullAnswer: null,
+    preview: "",
+    stopReason: input.stopReason,
+    usage: [],
+    monetaryCost: null,
+    cacheState: "unknown",
+    wallTimeMs: 0,
+  };
+}
+
+export function buildCanaryMarkdown(run: SmallRunManifest, extras: Record<string, string> = {}): string {
+  const summary = run.summary;
+  const lines = [
+    "# lean-v4 small canary",
+    "",
+    "Personal canary only. This is not a publication claim and is not evidence of 2% non-inferiority.",
+    "",
+    `- status: ${run.status}`,
+    `- liveEnabled: ${run.liveEnabled}`,
+    `- plannedPairs: ${run.plannedPairs}`,
+    `- primaryCompletePairs: ${summary?.primaryCompletePairs ?? 0}`,
+    `- ittPairs: ${summary?.ittPairs ?? 0}`,
+    `- diagnosticFailures: ${summary?.diagnosticFailures ?? 0}`,
+    `- monetaryCost: ${run.monetaryCost === null ? "null" : String(run.monetaryCost)}`,
+    `- decision: ${run.decision ?? "n/a"}`,
+    `- widelyBetterThanNative: false`,
+    `- publicationClaim: false`,
+  ];
+  if (run.blockedReason) lines.push(`- blockedReason: ${run.blockedReason}`);
+  for (const [key, value] of Object.entries(extras)) lines.push(`- ${key}: ${value}`);
+  lines.push("", "Unknown prices stay null. Timeouts stay in the ITT denominator. Recovery n=0 is not a pass.", "");
+  return lines.join("\n");
+}
+
+export async function runLiveCanary(input: {
+  cwd: string;
+  outDir: string;
+  config: CanaryConfig;
+  preflight: SmallPreflight;
+  env?: NodeJS.ProcessEnv;
+}): Promise<SmallRunManifest> {
+  if (!input || typeof input !== "object") failInput("input");
+  const env = input.env ?? process.env;
+  const plannedPairs = input.config.independentTasksRequired * input.config.repeats;
+  const brokerUrl = env.PCR_BROKER_URL;
+  const toolsEnabled = input.preflight.toolsEnabledAllowed;
+  const docsPath = resolve(input.cwd, "docs/reports/lean-v4-result.md");
+  const write = (run: SmallRunManifest, extras: Record<string, string> = {}) => {
+    const report = {
+      schemaVersion: 1,
+      purpose: "personal-canary-not-publication",
+      status: run.status,
+      decision: run.decision ?? null,
+      blockedReason: run.blockedReason ?? null,
+      identity: run.identity,
+      summary: run.summary ?? null,
+      monetaryCost: run.monetaryCost,
+      publicationClaim: false,
+      widelyBetterThanNative: false,
+      sufficientToProve2pctNonInferiority: false,
+      platform: { os: process.platform, node: process.version },
+      isolationReason: input.preflight.isolationReason,
+      toolsEnabledAllowed: toolsEnabled,
+      extras,
+    };
+    writeCanaryArtifacts({
+      dir: input.outDir,
+      run,
+      report,
+      markdown: buildCanaryMarkdown(run, extras),
+      docsPath,
+    });
+  };
+  const blocked = (reason: string): SmallRunManifest => {
+    const run: SmallRunManifest = {
+      identity: input.preflight.identity,
+      plannedPairs,
+      liveEnabled: true,
+      status: "blocked",
+      blockedReason: reason,
+      monetaryCost: null,
+      decision: "inconclusive",
+      summary: { primaryCompletePairs: 0, plannedPairs, diagnosticFailures: 0, ittPairs: plannedPairs },
+    };
+    write(run);
+    if (!existsSync(resolve(input.outDir, "results.jsonl"))) writeFileSync(resolve(input.outDir, "results.jsonl"), "");
+    writeFileSync(resolve(input.outDir, "BLOCKED.md"), `${buildCanaryMarkdown(run)}\n`);
+    return run;
+  };
+  if (typeof brokerUrl !== "string" || !brokerUrl.startsWith("http://127.0.0.1")) {
+    return blocked(input.preflight.isolationReason === "credentials-missing" ? "credentials-missing" : "broker-unready");
+  }
+  if (input.config.scenarioFiles.length === 0) return blocked("scenario-files-empty");
+  const scenarios = loadCanaryScenarios(input.cwd, input.config.scenarioFiles);
+  if (independentClusterCount(scenarios) < input.config.independentTasksRequired) {
+    failInput("independentTasksRequired");
+  }
+  const planned = planPrimaryPairs({ scenarios, repeats: input.config.repeats });
+  const maxArmRuns = input.config.maxPrimaryArmRuns ?? 48;
+  const extensionPath = resolve(input.cwd, "apps/pi-context-runtime/dist/extension.js");
+  if (!existsSync(extensionPath)) return blocked("extension-missing");
+  const executor = createLiveArmExecutor({
+    cwd: input.cwd,
+    brokerUrl,
+    providerModel: input.config.providerModel,
+    contextWindow: input.config.contextWindow,
+    extensionPath,
+    toolsEnabled,
+    leakCanary: env.PCR_LIVE_API_KEY,
+    singleRequestTimeoutMs: input.config.singleRequestTimeoutMs ?? 180_000,
+    armTimeoutMs: input.config.armTimeoutMs ?? 600_000,
+  });
+  const resultsPath = resolve(input.outDir, "results.jsonl");
+  if (existsSync(resultsPath)) writeFileSync(resultsPath, "");
+  const running: SmallRunManifest = {
+    identity: input.preflight.identity,
+    plannedPairs,
+    liveEnabled: true,
+    status: "running",
+    monetaryCost: recordedMonetaryCost(input.config.maxMonetaryCost),
+    decision: null,
+    summary: { primaryCompletePairs: 0, plannedPairs, diagnosticFailures: 0, ittPairs: plannedPairs },
+  };
+  write(running, { phase: "running" });
+  const allRecords: SmallRunRecord[] = [];
+  const pairs: PairAttempts[] = [];
+  let armRuns = 0;
+  let halted = false;
+  const workRoot = join(input.outDir, "work");
+  rmSync(workRoot, { recursive: true, force: true });
+  mkdirSync(workRoot, { recursive: true });
+  for (const row of planned) {
+    const scenario = scenarios.find((item) => item.id === row.id);
+    if (!scenario) failInput("planned.id");
+    if (halted || armRuns >= maxArmRuns) {
+      for (const arm of row.order) {
+        const record = emptyAttemptRecord({
+          scenario,
+          planned: row,
+          arm,
+          stopReason: halted ? "safety-stop" : "budget",
+        });
+        allRecords.push(record);
+        appendResultLine(resultsPath, record);
+      }
+      pairs.push({
+        id: scenario.id,
+        clusterId: scenario.clusterId,
+        repeat: row.repeat,
+        B0: { status: "not-run", success: false },
+        B2: { status: "not-run", success: false },
+      });
+      continue;
+    }
+    const pairRoot = join(workRoot, `${scenario.id}-${row.repeat}`);
+    const seedWorkspaceDir = join(pairRoot, "seed-workspace");
+    const seedSessionFile = join(pairRoot, "seed.jsonl");
+    materializeWorkspace(seedWorkspaceDir, scenario.workspaceFiles);
+    seedScenarioSession({
+      sessionFile: seedSessionFile,
+      cwd: seedWorkspaceDir,
+      scenario,
+      providerModel: input.config.providerModel,
+    });
+    const executed = await executePlannedPair({
+      scenario,
+      planned: row,
+      root: join(pairRoot, "arms"),
+      seedSessionFile,
+      seedWorkspaceDir,
+      executor,
+    });
+    armRuns += executed.records.filter((record) => record.attempt.status !== "not-run").length;
+    for (const record of executed.records) {
+      allRecords.push(record);
+      appendResultLine(resultsPath, record);
+    }
+    pairs.push(executed.pair);
+    if (executed.halted) halted = true;
+  }
+  const summary = summarizeAttempts(pairs);
+  const recovery = scoreRecoveryCoverage({ eligible: 5, trials: [] });
+  const counts = recoveryCounts(recovery);
+  const efficiency = pairedEfficiency(allRecords);
+  const decision = decideCanary({
+    integrityFailures: halted ? 1 : 0,
+    recoveryTested: counts.recoveryTested,
+    recoveryPassed: counts.recoveryPassed,
+    criticalRegressions: 0,
+    completedPairs: summary.primaryCompletePairs,
+    plannedPairs: summary.plannedPairs,
+    medianTaskInputDelta: efficiency.medianTaskInputDelta,
+    medianWallTimeDelta: efficiency.medianWallTimeDelta,
+  });
+  const run: SmallRunManifest = {
+    identity: input.preflight.identity,
+    plannedPairs,
+    liveEnabled: true,
+    status: halted ? "blocked" : "complete",
+    blockedReason: halted ? "safety-stop" : toolsEnabled ? undefined : input.preflight.isolationReason,
+    monetaryCost: null,
+    decision,
+    summary,
+  };
+  write(run, {
+    recoveryStatus: recovery.status,
+    medianTaskInputDelta: efficiency.medianTaskInputDelta === null ? "null" : String(efficiency.medianTaskInputDelta),
+    medianWallTimeDelta: efficiency.medianWallTimeDelta === null ? "null" : String(efficiency.medianWallTimeDelta),
+    toolsEnabled: String(toolsEnabled),
+  });
+  return run;
+}
+
 export function isolatePrimaryHomes(input: {
   root: string;
   seedSessionFile: string;
@@ -737,7 +1118,7 @@ export async function executePlannedPair(input: {
   seedSessionFile: string;
   seedWorkspaceDir: string;
   executor: ArmExecutor;
-}): Promise<{ pair: PairAttempts; records: SmallRunRecord[]; homes: IsolatedArmHome[] }> {
+}): Promise<{ pair: PairAttempts; records: SmallRunRecord[]; homes: IsolatedArmHome[]; halted: boolean }> {
   const scenario = validateScenario(input.scenario);
   if (input.planned.id !== scenario.id) failInput("planned.id");
   const homes = isolatePrimaryHomes({
@@ -753,17 +1134,30 @@ export async function executePlannedPair(input: {
     B2: { status: "not-run", success: false },
   };
   const records: SmallRunRecord[] = [];
+  let halt = false;
   for (const arm of input.planned.order) {
     const home = homes.find((row) => row.arm === arm);
     if (!home) failInput("homes");
+    if (halt) {
+      pair[arm] = { status: "not-run", success: false };
+      records.push({
+        pairId: scenario.id,
+        clusterId: scenario.clusterId,
+        repeat: input.planned.repeat,
+        arm,
+        attempt: pair[arm],
+        fullAnswer: null,
+        preview: "",
+        stopReason: "safety-stop",
+        usage: [],
+        monetaryCost: null,
+        cacheState: "unknown",
+        wallTimeMs: 0,
+      });
+      continue;
+    }
     const executed = await input.executor.run({ arm, scenario, home });
-    const score = scoreRecordedAnswer({
-      expected: scenario.oracle.expected,
-      family: "version",
-      fullAnswer: executed.fullAnswer,
-      preview: executed.preview,
-    });
-    const attempt = attemptFromScore(executed.status, score, executed.fullAnswer);
+    const attempt = scoreArmResult({ scenario, executed, workspaceDir: home.cwd });
     pair[arm] = attempt;
     records.push({
       pairId: scenario.id,
@@ -779,8 +1173,9 @@ export async function executePlannedPair(input: {
       cacheState: executed.cacheState,
       wallTimeMs: executed.wallTimeMs,
     });
+    if (executed.stopReason === "safety-stop") halt = true;
   }
-  return { pair, records, homes };
+  return { pair, records, homes, halted: halt };
 }
 
 function parseArgs(argv: readonly string[]): {
@@ -834,7 +1229,24 @@ export async function runCli(argv: readonly string[], env: NodeJS.ProcessEnv = p
       decision: null,
       summary: { primaryCompletePairs: 0, plannedPairs, diagnosticFailures: 0, ittPairs: plannedPairs },
     };
-    writeRunArtifacts(outDir, run);
+    writeCanaryArtifacts({
+      dir: outDir,
+      run,
+      report: {
+        schemaVersion: 1,
+        status: run.status,
+        decision: null,
+        identity: run.identity,
+        summary: run.summary,
+        monetaryCost: run.monetaryCost,
+        publicationClaim: false,
+        widelyBetterThanNative: false,
+        sufficientToProve2pctNonInferiority: false,
+        toolsEnabledAllowed: report.toolsEnabledAllowed,
+        isolationReason: report.isolationReason,
+      },
+      markdown: buildCanaryMarkdown(run, { isolationReason: report.isolationReason }),
+    });
     if (!existsSync(resultsPath)) writeFileSync(resultsPath, "");
     process.stdout.write(`${JSON.stringify({
       ok: true,
@@ -848,37 +1260,23 @@ export async function runCli(argv: readonly string[], env: NodeJS.ProcessEnv = p
     })}\n`);
     return 0;
   }
-  if (report.toolsEnabledAllowed !== true) {
-    const run: SmallRunManifest = {
-      identity: report.identity,
-      plannedPairs,
-      liveEnabled: true,
-      status: "blocked",
-      blockedReason: report.isolationReason || "isolation-unproven",
-      monetaryCost: null,
-      decision: "inconclusive",
-      summary: { primaryCompletePairs: 0, plannedPairs, diagnosticFailures: 0, ittPairs: plannedPairs },
-    };
-    writeRunArtifacts(outDir, run);
-    process.stdout.write(`${JSON.stringify({ ok: true, live: true, status: "blocked", blockedReason: run.blockedReason, identity: report.identity })}\n`);
-    return 0;
-  }
-  if (config.scenarioFiles.length === 0) {
-    const run: SmallRunManifest = {
-      identity: report.identity,
-      plannedPairs,
-      liveEnabled: true,
-      status: "blocked",
-      blockedReason: "scenario-files-empty",
-      monetaryCost: null,
-      decision: "inconclusive",
-      summary: { primaryCompletePairs: 0, plannedPairs, diagnosticFailures: 0, ittPairs: plannedPairs },
-    };
-    writeRunArtifacts(outDir, run);
-    process.stdout.write(`${JSON.stringify({ ok: true, live: true, status: "blocked", blockedReason: run.blockedReason, identity: report.identity })}\n`);
-    return 0;
-  }
-  fail("PCR_SMALL_RUNNER_LIVE_DISABLED", { reason: "live-executor-is-t12", scenarioCount: config.scenarioFiles.length });
+  const liveRun = await runLiveCanary({
+    cwd,
+    outDir,
+    config,
+    preflight: report,
+    env,
+  });
+  process.stdout.write(`${JSON.stringify({
+    ok: true,
+    live: true,
+    status: liveRun.status,
+    blockedReason: liveRun.blockedReason ?? null,
+    decision: liveRun.decision ?? null,
+    identity: liveRun.identity,
+    summary: liveRun.summary ?? null,
+  })}\n`);
+  return 0;
 }
 
 const invoked = typeof process.argv[1] === "string" && process.argv[1].includes("small-runner");

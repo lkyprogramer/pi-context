@@ -13,6 +13,7 @@ import {
   redactBrokerLog,
   sanitizeBrokerError,
   scanSecretSurfaces,
+  startCredentialBroker,
   toolsEnabledAllowed,
   writeArmProviderConfig,
 } from "../../scripts/credential-broker.mjs";
@@ -116,6 +117,34 @@ it("counts canary leaks without printing the secret", () => {
   expect(scan.hits).toBe(3);
   expect(scan.leaked).toBe(true);
   expect(JSON.stringify(scan)).not.toContain(CANARY);
+});
+
+it("does not freeze the parent broker with spawnSync while the runner is live", () => {
+  const src = readFileSync(new URL("../../scripts/eval-small.mjs", import.meta.url), "utf8");
+  expect(src).not.toMatch(/spawnSync\s*\(\s*jiti/);
+  expect(src).toMatch(/spawn\s*\(\s*jiti/);
+});
+
+it("broker http rejects a disallowed model without forwarding the parent key", async () => {
+  const broker = await startCredentialBroker({
+    targetBaseUrl: "http://127.0.0.1:1",
+    apiKey: CANARY,
+    allowedHost: "127.0.0.1",
+    allowedModel: "openclaw/Qwen3.8-27B-WORK",
+    maxRequests: 2,
+  });
+  try {
+    const response = await fetch(`${broker.url}/chat/completions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "openclaw/other", messages: [] }),
+    });
+    expect(response.status).toBe(403);
+    const text = await response.text();
+    expect(text).not.toContain(CANARY);
+  } finally {
+    await broker.close();
+  }
 });
 
 it("writes arm provider config that points at loopback without copying keys", () => {

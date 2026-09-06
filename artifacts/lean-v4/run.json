@@ -1,0 +1,22 @@
+{
+  "identity": {
+    "sourceSetSha256": "8899d4db5db402c41d1884167500267925a2866fe927d27c445d006960ee401b",
+    "hostPatchSha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
+    "modelFingerprint": "openclaw/Qwen3.8-27B-WORK",
+    "corpusSha256": "5a65894d85972f82bf47454beb2206bf27c8384d7c9eb972c6855d8d5ccf029a",
+    "configSha256": "2e7064b45bb70bd2a7888fef2891f2d19e86259c5c9e0c28c07e02f8266016c9",
+    "scorerRevision": "lean-v4-t07-probe"
+  },
+  "plannedPairs": 24,
+  "liveEnabled": true,
+  "status": "complete",
+  "blockedReason": "isolation-unproven",
+  "monetaryCost": null,
+  "decision": "inconclusive",
+  "summary": {
+    "primaryCompletePairs": 16,
+    "plannedPairs": 24,
+    "diagnosticFailures": 0,
+    "ittPairs": 24
+  }
+}

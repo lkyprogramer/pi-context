@@ -1,0 +1,156 @@
+{
+  "taskId": "T12",
+  "baseCommit": "0b0f23bd4683a72b72ec7b1d33090a32942033f5",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/benchmark/src/small-live.ts",
+      "reason": "T12 live executor talks to product Pi RPC with isolated HOME, --no-tools readers, and broker-only models.json."
+    },
+    {
+      "path": "packages/benchmark/package.json",
+      "reason": "Strict typecheck must include small-live.ts."
+    },
+    {
+      "path": "scripts/eval-small.mjs",
+      "reason": "Parent must start the loopback broker and async-spawn the runner so the event loop can proxy."
+    },
+    {
+      "path": "scripts/credential-broker.mjs",
+      "reason": "Live proxy must stream upstream SSE, rewrite the canonical model id, and keep the parent key out of the agent."
+    },
+    {
+      "path": "tests/security/eval-secrets.test.ts",
+      "reason": "Regression: eval-small must not spawnSync the runner while the broker is in-process."
+    },
+    {
+      "path": "docs/SECURITY.md",
+      "reason": "Document reader-only live via broker versus tools-enabled isolation-unproven."
+    },
+    {
+      "path": "packages/contracts/src/package-boundary.ts",
+      "reason": "pi-adapter already imports @pcr/core; the boundary list must match the existing paging/read-pages callers."
+    },
+    {
+      "path": "tests/acceptance/product-runtime-path.test.ts",
+      "reason": "After T11 ingress default, product-path tests must opt into experimental-runtime."
+    },
+    {
+      "path": ".gitignore",
+      "reason": "Do not track isolated live-arm homes under artifacts/lean-v4/work/."
+    },
+    {
+      "path": "HANDOFF.md",
+      "reason": "T12 required handoff of the frozen canary decision."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/small-runner.test.ts tests/security/eval-secrets.test.ts",
+      "exit": 0,
+      "tests": "36 passed"
+    },
+    {
+      "command": "pnpm --filter @pcr/benchmark typecheck",
+      "exit": 0
+    },
+    {
+      "command": "pnpm eval:small -- --preflight --config experiments/personal-canary.json --out artifacts/lean-v4/tasks/T12-preflight",
+      "exit": 0,
+      "live": false,
+      "isolationReason": "isolation-unproven"
+    },
+    {
+      "command": "PCR_LIVE=1 pnpm eval:small -- --config experiments/personal-canary.json",
+      "exit": 0,
+      "live": true,
+      "status": "complete",
+      "decision": "inconclusive",
+      "blockedReason": "isolation-unproven",
+      "summary": {
+        "primaryCompletePairs": 16,
+        "plannedPairs": 24,
+        "diagnosticFailures": 0,
+        "ittPairs": 24
+      },
+      "identityAtRun": {
+        "sourceSetSha256": "8899d4db5db402c41d1884167500267925a2866fe927d27c445d006960ee401b",
+        "hostPatchSha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
+        "modelFingerprint": "openclaw/Qwen3.8-27B-WORK",
+        "corpusSha256": "5a65894d85972f82bf47454beb2206bf27c8384d7c9eb972c6855d8d5ccf029a",
+        "configSha256": "2e7064b45bb70bd2a7888fef2891f2d19e86259c5c9e0c28c07e02f8266016c9",
+        "scorerRevision": "lean-v4-t07-probe"
+      }
+    },
+    {
+      "command": "node scripts/verify-small-run.mjs artifacts/lean-v4",
+      "exit": 0,
+      "summary": {
+        "primaryCompletePairs": 16,
+        "plannedPairs": 24,
+        "diagnosticFailures": 0,
+        "ittPairs": 24
+      }
+    },
+    {
+      "command": "pnpm check:local",
+      "exit": 1,
+      "note": "Stops at test:unit. 3 failures in tests/tasks/t31.test.ts (Native summary acknowledged, fromHook false). Not weakened."
+    },
+    {
+      "command": "pnpm test:contract",
+      "exit": 0,
+      "tests": "10 files passed"
+    },
+    {
+      "command": "pnpm test:integration",
+      "exit": 0,
+      "tests": "13 files passed"
+    },
+    {
+      "command": "pnpm test:acceptance",
+      "exit": 1,
+      "note": "14 failed: ancestor-evidence empty FTS hits; controlled-host-compaction Native fromHook/retry; product-runtime-path still Native/full tool text under experimental-runtime opt-in. Not weakened."
+    },
+    {
+      "command": "pnpm test:packed",
+      "exit": 0,
+      "tests": "4 files passed"
+    }
+  ],
+  "assertions": [
+    "decideCanary is inconclusive when recoveryTested=0 even with 24/24 pairs and large efficiency deltas",
+    "Source-set epoch drift refuses resume of a running/complete run",
+    "Timeouts remain in ITT; this live run had 0 timeouts and 48 primary arm rows",
+    "Unknown prices stay null (run.monetaryCost and every results.jsonl row)",
+    "safety-stop halts remaining arms in executePlannedPair",
+    "Scorer is not raised by restating a different requirement; coding success is workspace assertions",
+    "Parent broker uses spawn not spawnSync so Pi HTTP is accepted",
+    "splitProviderModel yields model Qwen3.8-27B-WORK from openclaw/Qwen3.8-27B-WORK",
+    "Reader live used product Pi RPC + isolated HOME + loopback broker + --no-tools",
+    "Coding/tools-enabled live stayed not-run with isolation-unproven on Darwin",
+    "publicationClaim and widelyBetterThanNative remain false; insufficient to prove 2% non-inferiority",
+    "Default product path stays ingress / Pi Native"
+  ],
+  "uncovered": [
+    "pnpm check:local is red on T31 product-harness compaction takeover (same Native acknowledged / fromHook false as T11). Live was still run because T12 explicitly requires PCR_LIVE=1; product/pack red is recorded, not waived.",
+    "Darwin unsandboxed agent can read host ~/.pi config, so tools-enabled/coding arms were not executed.",
+    "Recovery coverage eligible=5 with zero trials: not-tested, not a pass.",
+    "Live sourceSetSha256 8899d4db… is the freeze of the executor that produced results.jsonl. A later small-runner.ts change (do not write docs/reports on --preflight) has a different source-set and must not resume those rows.",
+    "artifacts/lean-v4/work/ contains isolated session/sqlite/key material and is not committed."
+  ],
+  "hashes": {
+    "packages/benchmark/src/small-runner.ts": "1b7d1dc52fd3c0cfdd99e5cedc93f4f0926a8b198c3e4eda248a32c8b2743470",
+    "packages/benchmark/src/small-live.ts": "dd0a4a7aa8882c33c8c4561d87e08ecab411220915462c00c7ac4cd0783624b8",
+    "packages/benchmark/test/small-runner.test.ts": "2275b1ddae8b82b552da20c59eadf5a8613cd327e430487646f8e1e916f916d5",
+    "scripts/eval-small.mjs": "2b263e77e240b30441ad5b2463c34aabec2e6c66d05aff4587c48aab49da96ee",
+    "scripts/credential-broker.mjs": "9f56f2c8c61fea74850cb3d1dc34168185fd435b5416ec136157a83081b106d2",
+    "scripts/verify-small-run.mjs": "6602c6b35e168474f23aa8c88a22d701d164beff416a3ae9f64cd7290f5bc9d4",
+    "experiments/personal-canary.json": "2e7064b45bb70bd2a7888fef2891f2d19e86259c5c9e0c28c07e02f8266016c9",
+    "docs/reports/lean-v4-result.md": "220c5e42c8a586b3b9171518a5df49fc7e4e86def55abc9248424c0650381ddf",
+    "artifacts/lean-v4/run.json": "f21a75cddea3da26ca10af320834d76434d1c3b4dbacadffff9cfb3d6f0bf0e6",
+    "artifacts/lean-v4/results.jsonl": "fbb1a8d47008a1ce025c444bbbb2fc106f5bbf018c5896b18e5f2a51640e0bff",
+    "artifacts/lean-v4/report.json": "b35dd508fcefb53b44bd6c546d300c0118af5e9fd3d3569ebc550bb37ae00c20"
+  }
+}

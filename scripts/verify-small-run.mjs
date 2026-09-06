@@ -11,10 +11,9 @@ if (!existsSync(jiti)) {
   process.stderr.write("PCR_SMALL_RUNNER_DEPENDENCY_MISSING\n");
   process.exit(1);
 }
-const dir = process.argv[2] ?? "artifacts/lean-v4";
+const dir = process.argv[2] && !process.argv[2].startsWith("-") ? process.argv[2] : "artifacts/lean-v4";
 const result = spawnSync(jiti, [cli, "--verify", dir], {
   stdio: "inherit",
   cwd: root,
-  env: process.env,
 });
 process.exit(result.status ?? 1);

@@ -5,6 +5,7 @@
  * in the trusted parent.
  */
 
+import { createServer } from "node:http";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -72,7 +73,22 @@ export function writeArmProviderConfig(armHome, input) {
       [input.provider]: {
         baseUrl: input.brokerUrl,
         api: "openai-completions",
-        models: [{ id: input.model, contextWindow: input.contextWindow ?? 200192, maxTokens: input.maxTokens ?? 16384 }],
+        apiKey: "pcr-broker",
+        authHeader: true,
+        compat: {
+          supportsDeveloperRole: false,
+          supportsReasoningEffort: false,
+          maxTokensField: "max_tokens",
+        },
+        models: [{
+          id: input.model,
+          name: input.model,
+          reasoning: false,
+          input: ["text"],
+          contextWindow: input.contextWindow ?? 200192,
+          maxTokens: input.maxTokens ?? 16384,
+          cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        }],
       },
     },
   };
@@ -213,6 +229,114 @@ process.stdout.write(JSON.stringify({ readable, envHit, home: process.env.HOME }
       home: probe.home,
     },
   };
+}
+
+export function canonicalModelId(model) {
+  if (typeof model !== "string" || model.length === 0) failInput("model");
+  const slash = model.lastIndexOf("/");
+  return slash >= 0 ? model.slice(slash + 1) : model;
+}
+
+function joinUpstreamUrl(targetBaseUrl, reqUrl) {
+  const base = new URL(targetBaseUrl.endsWith("/") ? targetBaseUrl : `${targetBaseUrl}/`);
+  const incoming = new URL(reqUrl ?? "/", "http://127.0.0.1");
+  let path = incoming.pathname;
+  if (path === "/v1" || path.startsWith("/v1/")) path = path.slice(3) || "/";
+  if (!path.startsWith("/")) path = `/${path}`;
+  return new URL(`.${path}${incoming.search}`, base);
+}
+
+/**
+ * Parent-only loopback proxy. Agent processes receive only the loopback URL.
+ * @param {{
+ *   targetBaseUrl: string;
+ *   apiKey: string;
+ *   allowedHost?: string;
+ *   allowedModel: string;
+ *   maxRequests?: number;
+ * }} input
+ */
+export function startCredentialBroker(input) {
+  if (!input || typeof input !== "object") failInput("input");
+  if (typeof input.targetBaseUrl !== "string" || !/^https?:\/\//u.test(input.targetBaseUrl)) failInput("targetBaseUrl");
+  if (typeof input.apiKey !== "string" || input.apiKey.length === 0) failInput("apiKey");
+  if (typeof input.allowedModel !== "string" || input.allowedModel.length === 0) failInput("allowedModel");
+  const allowedHost = input.allowedHost ?? "127.0.0.1";
+  const maxRequests = input.maxRequests ?? 384;
+  if (!Number.isSafeInteger(maxRequests) || maxRequests < 1) failInput("maxRequests");
+  let requestCount = 0;
+  return new Promise((resolve, reject) => {
+    const server = createServer((req, res) => {
+      void (async () => {
+        const chunks = [];
+        for await (const chunk of req) chunks.push(chunk);
+        const body = Buffer.concat(chunks);
+        try {
+          const host = String(req.headers.host ?? "").split(":")[0] ?? "";
+          let model = input.allowedModel;
+          let forwardBody = body;
+          if (body.length > 0) {
+            const parsed = JSON.parse(body.toString("utf8"));
+            if (parsed && typeof parsed === "object" && typeof parsed.model === "string" && parsed.model.length > 0) {
+              model = parsed.model;
+            }
+            if (parsed && typeof parsed === "object") {
+              parsed.model = canonicalModelId(input.allowedModel);
+              forwardBody = Buffer.from(JSON.stringify(parsed));
+            }
+          }
+          const requestedId = canonicalModelId(model);
+          const allowedId = canonicalModelId(input.allowedModel);
+          authorizeBrokerRoute({
+            host,
+            model: requestedId === allowedId ? input.allowedModel : model,
+            allowedHost,
+            allowedModel: input.allowedModel,
+            maxRequests,
+            requestCount,
+          });
+          requestCount += 1;
+          const upstreamUrl = joinUpstreamUrl(input.targetBaseUrl, req.url);
+          const headers = { authorization: `Bearer ${input.apiKey}` };
+          if (typeof req.headers["content-type"] === "string") headers["content-type"] = req.headers["content-type"];
+          const upstream = await fetch(upstreamUrl, {
+            method: req.method ?? "GET",
+            headers,
+            body: req.method === "GET" || req.method === "HEAD" ? undefined : forwardBody,
+          });
+          res.statusCode = upstream.status;
+          const contentType = upstream.headers.get("content-type");
+          if (contentType) res.setHeader("content-type", contentType);
+          if (!upstream.body) {
+            res.end();
+            return;
+          }
+          for await (const chunk of upstream.body) {
+            res.write(chunk);
+          }
+          res.end();
+        } catch (error) {
+          const code = error && typeof error === "object" && "code" in error ? String(error.code) : "PCR_BROKER_PROXY";
+          res.statusCode = code.startsWith("PCR_BROKER_") ? 403 : 502;
+          res.setHeader("content-type", "application/json");
+          res.end(JSON.stringify({ error: { type: code, message: sanitizeBrokerError(error) } }));
+        }
+      })();
+    });
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const addr = server.address();
+      const port = addr && typeof addr === "object" ? addr.port : 0;
+      resolve({
+        url: `http://127.0.0.1:${port}/v1`,
+        port,
+        close: () => new Promise((closeResolve, closeReject) => {
+          server.close((err) => (err ? closeReject(err) : closeResolve()));
+        }),
+        requestCount: () => requestCount,
+      });
+    });
+  });
 }
 
 export function preflightIsolation(parent = process.env) {

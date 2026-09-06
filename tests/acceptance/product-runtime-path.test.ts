@@ -11,16 +11,23 @@ import {
   type ExtensionFactory,
   type ToolResultEvent,
 } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createRuntimeCursor } from "@pcr/core";
 import { register as registerProductExtension } from "../../apps/pi-context-runtime/src/extension.js";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
+import { enableExperimentalProductRuntime } from "../helpers/product-harness.js";
 
 const roots: string[] = [];
 const PAYLOAD = "cache invalidation strategy\nerror: boom\nexit code 1";
 
+let restoreRuntimeMode: (() => void) | undefined;
+beforeEach(() => {
+  restoreRuntimeMode = enableExperimentalProductRuntime();
+});
 afterEach(() => {
+  restoreRuntimeMode?.();
+  restoreRuntimeMode = undefined;
   resetOwnerForTest();
   vi.restoreAllMocks();
   for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true });

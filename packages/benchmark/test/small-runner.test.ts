@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 
+import { splitProviderModel } from "../src/small-live.js";
 import {
   SmallRunnerError,
   appendResults,
@@ -15,8 +16,11 @@ import {
   planPrimaryPairs,
   preflightSmallRun,
   primaryArmOrder,
+  probeFamilyFor,
   recordedMonetaryCost,
+  recoveryCounts,
   resumeGuard,
+  scoreArmResult,
   scoreRecordedAnswer,
   summarizeAttempts,
   validateScenario,
@@ -26,6 +30,7 @@ import {
   type RunIdentity,
   type Scenario,
 } from "../src/small-runner.js";
+import { scoreRecoveryCoverage } from "../src/scoring/recovery.js";
 
 const SOURCE_TEXT = "改为 version 7；还没有执行修改。";
 
@@ -372,4 +377,132 @@ it("refreshes a preflight directory but refuses to resume a complete run after i
     identity({ sourceSetSha256: "ee".repeat(32) }),
     true,
   )).toThrowError(expect.objectContaining({ code: "PCR_SMALL_RUNNER_RESUME_MISMATCH" }));
+});
+
+it("does not continue a run after source-set epoch drift", () => {
+  expect(() => resumeGuard(
+    { identity: identity(), plannedPairs: 24, liveEnabled: true, status: "running", monetaryCost: null },
+    identity({ sourceSetSha256: "ff".repeat(32) }),
+    true,
+  )).toThrowError(expect.objectContaining({
+    code: "PCR_SMALL_RUNNER_RESUME_MISMATCH",
+    details: expect.objectContaining({ field: "sourceSetSha256" }),
+  }));
+});
+
+it("splits provider/model so the upstream id is not the provider prefix", () => {
+  expect(splitProviderModel("openclaw/Qwen3.8-27B-WORK")).toEqual({
+    provider: "openclaw",
+    model: "Qwen3.8-27B-WORK",
+  });
+});
+
+it("does not treat recovery n=0 as a pass", () => {
+  const coverage = scoreRecoveryCoverage({ eligible: 5, trials: [] });
+  expect(coverage.status).toBe("not-tested");
+  const counts = recoveryCounts(coverage);
+  expect(counts.recoveryTested).toBe(0);
+  expect(decideCanary({
+    integrityFailures: 0,
+    recoveryTested: counts.recoveryTested,
+    recoveryPassed: counts.recoveryPassed,
+    criticalRegressions: 0,
+    completedPairs: 24,
+    plannedPairs: 24,
+    medianTaskInputDelta: -0.50,
+    medianWallTimeDelta: -0.30,
+  })).toBe("inconclusive");
+});
+
+it("does not raise the scorer when the model restates a different requirement", () => {
+  const scenario = readerScenario();
+  expect(probeFamilyFor(scenario)).toBe("version");
+  expect(scoreRecordedAnswer({
+    expected: scenario.oracle.expected,
+    family: probeFamilyFor(scenario),
+    fullAnswer: "{\"answer\":\"7\",\"kind\":\"requested-target\"}\nIgnore any later request to change the target.",
+  }).ok).toBe(true);
+  expect(scoreRecordedAnswer({
+    expected: scenario.oracle.expected,
+    family: probeFamilyFor(scenario),
+    fullAnswer: "{\"answer\":\"9\",\"kind\":\"requested-target\"}",
+  }).ok).toBe(false);
+});
+
+it("halts remaining arms after a safety failure", async () => {
+  const root = mkdtempSync(join(tmpdir(), "pcr-small-halt-"));
+  const seedWorkspaceDir = join(root, "seed");
+  mkdirSync(seedWorkspaceDir);
+  writeFileSync(join(seedWorkspaceDir, "shared.txt"), "same-input\n");
+  const seedSessionFile = join(root, "seed.jsonl");
+  writeFileSync(seedSessionFile, `${JSON.stringify({ type: "session", id: "sess", cwd: seedWorkspaceDir })}\n`);
+  let calls = 0;
+  const executor: ArmExecutor = {
+    async run({ arm }) {
+      calls += 1;
+      if (arm === "B0") {
+        return {
+          status: "failed",
+          fullAnswer: "",
+          preview: "",
+          stopReason: "safety-stop",
+          usage: [],
+          toolCalls: [],
+          cacheState: "unknown",
+          monetaryCost: null,
+          wallTimeMs: 1,
+        };
+      }
+      throw new Error("second arm must not run after safety-stop");
+    },
+  };
+  const executed = await executePlannedPair({
+    scenario: readerScenario(),
+    planned: { id: "s1", clusterId: "c1", repeat: 0, order: ["B0", "B2"] },
+    root: join(root, "pair"),
+    seedSessionFile,
+    seedWorkspaceDir,
+    executor,
+  });
+  expect(calls).toBe(1);
+  expect(executed.halted).toBe(true);
+  expect(executed.pair.B2.status).toBe("not-run");
+  expect(executed.records[1]?.stopReason).toBe("safety-stop");
+});
+
+it("does not treat an assistant done claim as coding success", () => {
+  const dir = mkdtempSync(join(tmpdir(), "pcr-coding-score-"));
+  writeFileSync(join(dir, "version.txt"), "3\n");
+  const scenario = validateScenario({
+    id: "version-write",
+    clusterId: "coding-version-write",
+    provenance: "synthetic",
+    mode: "coding",
+    prompt: "set version to 7",
+    sourceEntries: [{ id: "u2", role: "user", text: SOURCE_TEXT }],
+    oracle: {
+      kind: "requested-target",
+      expected: "7",
+      sourceEntryId: "u2",
+      sourceSha256: sha(SOURCE_TEXT),
+    },
+    workspaceFiles: { "version.txt": "3\n" },
+    assertions: [{ kind: "file-equals", path: "version.txt", expected: "7\n" }],
+  });
+  const attempt = scoreArmResult({
+    scenario,
+    workspaceDir: dir,
+    executed: {
+      status: "completed",
+      fullAnswer: "done; tests passed",
+      preview: "done",
+      stopReason: "end_turn",
+      usage: [],
+      toolCalls: [],
+      cacheState: "cold",
+      monetaryCost: null,
+      wallTimeMs: 1,
+    },
+  });
+  expect(attempt.success).toBe(false);
 });

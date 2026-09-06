@@ -25,6 +25,9 @@ artifacts/runs/**/*.partial.json
 artifacts/runs/**/logs/
 artifacts/runs/**/nohup*.log
 artifacts/runs/**/pairs/
+
+# Isolated live-arm homes (session/sqlite/placeholder keys). Keep local.
+artifacts/lean-v4/work/
 **/pairs-sanitized.tar.gz
 **/pairs-archive-manifest.json
 **/pairs-partial.json

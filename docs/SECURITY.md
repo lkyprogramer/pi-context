@@ -11,7 +11,7 @@
 
 - Parent processes may read local Provider config. Agent/tool subprocesses receive `buildAgentEnvironment()` only: `HOME` is the arm directory, plus PATH/temp/locale and an explicit loopback broker URL. `TOKEN`/`KEY`/`AUTH`/`COOKIE` values are not inherited.
 - Do not copy `~/.pi/agent/auth.json` or `models.json` with secrets into an arm. Arm `models.json` may only point at `http://127.0.0.1` broker URLs.
-- Environment stripping is not a sandbox. If the agent process can still read the host auth path, tools-enabled live is blocked (`isolation-unproven`). A key present in the parent does not prove isolation.
+- Environment stripping is not a sandbox. If the agent process can still read the host auth path, tools-enabled live is blocked (`isolation-unproven`). A key present in the parent does not prove isolation. Reader-only live may still use the loopback broker with `--no-tools` and an isolated `PI_CODING_AGENT_DIR`; coding/tools-enabled arms stay not-run until isolation is proven.
 - Controlled no-key / `PCR_LIVE` unset runs do not need the broker.
 - Keys that already entered session, SQLite, or raw live logs should be rotated and those files kept local/read-restricted. Do not delete user logs from this repo and do not commit replacements that contain secrets.
 

@@ -8,7 +8,7 @@ export const TARGET_PACKAGE_BOUNDARIES: readonly PackageBoundary[] = [
   { from: "@pcr/core", allowedImports: ["@pcr/contracts"] },
   { from: "@pcr/runtime", allowedImports: ["@pcr/contracts", "@pcr/core"] },
   { from: "@pcr/storage-node", allowedImports: ["@pcr/contracts", "@pcr/runtime"] },
-  { from: "@pcr/pi-adapter", allowedImports: ["@pcr/contracts", "@pcr/runtime"] },
+  { from: "@pcr/pi-adapter", allowedImports: ["@pcr/contracts", "@pcr/core", "@pcr/runtime"] },
   { from: "@pcr/benchmark", allowedImports: ["@pcr/contracts", "@pcr/pi-adapter", "@pcr/runtime"] },
   {
     from: "@pcr/testkit",

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "purpose": "personal-canary-not-publication",
-  "liveEnabled": false,
+  "liveEnabled": true,
   "host": {
     "piVersion": "0.84.4",
     "patchSha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
@@ -33,5 +33,18 @@
   "maxMonetaryCost": null,
   "unknownPricePolicy": "use explicitly approved request cap; never report monetary savings",
   "decisionLevel": "canary-only",
-  "scenarioFiles": []
+  "scenarioFiles": [
+    "experiments/cases/branch-restart-ancestor.json",
+    "experiments/cases/branch-sibling-isolation.json",
+    "experiments/cases/delayed-fact-hash.json",
+    "experiments/cases/delayed-fact-utf8.json",
+    "experiments/cases/java-score-repair.json",
+    "experiments/cases/log-distant-error.json",
+    "experiments/cases/log-timeout-cause.json",
+    "experiments/cases/public-api-repair.json",
+    "experiments/cases/requirement-deploy-reader.json",
+    "experiments/cases/ts-null-guard.json",
+    "experiments/cases/version-target-reader.json",
+    "experiments/cases/version-write.json"
+  ]
 }
