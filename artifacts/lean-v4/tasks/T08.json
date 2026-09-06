@@ -1,0 +1,61 @@
+{
+  "taskId": "T08",
+  "baseCommit": "a6cd799",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/benchmark/src/index.ts",
+      "reason": "Export the small-runner contract from the benchmark barrel."
+    },
+    {
+      "path": "packages/benchmark/package.json",
+      "reason": "Strict typecheck must include small-runner.ts and small-runner.test.ts."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/small-runner.test.ts",
+      "exit": 0,
+      "tests": "18 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    },
+    {
+      "command": "pnpm eval:small -- --preflight --config experiments/personal-canary.json --out artifacts/lean-v4/tasks/T08-preflight",
+      "exit": 0,
+      "live": false
+    },
+    {
+      "command": "node scripts/verify-small-run.mjs artifacts/lean-v4/tasks/T08-preflight",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "Primary complete pairs stay 1 when B0/B2 completed and B1 timed out",
+    "Timeouts remain in the ITT/planned denominator",
+    "Duplicate pair IDs are rejected",
+    "Resume is forbidden when RunIdentity drifts on a complete run",
+    "Unknown monetary cost stays null",
+    "Empty answers and 400-character previews are not success/full scoring input",
+    "sourceSetSha256 covers runner/lock/patch files, not only dist/extension.js",
+    "hostPatchSha256 matches patches/@earendil-works__pi-coding-agent@0.84.4.patch",
+    "No PCR_LIVE means zero provider requests; preflight writes run.json + empty results.jsonl",
+    "Paired W2 live reports primaryCompletePairs separately from four-arm completedPairs"
+  ],
+  "uncovered": [
+    "Live arm execution against pi is deferred to T12; PCR_LIVE=1 with empty scenarioFiles is blocked, with scenario files throws PCR_SMALL_RUNNER_LIVE_DISABLED until an executor is wired",
+    "Credential isolation is only a config flag in T08; T09 must prove keys never enter the agent environment",
+    "Scenario corpus is empty in experiments/personal-canary.json until T10",
+    "Old W2 four-arm hardGatePass is unchanged; only primaryCompletePairs/diagnosticFailures were added"
+  ],
+  "hashes": {
+    "packages/benchmark/src/small-runner.ts": "ba3a831edc3551951af8093d6533d75c9f55c86275951c02677bfeae286d426c",
+    "packages/benchmark/test/small-runner.test.ts": "3c104fe0e24d5f08a389e04b10ab165365e8ae19472cb6ac45c2824a7b898d48",
+    "scripts/eval-small.mjs": "cbf177aa0b4cb07c091a7c1aa202bd03cb0608467f3d3d1e096d44229f951d49",
+    "scripts/verify-small-run.mjs": "2a2ba1d45e78d676ac2dcc31a7f456becb89947c47eacb398122be23cab35e20",
+    "experiments/personal-canary.json": "bacd115e9057c97dc0f1ae2500516dedffcc05a34829a45cde20a77eb5fd21ed"
+  }
+}

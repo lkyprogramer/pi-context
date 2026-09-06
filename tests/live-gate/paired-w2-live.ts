@@ -41,6 +41,7 @@ import {
 } from "../../packages/benchmark/src/runner/replicate-policy.js";
 import { scoreExactRecovery, type ExactRecoveryReport } from "../../packages/benchmark/src/scoring/integrity.js";
 import { scoreProbe, type ProbeFamily, type ProbeParseBucket } from "../../packages/benchmark/src/scoring/probe.js";
+import { summarizeAttempts, type Attempt, type PairAttempts } from "../../packages/benchmark/src/small-runner.js";
 import {
   createEncryptedBlobStore,
   openLocalWorkspaceBlobKeyProvider,
@@ -142,6 +143,14 @@ export function computeRunEpochHash(input: {
 
 export function isLiveTimeoutError(error: string): boolean {
   return /timed?\s*out|timeout|did not settle|timeout waiting/iu.test(error);
+}
+
+function liveArmToAttempt(arm: LiveArmResult): Attempt {
+  if (arm.ok) return { status: "completed", success: arm.closedLoopSuccess === 1 };
+  if (typeof arm.error === "string" && isLiveTimeoutError(arm.error)) {
+    return { status: "timeout", success: false };
+  }
+  return { status: "failed", success: false };
 }
 
 function nvmBin(): string {
@@ -878,6 +887,16 @@ export async function runLivePairedW2(opts: {
   }
 
   const completed = rows.filter((row) => row.b0.ok && row.b1.ok && row.b2.ok && row.f0.ok);
+  const pairAttempts: PairAttempts[] = rows.map((row) => ({
+    id: row.id,
+    clusterId: row.family,
+    repeat: row.replicateIndex,
+    B0: liveArmToAttempt(row.b0),
+    B2: liveArmToAttempt(row.b2),
+    B1: liveArmToAttempt(row.b1),
+    F0: liveArmToAttempt(row.f0),
+  }));
+  const primarySummary = summarizeAttempts(pairAttempts);
   const sameCut = completed.filter((row) => row.sameCut);
   const efficiencyRows = sameCut.filter((row) => !row.b0.budgetMismatch);
   const infraExcluded = rows.filter((row) => !row.b0.ok || !row.b1.ok || !row.b2.ok || !row.f0.ok).map((row) => row.id);
@@ -1055,6 +1074,10 @@ export async function runLivePairedW2(opts: {
       retried,
       expectedPairs,
       completedPairs: completed.length,
+      primaryCompletePairs: primarySummary.primaryCompletePairs,
+      plannedPairs: primarySummary.plannedPairs,
+      diagnosticFailures: primarySummary.diagnosticFailures,
+      ittPairs: primarySummary.ittPairs,
       armFailures: infraExcluded,
       timeouts,
       sameCutPairs: sameCut.length,

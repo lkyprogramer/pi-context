@@ -20,6 +20,7 @@
     "oracle:validate": "node scripts/ci/oracle-validation.mjs",
     "check:fast": "pnpm check:boundaries && pnpm typecheck && pnpm test:unit",
     "check:local": "pnpm typecheck && pnpm test:unit && pnpm test:contract && pnpm test:integration && pnpm test:acceptance && pnpm test:packed",
+    "eval:small": "node scripts/eval-small.mjs",
     "check:all": "pnpm check:fast",
     "w1:gate": "node scripts/run-w1-gate.mjs",
     "w2:gate": "node scripts/run-w2-gate.mjs",
