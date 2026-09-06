@@ -122,6 +122,7 @@ async function openHost(existing?: OpenHostInput) {
   });
   let writes = 0;
   const registeredTools = new Set<string>(["write_once"]);
+  const productTools = new Set(["context_search", "context_read", "context_recall", "context_status", "context_pin"]);
   let hostRegisterTool: ((tool: unknown) => void) | undefined;
   const loader = new DefaultResourceLoader({
     cwd: root,
@@ -223,22 +224,27 @@ async function openHost(existing?: OpenHostInput) {
       pendingTool = call;
     },
     ensureTool(name: string) {
-      if (registeredTools.has(name)) {
+      if (registeredTools.has(name) || productTools.has(name)) {
+        registeredTools.add(name);
         session.setActiveToolsByName([...registeredTools]);
         return;
       }
       if (typeof hostRegisterTool !== "function") {
         throw new Error(`PCR_HARNESS_TOOL_REGISTER_MISSING:${name}`);
       }
-      hostRegisterTool({
-        name,
-        label: name,
-        description: `Harness tool ${name}`,
-        parameters: { type: "object", additionalProperties: true } as never,
-        async execute(_id: string, args: Record<string, unknown>) {
-          return { content: [{ type: "text", text: JSON.stringify(args ?? {}) }], details: {} };
-        },
-      });
+      try {
+        hostRegisterTool({
+          name,
+          label: name,
+          description: `Harness tool ${name}`,
+          parameters: { type: "object", additionalProperties: true } as never,
+          async execute(_id: string, args: Record<string, unknown>) {
+            return { content: [{ type: "text", text: JSON.stringify(args ?? {}) }], details: {} };
+          },
+        });
+      } catch {
+        // The product extension already registered this name; activate the real tool.
+      }
       registeredTools.add(name);
       session.setActiveToolsByName([...registeredTools]);
     },
@@ -261,8 +267,9 @@ async function openHost(existing?: OpenHostInput) {
   };
 }
 
-export async function createProductHarness(): Promise<ProductHarnessHost> {
-  const state = { current: await openHost(), closed: false };
+export async function createProductHarness(input?: OpenHostInput & { disposeRoot?: boolean }): Promise<ProductHarnessHost> {
+  const state = { current: await openHost(input), closed: false };
+  const disposeRoot = input?.disposeRoot !== false && !input?.sessionFile;
   const harness: ProductHarnessHost = {
     get root() {
       return state.current.root;
@@ -299,7 +306,11 @@ export async function createProductHarness(): Promise<ProductHarnessHost> {
     async close() {
       if (state.closed) return;
       state.closed = true;
-      await state.current.close(true);
+      try {
+        await state.current.close(disposeRoot);
+      } catch {
+        await state.current.close(disposeRoot).catch(() => undefined);
+      }
     },
     setResponse(value) {
       state.current.setResponse(value);

@@ -61,6 +61,8 @@ export interface EvidenceRecord extends EvidenceUnit {
   rawBlobId: BlobRef;
   contentHash: string;
   reducer: { id: string; revision: string };
+  /** Host ledger entry that owns this record after idempotent association. */
+  sourceEntryId?: string;
 }
 
 export interface ByteRange {

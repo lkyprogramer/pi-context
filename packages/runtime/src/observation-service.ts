@@ -70,12 +70,9 @@ function snapshotCursor(value: RuntimeCursor, field = "cursor"): Readonly<Runtim
   return Object.freeze(cursor);
 }
 
-function sameCursor(left: RuntimeCursor, right: RuntimeCursor): boolean {
+function sameIdentity(left: RuntimeCursor, right: RuntimeCursor): boolean {
   return left.workspaceId === right.workspaceId
-    && left.sessionId === right.sessionId
-    && left.leafId === right.leafId
-    && left.lineageHash === right.lineageHash
-    && left.modelKey === right.modelKey;
+    && left.sessionId === right.sessionId;
 }
 
 function rawToolBytes(content: ToolObservation["content"]): Buffer {
@@ -102,7 +99,7 @@ function projectVisible(rawBlobId: string, operationId: string, observationId: s
 }
 
 class DefaultObservationService implements ObservationService {
-  readonly #cursor: Readonly<RuntimeCursor>;
+  #cursor: Readonly<RuntimeCursor>;
   readonly #blobs: BlobStore;
   readonly #saga: SagaJournal;
   readonly #configFingerprint: string;
@@ -129,9 +126,10 @@ class DefaultObservationService implements ObservationService {
   async ingest(value: ToolObservation): Promise<ProjectedToolResult> {
     if (!value || typeof value !== "object") failInput("input");
     const cursor = snapshotCursor(value.cursor, "input.cursor");
-    if (!sameCursor(cursor, this.#cursor)) {
+    if (!sameIdentity(cursor, this.#cursor)) {
       throw new ObservationServiceError("PCR_OBSERVATION_SCOPE_MISMATCH");
     }
+    this.#cursor = cursor;
     requireNonEmpty(value.operationId, "input.operationId");
     requireNonEmpty(value.toolCallId, "input.toolCallId");
     requireNonEmpty(value.toolName, "input.toolName");

@@ -244,7 +244,7 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
     expect(captures).toBe(3);
   });
 
-  it("rejects every cursor dimension outside the bound workspace/session/branch scope", async () => {
+  it("rejects workspace/session identity mismatches and accepts a later leaf on the same session", async () => {
     let captures = 0;
     const session = createSession(
       createPorts({
@@ -259,8 +259,6 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
     const mismatches = [
       { workspaceId: "other-workspace" },
       { sessionId: "other-session" },
-      { leafId: "other-leaf" },
-      { lineageHash: "8".repeat(64) },
     ];
     for (const [index, mismatch] of mismatches.entries()) {
       await expect(
@@ -271,6 +269,11 @@ describe("T07 Runtime ports and RuntimeSession application service", () => {
       ).rejects.toMatchObject({ code: "PCR_RUNTIME_SCOPE_MISMATCH" });
     }
     expect(captures).toBe(0);
+    await session.ingestUserInput({
+      ...userInput("op-same-session-new-leaf"),
+      cursor: { ...cursor, leafId: "leaf-next", lineageHash: "8".repeat(64) },
+    });
+    expect(captures).toBe(1);
   });
 
   it("does not invoke I/O when already cancelled and permits a retry after a port crash", async () => {

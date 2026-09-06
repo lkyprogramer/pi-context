@@ -91,9 +91,13 @@ function snapshotCursor(value: RuntimeCursor, field = "cursor"): Readonly<Runtim
   return Object.freeze(cursor);
 }
 
-function sameCursor(left: RuntimeCursor, right: RuntimeCursor): boolean {
+function sameIdentity(left: RuntimeCursor, right: RuntimeCursor): boolean {
   return left.workspaceId === right.workspaceId
-    && left.sessionId === right.sessionId
+    && left.sessionId === right.sessionId;
+}
+
+function sameCursor(left: RuntimeCursor, right: RuntimeCursor): boolean {
+  return sameIdentity(left, right)
     && left.leafId === right.leafId
     && left.lineageHash === right.lineageHash
     && left.modelKey === right.modelKey;
@@ -123,31 +127,8 @@ function normalizeReceiptResult(
   return Object.freeze({ ...expected, status: value.status, cursor: Object.freeze({ ...expected.cursor }) });
 }
 
-function normalizeRecordResult(
-  value: UserTurnRecord,
-  expectedCursor: RuntimeCursor,
-  expectedHostMessageId: string,
-  expectedUserTurnId: string,
-): UserTurnRecord {
-  if (
-    !value
-    || typeof value !== "object"
-    || value.userTurnId !== expectedUserTurnId
-    || value.hostMessageId !== expectedHostMessageId
-    || !sameCursor(value.cursor, expectedCursor)
-    || !SHA256_PATTERN.test(value.rawTextHash)
-    || !isBlobId(value.rawBlobId)
-    || !Number.isSafeInteger(value.utf8Bytes)
-    || value.utf8Bytes < 0
-    || !SOURCE_CLASSES.has(value.sourceClass)
-    || !Number.isSafeInteger(value.capturedAt)
-    || value.capturedAt < 0
-  ) failInput("ledger.link.result");
-  return Object.freeze({ ...value, cursor: Object.freeze({ ...value.cursor }) });
-}
-
 class DefaultUserTurnService implements UserTurnService {
-  readonly #cursor: Readonly<RuntimeCursor>;
+  #cursor: Readonly<RuntimeCursor>;
   readonly #blobs: BlobStore;
   readonly #ledger: UserTurnLedger;
 
@@ -177,9 +158,10 @@ class DefaultUserTurnService implements UserTurnService {
   async capture(value: UserInputEvent): Promise<UserInputReceipt> {
     if (!value || typeof value !== "object") failInput("input");
     const cursor = snapshotCursor(value.cursor, "input.cursor");
-    if (!sameCursor(cursor, this.#cursor)) {
+    if (!sameIdentity(cursor, this.#cursor)) {
       throw new UserTurnServiceError("PCR_USER_TURN_SCOPE_MISMATCH");
     }
+    this.#cursor = cursor;
     requireNonEmpty(value.operationId, "input.operationId");
     if (typeof value.rawText !== "string") failInput("input.rawText");
     if (!SOURCE_CLASSES.has(value.sourceClass)) failInput("input.sourceClass");
@@ -233,12 +215,17 @@ class DefaultUserTurnService implements UserTurnService {
       hostMessageId,
       receiptId,
     })}`;
-    return normalizeRecordResult(
-      await this.#ledger.link(this.#cursor, receiptId, hostMessageId, userTurnId),
-      this.#cursor,
-      hostMessageId,
-      userTurnId,
-    );
+    const record = await this.#ledger.link(this.#cursor, receiptId, hostMessageId, userTurnId);
+    if (
+      !record
+      || record.hostMessageId !== hostMessageId
+      || !sameIdentity(record.cursor, this.#cursor)
+      || !SHA256_PATTERN.test(record.rawTextHash)
+      || !isBlobId(record.rawBlobId)
+    ) {
+      failInput("ledger.link.result");
+    }
+    return Object.freeze({ ...record, cursor: Object.freeze({ ...record.cursor }) });
   }
 }
 

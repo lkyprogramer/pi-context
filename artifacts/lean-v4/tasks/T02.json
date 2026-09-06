@@ -1,0 +1,83 @@
+{
+  "taskId": "T02",
+  "baseCommit": "9dd44f3",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/core/src/identity/index.ts",
+      "reason": "Export buildBranchView/canReadSource from the identity barrel used by composition-root."
+    },
+    {
+      "path": "packages/core/package.json",
+      "reason": "Strict typecheck must include the new branch-access unit test."
+    },
+    {
+      "path": "packages/runtime/src/observation-service.ts",
+      "reason": "Same-session leaf/model changes must still ingest observations after owner keys became workspace+session."
+    },
+    {
+      "path": "packages/runtime/src/user-turn-service.ts",
+      "reason": "Restart reconcile links receipts captured on earlier leaves of the same session."
+    },
+    {
+      "path": "packages/storage-node/src/user-turn-store.ts",
+      "reason": "Ledger get/link/abandon must authorize by session identity, not the capturing leaf."
+    },
+    {
+      "path": "tests/helpers/product-harness.ts",
+      "reason": "Acceptance must call real PCR tools and reopen a host-proven forked session file."
+    },
+    {
+      "path": "tests/tasks/t07.test.ts",
+      "reason": "RuntimeSession identity is now workspace+session; later leaves on the same session must be accepted."
+    },
+    {
+      "path": "tests/tasks/t08.test.ts",
+      "reason": "Production owner maps are keyed by session, not per leaf."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/core/test/identity/branch-access.test.ts",
+      "exit": 0,
+      "tests": "7 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/acceptance/ancestor-evidence.test.ts",
+      "exit": 0,
+      "tests": "2 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/tasks/t07.test.ts tests/tasks/t08.test.ts packages/storage-node/test/user-turn-store.test.ts packages/storage-node/test/fts-index-cache.test.ts tests/acceptance/session-registry.test.ts tests/acceptance/user-input-flow.test.ts",
+      "exit": 0,
+      "tests": "related callers passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "buildBranchView/canReadSource allow ancestors and deny sibling-only plus cross-session sources",
+    "cycle, missing parent, duplicate id, unknown head, and unproven fork are rejected",
+    "real context_search finds tool originals after append, restart, model fence, and 100 extra prompts",
+    "sibling branch cannot read the other branch's secret; returning to the original branch restores it",
+    "host-proven createBranchedSession fork can search copied ancestors; newSession pseudo-fork cannot",
+    "Owner maps stay bounded by workspace/session rather than one owner per leaf"
+  ],
+  "uncovered": [
+    "packages/storage-node/src/state-store.ts remains leaf-keyed; directives/claims do not automatically follow a later leaf until a later task needs that",
+    "Reducer still projects a pointer into the live toolResult; original text is restored via evidence search/read (T03 owns visibleContent)",
+    "Live model search is not part of T02; product path used the controlled host with contextWindow 200192"
+  ],
+  "hashes": {
+    "packages/core/src/identity/branch-access.ts": "ecc0a5bbed32367b952aac1ed38d24c44e439329a0e9824de3cf045babc76976",
+    "packages/core/test/identity/branch-access.test.ts": "ed0e2a4072361ba5e8347dbcae90021f615595a60337b942b2c09b09371127ad",
+    "tests/acceptance/ancestor-evidence.test.ts": "399b0af4af0d3dd8ab2514fa42322756162d50f30939d64d409f8c411ed2c3dc",
+    "apps/pi-context-runtime/src/composition-root.ts": "6ebb37c99d72bb84a105980a49ec6aedf1ce5a19c5fe10b7166e2755f233c5f0",
+    "packages/runtime/src/evidence-service.ts": "07ded0cea4a1d064c6957767f66620ef0ce30abb4b2934b9a1e1bd902f816fe4",
+    "packages/storage-node/src/fts-index.ts": "f5c2f453d5ab24825f5be6e2a6e2e1436c823a209026c598be0839d82bb885f5",
+    "packages/storage-node/src/user-turn-store.ts": "ed116a4ab75f1694935ed5be10b5a635be35a44201ca0c4269c134edfa823902"
+  }
+}

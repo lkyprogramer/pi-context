@@ -1,4 +1,5 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { join, resolve } from "node:path";
 import {
   domainHash,
@@ -26,6 +27,10 @@ import {
   createProactiveRecallPolicy,
   emptyContinuityRevision,
   reservesFromPayload,
+  attachForkInheritance,
+  buildBranchView,
+  sessionIdentityKey,
+  type BranchView,
   type CacheReceiptRecord,
   type ContinuityRevision,
 } from "../../../packages/core/src/index.js";
@@ -60,6 +65,7 @@ import {
   type CompactionClaim,
   type DurableSagaJournal,
   type EvidenceFact,
+  type EvidenceRepository,
   type EvidenceService,
   type ObservationService,
   type PiSessionContext,
@@ -412,7 +418,17 @@ export interface ProductionUserTurnRuntime {
     sourceHead: string;
     configFingerprint: string;
   }): Promise<void>;
-  resolveTools(ctx?: { workspaceId?: string; sessionId?: string }): Promise<{
+  resolveTools(ctx?: {
+    workspaceId?: string;
+    sessionId?: string;
+    sessionManager?: {
+      getEntries?: () => readonly unknown[];
+      getLeafId?: () => string | null;
+      getHeader?: () => { id?: string } | null | undefined;
+      getSessionId?: () => string;
+      getBranch?: () => readonly unknown[];
+    };
+  }): Promise<{
     cursor: RuntimeCursor;
     evidence: EvidenceService;
     dataRoot: string;
@@ -440,6 +456,8 @@ interface WorkspaceUserTurnOwner {
   readonly leaseStore: RecallLeaseStore;
   readonly recalledBySession: Map<string, string[]>;
   readonly lastContinuityHash: Map<string, string>;
+  readonly viewsBySession: Map<string, BranchView>;
+  readonly evidenceRepository: EvidenceRepository;
   lastUsage?: ReturnType<typeof reconcileUsage> & {
     viewId: string;
     outputHash: string;
@@ -461,6 +479,131 @@ function cursorKey(cursor: RuntimeCursor): string {
     cursor.lineageHash,
     cursor.modelKey,
   ]);
+}
+
+function toolCallIdFromSessionEntry(entry: {
+  type?: string;
+  id?: string;
+  message?: { role?: unknown; toolCallId?: unknown; content?: unknown };
+}): string | undefined {
+  if (entry.type !== "message" || !entry.message || typeof entry.message !== "object") return undefined;
+  const message = entry.message;
+  if (typeof message.toolCallId === "string" && message.toolCallId.length > 0) {
+    return message.toolCallId;
+  }
+  if (!Array.isArray(message.content)) return undefined;
+  for (const block of message.content) {
+    if (!block || typeof block !== "object") continue;
+    const item = block as { type?: unknown; toolCallId?: unknown; id?: unknown };
+    if (
+      (item.type === "toolResult" || item.type === "tool_result")
+      && typeof item.toolCallId === "string"
+      && item.toolCallId.length > 0
+    ) {
+      return item.toolCallId;
+    }
+  }
+  return undefined;
+}
+
+function hostToolCallBindings(ctx: ExtensionContext): Array<{ toolCallId: string; entryId: string }> {
+  const bindings: Array<{ toolCallId: string; entryId: string }> = [];
+  let pendingCallId: string | undefined;
+  for (const entry of ctx.sessionManager.getEntries()) {
+    const explicit = toolCallIdFromSessionEntry(entry);
+    const message = entry.type === "message" && entry.message && typeof entry.message === "object"
+      ? entry.message as { role?: unknown; content?: unknown }
+      : undefined;
+    if (message && Array.isArray(message.content)) {
+      for (const block of message.content) {
+        if (!block || typeof block !== "object") continue;
+        const item = block as { type?: unknown; id?: unknown; name?: unknown };
+        if (item.type === "toolCall" && typeof item.id === "string" && item.id.length > 0) {
+          pendingCallId = item.id;
+        }
+      }
+    }
+    const toolCallId = explicit ?? (message?.role === "toolResult" ? pendingCallId : undefined);
+    if (toolCallId && typeof entry.id === "string") {
+      bindings.push({ toolCallId, entryId: entry.id });
+      if (explicit === undefined) pendingCallId = undefined;
+    }
+  }
+  return bindings;
+}
+
+function buildViewFromContext(cursor: RuntimeCursor, ctx: ExtensionContext): BranchView {
+  const manager = ctx.sessionManager;
+  if (!manager || typeof manager.getEntries !== "function" || typeof manager.getLeafId !== "function") {
+    throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "sessionManager" });
+  }
+  const header = typeof manager.getHeader === "function" ? manager.getHeader() : null;
+  const entries = manager.getEntries().map((entry) => ({
+    id: entry.id,
+    parentId: entry.parentId,
+  }));
+  if (header && typeof header.id === "string" && header.id.length > 0 && !entries.some((entry) => entry.id === header.id)) {
+    entries.unshift({ id: header.id, parentId: null });
+  }
+  const headId = manager.getLeafId() ?? header?.id;
+  if (typeof headId !== "string" || headId.length === 0) {
+    throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "sessionManager.leafId" });
+  }
+  let view = buildBranchView(
+    { workspaceId: cursor.workspaceId, sessionId: cursor.sessionId },
+    entries,
+    headId,
+  );
+  const claimedParent = typeof header?.parentSession === "string" && header.parentSession.length > 0
+    ? resolve(header.parentSession)
+    : undefined;
+  if (claimedParent) {
+    try {
+      const parent = SessionManager.open(claimedParent);
+      view = attachForkInheritance(view, {
+        parentSessionId: parent.getSessionId(),
+        parentSessionPath: claimedParent,
+        claimedParentSessionPath: claimedParent,
+        parentEntryIds: new Set(parent.getEntries().map((entry) => entry.id)),
+      });
+    } catch {
+      // Unproven parentSession stays a normal session view; cross-session reads remain denied.
+    }
+  }
+  return view;
+}
+
+async function refreshSessionAccess(
+  owner: WorkspaceUserTurnOwner,
+  cursor: RuntimeCursor,
+  ctx?: ExtensionContext,
+): Promise<BranchView | undefined> {
+  if (!ctx?.sessionManager) return owner.viewsBySession.get(cursor.sessionId);
+  const view = buildViewFromContext(cursor, ctx);
+  owner.viewsBySession.set(cursor.sessionId, view);
+  const bind = owner.evidenceRepository.bindSourceEntry?.bind(owner.evidenceRepository);
+  const listByCallId = owner.evidenceRepository.listByCallId?.bind(owner.evidenceRepository);
+  if (typeof bind !== "function" || typeof listByCallId !== "function") return view;
+  for (const { toolCallId, entryId } of hostToolCallBindings(ctx)) {
+    const evidenceIds = await listByCallId(cursor, toolCallId);
+    for (const evidenceId of evidenceIds) {
+      await bind(cursor, evidenceId, entryId);
+    }
+  }
+  return view;
+}
+
+function evidenceWithView(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor): EvidenceService {
+  const inner = owner.evidence(cursor);
+  const view = owner.viewsBySession.get(cursor.sessionId);
+  if (!view) {
+    throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "branchView" });
+  }
+  return {
+    admit: (input) => inner.admit(input),
+    search: (query) => inner.search({ ...query, view }),
+    read: (req) => inner.read({ ...req, view }),
+  };
 }
 
 function observationText(content: ToolObservation["content"]): string {
@@ -523,6 +666,7 @@ export function registerProductionUserTurnRuntime(
         });
       }
       owner.cursorsBySession.set(cursor.sessionId, cursor);
+      await refreshSessionAccess(owner, cursor, ctx);
       return owner;
     }
     const opening = (async (): Promise<WorkspaceUserTurnOwner> => {
@@ -578,9 +722,11 @@ export function registerProductionUserTurnRuntime(
           leaseStore: openWorkspaceRecallLeaseStore({ database }),
           recalledBySession: new Map(),
           lastContinuityHash: new Map(),
+          viewsBySession: new Map(),
+          evidenceRepository: repository,
           telemetry: createMemorySink(),
           evidence(candidate) {
-            const key = cursorKey(candidate);
+            const key = sessionIdentityKey(candidate);
             let service = evidences.get(key);
             if (!service) {
               service = createEvidenceService({ cursor: candidate, repository, fts, blobs });
@@ -589,7 +735,7 @@ export function registerProductionUserTurnRuntime(
             return service;
           },
           service(candidate) {
-            const key = cursorKey(candidate);
+            const key = sessionIdentityKey(candidate);
             let service = services.get(key);
             if (!service) {
               const inner = createUserTurnService({ cursor: candidate, blobs, ledger });
@@ -644,38 +790,39 @@ export function registerProductionUserTurnRuntime(
             return service;
           },
           observation(candidate) {
-            const key = cursorKey(candidate);
+            const key = sessionIdentityKey(candidate);
             let service = observations.get(key);
             if (!service) {
               const inner = createObservationService({ cursor: candidate, blobs, saga });
-              const reducers = createReducerRegistry({
-                cursor: candidate,
-                reducers: createProductionReducers(),
-              });
               service = {
                 async ingest(input: ToolObservation): Promise<ProjectedToolResult> {
                   const projected = await inner.ingest(input);
                   const text = observationText(input.content);
+                  const reducers = createReducerRegistry({
+                    cursor: input.cursor,
+                    reducers: createProductionReducers(),
+                  });
                   const reduced = await reducers.reduce({
                     observation: input,
                     text,
                     rawBlobId: projected.rawBlobId,
-                    cursor: candidate,
+                    cursor: input.cursor,
                     ...(input.signal === undefined ? {} : { signal: input.signal }),
                   });
-                  const admitted = await owner.evidence(candidate).admit({
-                    cursor: candidate,
+                  const admitted = await owner.evidence(input.cursor).admit({
+                    cursor: input.cursor,
                     operationId: projected.operationId,
                     observationId: projected.observationId,
                     rawBlobId: projected.rawBlobId,
                     reducer: { id: reduced.reducer.id, revision: "1" },
                     sourceClass: input.sourceClass,
-                    facts: evidenceFacts(reduced.facts, reduced.visibleText),
+                    facts: evidenceFacts(reduced.facts, text),
                     observedAt: input.capturedAt,
-                    visibleText: reduced.visibleText,
+                    visibleText: text,
+                    toolCallId: input.toolCallId,
                     ...(input.signal === undefined ? {} : { signal: input.signal }),
                   });
-                  owner.pointersByCursor.set(key, admitted.map((record) => ({ ref: record.evidenceId, kind: record.kind })));
+                  owner.pointersByCursor.set(sessionIdentityKey(input.cursor), admitted.map((record) => ({ ref: record.evidenceId, kind: record.kind })));
                   return Object.freeze({
                     ...projected,
                     evidenceIds: admitted.map((record) => record.evidenceId),
@@ -693,10 +840,10 @@ export function registerProductionUserTurnRuntime(
             observations.clear();
             evidences.clear();
             try {
-              await saga.close();
-              await ledger.close();
-              await database.close();
+              await saga.close().catch(() => undefined);
+              await ledger.close().catch(() => undefined);
             } finally {
+              await database.close().catch(() => undefined);
               keys!.close();
             }
           },
@@ -712,6 +859,7 @@ export function registerProductionUserTurnRuntime(
     try {
       const owner = await opening;
       owner.cursorsBySession.set(cursor.sessionId, cursor);
+      await refreshSessionAccess(owner, cursor, ctx);
       return owner;
     } catch (error) {
       if (owners.get(cursor.workspaceId) === opening) owners.delete(cursor.workspaceId);
@@ -850,49 +998,12 @@ export function registerProductionUserTurnRuntime(
       },
     });
     const model = ctx?.model;
-    const contextWindow = typeof model?.contextWindow === "number" ? model.contextWindow : undefined;
-    const maxOutputTokens = typeof model?.maxTokens === "number" ? model.maxTokens : undefined;
     // Keep an explicit host reserve (including a legitimate zero) distinct
     // from the adapter's historical `0` fallback when the host omits it.
     const modelProviderReservedTokens = (model as unknown as { providerReservedTokens?: unknown } | undefined)?.providerReservedTokens;
     const hostProviderReservedTokens = typeof modelProviderReservedTokens === "number"
       ? modelProviderReservedTokens
       : undefined;
-    if (contextWindow === undefined || maxOutputTokens === undefined) {
-      // Route is calibrated on materialize from the request; register a fail-closed placeholder only when host limits exist.
-    }
-    const routeModel = cursor.modelKey;
-    const routes = contextWindow !== undefined && maxOutputTokens !== undefined
-      ? {
-        [routeModel]: {
-          modelKey: routeModel,
-          contextWindow,
-          maxOutputTokens,
-          providerReservedTokens: 0,
-        },
-      }
-      : {
-        [routeModel]: {
-          modelKey: routeModel,
-          contextWindow: 1,
-          maxOutputTokens: 0,
-          providerReservedTokens: 0,
-        },
-      };
-    const pricer = createTokenPricer({ cursor, routes });
-    const cache = createCacheReceipt({
-      cursor,
-      store: {
-        put: (receipt: CacheReceiptRecord) => owner.state.putCacheReceipt(receipt),
-        head: async (scope) => (await owner.state.headCacheReceipt(scope)) as CacheReceiptRecord | null,
-      },
-    });
-    const materializer = createMaterializer({
-      cursor,
-      pricer,
-      planner: createSectionPlanner({ cursor, pricer }),
-      cache,
-    });
     const compactionAssembler: CompactionSnapshotAssembler = {
       async assemble(request) {
         request.signal?.throwIfAborted();
@@ -978,12 +1089,12 @@ export function registerProductionUserTurnRuntime(
       cursor,
       sessions: {
         async open() {
-          return owner.sessions.get(cursorKey(cursor));
+          return owner.sessions.get(sessionIdentityKey(cursor));
         },
         async close(sessionId) {
           const bound = owner.cursorsBySession.get(sessionId);
           if (!bound) return;
-          owner.sessions.delete(cursorKey(bound));
+          owner.sessions.delete(sessionIdentityKey(bound));
         },
       },
       journal: {
@@ -1000,10 +1111,32 @@ export function registerProductionUserTurnRuntime(
       toolResult: { ingest: (input) => observation.ingest(input) },
       materialization: {
         async materialize(request) {
-          const rows = await owner.state.readSnapshot(cursor);
-          const continuity = (rows.continuity as ContinuityRevision | null) ?? emptyContinuityRevision(cursor);
+          const viewCursor = request.cursor;
+          const requestRoutes = {
+            [viewCursor.modelKey]: {
+              modelKey: viewCursor.modelKey,
+              contextWindow: request.currentContextWindow,
+              maxOutputTokens: request.maxOutputTokens,
+              providerReservedTokens: request.providerReservedTokens ?? 0,
+            },
+          };
+          const requestPricer = createTokenPricer({ cursor: viewCursor, routes: requestRoutes });
+          const requestMaterializer = createMaterializer({
+            cursor: viewCursor,
+            pricer: requestPricer,
+            planner: createSectionPlanner({ cursor: viewCursor, pricer: requestPricer }),
+            cache: createCacheReceipt({
+              cursor: viewCursor,
+              store: {
+                put: (receipt: CacheReceiptRecord) => owner.state.putCacheReceipt(receipt),
+                head: async (scope) => (await owner.state.headCacheReceipt(scope)) as CacheReceiptRecord | null,
+              },
+            }),
+          });
+          const rows = await owner.state.readSnapshot(viewCursor);
+          const continuity = (rows.continuity as ContinuityRevision | null) ?? emptyContinuityRevision(viewCursor);
           const runtimeSnapshot = assembleRuntimeSnapshot({
-            cursor,
+            cursor: viewCursor,
             directives: rows.directives.filter((row) => row.status === "active"),
             claims: rows.claims.filter((row) => row.status === "active").map((row) => ({
               claimId: row.claimId,
@@ -1018,7 +1151,7 @@ export function registerProductionUserTurnRuntime(
             schemaVersion: rows.schemaVersion,
           });
           owner.lastRuntimeSnapshotHash = runtimeSnapshot.snapshotHash;
-          owner.snapshotHashByCursor.set(cursorKey(cursor), runtimeSnapshot.snapshotHash);
+          owner.snapshotHashByCursor.set(sessionIdentityKey(viewCursor), runtimeSnapshot.snapshotHash);
           const imageBlocks = request.canonicalMessages.reduce((count, message) => (
             count + message.content.filter((block) => block.type === "image-ref").length
           ), 0);
@@ -1038,13 +1171,14 @@ export function registerProductionUserTurnRuntime(
             env: options.environment ?? process.env,
           });
           const recallPolicy = createProactiveRecallPolicy({
-            cursor,
+            cursor: viewCursor,
             catalog: {
               async search(query) {
                 const hits = await evidence.search({
                   cursor: query.cursor,
                   text: query.text,
                   limit: 8,
+                  view: owner.viewsBySession.get(query.cursor.sessionId),
                   signal: query.signal,
                 });
                 const pages: Array<{ evidenceId: string; quote: string; tokens: number }> = [];
@@ -1056,6 +1190,7 @@ export function registerProductionUserTurnRuntime(
                         cursor: query.cursor,
                         evidenceId: hit.evidenceId,
                         range: { start: 0, endExclusive: 240 },
+                        view: owner.viewsBySession.get(query.cursor.sessionId),
                         signal: query.signal,
                       });
                       quote = new TextDecoder().decode(page.bytes);
@@ -1073,7 +1208,7 @@ export function registerProductionUserTurnRuntime(
               },
             },
             leases: createLeaseService({
-              cursor,
+              cursor: viewCursor,
               store: owner.leaseStore,
               clock,
               limits: { maxTurns: 4, maxTokenTurns: 2_000, ttlMs: 15 * 60 * 1_000 },
@@ -1082,10 +1217,10 @@ export function registerProductionUserTurnRuntime(
           let recall = materializerMode === "identity" || userText.length === 0
             ? { kind: "not-needed" as const, page: { items: [] as Array<{ evidenceId: string; quote: string }> } }
             : await recallPolicy.decide({
-              cursor,
+              cursor: viewCursor,
               userText,
               maxTokens: DEFAULT_RETRIEVAL_BUDGETS.recallTokens,
-              recentlyInjected: owner.recalledBySession.get(cursor.sessionId) ?? [],
+              recentlyInjected: owner.recalledBySession.get(viewCursor.sessionId) ?? [],
               signal: request.signal,
             });
           const boundedRecall: {
@@ -1095,7 +1230,7 @@ export function registerProductionUserTurnRuntime(
             ? boundRecallPage(recall.page.items, DEFAULT_RETRIEVAL_BUDGETS.recallTokens)
             : { items: [], tokenEstimate: 0 };
           if (materializerMode === "pcr" && recall.kind === "needed") {
-            const consumed = await owner.leaseStore.consume(cursor, recall.lease.leaseId, {
+            const consumed = await owner.leaseStore.consume(viewCursor, recall.lease.leaseId, {
               now: clock.now(),
               tokenTurns: boundedRecall.items.reduce((total, item) => total + item.tokens, 0),
             });
@@ -1103,20 +1238,20 @@ export function registerProductionUserTurnRuntime(
               boundedRecall.items.length = 0;
             }
             if (consumed) {
-              const prior = owner.recalledBySession.get(cursor.sessionId) ?? [];
+              const prior = owner.recalledBySession.get(viewCursor.sessionId) ?? [];
               owner.recalledBySession.set(
-                cursor.sessionId,
+                viewCursor.sessionId,
                 [...prior, ...boundedRecall.items.map((item) => item.evidenceId)].slice(-32),
               );
             }
           }
-          const activeLeases = await owner.leaseStore.list(cursor);
+          const activeLeases = await owner.leaseStore.list(viewCursor);
           const directoryPointers = mergePointers(
             rows.pointers,
-            owner.pointersByCursor.get(cursorKey(cursor)) ?? [],
+            owner.pointersByCursor.get(sessionIdentityKey(viewCursor)) ?? [],
           );
-          const previousContinuity = owner.lastContinuityHash.get(cursorKey(cursor));
-          owner.lastContinuityHash.set(cursorKey(cursor), continuity.contentHash);
+          const previousContinuity = owner.lastContinuityHash.get(sessionIdentityKey(viewCursor));
+          owner.lastContinuityHash.set(sessionIdentityKey(viewCursor), continuity.contentHash);
           const continuityDelta = previousContinuity && previousContinuity !== continuity.contentHash
             ? [{
               hostMessageId: `delta_${continuity.revisionId}`,
@@ -1126,8 +1261,8 @@ export function registerProductionUserTurnRuntime(
               content: [{ type: "text" as const, text: `continuity ${previousContinuity.slice(0, 12)} -> ${continuity.contentHash.slice(0, 12)}` }],
             }]
             : [];
-          const view = await materializer.materialize({
-            cursor: request.cursor,
+          const view = await requestMaterializer.materialize({
+            cursor: viewCursor,
             canonicalMessages: request.canonicalMessages,
             currentContextWindow: request.currentContextWindow,
             maxOutputTokens: request.maxOutputTokens,
@@ -1140,7 +1275,7 @@ export function registerProductionUserTurnRuntime(
             ...(request.toolsTokens === undefined ? {} : { toolsTokens: request.toolsTokens }),
             ...(request.reasoningTokens === undefined ? {} : { reasoningTokens: request.reasoningTokens }),
           }, {
-            cursor,
+            cursor: viewCursor,
             directives: quoteMessages(rows.directives.filter((row) => row.status === "active")),
             continuity: [
               ...continuityMessages(continuity),
@@ -1279,8 +1414,26 @@ export function registerProductionUserTurnRuntime(
         },
       },
       retrieval: {
-        search: (input) => evidence.search({ cursor: input.cursor, text: input.text, limit: input.limit, signal: input.signal }),
-        read: (input) => evidence.read({ cursor: input.cursor, evidenceId: input.evidenceId, range: input.range, signal: input.signal }),
+        search: (input) => {
+          const view = owner.viewsBySession.get(input.cursor.sessionId);
+          return evidence.search({
+            cursor: input.cursor,
+            text: input.text,
+            limit: input.limit,
+            ...(view === undefined ? {} : { view }),
+            signal: input.signal,
+          });
+        },
+        read: (input) => {
+          const view = owner.viewsBySession.get(input.cursor.sessionId);
+          return evidence.read({
+            cursor: input.cursor,
+            evidenceId: input.evidenceId,
+            range: input.range,
+            ...(view === undefined ? {} : { view }),
+            signal: input.signal,
+          });
+        },
       },
       recovery: {
         recover: (input) => recovery.onSessionStart({
@@ -1301,9 +1454,13 @@ export function registerProductionUserTurnRuntime(
   }
 
   async function sessionFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSession> {
-    const key = cursorKey(cursor);
+    const key = sessionIdentityKey(cursor);
+    await refreshSessionAccess(owner, cursor, ctx);
     const existing = owner.sessions.get(key);
-    if (existing) return existing;
+    if (existing) {
+      owner.cursorsBySession.set(cursor.sessionId, cursor);
+      return existing;
+    }
     const session = createRuntimeSession({
       scope: {
         workspaceId: cursor.workspaceId,
@@ -1373,6 +1530,11 @@ export function registerProductionUserTurnRuntime(
     try {
       cursor = cursorFromContext(ctx);
     } catch (error) {
+      if (owners.size === 1) {
+        const [workspaceId, pending] = [...owners.entries()][0]!;
+        owners.delete(workspaceId);
+        await (await pending).close().catch(() => undefined);
+      }
       throw Object.assign(error instanceof Error ? error : new Error(String(error)), {
         code: "PCR_SESSION_SHUTDOWN_CURSOR_INVALID",
       });
@@ -1389,7 +1551,8 @@ export function registerProductionUserTurnRuntime(
     }
     opening.cursorsBySession.delete(cursor.sessionId);
     await Promise.all(closing.map((session) => session.close?.() ?? Promise.resolve()));
-    if (opening.sessions.size === 0) {
+    const quit = event && typeof event === "object" && (event as { reason?: unknown }).reason === "quit";
+    if (quit || opening.sessions.size === 0) {
       owners.delete(cursor.workspaceId);
       await opening.close();
     }
@@ -1455,11 +1618,11 @@ export function registerProductionUserTurnRuntime(
       const recovery = createRecoveryService({
         cursor: input.cursor,
         sessions: {
-          async open() { return opening.sessions.get(cursorKey(input.cursor)); },
+          async open() { return opening.sessions.get(sessionIdentityKey(input.cursor)); },
           async close(sessionId) {
             const bound = opening.cursorsBySession.get(sessionId);
             if (!bound) return;
-            opening.sessions.delete(cursorKey(bound));
+            opening.sessions.delete(sessionIdentityKey(bound));
           },
         },
         journal: { reconcile: (snapshot) => opening.saga.reconcile(snapshot) },
@@ -1480,11 +1643,11 @@ export function registerProductionUserTurnRuntime(
       const recovery = createRecoveryService({
         cursor: input.cursor,
         sessions: {
-          async open() { return opening.sessions.get(cursorKey(input.cursor)); },
+          async open() { return opening.sessions.get(sessionIdentityKey(input.cursor)); },
           async close(sessionId) {
             const bound = opening.cursorsBySession.get(sessionId);
             if (!bound) return;
-            opening.sessions.delete(cursorKey(bound));
+            opening.sessions.delete(sessionIdentityKey(bound));
           },
         },
         journal: { reconcile: (snapshot) => opening.saga.reconcile(snapshot) },
@@ -1499,10 +1662,14 @@ export function registerProductionUserTurnRuntime(
     async closeSession(cursor: RuntimeCursor) {
       const opening = await ownerByWorkspace(cursor.workspaceId);
       if (!opening) return;
-      const session = opening.sessions.get(cursorKey(cursor));
-      opening.sessions.delete(cursorKey(cursor));
+      const session = opening.sessions.get(sessionIdentityKey(cursor));
+      opening.sessions.delete(sessionIdentityKey(cursor));
       opening.cursorsBySession.delete(cursor.sessionId);
       await session?.close?.();
+      if (opening.sessions.size === 0) {
+        owners.delete(cursor.workspaceId);
+        await opening.close();
+      }
     },
     async stageCompaction(input: {
       cursor: RuntimeCursor;
@@ -1558,7 +1725,17 @@ export function registerProductionUserTurnRuntime(
         configFingerprint: input.configFingerprint,
       });
     },
-    async resolveTools(ctx?: { workspaceId?: string; sessionId?: string }) {
+    async resolveTools(ctx?: {
+      workspaceId?: string;
+      sessionId?: string;
+      sessionManager?: {
+        getEntries?: () => readonly unknown[];
+        getLeafId?: () => string | null;
+        getHeader?: () => { id?: string } | null | undefined;
+        getSessionId?: () => string;
+        getBranch?: () => readonly unknown[];
+      };
+    }) {
       if (!ctx?.sessionId) {
         throw new ProductionCompositionError("PCR_PI_SESSION_CONTEXT_INVALID", { field: "sessionId" });
       }
@@ -1586,7 +1763,10 @@ export function registerProductionUserTurnRuntime(
           actualWorkspaceId: ctx.workspaceId,
         });
       }
-      return { cursor, evidence: owner.evidence(cursor), dataRoot: owner.dataRoot };
+      if (ctx.sessionManager && typeof ctx.sessionManager.getEntries === "function") {
+        await refreshSessionAccess(owner, cursor, { sessionManager: ctx.sessionManager } as ExtensionContext);
+      }
+      return { cursor, evidence: evidenceWithView(owner, cursor), dataRoot: owner.dataRoot };
     },
   });
 }

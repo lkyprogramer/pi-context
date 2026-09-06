@@ -110,6 +110,11 @@ function sameCursor(left: RuntimeCursor, right: RuntimeCursor): boolean {
     && left.modelKey === right.modelKey;
 }
 
+function sameSession(left: RuntimeCursor, right: RuntimeCursor): boolean {
+  return left.workspaceId === right.workspaceId
+    && left.sessionId === right.sessionId;
+}
+
 function normalizeReceipt(value: UserInputReceipt, workspaceId: string): Readonly<UserInputReceipt> {
   if (!value || typeof value !== "object") failInput("receipt");
   const cursor = snapshotCursor(value.cursor, "receipt.cursor");
@@ -292,7 +297,7 @@ class WorkspaceUserTurnLedger implements DurableUserTurnLedger {
         const row = db.prepare(`SELECT ${USER_TURN_COLUMNS} FROM user_turn_ledger WHERE receipt_id = ?`)
           .get(receiptId) as unknown as UserTurnRow | undefined;
         if (!row) return { kind: "missing" as const };
-        if (!sameCursor(toReceipt(row).cursor, cursor)) return { kind: "scope" as const };
+        if (!sameSession(toReceipt(row).cursor, cursor)) return { kind: "scope" as const };
         if (row.disposition === "linked") return { kind: "conflict" as const };
         if (row.disposition === "pending") {
           db.prepare(`
@@ -331,10 +336,10 @@ class WorkspaceUserTurnLedger implements DurableUserTurnLedger {
         const row = db.prepare(`SELECT ${USER_TURN_COLUMNS} FROM user_turn_ledger WHERE receipt_id = ?`)
           .get(receiptId) as unknown as UserTurnRow | undefined;
         if (!row) return { kind: "missing" as const };
-        if (!sameCursor(toReceipt(row).cursor, cursor)) return { kind: "scope" as const };
+        if (!sameSession(toReceipt(row).cursor, cursor)) return { kind: "scope" as const };
         if (row.disposition === "handled") return { kind: "conflict" as const };
         if (row.host_message_id !== null || row.user_turn_id !== null) {
-          return row.host_message_id === hostMessageId && row.user_turn_id === userTurnId
+          return row.host_message_id === hostMessageId
             ? { kind: "linked" as const, row }
             : { kind: "conflict" as const };
         }
@@ -377,7 +382,7 @@ class WorkspaceUserTurnLedger implements DurableUserTurnLedger {
       const row = this.#database.read("get-user-turn", (db) => db.prepare(`
         SELECT ${USER_TURN_COLUMNS} FROM user_turn_ledger WHERE receipt_id = ?
       `).get(receiptId) as unknown as UserTurnRow | undefined);
-      if (!row || !sameCursor(toReceipt(row).cursor, cursor)) return null;
+      if (!row || !sameSession(toReceipt(row).cursor, cursor)) return null;
       return row.disposition === "linked" ? toRecord(row) : toReceipt(row);
     } catch (error) {
       throw mapStorageError(error);

@@ -168,15 +168,11 @@ export class RuntimeSessionApplicationService implements RuntimeSession {
     const cursor = input.cursor;
     const mismatch =
       cursor.workspaceId !== this.scope.workspaceId ||
-      cursor.sessionId !== this.scope.sessionId ||
-      cursor.leafId !== this.scope.leafId ||
-      cursor.lineageHash !== this.scope.lineageHash;
+      cursor.sessionId !== this.scope.sessionId;
     if (mismatch) {
       throw new RuntimeSessionError("PCR_RUNTIME_SCOPE_MISMATCH", {
         expectedWorkspaceId: this.scope.workspaceId,
         expectedSessionId: this.scope.sessionId,
-        expectedLeafId: this.scope.leafId,
-        expectedLineageHash: this.scope.lineageHash,
       });
     }
   }

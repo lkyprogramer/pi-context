@@ -151,13 +151,13 @@ describe("T08 Production composition root and session registry", () => {
     expect(disposed).toEqual(["8".repeat(64)]);
     await expect(
       oldSession.ingestUserInput({
-        operationId: "op-wrong-branch",
+        operationId: "op-same-identity-new-leaf",
         cursor: nextContext,
-        rawText: "wrong scope",
+        rawText: "same session identity",
         sourceClass: "authenticated-user",
         capturedAt: 1,
       }),
-    ).rejects.toMatchObject({ code: "PCR_RUNTIME_SCOPE_MISMATCH" });
+    ).resolves.toMatchObject({ operationId: "op-same-identity-new-leaf" });
   });
 
   it("leaves no partial cache after factory crash and allows a deterministic retry", async () => {

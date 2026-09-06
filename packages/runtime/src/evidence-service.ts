@@ -1,3 +1,11 @@
+import {
+  canReadSource,
+  parseSourceEntryId,
+  sameSessionIdentity,
+  sourceCallRef,
+  sourceEntryRef,
+  type BranchView,
+} from "@pcr/core";
 import { createHash } from "node:crypto";
 
 import {
@@ -41,6 +49,8 @@ export interface EvidenceAdmission {
   facts: readonly EvidenceFact[];
   observedAt: number;
   visibleText?: string;
+  sourceEntryId?: string;
+  toolCallId?: string;
   signal?: AbortSignal;
 }
 
@@ -48,6 +58,7 @@ export interface EvidenceQuery {
   cursor: RuntimeCursor;
   text: string;
   limit?: number;
+  view?: BranchView;
   signal?: AbortSignal;
 }
 
@@ -62,6 +73,7 @@ export interface EvidenceRead {
   cursor: RuntimeCursor;
   evidenceId: string;
   range?: ByteRange;
+  view?: BranchView;
   signal?: AbortSignal;
 }
 
@@ -78,6 +90,8 @@ export interface ExactPage {
 export interface EvidenceRepository {
   put(record: EvidenceRecord): Promise<void>;
   get(cursor: RuntimeCursor, id: string): Promise<EvidenceRecord | null>;
+  bindSourceEntry?(cursor: RuntimeCursor, evidenceId: string, sourceEntryId: string): Promise<boolean>;
+  listByCallId?(cursor: RuntimeCursor, toolCallId: string): Promise<string[]>;
 }
 
 export interface EvidenceFtsIndex {
@@ -142,12 +156,44 @@ function snapshotCursor(value: RuntimeCursor, field = "cursor"): Readonly<Runtim
   return Object.freeze(cursor);
 }
 
+function sameIdentity(left: RuntimeCursor, right: RuntimeCursor): boolean {
+  return sameSessionIdentity(left, right);
+}
+
 function sameCursor(left: RuntimeCursor, right: RuntimeCursor): boolean {
-  return left.workspaceId === right.workspaceId
-    && left.sessionId === right.sessionId
+  return sameIdentity(left, right)
     && left.leafId === right.leafId
     && left.lineageHash === right.lineageHash
     && left.modelKey === right.modelKey;
+}
+
+function sourceLocationOf(record: EvidenceRecord): { workspaceId: string; sessionId: string; entryId: string } | undefined {
+  const entryId = record.sourceEntryId ?? parseSourceEntryId(record.sourceRefs);
+  if (!entryId) return undefined;
+  return {
+    workspaceId: record.cursor.workspaceId,
+    sessionId: record.cursor.sessionId,
+    entryId,
+  };
+}
+
+function authorizeRecord(record: EvidenceRecord, cursor: RuntimeCursor, view: BranchView | undefined): void {
+  if (view) {
+    const source = sourceLocationOf(record);
+    if (!source) {
+      if (!sameCursor(record.cursor, cursor)) {
+        throw new EvidenceServiceError("PCR_EVIDENCE_NOT_FOUND", { evidenceId: record.evidenceId });
+      }
+      return;
+    }
+    if (!canReadSource(view, source)) {
+      throw new EvidenceServiceError("PCR_EVIDENCE_NOT_FOUND", { evidenceId: record.evidenceId });
+    }
+    return;
+  }
+  if (!sameCursor(record.cursor, cursor)) {
+    throw new EvidenceServiceError("PCR_EVIDENCE_NOT_FOUND", { evidenceId: record.evidenceId });
+  }
 }
 
 function minAuthority(left: ActionAuthority, right: ActionAuthority): ActionAuthority {
@@ -244,7 +290,7 @@ class DefaultEvidenceService implements EvidenceService {
   async admit(input: EvidenceAdmission): Promise<EvidenceRecord[]> {
     if (!input || typeof input !== "object") failInput("input");
     const cursor = snapshotCursor(input.cursor, "input.cursor");
-    if (!sameCursor(cursor, this.#cursor)) {
+    if (!sameIdentity(cursor, this.#cursor)) {
       throw new EvidenceServiceError("PCR_EVIDENCE_SCOPE_MISMATCH");
     }
     requireNonEmpty(input.operationId, "input.operationId");
@@ -259,9 +305,16 @@ class DefaultEvidenceService implements EvidenceService {
       : parseSourceClass(input.originSourceClass, "input.originSourceClass");
     if (!Number.isSafeInteger(input.observedAt) || input.observedAt < 0) failInput("input.observedAt");
     if (input.visibleText !== undefined && typeof input.visibleText !== "string") failInput("input.visibleText");
+    if (input.sourceEntryId !== undefined) requireNonEmpty(input.sourceEntryId, "input.sourceEntryId");
+    if (input.toolCallId !== undefined) requireNonEmpty(input.toolCallId, "input.toolCallId");
     if (input.signal !== undefined && !(input.signal instanceof AbortSignal)) failInput("input.signal");
     if (!Array.isArray(input.facts) || input.facts.length === 0) failInput("input.facts");
     const ceiling = sourceAuthorityCeiling(origin);
+    const sourceRefs = [
+      input.rawBlobId,
+      ...(input.toolCallId ? [sourceCallRef(input.toolCallId)] : []),
+      ...(input.sourceEntryId ? [sourceEntryRef(input.sourceEntryId)] : []),
+    ];
     const records: EvidenceRecord[] = input.facts.map((fact, index) => {
       if (!fact || typeof fact !== "object") failInput(`input.facts[${index}]`);
       requireNonEmpty(fact.kind, `input.facts[${index}].kind`);
@@ -287,10 +340,11 @@ class DefaultEvidenceService implements EvidenceService {
         value: fact.value,
         sourceClass: origin,
         authority,
-        sourceRefs: [input.rawBlobId],
+        sourceRefs,
         validity,
         contentHash: domainHash("evidence-payload", fact.value),
         observedAt: input.observedAt,
+        ...(input.sourceEntryId === undefined ? {} : { sourceEntryId: input.sourceEntryId }),
       };
     });
     input.signal?.throwIfAborted();
@@ -305,8 +359,13 @@ class DefaultEvidenceService implements EvidenceService {
   async search(query: EvidenceQuery): Promise<SearchHit[]> {
     if (!query || typeof query !== "object") failInput("query");
     const cursor = snapshotCursor(query.cursor, "query.cursor");
-    if (!sameCursor(cursor, this.#cursor)) {
+    if (!sameIdentity(cursor, this.#cursor)) {
       throw new EvidenceServiceError("PCR_EVIDENCE_SCOPE_MISMATCH");
+    }
+    if (query.view) {
+      if (!sameSessionIdentity(query.view, cursor)) {
+        throw new EvidenceServiceError("PCR_EVIDENCE_SCOPE_MISMATCH");
+      }
     }
     requireNonEmpty(query.text, "query.text");
     if (query.signal !== undefined && !(query.signal instanceof AbortSignal)) failInput("query.signal");
@@ -317,22 +376,26 @@ class DefaultEvidenceService implements EvidenceService {
   async read(req: EvidenceRead): Promise<ExactPage> {
     if (!req || typeof req !== "object") failInput("req");
     const cursor = snapshotCursor(req.cursor, "req.cursor");
-    if (!sameCursor(cursor, this.#cursor)) {
+    if (!sameIdentity(cursor, this.#cursor)) {
+      throw new EvidenceServiceError("PCR_EVIDENCE_SCOPE_MISMATCH");
+    }
+    if (req.view && !sameSessionIdentity(req.view, cursor)) {
       throw new EvidenceServiceError("PCR_EVIDENCE_SCOPE_MISMATCH");
     }
     requireNonEmpty(req.evidenceId, "req.evidenceId");
     if (req.signal !== undefined && !(req.signal instanceof AbortSignal)) failInput("req.signal");
     req.signal?.throwIfAborted();
-    const record = await this.#repository.get(cursor, req.evidenceId);
+    const record = await this.#repository.get(cursor, req.evidenceId)
+      ?? (req.view?.parentSessionId
+        ? await this.#repository.get({ ...cursor, sessionId: req.view.parentSessionId }, req.evidenceId)
+        : null);
     if (!record) throw new EvidenceServiceError("PCR_EVIDENCE_NOT_FOUND", { evidenceId: req.evidenceId });
-    if (!sameCursor(record.cursor, cursor)) {
-      throw new EvidenceServiceError("PCR_EVIDENCE_SCOPE_MISMATCH");
-    }
+    authorizeRecord(record, cursor, req.view);
     if (domainHash("evidence-payload", record.value) !== record.contentHash) {
       throw new EvidenceServiceError("PCR_EVIDENCE_INTEGRITY", { field: "contentHash" });
     }
     req.signal?.throwIfAborted();
-    const full = await this.#blobs.read(cursor, record.rawBlobId);
+    const full = await this.#blobs.read(record.cursor, record.rawBlobId);
     const byteLength = full.byteLength;
     const digest = createHash("sha256").update(full).digest("hex");
     const range = normalizeRange(req.range, byteLength);

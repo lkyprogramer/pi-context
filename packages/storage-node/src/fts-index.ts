@@ -1,4 +1,6 @@
+import type { DatabaseSync } from "node:sqlite";
 import type { EvidenceRecord, RuntimeCursor } from "@pcr/contracts";
+import { SOURCE_ENTRY_REF_PREFIX } from "@pcr/core";
 import type { EvidenceFtsIndex, EvidenceQuery, SearchHit } from "@pcr/runtime";
 
 import {
@@ -91,6 +93,7 @@ function searchCacheKey(
   text: string,
   limit: number,
   version: SearchCacheVersion,
+  viewKey: string,
 ): string {
   return JSON.stringify([
     cursor.workspaceId,
@@ -100,9 +103,96 @@ function searchCacheKey(
     cursor.modelKey,
     text,
     limit,
+    viewKey,
     version.dataVersion,
     version.totalChanges,
   ]);
+}
+
+function viewCacheKey(query: EvidenceQuery): string {
+  if (!query.view) return "legacy-cursor";
+  const inherited = query.view.inheritedEntryIds ? [...query.view.inheritedEntryIds].sort() : [];
+  return JSON.stringify([
+    query.view.workspaceId,
+    query.view.sessionId,
+    query.view.headId,
+    [...query.view.ancestorIds].sort(),
+    query.view.parentSessionId ?? null,
+    inherited,
+  ]);
+}
+
+function searchWithBranchView(
+  db: DatabaseSync,
+  match: string,
+  cursor: RuntimeCursor,
+  limit: number,
+  query: EvidenceQuery,
+): Array<{ evidence_id: string; kind: string; rank: number; snippet: string }> {
+  const view = query.view!;
+  const ancestorJson = JSON.stringify([...view.ancestorIds]);
+  const inheritedJson = JSON.stringify([...(view.inheritedEntryIds ?? [])]);
+  const parentSessionId = view.parentSessionId ?? "";
+  return db.prepare(`
+    SELECT
+      evidence_fts.evidence_id AS evidence_id,
+      evidence.kind AS kind,
+      bm25(evidence_fts) AS rank,
+      snippet(evidence_fts, 1, '', '', '…', 12) AS snippet
+    FROM evidence_fts
+    JOIN evidence ON evidence.evidence_id = evidence_fts.evidence_id
+    WHERE evidence_fts MATCH ?
+      AND evidence.workspace_id = ?
+      AND (
+        (
+          evidence.session_id = ?
+          AND (
+            EXISTS (
+              SELECT 1
+              FROM json_each(evidence.source_refs_json) AS refs
+              JOIN json_each(?) AS ancestors
+                ON refs.value = ? || ancestors.value
+            )
+            OR (
+              NOT EXISTS (
+                SELECT 1 FROM json_each(evidence.source_refs_json)
+                WHERE value LIKE ? || '%'
+              )
+              AND evidence.leaf_id IS ?
+              AND evidence.lineage_hash = ?
+              AND evidence.model_key = ?
+            )
+          )
+        )
+        OR (
+          length(?) > 0
+          AND evidence.session_id = ?
+          AND EXISTS (
+            SELECT 1
+            FROM json_each(evidence.source_refs_json) AS refs
+            JOIN json_each(?) AS inherited
+              ON refs.value = ? || inherited.value
+          )
+        )
+      )
+    ORDER BY rank ASC, evidence.evidence_id ASC
+    LIMIT ?
+  `).all(
+    match,
+    view.workspaceId,
+    view.sessionId,
+    ancestorJson,
+    SOURCE_ENTRY_REF_PREFIX,
+    SOURCE_ENTRY_REF_PREFIX,
+    cursor.leafId,
+    cursor.lineageHash,
+    cursor.modelKey,
+    parentSessionId,
+    parentSessionId,
+    inheritedJson,
+    SOURCE_ENTRY_REF_PREFIX,
+    limit,
+  ) as Array<{ evidence_id: string; kind: string; rank: number; snippet: string }>;
 }
 
 function copySearchHits(hits: readonly SearchHit[]): SearchHit[] {
@@ -175,10 +265,12 @@ class WorkspaceEvidenceFtsIndex implements EvidenceFtsIndex {
         };
         return { dataVersion: dataVersion.data_version, totalChanges: totalChanges.total_changes };
       });
-      const key = searchCacheKey(cursor, query.text, limit, version);
+      const key = searchCacheKey(cursor, query.text, limit, version, viewCacheKey(query));
       if (this.#latestSearch?.key === key) return copySearchHits(this.#latestSearch.hits);
       const hits = this.#database.read("search-evidence-fts", (db) => {
-        const rows = db.prepare(`
+        const rows = query.view
+          ? searchWithBranchView(db, match, cursor, limit, query)
+          : db.prepare(`
           SELECT
             evidence_fts.evidence_id AS evidence_id,
             evidence.kind AS kind,
