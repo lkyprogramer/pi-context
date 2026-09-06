@@ -1,0 +1,21 @@
+{
+  "identity": {
+    "sourceSetSha256": "5b09e4b6b74485a58d820e6149e7c24e537e8bbb0a35486cff75929ce066bce9",
+    "hostPatchSha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
+    "modelFingerprint": "openclaw/Qwen3.8-27B-WORK",
+    "corpusSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "configSha256": "a9bc3d63e69037c3ada1957687c8f7603416a130cd091451443d6922dbff4260",
+    "scorerRevision": "lean-v4-t07-probe"
+  },
+  "plannedPairs": 24,
+  "liveEnabled": false,
+  "status": "preflight",
+  "monetaryCost": null,
+  "decision": null,
+  "summary": {
+    "primaryCompletePairs": 0,
+    "plannedPairs": 24,
+    "diagnosticFailures": 0,
+    "ittPairs": 24
+  }
+}

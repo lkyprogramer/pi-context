@@ -22,6 +22,11 @@
   "alternateArmOrder": true,
   "diagnosticsEnabled": false,
   "requireToolCredentialIsolation": true,
+  "broker": {
+    "bind": "127.0.0.1",
+    "allowedHost": "127.0.0.1",
+    "allowedModel": "openclaw/Qwen3.8-27B-WORK"
+  },
   "providerModel": "openclaw/Qwen3.8-27B-WORK",
   "contextWindow": 200192,
   "maxOutputTokens": 16384,

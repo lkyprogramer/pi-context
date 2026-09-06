@@ -383,6 +383,8 @@ export function decideCanary(input: {
 export interface SmallPreflight {
   liveEnabled: boolean;
   credentialIsolation: boolean;
+  toolsEnabledAllowed: boolean;
+  isolationReason: string;
   identity: RunIdentity;
   configPath: string;
   contextWindow: number;
@@ -456,6 +458,10 @@ export function preflightSmallRun(input: {
   return {
     liveEnabled: env.PCR_LIVE === "1",
     credentialIsolation: true,
+    toolsEnabledAllowed: env.PCR_TOOLS_ENABLED_ALLOWED === "1",
+    isolationReason: typeof env.PCR_ISOLATION_REASON === "string" && env.PCR_ISOLATION_REASON.length > 0
+      ? env.PCR_ISOLATION_REASON
+      : "unassessed",
     identity,
     configPath,
     contextWindow: config.contextWindow,
@@ -749,8 +755,25 @@ export async function runCli(argv: readonly string[], env: NodeJS.ProcessEnv = p
       preflight: true,
       identity: report.identity,
       plannedPairs,
+      toolsEnabledAllowed: report.toolsEnabledAllowed,
+      isolationReason: report.isolationReason,
       outDir,
     })}\n`);
+    return 0;
+  }
+  if (report.toolsEnabledAllowed !== true) {
+    const run: SmallRunManifest = {
+      identity: report.identity,
+      plannedPairs,
+      liveEnabled: true,
+      status: "blocked",
+      blockedReason: report.isolationReason || "isolation-unproven",
+      monetaryCost: null,
+      decision: "inconclusive",
+      summary: { primaryCompletePairs: 0, plannedPairs, diagnosticFailures: 0, ittPairs: plannedPairs },
+    };
+    writeRunArtifacts(outDir, run);
+    process.stdout.write(`${JSON.stringify({ ok: true, live: true, status: "blocked", blockedReason: run.blockedReason, identity: report.identity })}\n`);
     return 0;
   }
   if (config.scenarioFiles.length === 0) {

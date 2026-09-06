@@ -1,0 +1,53 @@
+{
+  "taskId": "T09",
+  "baseCommit": "b29966a",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run tests/security/eval-secrets.test.ts",
+      "exit": 0,
+      "tests": "10 passed"
+    },
+    {
+      "command": "pnpm exec vitest run packages/benchmark/test/small-runner.test.ts tests/security/eval-secrets.test.ts",
+      "exit": 0,
+      "tests": "28 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    },
+    {
+      "command": "pnpm eval:small -- --preflight --config experiments/personal-canary.json --out artifacts/lean-v4/tasks/T09-preflight",
+      "exit": 0,
+      "isolationReason": "controlled-no-key",
+      "toolsEnabledAllowed": false
+    }
+  ],
+  "assertions": [
+    "buildAgentEnvironment does not inherit API_KEY and sets HOME to the arm directory",
+    "Absolute host auth paths are denied by the agent path policy",
+    "Stripped agent env/proc does not contain the parent canary secret",
+    "Broker rejects non-loopback hosts and non-allowlisted models",
+    "Broker logs and error stacks redact Authorization headers",
+    "A parent key plus readable host config is not isolation proof",
+    "Controlled no-key mode does not require a broker",
+    "Tools-enabled live is blocked when the agent process can still read host config",
+    "Secret scan reports hit counts without echoing the canary"
+  ],
+  "uncovered": [
+    "macOS does not sandbox agent filesystem access; isolationProven stays false for tools-enabled live until an OS sandbox or equivalent is available",
+    "No long-running HTTP broker process is started in T09; T12 still cannot enable tools live without a proven sandbox plus brokerReady",
+    "Historical live logs that may contain real keys were not rotated by this task"
+  ],
+  "hashes": {
+    "scripts/credential-broker.mjs": "2e8f452769bcde1f4ce7966d3c19aaa025cec595c67219b544d62fb137195812",
+    "scripts/eval-small.mjs": "48c19b012955988e01489faf6ba27030d35c11036d0f56390e8c94979bb82eb9",
+    "packages/benchmark/src/small-runner.ts": "5104bbf8d709955c6d54d56a917c58cfa69f62580de666f11a33473e66c0e311",
+    "tests/security/eval-secrets.test.ts": "80004aa135037a53dfc86b2326415b5d1135eeaef3c60945751131b274f264c7",
+    "docs/SECURITY.md": "8601830d228ed89490805c99c33716fb899c58c410dbd0a6b9e3881c6434545c",
+    "experiments/personal-canary.json": "a9bc3d63e69037c3ada1957687c8f7603416a130cd091451443d6922dbff4260"
+  }
+}
