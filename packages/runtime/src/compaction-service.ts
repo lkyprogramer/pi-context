@@ -1,7 +1,7 @@
-import { estimateTextTokens, twoRunHash, verifyHardGates, type CheckpointRenderer, type CheckpointVerifier, type ToolPairMessage } from "@pcr/core";
+import { estimateTextTokens, pointerRefWellFormed, twoRunHash, verifyHardGates, type CheckpointRenderer, type CheckpointVerifier, type ToolPairMessage } from "@pcr/core";
 import type { HostCheckpointDetails, RuntimeCursor } from "@pcr/contracts";
 
-import type { CompactionSnapshotAssembler } from "./compaction/snapshot.js";
+import type { CompactionSnapshotAssembler, CompactionSnapshot } from "./compaction/snapshot.js";
 
 const WORKSPACE_PATTERN = /^ws_[a-f0-9]{40}$/u;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/u;
@@ -183,6 +183,41 @@ export function uniqueShortRefs(values: readonly string[], minLength = 12): Map<
   return new Map(unique.map((value) => [value, value]));
 }
 
+const UNGROUNDED_SUCCESS = /\btests?\s+passed\b|测试通过/iu;
+
+function frontTitle(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const title = (value as { title?: unknown }).title;
+  return typeof title === "string" && title.trim().length > 0 ? title : undefined;
+}
+
+function actionText(value: unknown): string | undefined {
+  if (typeof value === "string" && value.trim().length > 0) return value;
+  if (!value || typeof value !== "object") return undefined;
+  const text = (value as { text?: unknown }).text;
+  return typeof text === "string" && text.trim().length > 0 ? text : undefined;
+}
+
+function isUngroundedSuccessClaim(item: { key: string; value: unknown; status: string }): boolean {
+  const blob = `${item.key} ${String(item.value)}`;
+  if (!UNGROUNDED_SUCCESS.test(blob)) return false;
+  return item.status !== "resolved" && item.status !== "verified";
+}
+
+export function capsuleRetainsWorkingState(
+  summary: string,
+  state: { activeTitles?: readonly string[]; errors?: readonly string[] },
+): boolean {
+  for (const title of state.activeTitles ?? []) {
+    if (title.length > 0 && !summary.includes(title)) return false;
+  }
+  for (const error of state.errors ?? []) {
+    if (error.length === 0) continue;
+    if (!summary.includes(error) && !summary.includes(error.slice(0, 48))) return false;
+  }
+  return true;
+}
+
 export function renderModelCheckpointView(
   checkpoint: {
     snapshotHash: string;
@@ -196,25 +231,44 @@ export function renderModelCheckpointView(
     claims: ReadonlyArray<{ claimId: string; key: string; polarity: string; status: string; value: unknown }>;
     pointers: ReadonlyArray<{ ref: string; kind: string }>;
     heads: Record<string, string>;
-    continuity: { revisionId: string; contentHash?: string };
+    continuity: { revisionId: string; contentHash?: string; taskFronts?: { active?: unknown[] }; nextSafeActions?: unknown[] };
+    taskFronts?: { active?: readonly unknown[] };
+    nextSafeActions?: readonly unknown[];
+    errors?: readonly string[];
   },
   options: { includeMetadata?: boolean } = {},
 ): { summary: string; shortRefs: Record<string, string> } {
   const includeMetadata = options.includeMetadata === true;
+  const active = checkpoint.taskFronts?.active ?? checkpoint.continuity.taskFronts?.active ?? [];
+  const nextActions = checkpoint.nextSafeActions ?? checkpoint.continuity.nextSafeActions ?? [];
+  const errors = checkpoint.errors ?? [];
+  const groundedClaims = checkpoint.claims.filter((item) => !isUngroundedSuccessClaim(item));
+  const promptPointers = includeMetadata ? checkpoint.pointers : [];
   const refValues = [
     checkpoint.snapshotHash,
     checkpoint.continuity.revisionId,
     ...checkpoint.directives.map((item) => item.directiveId),
-    ...checkpoint.pointers.map((item) => item.ref),
+    ...(includeMetadata ? checkpoint.pointers.map((item) => item.ref) : []),
+    ...(includeMetadata ? Object.values(checkpoint.heads) : []),
   ];
   const refs = uniqueShortRefs(refValues);
   const shortOf = (value: string): string => (includeMetadata ? value : (refs.get(value) ?? value.slice(0, 12)));
   const summary = [
     `checkpoint v2 ${shortOf(checkpoint.snapshotHash)}`,
     ...checkpoint.directives.map((item) => `- [${shortOf(item.directiveId)}] ${item.exactQuote}`),
+    ...active.flatMap((item) => {
+      const title = frontTitle(item);
+      return title === undefined ? [] : [`pending: ${title}`];
+    }),
+    ...nextActions.flatMap((item) => {
+      const text = actionText(item);
+      return text === undefined ? [] : [`next: ${text}`];
+    }),
+    ...errors.filter((item) => item.trim().length > 0).map((item) => `error: ${item}`),
     `continuity ${shortOf(checkpoint.continuity.revisionId)}`,
-    ...checkpoint.claims.map((item) => `- ${item.key}=${String(item.value)}`),
-    ...checkpoint.pointers.map((item) => `- ${item.kind}:${shortOf(item.ref)}`),
+    ...groundedClaims.map((item) => `- ${item.key}=${String(item.value)}`),
+    ...promptPointers.map((item) => `- ${item.kind}:${shortOf(item.ref)}`),
+    ...(includeMetadata ? Object.entries(checkpoint.heads).map(([key, value]) => `${key} ${value}`) : []),
   ].join("\n");
   const shortRefs: Record<string, string> = {};
   for (const [full, short] of refs) shortRefs[full] = short;
@@ -250,7 +304,7 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
       const cursor = snapshotCursor(request.cursor, "request.cursor");
       if (!sameCursor(bound, cursor)) throw new CompactionServiceError("PCR_COMPACTION_SCOPE_MISMATCH");
       request.signal?.throwIfAborted();
-      let snapshot;
+      let snapshot: CompactionSnapshot;
       try {
         snapshot = await assembler.assemble({
           operationId: request.operationId,
@@ -286,6 +340,10 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
           return { kind: "hard-stop", code: "PCR_HARD_GATE_BROKEN_TAIL" };
         }
       }
+      const damagedPointer = snapshot.pointers.some((item) => !pointerRefWellFormed(item.ref));
+      if (damagedPointer) {
+        return { kind: "hard-stop", code: "PCR_CHECKPOINT_POINTER_UNVERIFIED" };
+      }
       const checkpoint = await renderer.render(snapshot, request.signal);
       const secondCheckpoint = await renderer.render(snapshot, request.signal);
       if (twoRunHash(checkpoint) !== twoRunHash(secondCheckpoint)) {
@@ -295,14 +353,27 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
       if (!report.ok) {
         return { kind: "hard-stop", code: report.issues[0]?.code ?? "PCR_CHECKPOINT_VERIFY_FAILED" };
       }
+      const active = snapshot.taskFronts.active;
+      const nextActions = snapshot.nextSafeActions;
+      const errors = snapshot.errors;
       const view = renderModelCheckpointView({
         snapshotHash: checkpoint.snapshotHash,
         directives: checkpoint.directives,
         claims: checkpoint.claims as Array<{ claimId: string; key: string; polarity: string; status: string; value: unknown }>,
         pointers: checkpoint.pointers as Array<{ ref: string; kind: string }>,
         heads: checkpoint.heads as Record<string, string>,
-        continuity: checkpoint.continuity as { revisionId: string; contentHash?: string },
+        continuity: checkpoint.continuity as { revisionId: string; contentHash?: string; taskFronts?: { active?: unknown[] }; nextSafeActions?: unknown[] },
+        taskFronts: { active },
+        nextSafeActions: nextActions,
+        errors,
       });
+      const activeTitles = active.flatMap((item) => {
+        const title = frontTitle(item);
+        return title === undefined ? [] : [title];
+      });
+      if (!capsuleRetainsWorkingState(view.summary, { activeTitles, errors })) {
+        return { kind: "native-fallback" };
+      }
       const sourceTexts = collectCompactionSourceTexts(request.messagesToSummarize);
       if (snapshot.directives.length === 0 && sourceTextsLookConstrained(sourceTexts)) {
         return { kind: "native-fallback" };
@@ -312,7 +383,9 @@ export function createCompactionService(input: CreateCompactionServiceInput): Co
       if (typeof retainedTailTokens !== "number" || !Number.isFinite(retainedTailTokens) || retainedTailTokens < 0) {
         failInput("request.retainedTailTokens");
       }
-      if (!(estimatedTokensAfter + retainedTailTokens < request.tokensBefore)) return { kind: "native-fallback" };
+      if (!(estimatedTokensAfter + retainedTailTokens < request.tokensBefore)) {
+        return { kind: "native-fallback" };
+      }
       return {
         kind: "pcr",
         result: {

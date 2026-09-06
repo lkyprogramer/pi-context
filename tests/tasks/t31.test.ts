@@ -3,11 +3,11 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createPiContextExtension } from "../../apps/pi-context-runtime/src/extension.js";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
-import { createProductHarness } from "../helpers/product-harness.js";
+import { createProductHarness, enableExperimentalProductRuntime } from "../helpers/product-harness.js";
 import { blobId, type DirectiveRecord, type RuntimeCursor } from "@pcr/contracts";
 import {
   createCheckpointRenderer,
@@ -36,6 +36,16 @@ import {
 } from "../../packages/pi-adapter/src/compaction-hook.js";
 
 afterEach(resetOwnerForTest);
+
+let restoreRuntimeMode: (() => void) | undefined;
+beforeEach(() => {
+  restoreRuntimeMode = enableExperimentalProductRuntime();
+});
+afterEach(() => {
+  restoreRuntimeMode?.();
+  restoreRuntimeMode = undefined;
+  resetOwnerForTest();
+});
 
 const WORK = mkdtempSync(join(tmpdir(), "pcr-work-"));
 

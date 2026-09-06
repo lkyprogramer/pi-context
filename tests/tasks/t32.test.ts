@@ -2,10 +2,11 @@ import { tmpdir } from "node:os";
 import { mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createPiContextExtension } from "../../apps/pi-context-runtime/src/extension.js";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
+import { enableExperimentalProductRuntime } from "../helpers/product-harness.js";
 import { blobId, domainHash } from "@pcr/contracts";
 import { createRuntimeCursor } from "@pcr/core";
 import {
@@ -19,6 +20,16 @@ import {
 } from "@pcr/runtime";
 
 afterEach(resetOwnerForTest);
+
+let restoreRuntimeMode: (() => void) | undefined;
+beforeEach(() => {
+  restoreRuntimeMode = enableExperimentalProductRuntime();
+});
+afterEach(() => {
+  restoreRuntimeMode?.();
+  restoreRuntimeMode = undefined;
+  resetOwnerForTest();
+});
 
 const WORK = mkdtempSync(join(tmpdir(), "pcr-work-"));
 

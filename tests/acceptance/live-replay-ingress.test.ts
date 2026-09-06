@@ -9,8 +9,10 @@ import { persistArmHome } from "../live-gate/paired-w2-live.js";
 import { replayUserIngress } from "../live-gate/replay-user-ingress.js";
 import { LIVE_MODEL, LIVE_PROVIDER, writeW1ShapedSession } from "../live-gate/w1-session-jsonl.js";
 import { buildW2SyntheticCorpus } from "../w2-gate/corpus.js";
+import { enableExperimentalProductRuntime } from "../helpers/product-harness.js";
 
 it.each(["ct-00", "tu-00", "tu-08"])("restores %s receipts for product compaction without changing frozen messages", async (caseId) => {
+  const restoreRuntimeMode = enableExperimentalProductRuntime();
   const root = mkdtempSync(join(tmpdir(), "pcr-live-replay-"));
   const sessionFile = join(root, "session.jsonl");
   const item = buildW2SyntheticCorpus().find((item) => item.id === caseId)!;
@@ -51,6 +53,7 @@ it.each(["ct-00", "tu-00", "tu-08"])("restores %s receipts for product compactio
     expect(existsSync(join(artifactDir, "runtime-store"))).toBe(true);
     await expect(replayUserIngress(sessionFile, root)).rejects.toThrow("PCR_REPLAY_INPUT_ALREADY_CAPTURED");
   } finally {
+    restoreRuntimeMode();
     await extension.release?.();
     rmSync(root, { recursive: true, force: true });
   }

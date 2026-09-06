@@ -173,6 +173,10 @@ function copyPointer(pointer: CompactionSnapshotPointer): CompactionSnapshotPoin
   return Object.freeze({ ref: pointer.ref, kind: pointer.kind });
 }
 
+export function pointerRefWellFormed(ref: string): boolean {
+  return SHA256_PATTERN.test(ref) || /^blob_[a-f0-9]{64}$/u.test(ref);
+}
+
 function parseSnapshot(value: CompactionSnapshot, field: string): CompactionSnapshot {
   if (!value || typeof value !== "object") failInput(field);
   requireNonEmpty(value.snapshotHash, `${field}.snapshotHash`);

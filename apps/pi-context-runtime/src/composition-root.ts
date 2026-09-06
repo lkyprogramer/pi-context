@@ -30,6 +30,7 @@ import {
   attachForkInheritance,
   buildBranchView,
   sessionIdentityKey,
+  sameSessionIdentity,
   type BranchView,
   type CacheReceiptRecord,
   type ContinuityRevision,
@@ -369,6 +370,7 @@ export function createProductionPiContextExtension(
 
 export type ProductMaterializerMode = "identity" | "pcr";
 
+/** Eval-arm materializer only. Product takeover is `PCR_RUNTIME_MODE=experimental-runtime`, never `publicationClaim` or this flag alone. */
 export function resolveProductMaterializerMode(input: {
   requestMode?: unknown;
   optionMode?: unknown;
@@ -521,8 +523,18 @@ function toolCallIdFromSessionEntry(entry: {
 
 function hostToolCallBindings(ctx: ExtensionContext): Array<{ toolCallId: string; entryId: string }> {
   const bindings: Array<{ toolCallId: string; entryId: string }> = [];
+  const getEntries = ctx.sessionManager?.getEntries;
+  if (typeof getEntries !== "function") return bindings;
+  let entries: readonly unknown[];
+  try {
+    entries = getEntries();
+  } catch {
+    return bindings;
+  }
+  if (!Array.isArray(entries)) return bindings;
   let pendingCallId: string | undefined;
-  for (const entry of ctx.sessionManager.getEntries()) {
+  for (const value of entries) {
+    const entry = value as { type?: string; id?: string; parentId?: string | null; message?: { role?: unknown; content?: unknown } };
     const explicit = toolCallIdFromSessionEntry(entry);
     const message = entry.type === "message" && entry.message && typeof entry.message === "object"
       ? entry.message as { role?: unknown; content?: unknown }
@@ -592,16 +604,25 @@ async function refreshSessionAccess(
   ctx?: ExtensionContext,
 ): Promise<BranchView | undefined> {
   if (!ctx?.sessionManager) return owner.viewsBySession.get(cursor.sessionId);
-  const view = buildViewFromContext(cursor, ctx);
+  let view: BranchView;
+  try {
+    view = buildViewFromContext(cursor, ctx);
+  } catch {
+    return owner.viewsBySession.get(cursor.sessionId);
+  }
   owner.viewsBySession.set(cursor.sessionId, view);
   const bind = owner.evidenceRepository.bindSourceEntry?.bind(owner.evidenceRepository);
   const listByCallId = owner.evidenceRepository.listByCallId?.bind(owner.evidenceRepository);
   if (typeof bind !== "function" || typeof listByCallId !== "function") return view;
-  for (const { toolCallId, entryId } of hostToolCallBindings(ctx)) {
-    const evidenceIds = await listByCallId(cursor, toolCallId);
-    for (const evidenceId of evidenceIds) {
-      await bind(cursor, evidenceId, entryId);
+  try {
+    for (const { toolCallId, entryId } of hostToolCallBindings(ctx)) {
+      const evidenceIds = await listByCallId(cursor, toolCallId);
+      for (const evidenceId of evidenceIds) {
+        await bind(cursor, evidenceId, entryId);
+      }
     }
+  } catch {
+    return view;
   }
   return view;
 }
@@ -700,12 +721,6 @@ export function registerProductionUserTurnRuntime(
     const existing = owners.get(cursor.workspaceId);
     if (existing) {
       const owner = await existing;
-      if (owner.dataRoot !== dataRoot) {
-        throw new ProductionCompositionError("PCR_PI_SESSION_SCOPE_CONFLICT", {
-          expectedDataRoot: owner.dataRoot,
-          actualDataRoot: dataRoot,
-        });
-      }
       owner.cursorsBySession.set(cursor.sessionId, cursor);
       await refreshSessionAccess(owner, cursor, ctx);
       return owner;
@@ -932,6 +947,7 @@ export function registerProductionUserTurnRuntime(
       return owner;
     } catch (error) {
       if (owners.get(cursor.workspaceId) === opening) owners.delete(cursor.workspaceId);
+      await opening.then((owner) => owner.close()).catch(() => undefined);
       throw error;
     }
   };
@@ -1467,7 +1483,7 @@ export function registerProductionUserTurnRuntime(
                 projected.set(record.directiveId, record);
               }
               input.signal?.throwIfAborted();
-              if (cursorKey(cursorFromContext(ctx)) !== cursorKey(cursor)) {
+              if (!sameSessionIdentity(cursorFromContext(ctx), cursor)) {
                 throw new ProductionCompositionError("PCR_PI_SESSION_SCOPE_CONFLICT");
               }
               const directives = [...projected.values()];
@@ -1545,8 +1561,8 @@ export function registerProductionUserTurnRuntime(
     const key = sessionIdentityKey(cursor);
     await refreshSessionAccess(owner, cursor, ctx);
     const existing = owner.sessions.get(key);
-    if (existing) {
-      owner.cursorsBySession.set(cursor.sessionId, cursor);
+    const bound = owner.cursorsBySession.get(cursor.sessionId);
+    if (existing && bound && cursorKey(bound) === cursorKey(cursor)) {
       return existing;
     }
     const session = createRuntimeSession({

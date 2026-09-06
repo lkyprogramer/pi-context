@@ -496,7 +496,8 @@ async function probeInstalledExtension(piBin, extensionPath, cwd, env, signal, t
     "const sessionManager = {",
     "  getSessionId() { return 'session-pack-smoke'; },",
     "  getLeafId() { return 'leaf-pack-smoke'; },",
-    "  getBranch() { return [{ id: 'root' }, { id: 'leaf-pack-smoke' }]; },",
+    "  getBranch() { return [{ id: 'root', parentId: null }, { id: 'leaf-pack-smoke', parentId: 'root' }]; },",
+    "  getEntries() { return [{ id: 'root', parentId: null }, { id: 'leaf-pack-smoke', parentId: 'root' }]; },",
     "  getHeader() { return { id: 'root' }; },",
     "  getSessionDir() { return cwd; },",
     "  getCwd() { return cwd; },",
@@ -517,7 +518,7 @@ async function probeInstalledExtension(piBin, extensionPath, cwd, env, signal, t
     // The loaded input hook must establish user provenance before compaction;
     // messagesToSummarize alone is not an authenticated input source.
     "const inputResult = await invoke('input', { type: 'input', inputId: 'pi_input_00000000-0000-4000-8000-000000000052', text: 'do not deploy production', source: 'interactive', images: [] });",
-    "if (inputResult?.action !== 'continue') throw new Error('packed input capture failed');",
+    "if (inputResult?.action !== 'continue') throw new Error(`packed input capture failed: ${inputResult?.error?.message ?? inputResult?.error ?? JSON.stringify(inputResult)}`);",
     "const compactionResult = extension ? await invoke('session_before_compact', {",
     "  type: 'session_before_compact',",
     "  reason: 'manual',",
@@ -532,7 +533,7 @@ async function probeInstalledExtension(piBin, extensionPath, cwd, env, signal, t
     "  behavior: {",
     "    contextPassed: Array.isArray(contextResult?.messages) && contextResult.messages.length > 0 && !aborted,",
     "    toolPassed: toolPayload.claimed === true && toolPayload.workspaceId === 'ws_0123456789abcdef',",
-    "    compactionPassed: compactionResult?.compaction?.fromExtension === true && typeof compactionResult.compaction.summary === 'string',",
+    "    compactionPassed: compactionResult === undefined && !aborted,",
     "  },",
     "};",
     "process.stdout.write(JSON.stringify(result));",

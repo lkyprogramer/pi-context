@@ -22,6 +22,15 @@ export interface ProductHarness {
   close(): Promise<void>;
 }
 
+export function enableExperimentalProductRuntime(): () => void {
+  const previous = process.env.PCR_RUNTIME_MODE;
+  process.env.PCR_RUNTIME_MODE = "experimental-runtime";
+  return () => {
+    if (previous === undefined) delete process.env.PCR_RUNTIME_MODE;
+    else process.env.PCR_RUNTIME_MODE = previous;
+  };
+}
+
 export type ControlledHostResponse =
   | "normal"
   | "overflow-once"
@@ -98,6 +107,7 @@ function streamOf(message: ReturnType<typeof assistantMessage>, error: boolean) 
 }
 
 async function openHost(existing?: OpenHostInput) {
+  const restoreRuntimeMode = enableExperimentalProductRuntime();
   const root = existing?.root ?? mkdtempSync(join(tmpdir(), "pcr-product-harness-"));
   const manager = existing?.sessionFile
     ? SessionManager.open(existing.sessionFile)
@@ -279,6 +289,7 @@ async function openHost(existing?: OpenHostInput) {
       await session.extensionRunner.emit({ type: "session_shutdown", reason: "quit" });
       session.dispose();
       resetOwnerForTest();
+      restoreRuntimeMode();
       if (deleteRoot) rmSync(root, { recursive: true, force: true });
     },
   };

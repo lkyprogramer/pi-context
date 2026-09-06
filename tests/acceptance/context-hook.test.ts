@@ -1,13 +1,22 @@
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createPiContextExtension } from "../../apps/pi-context-runtime/src/extension.js";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
 import { createRuntimeCursor } from "@pcr/core";
 import { registerContextHook } from "@pcr/pi-adapter";
 import { createRuntimeSessionRegistry } from "@pcr/runtime";
+import { enableExperimentalProductRuntime } from "../helpers/product-harness.js";
 
-afterEach(resetOwnerForTest);
+let restoreRuntimeMode: (() => void) | undefined;
+beforeEach(() => {
+  restoreRuntimeMode = enableExperimentalProductRuntime();
+});
+afterEach(() => {
+  restoreRuntimeMode?.();
+  restoreRuntimeMode = undefined;
+  resetOwnerForTest();
+});
 
 describe("context hook acceptance", () => {
   it("returns a zone-ordered list from the registry materializer without zero-filling usage", async () => {

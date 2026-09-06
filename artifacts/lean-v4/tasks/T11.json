@@ -1,0 +1,90 @@
+{
+  "taskId": "T11",
+  "baseCommit": "ac8f5ac",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "scripts/pack-smoke.mjs",
+      "reason": "Default ingress must be what packed install probes: native compaction, complete sessionManager stub, and input capture without requiring experimental-runtime."
+    },
+    {
+      "path": "tests/acceptance/context-hook.test.ts",
+      "reason": "Product context materialization callers must opt into PCR_RUNTIME_MODE=experimental-runtime after the default became ingress."
+    },
+    {
+      "path": "tests/acceptance/context-budget.test.ts",
+      "reason": "Same experimental-runtime opt-in for createPiContextExtension(host) materialization tests."
+    },
+    {
+      "path": "tests/acceptance/live-replay-ingress.test.ts",
+      "reason": "Product compaction after receipt replay still requires explicit experimental-runtime."
+    },
+    {
+      "path": "tests/tasks/t28.test.ts",
+      "reason": "Vertical context-hook integration is full-runtime behavior, not the new ingress default."
+    },
+    {
+      "path": "tests/tasks/t31.test.ts",
+      "reason": "Product compaction takeover tests must not silently become ingress after the default change."
+    },
+    {
+      "path": "tests/tasks/t32.test.ts",
+      "reason": "Product lifecycle register(pi) tests need the same explicit experimental-runtime opt-in."
+    },
+    {
+      "path": "packages/core/src/index.ts",
+      "reason": "Export pointerRefWellFormed used by the compaction capsule to refuse damaged pointer injection."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run tests/acceptance/default-profile.test.ts tests/acceptance/compaction-fallback.test.ts --config vitest.acceptance.config.ts",
+      "exit": 0,
+      "tests": "11 passed"
+    },
+    {
+      "command": "pnpm exec vitest run tests/acceptance/default-profile.test.ts tests/acceptance/compaction-fallback.test.ts tests/acceptance/context-hook.test.ts tests/acceptance/context-budget.test.ts --config vitest.acceptance.config.ts",
+      "exit": 0,
+      "tests": "21 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    },
+    {
+      "command": "pnpm test:packed",
+      "exit": 0,
+      "tests": "19 passed"
+    }
+  ],
+  "assertions": [
+    "resolveRuntimeMode(undefined) is ingress; experimental-runtime is explicit; unknown values throw CONFIG_ERROR",
+    "off registers no mutating hooks",
+    "Default install returns original context order and yields native compaction (undefined session_before_compact result)",
+    "publicationClaim and PCR_EVAL_MATERIALIZER are not runtime-mode switches in extension.ts",
+    "semantic beta remains PCR_SEMANTIC_BETA === \"1\"",
+    "Ungrounded 'tests passed' claims are omitted from the model capsule",
+    "A directive-only capsule does not count as complete when active work is pending",
+    "Damaged pointer refs hard-stop instead of being injected into the prompt",
+    "Packed default probe treats native compaction as compactionPassed",
+    "Product harness and full-runtime tests set PCR_RUNTIME_MODE=experimental-runtime"
+  ],
+  "uncovered": [
+    "T31 product-harness compaction still produces Pi Native summary 'acknowledged' under experimental-runtime; the same failure reproduces on HEAD without T11. Not treated as T11 GREEN for takeover quality.",
+    "Live experimental-runtime vs Native still belongs to T12 with PCR_LIVE=1",
+    "publicationClaim remains a report field only"
+  ],
+  "hashes": {
+    "apps/pi-context-runtime/src/extension.ts": "6278274b191b51d5dbecdb4ee1e8366dfa85fc164ec9225dfe34f62eeef05335",
+    "apps/pi-context-runtime/src/composition-root.ts": "e6e1fd8e9556b8b2145fe4e1a20337f00827b3ada0e645abc56d62b71c9b229a",
+    "packages/core/src/compaction/checkpoint.ts": "b0200f61ac5103b39034539e606b49cea1d72454dfc65c6e427ae17c17ce68ff",
+    "packages/runtime/src/compaction-service.ts": "87ef50ef5f4940d9c3e41654f25d494fe88ca4ceaa40e2534d8d5c1ea8716aff",
+    "tests/helpers/product-harness.ts": "5f5c2205e7b458b8d8bf81bf1544ebc5c0757ba3f283c40310b8cee73ae1aafd",
+    "tests/acceptance/default-profile.test.ts": "60aa481eeb658c16fc7f9bfcba8f8656fc70f298f55f2bb299a39fdc9bf9ca96",
+    "tests/acceptance/compaction-fallback.test.ts": "1259328148c3604d248f124826c3377b6afc7ee9bf44f041e406fc3ec16df6df",
+    "docs/CONFIGURATION.md": "ab0b8df846230e8cf71d6d7db5eeb73cc709c192089aac06e166a8017844ab8a",
+    "docs/INSTALL.md": "e8346c70547a0c0ee5e6ceeda24f42f70ffde749d3cdb00611ed02689a0b43fb",
+    "scripts/pack-smoke.mjs": "b51bca2e10c2b3a010e867b8a6de66f88b79eeaae250fa07606d2c61451151fa"
+  }
+}

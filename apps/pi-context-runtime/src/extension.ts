@@ -49,6 +49,14 @@ export interface PiContextExtension {
   release?: () => void | Promise<void>;
 }
 
+export type RuntimeMode = "off" | "ingress" | "experimental-runtime";
+
+export function resolveRuntimeMode(value: string | undefined): RuntimeMode {
+  if (value === undefined || value === "") return "ingress";
+  if (value === "off" || value === "ingress" || value === "experimental-runtime") return value;
+  throw Object.assign(new Error("CONFIG_ERROR"), { code: "CONFIG_ERROR", value });
+}
+
 function isHostExtensionAPI(value: unknown): value is HostExtensionAPI {
   return (
     typeof value === "object" &&
@@ -159,6 +167,11 @@ function toolsJsonFromHost(pi: HostExtensionAPI, registered: readonly HostToolIn
 }
 
 function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
+  const mode = resolveRuntimeMode(process.env.PCR_RUNTIME_MODE);
+  if (mode === "off") {
+    return { name: "pi-context-runtime", hooks: {}, claimed: false };
+  }
+  const experimental = mode === "experimental-runtime";
   const owner = claimPiContextOwner("pi-context-runtime");
   const registeredTools: HostToolInfo[] = [];
   const hostRegisterTool = pi.registerTool.bind(pi);
@@ -173,55 +186,67 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
   }) as typeof pi.registerTool;
   const userTurns = registerProductionUserTurnRuntime(pi as never);
   const identity = { create: createRuntimeCursor };
-  registerContextHook({
-    on(hook, handler) {
-      pi.on(hook, async (event, ctx) => {
-        if (hook !== "context") return handler(event, ctx);
-        let derived;
-        try {
-          derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
-        } catch {
-          return { messages: event.messages };
-        }
-        await userTurns.ensure(ctx as never);
-        const host = ctx && typeof ctx === "object"
-          ? ctx as PiRuntimeContext & {
-            abort?: () => void;
-            now?: number;
-            model?: { contextWindow?: number; maxTokens?: number; providerReservedTokens?: number };
-            getSystemPrompt?: () => string;
-            sessionManager?: { getEntries?: () => readonly unknown[] };
+  if (experimental) {
+    registerContextHook({
+      on(hook, handler) {
+        pi.on(hook, async (event, ctx) => {
+          if (hook !== "context") return handler(event, ctx);
+          let derived;
+          try {
+            derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
+          } catch {
+            return { messages: event.messages };
           }
-          : undefined;
-        const systemText = typeof host?.getSystemPrompt === "function" ? host.getSystemPrompt() : undefined;
-        const toolsJson = toolsJsonFromHost(pi, registeredTools);
-        return handler(event, {
-          abort: () => {
-            if (typeof host?.abort === "function") host.abort();
-          },
-          signal: host?.signal,
-          workspaceId: derived.workspaceId,
-          sessionId: derived.sessionId,
-          leafId: derived.leafId,
-          lineageHash: derived.lineageHash,
-          modelKey: derived.modelKey,
-          now: typeof host?.now === "number" && Number.isFinite(host.now) ? host.now : 0,
-          currentContextWindow: host?.model?.contextWindow,
-          maxOutputTokens: host?.model?.maxTokens,
-          providerReservedTokens: typeof host?.model?.providerReservedTokens === "number"
-            ? host.model.providerReservedTokens
-            : 0,
-          ...(systemText === undefined ? {} : { systemText }),
-          toolsJson,
-          ...(host?.sessionManager === undefined ? {} : { sessionManager: host.sessionManager }),
+          await userTurns.ensure(ctx as never);
+          const host = ctx && typeof ctx === "object"
+            ? ctx as PiRuntimeContext & {
+              abort?: () => void;
+              now?: number;
+              model?: { contextWindow?: number; maxTokens?: number; providerReservedTokens?: number };
+              getSystemPrompt?: () => string;
+              sessionManager?: { getEntries?: () => readonly unknown[] };
+            }
+            : undefined;
+          const systemText = typeof host?.getSystemPrompt === "function" ? host.getSystemPrompt() : undefined;
+          const toolsJson = toolsJsonFromHost(pi, registeredTools);
+          return handler(event, {
+            abort: () => {
+              if (typeof host?.abort === "function") host.abort();
+            },
+            signal: host?.signal,
+            workspaceId: derived.workspaceId,
+            sessionId: derived.sessionId,
+            leafId: derived.leafId,
+            lineageHash: derived.lineageHash,
+            modelKey: derived.modelKey,
+            now: typeof host?.now === "number" && Number.isFinite(host.now) ? host.now : 0,
+            currentContextWindow: host?.model?.contextWindow,
+            maxOutputTokens: host?.model?.maxTokens,
+            providerReservedTokens: typeof host?.model?.providerReservedTokens === "number"
+              ? host.model.providerReservedTokens
+              : 0,
+            ...(systemText === undefined ? {} : { systemText }),
+            toolsJson,
+            ...(host?.sessionManager === undefined ? {} : { sessionManager: host.sessionManager }),
+          });
         });
-      });
-    },
-  }, {
-    open: (sessionCtx) => userTurns.openSession(sessionCtx),
-  });
+      },
+    }, {
+      open: (sessionCtx) => userTurns.openSession(sessionCtx),
+    });
+  } else {
+    pi.on("context", async (event, ctx) => {
+      try {
+        await userTurns.ensure(ctx as never);
+      } catch {
+        // Ingress never rewrites messages; observation setup is best-effort.
+      }
+      return { messages: event.messages };
+    });
+  }
   registerCompactionHooks(pi as unknown as CompactionExtensionAPI, {
     async prepareCompaction(event, ctx) {
+      if (!experimental) return { kind: "native-fallback" };
       try {
         const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
         await userTurns.ensure(ctx as never);
@@ -253,6 +278,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       }
     },
     async stageCompaction(result, ctx) {
+      if (!experimental) return;
       const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
       const pending = await userTurns.pendingCompaction(cursor);
       if (pending?.outputHash === result.details.outputHash && pending.firstKeptEntryId === result.firstKeptEntryId) {
@@ -266,7 +292,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       });
     },
     async ackHostCompaction(entry, ctx) {
-      if (!entry) return;
+      if (!experimental || !entry) return;
       const derived = derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity);
       await userTurns.ensure(ctx as never);
       const session = await userTurns.openSession(derived);
@@ -282,6 +308,7 @@ function bindClaimedRuntime(pi: HostExtensionAPI): PiContextExtension {
       });
     },
     async failStagedCompaction(_event, ctx) {
+      if (!experimental) return;
       const cursor = sessionCursor(derivePiSessionContext(ctx as unknown as PiRuntimeContext, identity));
       await userTurns.failStagedCompaction(cursor);
     },

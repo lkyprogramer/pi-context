@@ -140,6 +140,7 @@ export {
   CheckpointError,
   createCheckpointRenderer,
   createCheckpointVerifier,
+  pointerRefWellFormed,
   type CheckpointRenderer,
   type CheckpointVerifier,
   type CompactionSnapshot,

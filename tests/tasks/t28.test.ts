@@ -1,8 +1,9 @@
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createPiContextExtension } from "../../apps/pi-context-runtime/src/extension.js";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
+import { enableExperimentalProductRuntime } from "../helpers/product-harness.js";
 
 import type { HostMessage, MaterializedView } from "@pcr/contracts";
 import {
@@ -153,6 +154,16 @@ async function runT28Fixture() {
 }
 
 afterEach(resetOwnerForTest);
+
+let restoreRuntimeMode: (() => void) | undefined;
+beforeEach(() => {
+  restoreRuntimeMode = enableExperimentalProductRuntime();
+});
+afterEach(() => {
+  restoreRuntimeMode?.();
+  restoreRuntimeMode = undefined;
+  resetOwnerForTest();
+});
 
 function productHost() {
   let handler: ((event: { messages: unknown[] }, ctx: unknown) => Promise<{ messages: unknown[] }>) | undefined;

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { computeEffectiveInput, createRuntimeCursor, reservesFromPayload } from "@pcr/core";
 import { createPiContextExtension } from "../../apps/pi-context-runtime/src/extension.js";
@@ -11,10 +11,17 @@ import {
   registerProductionUserTurnRuntime,
 } from "../../apps/pi-context-runtime/src/composition-root.js";
 import { resetOwnerForTest } from "../../apps/pi-context-runtime/src/owner.js";
+import { enableExperimentalProductRuntime } from "../helpers/product-harness.js";
 
 const roots: string[] = [];
+let restoreRuntimeMode: (() => void) | undefined;
 
+beforeEach(() => {
+  restoreRuntimeMode = enableExperimentalProductRuntime();
+});
 afterEach(() => {
+  restoreRuntimeMode?.();
+  restoreRuntimeMode = undefined;
   resetOwnerForTest();
   for (const root of roots.splice(0)) rmSync(root, { force: true, recursive: true });
 });

@@ -23,5 +23,7 @@ The extension factory only registers handlers. After `session_start` the runtime
 
 | Flag | Default | Notes |
 |---|---|---|
-| semanticDefault | off | Quality-profile-only requires T45 continue **and** T46 stale-cost coverage |
-| publicationClaim | false | Synthetic W1/W2 and informal live compact are not publication evidence |
+| `PCR_RUNTIME_MODE` | `ingress` | `off` registers no mutating hooks. `ingress` observes/read-tools and keeps Pi Native context+compaction. `experimental-runtime` must be set explicitly to take over materialization and compaction. Illegal values throw `CONFIG_ERROR`. |
+| semanticDefault / `PCR_SEMANTIC_BETA` | off | Background worker only when `PCR_SEMANTIC_BETA=1`. Quality-profile-only requires T45 continue **and** T46 stale-cost coverage |
+| `PCR_EVAL_MATERIALIZER` | n/a | Eval-arm identity vs PCR materializer. Not a product runtime-mode switch. |
+| publicationClaim | false | Report field only. Synthetic W1/W2 and informal live compact are not publication evidence and must not enable experimental-runtime |
