@@ -456,6 +456,7 @@ interface WorkspaceUserTurnOwner {
   readonly saga: DurableSagaJournal;
   readonly ledger: Awaited<ReturnType<typeof openWorkspaceUserTurnLedger>>;
   readonly cursorsBySession: Map<string, RuntimeCursor>;
+  readonly boundSessionCursors: Map<string, RuntimeCursor>;
   readonly pointersByCursor: Map<string, Array<{ ref: string; kind: string }>>;
   readonly sessions: Map<string, RuntimeSession>;
   readonly candidates: CandidateRepository;
@@ -469,6 +470,7 @@ interface WorkspaceUserTurnOwner {
   readonly recalledBySession: Map<string, string[]>;
   readonly lastContinuityHash: Map<string, string>;
   readonly viewsBySession: Map<string, BranchView>;
+  lastSessionManager?: ExtensionContext["sessionManager"];
   readonly evidenceRepository: EvidenceRepository;
   lastUsage?: ReturnType<typeof reconcileUsage> & {
     viewId: string;
@@ -523,11 +525,11 @@ function toolCallIdFromSessionEntry(entry: {
 
 function hostToolCallBindings(ctx: ExtensionContext): Array<{ toolCallId: string; entryId: string }> {
   const bindings: Array<{ toolCallId: string; entryId: string }> = [];
-  const getEntries = ctx.sessionManager?.getEntries;
-  if (typeof getEntries !== "function") return bindings;
+  const manager = ctx.sessionManager;
+  if (!manager || typeof manager.getEntries !== "function") return bindings;
   let entries: readonly unknown[];
   try {
-    entries = getEntries();
+    entries = manager.getEntries();
   } catch {
     return bindings;
   }
@@ -604,6 +606,7 @@ async function refreshSessionAccess(
   ctx?: ExtensionContext,
 ): Promise<BranchView | undefined> {
   if (!ctx?.sessionManager) return owner.viewsBySession.get(cursor.sessionId);
+  owner.lastSessionManager = ctx.sessionManager;
   let view: BranchView;
   try {
     view = buildViewFromContext(cursor, ctx);
@@ -767,6 +770,7 @@ export function registerProductionUserTurnRuntime(
           saga,
           ledger,
           cursorsBySession: new Map(),
+          boundSessionCursors: new Map(),
           pointersByCursor: new Map(),
           sessions: new Map(),
           candidates,
@@ -797,22 +801,23 @@ export function registerProductionUserTurnRuntime(
             let service = services.get(key);
             if (!service) {
               const inner = createUserTurnService({ cursor: candidate, blobs, ledger });
-              const resolver = createDirectiveResolver({
-                cursor: candidate,
-                store: {
-                  put: (record) => owner.state.putDirective(record),
-                  list: (scope) => owner.state.listDirectives(scope),
-                },
-              });
-              const extractor = createDirectiveExtractor({ cursor: candidate });
-              const segmenter = createClauseSegmenter({ cursor: candidate });
               service = {
                 capture: async (input) => {
                   const receipt = await inner.capture(input);
                   if (input.sourceClass === "authenticated-user") {
+                    const turnCursor = receipt.cursor;
+                    const turnResolver = createDirectiveResolver({
+                      cursor: turnCursor,
+                      store: {
+                        put: (record) => owner.state.putDirective(record),
+                        list: (scope) => owner.state.listDirectives(scope),
+                      },
+                    });
+                    const turnExtractor = createDirectiveExtractor({ cursor: turnCursor });
+                    const turnSegmenter = createClauseSegmenter({ cursor: turnCursor });
                     const turn = {
                       userTurnId: `user_turn_${receipt.receiptId}`,
-                      cursor: candidate,
+                      cursor: turnCursor,
                       rawTextHash: receipt.rawTextHash,
                       rawBlobId: receipt.rawBlobId,
                       utf8Bytes: receipt.utf8Bytes,
@@ -820,15 +825,15 @@ export function registerProductionUserTurnRuntime(
                       sourceClass: receipt.sourceClass,
                       capturedAt: receipt.capturedAt,
                     };
-                    for (const candidateDirective of extractor.extract(turn, segmenter.segment({
+                    for (const candidateDirective of turnExtractor.extract(turn, turnSegmenter.segment({
                       text: input.rawText,
-                      cursor: candidate,
+                      cursor: turnCursor,
                     }))) {
-                      const stored = await resolver.apply(candidateDirective, input.signal);
+                      const stored = await turnResolver.apply(candidateDirective, input.signal);
                       if (stored.key) {
                         await owner.state.putClaim({
                           claimId: `cl_${stored.directiveId}`,
-                          cursor: candidate,
+                          cursor: turnCursor,
                           key: stored.key,
                           polarity: stored.polarity,
                           status: stored.status,
@@ -1179,7 +1184,9 @@ export function registerProductionUserTurnRuntime(
         async close(sessionId) {
           const bound = owner.cursorsBySession.get(sessionId);
           if (!bound) return;
-          owner.sessions.delete(sessionIdentityKey(bound));
+          const key = sessionIdentityKey(bound);
+          owner.sessions.delete(key);
+          owner.boundSessionCursors.delete(key);
         },
       },
       journal: {
@@ -1560,10 +1567,15 @@ export function registerProductionUserTurnRuntime(
   async function sessionFor(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor, ctx?: ExtensionContext): Promise<RuntimeSession> {
     const key = sessionIdentityKey(cursor);
     await refreshSessionAccess(owner, cursor, ctx);
+    owner.cursorsBySession.set(cursor.sessionId, cursor);
     const existing = owner.sessions.get(key);
-    const bound = owner.cursorsBySession.get(cursor.sessionId);
-    if (existing && bound && cursorKey(bound) === cursorKey(cursor)) {
+    const boundPorts = owner.boundSessionCursors.get(key);
+    if (existing && boundPorts && cursorKey(boundPorts) === cursorKey(cursor)) {
       return existing;
+    }
+    if (existing) {
+      owner.sessions.delete(key);
+      await existing.close?.().catch(() => undefined);
     }
     const session = createRuntimeSession({
       scope: {
@@ -1575,7 +1587,13 @@ export function registerProductionUserTurnRuntime(
       ports: await portsFor(owner, cursor, ctx),
     });
     owner.sessions.set(key, session);
-    owner.cursorsBySession.set(cursor.sessionId, cursor);
+    owner.boundSessionCursors.set(key, {
+      workspaceId: cursor.workspaceId,
+      sessionId: cursor.sessionId,
+      leafId: cursor.leafId,
+      lineageHash: cursor.lineageHash,
+      modelKey: cursor.modelKey,
+    });
     return session;
   }
 
@@ -1650,6 +1668,7 @@ export function registerProductionUserTurnRuntime(
       const parsed = JSON.parse(key) as [string, string];
       if (parsed[0] === cursor.workspaceId && parsed[1] === cursor.sessionId) {
         opening.sessions.delete(key);
+        opening.boundSessionCursors.delete(key);
         closing.push(session);
       }
     }
@@ -1734,7 +1753,9 @@ export function registerProductionUserTurnRuntime(
           async close(sessionId) {
             const bound = opening.cursorsBySession.get(sessionId);
             if (!bound) return;
-            opening.sessions.delete(sessionIdentityKey(bound));
+            const key = sessionIdentityKey(bound);
+            opening.sessions.delete(key);
+            opening.boundSessionCursors.delete(key);
           },
         },
         journal: { reconcile: (snapshot) => opening.saga.reconcile(snapshot) },
@@ -1759,7 +1780,9 @@ export function registerProductionUserTurnRuntime(
           async close(sessionId) {
             const bound = opening.cursorsBySession.get(sessionId);
             if (!bound) return;
-            opening.sessions.delete(sessionIdentityKey(bound));
+            const key = sessionIdentityKey(bound);
+            opening.sessions.delete(key);
+            opening.boundSessionCursors.delete(key);
           },
         },
         journal: { reconcile: (snapshot) => opening.saga.reconcile(snapshot) },
@@ -1776,6 +1799,7 @@ export function registerProductionUserTurnRuntime(
       if (!opening) return;
       const session = opening.sessions.get(sessionIdentityKey(cursor));
       opening.sessions.delete(sessionIdentityKey(cursor));
+      opening.boundSessionCursors.delete(sessionIdentityKey(cursor));
       opening.cursorsBySession.delete(cursor.sessionId);
       await session?.close?.();
       if (opening.sessions.size === 0) {
@@ -1875,8 +1899,9 @@ export function registerProductionUserTurnRuntime(
           actualWorkspaceId: ctx.workspaceId,
         });
       }
-      if (ctx.sessionManager && typeof ctx.sessionManager.getEntries === "function") {
-        await refreshSessionAccess(owner, cursor, { sessionManager: ctx.sessionManager } as ExtensionContext);
+      const manager = ctx.sessionManager ?? owner.lastSessionManager;
+      if (manager && typeof manager.getEntries === "function") {
+        await refreshSessionAccess(owner, cursor, { sessionManager: manager } as ExtensionContext);
       }
       return { cursor, evidence: evidenceWithView(owner, cursor), dataRoot: owner.dataRoot };
     },

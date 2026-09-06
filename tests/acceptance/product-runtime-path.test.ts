@@ -177,12 +177,13 @@ describe("product runtime SQLite/FTS/CAS path", () => {
         toolCallId: "c-product-fts",
         toolName: "bash",
         input: { command: "npm test" },
-        content: [{ type: "text", text: PAYLOAD }],
+        content: [{ type: "text", text: `cache invalidation strategy\nerror: boom\nexit code 1\n${"noise ".repeat(8000)}` }],
         isError: true,
         details: { exitCode: 1 },
       } as ToolResultEvent);
       const visible = JSON.stringify(hostVisible?.content ?? "");
-      expect(visible).not.toContain("boom");
+      // T03: long error logs keep the failure text plus a readable CAS handle.
+      expect(visible).toContain("boom");
       expect(visible).toMatch(/blob_[a-f0-9]{64}/u);
 
       const searchOut = await tools.get("context_search")!.execute(
