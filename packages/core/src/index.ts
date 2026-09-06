@@ -73,11 +73,16 @@ export {
   DEFAULT_RETRIEVAL_BUDGETS,
   boundDirectoryPointers,
   boundRecallPage,
+  byteOffsetToUtf16Index,
   retrievalPageTokenEstimate,
+  sliceUtf8Page,
+  utf16IndexToByteOffset,
+  Utf8PageError,
   type BoundedDirectory,
   type BoundedRecallPage,
   type BoundedRecallPageItem,
   type DirectoryPointer,
+  type Utf8Page,
 } from "./retrieval/bounded.js";
 export {
   BudgetError,

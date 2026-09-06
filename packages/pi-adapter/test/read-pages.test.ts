@@ -1,7 +1,7 @@
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { createRuntimeCursor } from "@pcr/core";
+import { createRuntimeCursor, sliceUtf8Page } from "@pcr/core";
 import { createEvidenceService } from "@pcr/runtime";
 import { blobId, type EvidenceRecord } from "@pcr/contracts";
 import { createRecallTool } from "../src/tools/recall.js";
@@ -143,5 +143,70 @@ describe("retrieval boundary regressions", () => {
     controller.abort();
     await expect(tools.get("context_search")!.execute("search", { query: "original" }, controller.signal))
       .rejects.toMatchObject({ name: "AbortError" });
+  });
+
+  it("rejects mid-codepoint offsets and preserves complete UTF8 pages",()=>{
+    const bytes=Buffer.from("A中🙂Z","utf8");
+    expect(()=>sliceUtf8Page({bytes,byteOffset:2,maxBytes:8})).toThrow("INVALID_BYTE_OFFSET");
+    const page=sliceUtf8Page({bytes,byteOffset:1,maxBytes:7});
+    expect(Buffer.from(page.bytes).toString("utf8")).toBe("中🙂");
+    expect(page.nextByteOffset).toBe(8);
+  });
+
+  it("distinguishes UTF-8 byte offsets from UTF-16 character offsets", async () => {
+    const original = "A中🙂Z";
+    const { tool, id, runtime } = await fixture(original).prepare();
+    await expect(tool.execute("read", { evidenceId: id, start: 2 })).rejects.toMatchObject({ code: "INVALID_BYTE_OFFSET" });
+    const recall = createRecallTool(runtime);
+    const recalled = await recall.execute("recall", { evidenceId: id, start: 2, end: 4, maxTokens: 256 }, undefined, undefined, context(1000));
+    expect(recalled.content[0]!.text).toBe("🙂");
+    const paged = await tool.execute("read", { evidenceId: id, byteOffset: 1, maxBytes: 7 }, undefined, undefined, context(1000));
+    expect(JSON.parse(paged.content[0]!.text)).toMatchObject({ text: "中🙂", nextOffset: 8 });
+  });
+
+  it("returns a bounded error when the JSON header cannot fit", async () => {
+    const { tool, id } = await fixture("A中🙂Z").prepare();
+    await expect(tool.execute("read", { evidenceId: id, maxTokens: 8 })).rejects.toMatchObject({
+      code: "PCR_RETRIEVAL_BUDGET_EXCEEDED",
+      details: { offset: 0 },
+    });
+  });
+
+  it("keeps binary pages typed instead of inserting UTF-8 replacement characters", async () => {
+    const bytes = Buffer.from([0xff, 0xfe, 0x00, 0x41]);
+    const cursor = createRuntimeCursor({ workspacePath: "/tmp/pcr-read-pages", sessionId: "pages", leafId: "leaf", lineageEntryIds: ["leaf"], modelKey: "test/model" });
+    const records = new Map();
+    const evidence = createEvidenceService({
+      cursor,
+      repository: { async put(record) { records.set(record.evidenceId, record); }, async get(_cursor, id) { return records.get(id) ?? null; } },
+      fts: { async upsert() {}, async search() { return []; } },
+      blobs: { async put() { return blobId(`blob_${"a".repeat(64)}`); }, async read() { return bytes; } },
+    });
+    const [record] = await evidence.admit({
+      cursor, operationId: "capture", observationId: "obs-bin", rawBlobId: blobId(`blob_${"a".repeat(64)}`),
+      reducer: { id: "bytes", revision: "1" }, sourceClass: "untrusted-tool",
+      facts: [{ kind: "note", value: "binary" }], observedAt: 1,
+    });
+    const binaryTool = createReadTool({ cursor, evidence });
+    const out = await binaryTool.execute("read", { evidenceId: record!.evidenceId }, undefined, undefined, context(1000));
+    const page = JSON.parse(out.content[0]!.text);
+    expect(page.encoding).toBe("binary");
+    expect(page.text).toBeUndefined();
+    expect(Buffer.from(page.bytesBase64, "base64").equals(bytes)).toBe(true);
+    expect(page.sha256).toBe(createHash("sha256").update(bytes).digest("hex"));
+    await expect(createRecallTool({ workspaceId: cursor.workspaceId, cursor, evidence }).execute(
+      "recall",
+      { evidenceId: record!.evidenceId },
+      undefined,
+      undefined,
+      context(1000),
+    )).rejects.toMatchObject({ code: "PCR_INVALID_RANGE" });
+  });
+
+  it("cancels an in-flight context_read before paging", async () => {
+    const { tool, id } = await fixture("A中🙂Z").prepare();
+    const controller = new AbortController();
+    controller.abort();
+    await expect(tool.execute("read", { evidenceId: id }, controller.signal)).rejects.toMatchObject({ name: "AbortError" });
   });
 });

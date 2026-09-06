@@ -6,6 +6,7 @@ import {
   boundRecallPage,
   estimateTextTokens,
   retrievalPageTokenEstimate,
+  sliceUtf8Page,
 } from "../../src/index.js";
 
 describe("bounded retrieval", () => {
@@ -37,5 +38,13 @@ describe("bounded retrieval", () => {
     expect(page.items).toHaveLength(1);
     expect(page.tokenEstimate).toBe(estimateTextTokens(quote));
     expect(page.omitted).toEqual([{ evidenceId: "ev_duplicate", reason: "duplicate" }]);
+  });
+
+  it("rejects mid-codepoint offsets and preserves complete UTF8 pages", () => {
+    const bytes = Buffer.from("A中🙂Z", "utf8");
+    expect(() => sliceUtf8Page({ bytes, byteOffset: 2, maxBytes: 8 })).toThrow("INVALID_BYTE_OFFSET");
+    const page = sliceUtf8Page({ bytes, byteOffset: 1, maxBytes: 7 });
+    expect(Buffer.from(page.bytes).toString("utf8")).toBe("中🙂");
+    expect(page.nextByteOffset).toBe(8);
   });
 });

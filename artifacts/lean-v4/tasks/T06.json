@@ -1,0 +1,62 @@
+{
+  "taskId": "T06",
+  "baseCommit": "bf45e86",
+  "node": "v22.19.0",
+  "status": "implemented",
+  "allowedFilesExpanded": [
+    {
+      "path": "packages/core/src/index.ts",
+      "reason": "Export sliceUtf8Page and UTF-16 conversion helpers from the core barrel used by tools and tests."
+    },
+    {
+      "path": "packages/pi-adapter/src/tools/status.ts",
+      "reason": "context_read needs typed byteOffset/maxBytes arguments without mixing UTF-16 offsets."
+    },
+    {
+      "path": "packages/pi-adapter/package.json",
+      "reason": "read/recall now import the shared core paging primitive."
+    }
+  ],
+  "commands": [
+    {
+      "command": "pnpm exec vitest run packages/pi-adapter/test/read-pages.test.ts",
+      "exit": 0,
+      "tests": "14 passed"
+    },
+    {
+      "command": "pnpm exec vitest run packages/core/test/retrieval/bounded.test.ts packages/pi-adapter/test/read-pages.test.ts packages/storage-node/test/fts-index-cache.test.ts",
+      "exit": 0,
+      "tests": "25 passed"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0
+    }
+  ],
+  "assertions": [
+    "Mid-codepoint UTF-8 offsets throw INVALID_BYTE_OFFSET instead of inserting U+FFFD",
+    "sliceUtf8Page(A中🙂Z, offset=1, maxBytes=7) returns 中🙂 with nextByteOffset 8",
+    "context_read start/byteOffset are UTF-8 bytes; context_recall start/end stay UTF-16 and convert explicitly",
+    "JSON header that cannot fit the live budget throws PCR_RETRIEVAL_BUDGET_EXCEEDED",
+    "Invalid UTF-8 blobs return encoding=binary with base64 instead of replacement characters",
+    "Aborted context_read fails with AbortError before paging",
+    "FTS cache keys use evidence_fts count/max(rowid)+data_version, not total_changes()",
+    "A different branch view does not reuse the previous FTS cache entry",
+    "100 same-connection lease writes do not reissue the full FTS search",
+    "Product materialize does not list leases when recall is not needed",
+    "Exact observation pages present the full envelope before applying a byte range"
+  ],
+  "uncovered": [
+    "Full-blob decrypt before paging is still the fact; chunk encryption is not claimed",
+    "100-round owner-count / P95 latency was not measured; this task only proved FTS query count stays at 1 across lease churn",
+    "Live models are T12 only"
+  ],
+  "hashes": {
+    "packages/core/src/retrieval/bounded.ts": "488b9df98fd9f970a278e5ac6520b6c16c39b4c221736748af48ee2c0becbde5",
+    "packages/pi-adapter/src/tools/read.ts": "818b98675733f14b87a471c928c54aeb16fc83329f49b3649a5c2d987c4e7ad2",
+    "packages/pi-adapter/src/tools/recall.ts": "4196c0a45b4ac8850d40d6c95dce5b8c25ec01f2bbb451fefe4bd93a4e0f0432",
+    "packages/storage-node/src/fts-index.ts": "0140b5b91b887a364f73d9688d5481751bfe550427b38632e78ee7799dee87e9",
+    "packages/pi-adapter/test/read-pages.test.ts": "c89ef887d906ff52d7cf61fc45ad6750c6595a659872adc0059a9dec8f034e0f",
+    "apps/pi-context-runtime/src/composition-root.ts": "9979a2bb28dc36afb53640ede9a9c27b4a865385185a477d9416b50dc9e1571d"
+  }
+}

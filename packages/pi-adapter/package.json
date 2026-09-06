@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@pcr/contracts": "workspace:*",
+    "@pcr/core": "workspace:*",
     "@pcr/runtime": "workspace:*"
   },
   "scripts": {

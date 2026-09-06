@@ -44,7 +44,8 @@ export interface OpenWorkspaceEvidenceFtsIndexInput {
 
 interface SearchCacheVersion {
   readonly dataVersion: number;
-  readonly totalChanges: number;
+  readonly ftsCount: number;
+  readonly ftsMaxRowid: number;
 }
 
 interface CachedSearch {
@@ -105,7 +106,8 @@ function searchCacheKey(
     limit,
     viewKey,
     version.dataVersion,
-    version.totalChanges,
+    version.ftsCount,
+    version.ftsMaxRowid,
   ]);
 }
 
@@ -260,10 +262,15 @@ class WorkspaceEvidenceFtsIndex implements EvidenceFtsIndex {
     try {
       const version = this.#database.read("check-evidence-fts-version", (db) => {
         const dataVersion = db.prepare("PRAGMA data_version").get() as { data_version: number };
-        const totalChanges = db.prepare("SELECT total_changes() AS total_changes").get() as {
-          total_changes: number;
+        const fts = db.prepare("SELECT COUNT(*) AS fts_count, COALESCE(MAX(rowid), 0) AS fts_max_rowid FROM evidence_fts").get() as {
+          fts_count: number;
+          fts_max_rowid: number;
         };
-        return { dataVersion: dataVersion.data_version, totalChanges: totalChanges.total_changes };
+        return {
+          dataVersion: dataVersion.data_version,
+          ftsCount: fts.fts_count,
+          ftsMaxRowid: fts.fts_max_rowid,
+        };
       });
       const key = searchCacheKey(cursor, query.text, limit, version, viewCacheKey(query));
       if (this.#latestSearch?.key === key) return copySearchHits(this.#latestSearch.hits);

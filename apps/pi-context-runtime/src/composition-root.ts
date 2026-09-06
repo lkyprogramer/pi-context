@@ -616,14 +616,32 @@ function evidenceWithView(owner: WorkspaceUserTurnOwner, cursor: RuntimeCursor):
     admit: (input) => inner.admit(input),
     search: (query) => inner.search({ ...query, view }),
     async read(req) {
-      const page = await inner.read({ ...req, view });
-      const presented = presentExactObservationPage(page);
-      if (presented.kind !== "envelope") return page;
+      const full = await inner.read({
+        ...req,
+        view,
+        range: undefined,
+      });
+      const presented = presentExactObservationPage({
+        ...full,
+        range: { start: 0, endExclusive: full.byteLength },
+      });
+      const source = presented.kind === "envelope"
+        ? { ...full, bytes: presented.bytes, byteLength: presented.bytes.byteLength }
+        : full;
+      const range = req.range ?? { start: 0, endExclusive: source.byteLength };
+      if (
+        !Number.isSafeInteger(range.start)
+        || !Number.isSafeInteger(range.endExclusive)
+        || range.start < 0
+        || range.endExclusive < range.start
+        || range.endExclusive > source.byteLength
+      ) {
+        throw Object.assign(new Error("invalid range"), { code: "PCR_INVALID_RANGE" });
+      }
       return {
-        ...page,
-        bytes: presented.bytes,
-        byteLength: presented.bytes.byteLength,
-        range: { start: 0, endExclusive: presented.bytes.byteLength },
+        ...source,
+        bytes: source.bytes.subarray(range.start, range.endExclusive),
+        range,
       };
     },
   };
@@ -1297,7 +1315,9 @@ export function registerProductionUserTurnRuntime(
               );
             }
           }
-          const activeLeases = await owner.leaseStore.list(viewCursor);
+          const activeLeases = materializerMode === "pcr" && recall.kind === "needed"
+            ? await owner.leaseStore.list(viewCursor)
+            : [];
           const directoryPointers = mergePointers(
             rows.pointers,
             owner.pointersByCursor.get(sessionIdentityKey(viewCursor)) ?? [],

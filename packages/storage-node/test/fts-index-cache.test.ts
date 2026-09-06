@@ -8,6 +8,7 @@ import { blobId, type EvidenceRecord, type RuntimeCursor } from "@pcr/contracts"
 import { createRuntimeCursor } from "@pcr/core";
 import {
   openWorkspaceEvidenceFtsIndex,
+  openWorkspaceRecallLeaseStore,
   openWorkspaceSqliteStore,
   type WorkspaceSqliteEvidenceStore,
 } from "@pcr/storage-node";
@@ -261,6 +262,73 @@ describe("WorkspaceEvidenceFtsIndex latest-query cache", () => {
         expect(result.map((hit) => hit.evidenceId)).toEqual([records[offset]!.evidenceId]);
       }
     } finally {
+      await database.close();
+    }
+  });
+
+  it("does not serve a cached lookup to a different branch view", async () => {
+    const root = dataRoot();
+    const scope = cursor(root);
+    const database = await openDatabase(root, scope);
+    const index = openWorkspaceEvidenceFtsIndex({ database });
+    const measure = countFullFtsSearches(database);
+    try {
+      const record = evidence(scope, "evidence-cache-branch");
+      await insertEvidence(database, index, record);
+      const firstView = {
+        workspaceId: scope.workspaceId,
+        sessionId: scope.sessionId,
+        headId: "head-a",
+        ancestorIds: new Set(["root", "head-a"]),
+      };
+      const otherView = {
+        workspaceId: scope.workspaceId,
+        sessionId: scope.sessionId,
+        headId: "head-b",
+        ancestorIds: new Set(["root", "head-b"]),
+      };
+      const first = await index.search({ cursor: scope, text: "shared cache phrase", view: firstView });
+      const second = await index.search({ cursor: scope, text: "shared cache phrase", view: otherView });
+      expect(first.map((hit) => hit.evidenceId)).toEqual([record.evidenceId]);
+      expect(second).not.toBe(first);
+      expect(measure.count()).toBe(2);
+    } finally {
+      measure.restore();
+      await database.close();
+    }
+  });
+
+  it("keeps the FTS cache across 100 lease writes on the same connection", async () => {
+    const root = dataRoot();
+    const scope = cursor(root);
+    const database = await openDatabase(root, scope);
+    const index = openWorkspaceEvidenceFtsIndex({ database });
+    const leases = openWorkspaceRecallLeaseStore({ database });
+    const measure = countFullFtsSearches(database);
+    try {
+      const record = evidence(scope, "evidence-cache-lease-churn");
+      await insertEvidence(database, index, record);
+      const first = await index.search({ cursor: scope, text: "shared cache phrase" });
+      for (let round = 0; round < 100; round += 1) {
+        await leases.put({
+          leaseId: `lease-${round}`,
+          cursor: scope,
+          pageId: `page-${round}`,
+          purpose: "recall",
+          authority: "inform",
+          turns: 0,
+          tokenTurns: round,
+          issuedAt: 1_000 + round,
+          expiresAt: 1_000_000,
+          remainingUses: 1,
+          status: "active",
+        });
+      }
+      const second = await index.search({ cursor: scope, text: "shared cache phrase" });
+      expect(second).toEqual(first);
+      expect(measure.count()).toBe(1);
+    } finally {
+      measure.restore();
       await database.close();
     }
   });

@@ -20,6 +20,8 @@ export interface ToolExecuteArgs {
   limit?: number;
   timeoutMs?: number;
   start?: number;
+  byteOffset?: number;
+  maxBytes?: number;
   end?: number;
   endExclusive?: number;
   directive?: string;
