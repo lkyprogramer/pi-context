@@ -1,0 +1,13 @@
+{
+  "kind": "live-dump-backup",
+  "createdAt": "2026-09-07T06:48:33Z",
+  "destination": "artifacts/backups/live-20260907",
+  "originalsDeleted": false,
+  "fileCount": 3243,
+  "errorCount": 0,
+  "totalBytes": 125763622,
+  "elapsedSec": 2.88,
+  "errors": [],
+  "manifestSha256": "5b1e37eb85f7cf3b449aa56cea2d2a158e3a3f87eac8cef6dc8e58feadf28b0a",
+  "note": "Full per-file hashes in artifacts/backups/live-20260907/MANIFEST.json (gitignored). Originals were copied, not moved."
+}

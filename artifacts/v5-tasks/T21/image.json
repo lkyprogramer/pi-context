@@ -1,0 +1,10 @@
+{
+  "kind": "t21-image-build",
+  "tag": "pctx-t21-sandbox:0.85.1",
+  "status": "passed",
+  "command": "docker build -f eval/sandbox/Containerfile -t pctx-t21-sandbox:0.85.1 eval/sandbox",
+  "imageId": "sha256:38ca0d7d26b9fa17d7a55c77c627cdb6cd37b9ea7e282789321fd85e4201d835",
+  "digest": null,
+  "versions": "v22.19.0\n0.85.1\njavac 17.0.20.1\nApache Maven 3.8.7",
+  "error": null
+}

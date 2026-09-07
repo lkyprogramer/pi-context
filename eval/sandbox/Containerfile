@@ -1,7 +1,20 @@
-# Isolation smoke image. Live Java/E2E still needs Node+Pi+JDK together;
-# this file is not that product image.
-FROM debian:latest
-USER nobody
-WORKDIR /work
-CMD ["true"]
+# T21 product sandbox. Pin the local official Node 22.19.0 bookworm digest.
+# Build context is this directory only — never the PCR workspace or .env.
+FROM node:22.19.0-bookworm@sha256:afff6d8c97964a438d2e6a9c96509367e45d8bf93f790ad561a1eaea926303d9
 
+USER root
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openjdk-17-jdk-headless maven socat ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+  && npm install -g @earendil-works/pi-coding-agent@0.85.1 \
+  && npm cache clean --force
+
+COPY docker-entrypoint.sh /usr/local/bin/pctx-sandbox-entry
+RUN chmod 0755 /usr/local/bin/pctx-sandbox-entry \
+  && mkdir -p /work /run/pctx \
+  && chown node:node /work /run/pctx
+
+USER node
+WORKDIR /work
+ENTRYPOINT ["/usr/local/bin/pctx-sandbox-entry"]
+CMD ["true"]

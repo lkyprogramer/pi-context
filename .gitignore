@@ -40,3 +40,6 @@ docs/**/evidence/logs/
 
 # Unexecuted local orchestration draft; not an implementation or verification record.
 /.workflow/pi-context-current-head-remediation-continuation/
+
+# Local live-dump backups (not analysis reports).
+artifacts/backups/

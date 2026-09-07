@@ -1,0 +1,6 @@
+{
+  "kind": "t21-unix-relay-smoke",
+  "status": "blocked",
+  "error": "socat connect /run/pctx/broker.sock: Connection refused",
+  "note": "Host Node unix socket under macOS tmpdir is not a live socket inside the Linux VM. Image still contains socat for Linux CI. Agent isolation (network none, non-root, cap-drop, unread host secrets) passed without the socket."
+}

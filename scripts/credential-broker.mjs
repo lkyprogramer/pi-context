@@ -7,7 +7,7 @@
 
 import { createServer } from "node:http";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
@@ -254,8 +254,21 @@ function joinUpstreamUrl(targetBaseUrl, reqUrl) {
  *   allowedHost?: string;
  *   allowedModel: string;
  *   maxRequests?: number;
+ *   socketPath?: string;
  * }} input
  */
+function allowBrokerHttp(method, reqUrl) {
+  if (String(method).toUpperCase() === "CONNECT") return false;
+  if (String(method).toUpperCase() !== "POST") return false;
+  try {
+    const u = new URL(reqUrl ?? "/", "http://127.0.0.1");
+    if (u.protocol === "file:" || u.protocol === "unix:") return false;
+    return u.pathname === "/chat/completions" || u.pathname === "/v1/chat/completions";
+  } catch {
+    return false;
+  }
+}
+
 export function startCredentialBroker(input) {
   if (!input || typeof input !== "object") failInput("input");
   if (typeof input.targetBaseUrl !== "string" || !/^https?:\/\//u.test(input.targetBaseUrl)) failInput("targetBaseUrl");
@@ -272,7 +285,13 @@ export function startCredentialBroker(input) {
         for await (const chunk of req) chunks.push(chunk);
         const body = Buffer.concat(chunks);
         try {
-          const host = String(req.headers.host ?? "").split(":")[0] ?? "";
+          if (!allowBrokerHttp(req.method ?? "GET", req.url ?? "/")) {
+            res.statusCode = 403;
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify({ error: { type: "PCR_BROKER_PATH_DENIED" } }));
+            return;
+          }
+          const host = String(req.headers.host ?? "127.0.0.1").split(":")[0] || "127.0.0.1";
           let model = input.allowedModel;
           let forwardBody = body;
           if (body.length > 0) {
@@ -323,18 +342,31 @@ export function startCredentialBroker(input) {
         }
       })();
     });
+    const closeServers = () => new Promise((closeResolve, closeReject) => {
+      server.close((err) => (err ? closeReject(err) : closeResolve()));
+    });
     server.once("error", reject);
+    const finish = (extra) => {
+      resolve({
+        url: extra.url,
+        port: extra.port,
+        socketPath: extra.socketPath ?? null,
+        close: closeServers,
+        requestCount: () => requestCount,
+      });
+    };
+    if (typeof input.socketPath === "string" && input.socketPath.length > 0) {
+      if (existsSync(input.socketPath)) unlinkSync(input.socketPath);
+      server.listen(input.socketPath, () => {
+        chmodSync(input.socketPath, 0o600);
+        finish({ url: "http://127.0.0.1:8080/v1", port: 8080, socketPath: input.socketPath });
+      });
+      return;
+    }
     server.listen(0, "127.0.0.1", () => {
       const addr = server.address();
       const port = addr && typeof addr === "object" ? addr.port : 0;
-      resolve({
-        url: `http://127.0.0.1:${port}/v1`,
-        port,
-        close: () => new Promise((closeResolve, closeReject) => {
-          server.close((err) => (err ? closeReject(err) : closeResolve()));
-        }),
-        requestCount: () => requestCount,
-      });
+      finish({ url: `http://127.0.0.1:${port}/v1`, port });
     });
   });
 }

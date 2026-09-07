@@ -1,0 +1,12 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/integration/sandbox.test.ts (4 tests) 3845ms
+   ✓ T21 sandbox > records BLOCKED when docker isolation is unavailable  1962ms
+   ✓ T21 sandbox > container cannot read host secrets or docker.sock when the T21 image exists  1879ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  14:52:35
+   Duration  4.28s (transform 91ms, setup 0ms, collect 60ms, tests 3.85s, environment 0ms, prepare 132ms)
+
