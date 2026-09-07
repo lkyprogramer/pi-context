@@ -2,9 +2,11 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { DEFAULT_CONFIG } from "../../src/config.js";
 import { collectBatches } from "../../src/projection/batches.js";
 import { ExposureLedger, outcomeFromStop } from "../../src/projection/exposure.js";
 import { decideBudget } from "../../src/projection/budget.js";
+import { planEpoch } from "../../src/projection/planner.js";
 import { renderMessages } from "../../src/projection/render.js";
 import { authorizeHits } from "../../src/history/scope.js";
 import { utf8Slice, utf8Bytes } from "../../src/contracts.js";
@@ -66,10 +68,48 @@ describe("T20 INV matrix", () => {
     expect(decideBudget({ protectedTokens: 1, optionalTokens: 1, limit: 100, unknownImageCost: true }).kind).toBe("bypass");
   });
 
-  it("covers protocol vectors F01-F04", () => {
+  it("covers protocol vectors F01-F05 against shipped planner/batches", () => {
     const ids = protocol.cases.map((c) => c.id);
-    expect(ids).toEqual(expect.arrayContaining(["F01-first-exposure", "F02-image", "F03-branch", "F04-failed-request"]));
+    expect(ids).toEqual(expect.arrayContaining(["F01-first-exposure", "F02-image", "F03-branch", "F04-failed-request", "F05-incomplete-batch"]));
     const f01 = protocol.cases.find((c) => c.id === "F01-first-exposure")!;
     expect(f01.expect.transformAllowed).toBe(false);
+    const entries = [
+      userEntry("u", null, textBlocks("q")),
+      assistantEntry("a", "u", [{ type: "toolCall", id: "c1" }]),
+      toolResultEntry("r1", "a", "c1", textBlocks(String(f01.input.text))),
+    ];
+    const ledger = new ExposureLedger();
+    const plan = planEpoch({
+      entries,
+      batches: collectBatches(entries),
+      ledger,
+      generation: 1,
+      snapshot: { generation: 1, sessionId: "s", leafId: "r1", sourceRevision: "a".repeat(64), modelIdentity: "m", configHash: "b".repeat(64) },
+      config: DEFAULT_CONFIG,
+      refs: new Map(),
+      hashes: new Map(),
+      successfulRequests: 0,
+    });
+    expect(plan).toBeNull();
+    const incomplete = [
+      assistantEntry("a", null, [{ type: "toolCall", id: "c1" }, { type: "toolCall", id: "c2" }]),
+      toolResultEntry("r1", "a", "c1", textBlocks("only-one")),
+    ];
+    expect(collectBatches(incomplete)[0]?.complete).toBe(false);
+    const stale = renderMessages({
+      messages: [{ role: "user", content: [{ type: "text", text: "keep" }] }],
+      plan: {
+        epochId: "e",
+        snapshot: { generation: 1, sessionId: "s", leafId: "r1", sourceRevision: "a".repeat(64), modelIdentity: "m", configHash: "b".repeat(64) },
+        sourceBoundary: null,
+        replacements: [{ entryId: "r1", ref: "x", originalHash: "h", replacementText: "stub", estimatedBeforeTokens: 10, estimatedAfterTokens: 1 }],
+        firstChangedMessageIndex: 0,
+        planHash: "p",
+      },
+      profile: "balanced",
+      optionalBudget: 100,
+      generation: 2,
+    });
+    expect(stale.messages[0]?.content).toEqual([{ type: "text", text: "keep" }]);
   });
 });

@@ -15,15 +15,26 @@ function javaAvailable() {
 }
 
 function probeIsolation() {
-  const r = spawnSync("docker", ["info"], { encoding: "utf8", timeout: 8000 });
-  if (r.status === 0) return { ok: true };
-  return { ok: false, blocked: r.stderr || r.error?.message || "docker info failed" };
+  const info = spawnSync("docker", ["info"], { encoding: "utf8", timeout: 8000 });
+  if (info.status !== 0) return { ok: false, blocked: info.stderr || info.error?.message || "docker info failed" };
+  const isolated = spawnSync("docker", [
+    "run", "--rm", "--network", "none", "--read-only", "--cap-drop", "ALL",
+    "debian:latest", "sh", "-c", "if [ -r /Users/luo/.pi/agent/auth.json ]; then echo READABLE; else echo UNREADABLE; fi",
+  ], { encoding: "utf8", timeout: 30_000 });
+  if (isolated.status !== 0) return { ok: false, blocked: isolated.stderr || isolated.error?.message || "docker run failed" };
+  if (!isolated.stdout.includes("UNREADABLE")) return { ok: false, blocked: "container could read host auth path" };
+  return { ok: true };
 }
 
-function runSandboxed(_cmd) {
+function runSandboxed(cmd) {
   const probe = probeIsolation();
   if (!probe.ok) return { status: "blocked", error: probe.blocked };
-  return { status: "ok" };
+  const r = spawnSync("docker", [
+    "run", "--rm", "--network", "none", "--read-only", "--tmpfs", "/tmp", "--cap-drop", "ALL",
+    "debian:latest", "sh", "-c", cmd,
+  ], { encoding: "utf8", timeout: 30_000 });
+  if (r.status !== 0) return { status: "blocked", error: r.stderr || r.error?.message };
+  return { status: "ok", stdout: r.stdout };
 }
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -60,9 +71,9 @@ export function runLiveG4() {
 
   const netNone = spawnSync("docker", [
     "run", "--rm", "--network", "none", "--read-only", "--tmpfs", "/tmp",
-    "--cap-drop", "ALL", "--user", "1000:1000",
-    "node:22.19.0-bookworm", "node", "-e", "console.log('sandbox-ok')",
-  ], { encoding: "utf8", timeout: 60_000 });
+    "--cap-drop", "ALL", "--user", "65534:65534",
+    "debian:latest", "sh", "-c", "echo sandbox-ok",
+  ], { encoding: "utf8", timeout: 30_000 });
   out.containerNetworkNone = {
     status: netNone.status,
     stdout: (netNone.stdout || "").trim().slice(0, 200),
@@ -71,8 +82,8 @@ export function runLiveG4() {
 
   const jdkProbe = spawnSync("docker", [
     "run", "--rm", "--network", "none",
-    "node:22.19.0-bookworm", "bash", "-lc", "command -v javac || echo NO_JAVAC",
-  ], { encoding: "utf8", timeout: 60_000 });
+    "eclipse-temurin:25-jre-noble", "sh", "-c", "command -v javac || echo NO_JAVAC; command -v java && echo HAS_JAVA",
+  ], { encoding: "utf8", timeout: 30_000 });
   out.jdkInNodeImage = {
     status: jdkProbe.status,
     stdout: (jdkProbe.stdout || "").trim().slice(0, 200),
@@ -101,17 +112,17 @@ export function runLiveG4() {
   }
 
   const oracleOk = out.oracleCalibration?.status === "passed";
-  const containerOk = out.containerNetworkNone?.status === 0 && out.containerNetworkNone.stdout.includes("sandbox-ok");
-  const jdkInSandbox = typeof out.jdkInNodeImage?.stdout === "string" && out.jdkInNodeImage.stdout.includes("javac") && !out.jdkInNodeImage.stdout.includes("NO_JAVAC");
+  const containerOk = out.containerNetworkNone?.status === 0 && String(out.containerNetworkNone.stdout).includes("sandbox-ok");
+  const javaInSandbox = typeof out.jdkInNodeImage?.stdout === "string" && out.jdkInNodeImage.stdout.includes("HAS_JAVA");
   if (!oracleOk) {
     out.status = out.oracleCalibration?.status === "not-run" ? "not-run" : "failed";
     out.note = "host oracle calibration did not pass; live E2E not started";
-  } else if (!containerOk || !jdkInSandbox) {
+  } else if (!containerOk) {
     out.status = "blocked";
-    out.note = `oracle calibrated on host; live Java E2E blocked: network-none container=${containerOk} jdkInSandbox=${jdkInSandbox}. Containerfile has no JDK/Maven/unix relay.`;
+    out.note = "oracle calibrated on host; network-none container smoke failed";
   } else {
     out.status = "blocked";
-    out.note = "sandbox has javac but grader-unmounted live loop is not wired; not claimed as E2E pass";
+    out.note = `oracle calibrated; debian network-none smoke ok; temurin JRE java=${javaInSandbox}. Live agent E2E still blocked: no Node+Pi+JDK image, unix relay, unmounted grader, isolation-unproven for host bash.`;
   }
   return out;
 }

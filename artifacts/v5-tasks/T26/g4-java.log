@@ -1,11 +1,11 @@
 {
   "status": "blocked",
-  "note": "oracle calibrated on host; live Java E2E blocked: network-none container=false jdkInSandbox=false. Containerfile has no JDK/Maven/unix relay.",
+  "note": "oracle calibrated; debian network-none smoke ok; temurin JRE java=true. Live agent E2E still blocked: no Node+Pi+JDK image, unix relay, unmounted grader, isolation-unproven for host bash.",
   "javac": true,
   "dockerInfo": {
     "ok": true,
     "blocked": null
   },
-  "containerNetworkNone": 143,
+  "containerNetworkNone": 0,
   "oracle": "passed"
 }

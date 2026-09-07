@@ -7,16 +7,17 @@
     "blocked": null
   },
   "sandboxRun": {
-    "status": "ok"
+    "status": "ok",
+    "stdout": ""
   },
   "containerNetworkNone": {
-    "status": 143,
-    "stdout": "",
-    "stderr": "Unable to find image 'node:22.19.0-bookworm' locally\n22.19.0-bookworm: Pulling from library/node\na9331b686701: Pulling fs layer\ne108925666d6: Pulling fs layer\n133142790bc0: Pulling fs layer\n2a74a28f7860: Pulling fs layer\n466a56b828bf: Pulling fs layer\n793b9e17564d: Pulling fs layer\n2a74a28f7860: Waiting\n6be0e38cf5c5: Pulling fs layer\n7fc784eecf10: Pulling fs layer\n466a56b828bf: Waiting\n793b9e17564"
+    "status": 0,
+    "stdout": "sandbox-ok",
+    "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
   },
   "jdkInNodeImage": {
     "status": 0,
-    "stdout": "NO_JAVAC"
+    "stdout": "NO_JAVAC\n/opt/java/openjdk/bin/java\nHAS_JAVA"
   },
   "oracleCalibration": {
     "kind": "java-oracle-calibration",
@@ -84,5 +85,5 @@
       "reason": "isolation-unproven"
     }
   },
-  "note": "oracle calibrated on host; live Java E2E blocked: network-none container=false jdkInSandbox=false. Containerfile has no JDK/Maven/unix relay."
+  "note": "oracle calibrated; debian network-none smoke ok; temurin JRE java=true. Live agent E2E still blocked: no Node+Pi+JDK image, unix relay, unmounted grader, isolation-unproven for host bash."
 }

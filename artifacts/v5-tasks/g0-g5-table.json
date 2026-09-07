@@ -54,9 +54,9 @@
       "status": "blocked",
       "command": "PCR_LIVE=1 node eval/live-g4.mjs artifacts/v5-tasks/T26/g4-java.json",
       "exitCode": 2,
-      "artifactHash": "9f95df72cca36a08b7bd9bc312f643d9cdd66afd671cd21d1f8ad75ed465a2b2",
+      "artifactHash": "2407f6710b460c8b0a0fd0e204bb92f009805a7813981c97ed68cd0d50025e49",
       "n": 0,
-      "note": "host oracle J01/J02/J07 calibrated (initial RED, known-good GREEN). Live agent E2E blocked: env isolation-unproven, node:22.19.0-bookworm has no javac, Containerfile has no JDK/Maven/unix relay. docker info ok is not T21 sandbox."
+      "note": "host oracle J01/J02/J07 calibrated. debian network-none smoke ok; temurin JRE has java. Live agent E2E blocked: no Node+Pi+JDK image, unix relay, unmounted grader."
     },
     {
       "id": "G5",

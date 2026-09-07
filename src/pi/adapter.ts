@@ -38,6 +38,7 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     }
   });
   pi.on("tool_result", () => undefined);
+  pi.on("before_provider_request", () => undefined);
   pi.on("message_end", (event) => {
     const msg = event.message as { stopReason?: string; errorMessage?: string } | undefined;
     confirmAttempt(state, msg?.stopReason, msg?.errorMessage);

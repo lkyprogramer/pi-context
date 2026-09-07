@@ -11,7 +11,7 @@ describe("T20 host event matrix", () => {
     };
     bindHooks(pi);
     expect(events).toEqual(expect.arrayContaining([
-      "session_start", "context", "tool_result", "message_end",
+      "session_start", "context", "tool_result", "before_provider_request", "message_end",
       "session_compact", "session_compact_failed", "session_tree", "model_select",
       "session_shutdown", "agent_settled",
     ]));

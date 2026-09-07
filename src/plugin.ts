@@ -159,6 +159,7 @@ export function applyContext(state: PluginState, messages: AgentMessage[], entri
       profile: state.profile,
       optionalBudget: state.config.checkpoint.maxTokens,
       mappedEntries: mapped,
+      generation: state.generation,
     });
     if (rendered.bypassed) return messages;
     let outbound = rendered.messages;

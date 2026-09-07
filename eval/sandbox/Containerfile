@@ -1,4 +1,7 @@
-FROM node:22.19.0-bookworm
-USER node
+# Isolation smoke image. Live Java/E2E still needs Node+Pi+JDK together;
+# this file is not that product image.
+FROM debian:latest
+USER nobody
 WORKDIR /work
-CMD ["node", "-e", "console.log('pctx-sandbox')"]
+CMD ["true"]
+

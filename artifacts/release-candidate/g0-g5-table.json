@@ -19,7 +19,8 @@
       "status": "passed",
       "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts --config vitest.config.ts",
       "exitCode": 0,
-      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd"
+      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
+      "note": "official Pi 0.85.1 extracts npm:file tarball to node_modules/pi-context/dist/extension.js; npm gitHead differs from stated source 9767ba2"
     },
     {
       "id": "G1",
@@ -45,7 +46,7 @@
       "exitCode": 0,
       "artifactHash": "8fd4f1f07072e10d596a8c004d2a0a5559be135fbbe7e99f030621c3996c3010",
       "n": 1,
-      "note": "official Pi + pctx_history after native compact; nonce recovered; n=1"
+      "note": "official Pi 0.85.1 + packed plugin + native compact + pctx_history; nonce not in compact summary; model called history and returned nonce. Broker requests=4. Coding isolation unproven; bash was not enabled. n=1, not a cluster."
     },
     {
       "id": "G4",
@@ -53,9 +54,9 @@
       "status": "blocked",
       "command": "PCR_LIVE=1 node eval/live-g4.mjs artifacts/v5-tasks/T26/g4-java.json",
       "exitCode": 2,
-      "artifactHash": "9f95df72cca36a08b7bd9bc312f643d9cdd66afd671cd21d1f8ad75ed465a2b2",
+      "artifactHash": "2407f6710b460c8b0a0fd0e204bb92f009805a7813981c97ed68cd0d50025e49",
       "n": 0,
-      "note": "oracle calibrated; live E2E blocked (no JDK in sandbox image, isolation-unproven)"
+      "note": "host oracle J01/J02/J07 calibrated. debian network-none smoke ok; temurin JRE has java. Live agent E2E blocked: no Node+Pi+JDK image, unix relay, unmounted grader."
     },
     {
       "id": "G5",
