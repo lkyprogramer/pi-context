@@ -11,7 +11,7 @@
   "tarballSha256": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
   "installSpec": "npm:pi-context@file:<abs-tarball>",
   "verifiedInstallCommand": "pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz",
-  "recommendation": "history-only / observe; G3 C2 n=1 on this host is not enough for balanced; G4 live Java E2E is blocked",
+  "recommendation": "history-only / observe; G3 C2 n=1 and G4 J01 n=1 are not an 8-cluster balanced claim",
   "gates": [
     {
       "id": "G0",
@@ -51,12 +51,12 @@
     {
       "id": "G4",
       "name": "Java/E2E",
-      "status": "blocked",
+      "status": "passed",
       "command": "PCR_LIVE=1 node eval/live-g4.mjs artifacts/v5-tasks/T26/g4-java.json",
-      "exitCode": 2,
-      "artifactHash": "2407f6710b460c8b0a0fd0e204bb92f009805a7813981c97ed68cd0d50025e49",
-      "n": 0,
-      "note": "host oracle J01/J02/J07 calibrated. debian network-none smoke ok; temurin JRE has java. Live agent E2E blocked: no Node+Pi+JDK image, unix relay, unmounted grader."
+      "exitCode": 0,
+      "artifactHash": "5ee4a00e16fdbdfd6d9f9837e03cc37a5151329ff81a9ea00018eda269306892",
+      "n": 1,
+      "note": "J01 live agent in T21 container (network none, sidecar unix broker, plugin loaded). Host oracle ORACLE_PASS:J01. Grader/KnownGood not mounted. J02/J07 live not run. n=1."
     },
     {
       "id": "G5",

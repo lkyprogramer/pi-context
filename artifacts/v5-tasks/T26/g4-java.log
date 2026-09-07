@@ -1,11 +1,11 @@
 {
-  "status": "blocked",
-  "note": "oracle calibrated; debian network-none smoke ok; temurin JRE java=true. Live agent E2E still blocked: no Node+Pi+JDK image, unix relay, unmounted grader, isolation-unproven for host bash.",
-  "javac": true,
-  "dockerInfo": {
-    "ok": true,
-    "blocked": null
-  },
-  "containerNetworkNone": 0,
-  "oracle": "passed"
+  "status": "passed",
+  "note": "J01 live agent in T21 container; oracle passed; grader was not mounted",
+  "oracleCalibration": "passed",
+  "live": {
+    "attempted": true,
+    "brokerSocket": true,
+    "agentExit": 0,
+    "oracle": "passed"
+  }
 }

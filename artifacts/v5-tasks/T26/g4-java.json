@@ -1,24 +1,7 @@
 {
   "kind": "g4-java-e2e",
-  "status": "blocked",
-  "javac": true,
-  "dockerInfo": {
-    "ok": true,
-    "blocked": null
-  },
-  "sandboxRun": {
-    "status": "ok",
-    "stdout": ""
-  },
-  "containerNetworkNone": {
-    "status": 0,
-    "stdout": "sandbox-ok",
-    "stderr": "WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested\n"
-  },
-  "jdkInNodeImage": {
-    "status": 0,
-    "stdout": "NO_JAVAC\n/opt/java/openjdk/bin/java\nHAS_JAVA"
-  },
+  "status": "passed",
+  "image": "pctx-t21-sandbox:0.85.1",
   "oracleCalibration": {
     "kind": "java-oracle-calibration",
     "status": "passed",
@@ -76,14 +59,47 @@
     ]
   },
   "liveAgent": {
-    "attempted": false,
-    "status": "blocked",
-    "reason": "coding tools require T21 container (network none, loopback unix relay, unmounted grader, JDK). docker info / env isolation is not that sandbox.",
-    "envIsolationProven": false,
-    "toolsEnabledAllowed": {
-      "allowed": false,
-      "reason": "isolation-unproven"
-    }
+    "attempted": true,
+    "status": "passed",
+    "isolation": "t21-container",
+    "brokerSocket": true,
+    "agentExit": 0,
+    "agentResult": {
+      "kind": "g4-agent",
+      "status": "ok",
+      "plugin": {
+        "errors": [],
+        "paths": [
+          "/home/node/.pi/agent/plugins/pi-context/dist/extension.js"
+        ],
+        "commands": [
+          "pctx"
+        ]
+      },
+      "tools": [
+        "read",
+        "bash",
+        "edit",
+        "write",
+        "pctx_history"
+      ],
+      "lastAssistant": "Fixed. The key change: `seen.add(eventId)` → `seen.add(tenant + '\\u0000' + eventId)`, making uniqueness the pair (tenant, eventId). The `\\u0000` separator is unambiguous (it can't appear in a tenant/eventId string), so `(\"a:b\",\"c\")` and `(\"a\",\"b:c\")` are never merged. `seen` is already an instance field, so separate instances don't share state, and the null/empty validation was kept.\n\nVerified with a test run:\n- `claim(\"A\",\"event-1\")` → true\n- `claim(\"B\",\"event-1\")` → true\n- `claim(\"A\",\"event-1\"",
+      "files": [
+        "Deduplicator.class",
+        "Deduplicator.java",
+        "TASK.md",
+        "sessions"
+      ],
+      "error": null
+    },
+    "oracle": {
+      "status": "passed",
+      "compileExit": 0,
+      "runExit": 0,
+      "output": "ORACLE_PASS:J01\n"
+    },
+    "note": "J01 live agent in T21 container; oracle passed; grader was not mounted",
+    "error": null
   },
-  "note": "oracle calibrated; debian network-none smoke ok; temurin JRE java=true. Live agent E2E still blocked: no Node+Pi+JDK image, unix relay, unmounted grader, isolation-unproven for host bash."
+  "note": "J01 live agent in T21 container; oracle passed; grader was not mounted"
 }

@@ -13,4 +13,4 @@ node scripts/packed-host.mjs
 pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
 ```
 
-Recommendation is produced only from `artifacts/release-candidate/g0-g5-table.json` (history-only / observe). G3 C2 passed n=1 via official Pi + `pctx_history` after native compact; G4 live Java E2E is blocked. Semantic stage (T17/T18) is unsupported. Host npm gitHead `d981de12` ≠ stated source `9767ba2`.
+Recommendation is produced only from `artifacts/release-candidate/g0-g5-table.json` (history-only / observe). G3 C2 passed n=1 via official Pi + `pctx_history` after native compact. G4 J01 live Java E2E passed n=1 in the T21 container (grader unmounted); J02/J07 were not live-run. Semantic stage (T17/T18) is unsupported. Host npm gitHead `d981de12` ≠ stated source `9767ba2`.

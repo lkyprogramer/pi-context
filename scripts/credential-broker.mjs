@@ -358,7 +358,7 @@ export function startCredentialBroker(input) {
     if (typeof input.socketPath === "string" && input.socketPath.length > 0) {
       if (existsSync(input.socketPath)) unlinkSync(input.socketPath);
       server.listen(input.socketPath, () => {
-        chmodSync(input.socketPath, 0o600);
+        chmodSync(input.socketPath, input.socketMode ?? 0o600);
         finish({ url: "http://127.0.0.1:8080/v1", port: 8080, socketPath: input.socketPath });
       });
       return;

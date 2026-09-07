@@ -11,11 +11,12 @@
     "note": "native compact then pctx_history readback; ping is not this result"
   },
   "g4": {
-    "status": "blocked",
-    "javac": true,
-    "docker": "ok",
-    "oracleCalibration": "passed",
-    "liveE2E": false,
-    "note": "host oracles RED/GREEN; live Java blocked: isolation-unproven, no javac in node:22.19.0-bookworm, Containerfile has no JDK/unix relay"
+    "status": "passed",
+    "n": 1,
+    "case": "J01",
+    "isolation": "t21-container",
+    "brokerSocket": true,
+    "oracle": "ORACLE_PASS:J01",
+    "note": "live agent in network-none image; grader unmounted; J02/J07 not live-run"
   }
 }
