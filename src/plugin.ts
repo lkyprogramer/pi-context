@@ -13,6 +13,8 @@ import { planEpoch, type FrozenPlan } from "./projection/planner.js";
 import { cloneMessages, deepEqual, renderMessages, type AgentMessage } from "./projection/render.js";
 import { restorePins, type Pin } from "./checkpoint/pins.js";
 import { buildCapsule, appendCapsuleClone } from "./checkpoint/capsule.js";
+import { ack, bumpFence, emptyProposal, onCompactFailed, type Proposal } from "./checkpoint/staging.js";
+import { shouldGenerateSemantic } from "./checkpoint/semantic.js";
 import { mapOutbound, readVisibleSnapshot } from "./pi/source-reader.js";
 
 export interface PluginState {
@@ -25,6 +27,7 @@ export interface PluginState {
   successfulRequests: number;
   pendingAttempt: string | null;
   lastCapsule: string | null;
+  proposal: Proposal;
 }
 
 export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
@@ -38,6 +41,7 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     successfulRequests: 0,
     pendingAttempt: null,
     lastCapsule: null,
+    proposal: emptyProposal(0),
   };
 }
 
@@ -230,6 +234,26 @@ export function noteNativeCompact(state: PluginState, summary: string, entryId: 
   state.lastCapsule = appendCapsuleClone(summary, capsule);
   state.plan = null;
   state.generation += 1;
+  const compactHash = hashCanonical(summary);
+  if (state.proposal.status === "proposed" && state.proposal.proposedHash === compactHash) {
+    state.proposal = ack(state.proposal, { hash: compactHash, generation: state.proposal.generation, nativeEntryId: entryId });
+  }
+}
+
+export function noteSemanticAttempt(state: PluginState, hash: string): void {
+  if (!shouldGenerateSemantic(state.profile, state.config.semantic.enabled)) return;
+  state.proposal = { generation: state.generation, proposedHash: hash, nativeEntryId: null, ackCount: 0, status: "proposed" };
+}
+
+export function noteCompactFailed(state: PluginState): void {
+  state.proposal = onCompactFailed(state.proposal);
+  state.plan = null;
+}
+
+export function noteFence(state: PluginState): void {
+  state.proposal = bumpFence(state.proposal);
+  state.generation = state.proposal.generation;
+  state.plan = null;
 }
 
 export { deepEqual };

@@ -1,0 +1,162 @@
+{
+  "kind": "g4-java-e2e",
+  "status": "passed",
+  "image": "pctx-t21-sandbox:0.85.1",
+  "oracleCalibration": {
+    "kind": "java-oracle-calibration",
+    "status": "passed",
+    "productTestsExecuted": false,
+    "liveModelExecuted": false,
+    "rows": [
+      {
+        "case": "J01",
+        "calibrated": true,
+        "outcomes": {
+          "initial": {
+            "compileExit": 0,
+            "runExit": 1,
+            "output": "Exception in thread \"main\" java.lang.AssertionError: same eventId from another tenant must succeed\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:8)\n"
+          },
+          "known-good": {
+            "compileExit": 0,
+            "runExit": 0,
+            "output": "ORACLE_PASS:J01\n"
+          }
+        }
+      },
+      {
+        "case": "J02",
+        "calibrated": true,
+        "outcomes": {
+          "initial": {
+            "compileExit": 0,
+            "runExit": 1,
+            "output": "Exception in thread \"main\" java.lang.AssertionError: list query leaked foreign tenant\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:13)\n"
+          },
+          "known-good": {
+            "compileExit": 0,
+            "runExit": 0,
+            "output": "ORACLE_PASS:J02\n"
+          }
+        }
+      },
+      {
+        "case": "J07",
+        "calibrated": true,
+        "outcomes": {
+          "initial": {
+            "compileExit": 0,
+            "runExit": 1,
+            "output": "Exception in thread \"main\" java.lang.AssertionError: old success must not override current failure\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:11)\n"
+          },
+          "known-good": {
+            "compileExit": 0,
+            "runExit": 0,
+            "output": "ORACLE_PASS:J07\n"
+          }
+        }
+      }
+    ]
+  },
+  "cases": {
+    "J06": {
+      "caseId": "J06",
+      "attempted": true,
+      "status": "passed",
+      "isolation": "t21-container",
+      "brokerSocket": true,
+      "agentExit": 0,
+      "agentResult": {
+        "kind": "g4-agent",
+        "status": "ok",
+        "plugin": {
+          "errors": [],
+          "paths": [
+            "/home/node/.pi/agent/plugins/pi-context/dist/extension.js"
+          ],
+          "commands": [
+            "pctx"
+          ]
+        },
+        "tools": [
+          "read",
+          "bash",
+          "edit",
+          "write",
+          "pctx_history"
+        ],
+        "lastAssistant": "Writer.java already has `targetSchema()` returning exactly \"app\" — no changes needed. No new schemas added.\n\nDONE",
+        "files": [
+          "TASK.md",
+          "Writer.java",
+          "sessions"
+        ],
+        "error": null,
+        "forked": true,
+        "forkRootId": "6429d2ad",
+        "historyCalled": true
+      },
+      "oracle": {
+        "status": "passed",
+        "compileExit": 0,
+        "runExit": 0,
+        "output": "ORACLE_PASS:J06\n"
+      },
+      "note": "J06 B2 live agent in T21 container; oracle passed; grader was not mounted",
+      "error": null,
+      "arm": "B2",
+      "plugin": true,
+      "monetaryCost": null
+    }
+  },
+  "liveAgent": {
+    "caseId": "J06",
+    "attempted": true,
+    "status": "passed",
+    "isolation": "t21-container",
+    "brokerSocket": true,
+    "agentExit": 0,
+    "agentResult": {
+      "kind": "g4-agent",
+      "status": "ok",
+      "plugin": {
+        "errors": [],
+        "paths": [
+          "/home/node/.pi/agent/plugins/pi-context/dist/extension.js"
+        ],
+        "commands": [
+          "pctx"
+        ]
+      },
+      "tools": [
+        "read",
+        "bash",
+        "edit",
+        "write",
+        "pctx_history"
+      ],
+      "lastAssistant": "Writer.java already has `targetSchema()` returning exactly \"app\" — no changes needed. No new schemas added.\n\nDONE",
+      "files": [
+        "TASK.md",
+        "Writer.java",
+        "sessions"
+      ],
+      "error": null,
+      "forked": true,
+      "forkRootId": "6429d2ad",
+      "historyCalled": true
+    },
+    "oracle": {
+      "status": "passed",
+      "compileExit": 0,
+      "runExit": 0,
+      "output": "ORACLE_PASS:J06\n"
+    },
+    "note": "J06 B2 live agent in T21 container; oracle passed; grader was not mounted",
+    "error": null,
+    "arm": "B2",
+    "plugin": true,
+    "monetaryCost": null
+  },
+  "note": "J06=passed"
+}

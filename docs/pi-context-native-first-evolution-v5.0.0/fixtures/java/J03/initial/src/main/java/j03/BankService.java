@@ -12,11 +12,10 @@ public class BankService {
         this.jdbc = jdbc;
     }
 
-    @Transactional
     public void transfer(int amount, boolean failAfterDebit) {
-        jdbc.update("UPDATE accounts SET balance = balance - ?", amount);
-        jdbc.update("INSERT INTO journal(amount) VALUES (?)", amount);
+        debit(amount);
         if (failAfterDebit) throw new IllegalStateException("boom");
+        credit(amount);
     }
 
     @Transactional

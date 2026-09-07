@@ -54,7 +54,8 @@ if (!env.apiKey || !env.baseUrl || !env.model) {
   process.exit(2);
 }
 
-for (const caseId of plan.caseIds) {
+const caseIds = (process.env.PCR_SMOKE_CASES || plan.caseIds.join(",")).split(",").map((s) => s.trim()).filter(Boolean);
+for (const caseId of caseIds) {
   const order = armOrderFor(plan.seed, caseId);
   const pair = {
     kind: "real-run",

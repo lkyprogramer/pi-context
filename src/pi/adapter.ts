@@ -1,4 +1,5 @@
-import { applyContext, confirmAttempt, createPlugin, historyTool, noteNativeCompact, setProfile, type PluginState } from "../plugin.js";
+import { applyContext, confirmAttempt, createPlugin, historyTool, noteCompactFailed, noteFence, noteNativeCompact, setProfile, type PluginState } from "../plugin.js";
+import { shouldGenerateSemantic } from "../checkpoint/semantic.js";
 import { DEFAULT_CONFIG } from "../config.js";
 import type { NativeEntry } from "../contracts.js";
 import { readVisibleSnapshot, type SessionReader } from "./source-reader.js";
@@ -39,6 +40,10 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
   });
   pi.on("tool_result", () => undefined);
   pi.on("before_provider_request", () => undefined);
+  pi.on("session_before_compact", () => {
+    if (!shouldGenerateSemantic(state.profile, state.config.semantic.enabled)) return undefined;
+    return undefined;
+  });
   pi.on("message_end", (event) => {
     const msg = event.message as { stopReason?: string; errorMessage?: string } | undefined;
     confirmAttempt(state, msg?.stopReason, msg?.errorMessage);
@@ -49,15 +54,13 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     noteNativeCompact(state, String(entry?.summary ?? ""), String(entry?.id ?? "compact"), entries, sessionId, leafId, cwd);
   });
   pi.on("session_compact_failed", () => {
-    state.plan = null;
+    noteCompactFailed(state);
   });
   pi.on("session_tree", () => {
-    state.generation += 1;
-    state.plan = null;
+    noteFence(state);
   });
   pi.on("model_select", () => {
-    state.generation += 1;
-    state.plan = null;
+    noteFence(state);
   });
   pi.on("session_shutdown", () => {
     state.plan = null;

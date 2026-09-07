@@ -17,8 +17,8 @@
     ],
     "seed": "freeze-before-run"
   },
-  "elapsedMs": 195395,
-  "remainingSeconds": 3104.608000000001,
+  "elapsedMs": 37120,
+  "remainingSeconds": 3262.881,
   "manifest": {
     "host": "official-pi",
     "piVersion": "0.85.1",
@@ -26,15 +26,15 @@
     "configHash": "pending",
     "model": "openclaw/Qwen3.8-27B-WORK",
     "pricingIdentity": null,
-    "createdAt": "2026-09-07T08:55:07.833Z",
+    "createdAt": "2026-09-07T09:33:20.941Z",
     "immutable": true
   },
   "evaluation": {
-    "ittDenominator": 8,
-    "bothPass": 7,
+    "ittDenominator": 1,
+    "bothPass": 0,
     "summary": {
-      "n": 8,
-      "complete": 8,
+      "n": 1,
+      "complete": 1,
       "blocked": 0,
       "notRun": 0,
       "incomplete": 0,
@@ -42,73 +42,30 @@
     },
     "honest": true,
     "twoPercentNiClaimAllowed": false,
-    "adverseEventUpperBound": 0.31234397806636793,
+    "adverseEventUpperBound": 0.95,
     "recommendation": {
       "level": "observe",
-      "reason": "closed-loop cases 7 < 8 or planned 8"
+      "reason": "closed-loop cases 0 < 8 or planned 1"
     },
     "syntheticExcludedFromMain": true
   },
   "cases": {
-    "J01": {
-      "B0": "passed",
-      "B2": "passed",
-      "B0oracle": "passed",
-      "B2oracle": "passed",
-      "B2c2": null
-    },
-    "J02": {
-      "B0": "passed",
-      "B2": "passed",
-      "B0oracle": "passed",
-      "B2oracle": "passed",
-      "B2c2": null
-    },
-    "J03": {
-      "B0": "passed",
-      "B2": "passed",
-      "B0oracle": "passed",
-      "B2oracle": "passed",
-      "B2c2": null
-    },
-    "J04": {
-      "B0": "passed",
-      "B2": "passed",
-      "B0oracle": "passed",
-      "B2oracle": "passed",
-      "B2c2": null
-    },
     "J05": {
-      "B0": "passed",
-      "B2": "passed",
-      "B0oracle": "passed",
-      "B2oracle": "passed",
-      "B2c2": {
-        "historyCalled": true,
-        "nonceMatched": true,
-        "recoveryPathProven": true
-      }
-    },
-    "J06": {
       "B0": "failed",
       "B2": "failed",
       "B0oracle": "failed",
       "B2oracle": "failed",
-      "B2c2": null
-    },
-    "J07": {
-      "B0": "passed",
-      "B2": "passed",
-      "B0oracle": "passed",
-      "B2oracle": "passed",
-      "B2c2": null
-    },
-    "J08": {
-      "B0": "passed",
-      "B2": "passed",
-      "B0oracle": "passed",
-      "B2oracle": "passed",
-      "B2c2": null
+      "B2c2": {
+        "historyCalled": false,
+        "nonceMatched": false,
+        "compactLeaked": false,
+        "recoveryPathProven": false
+      }
     }
+  },
+  "notes": {
+    "J05": "After strict toolCall.name===pctx_history: B0 failed, B2 failed this run (historyCalled=false, compactLeaked=false). C2 not proven on this tarball via J05. Earlier live-c2.mjs still separate.",
+    "J03": "Spring TX + H2 self-invocation. B2 ORACLE_PASS:J03. B0 oracle was blocked in first log (maven non-exec) then failed; do not treat blocked as did-not-fix.",
+    "independentReview": "artifacts/v5-tasks/T26/independent-review.md"
   }
 }

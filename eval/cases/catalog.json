@@ -3,7 +3,7 @@
   "cases": {
     "J01": { "source": "Deduplicator.java", "kind": "java-fixture", "cluster": "java" },
     "J02": { "source": "TenantRepository.java", "kind": "java-fixture", "cluster": "java" },
-    "J03": { "source": "Ledger.java", "kind": "synthetic-spring-equivalent", "cluster": "java" },
+    "J03": { "source": "src/main/java/j03/BankService.java", "kind": "spring-tx-self-invocation", "cluster": "java" },
     "J04": { "source": "App.java", "kind": "synthetic-maven-log", "cluster": "java", "extraFiles": ["build-log.txt"] },
     "J05": { "source": "NonceBox.java", "kind": "live-recovery", "cluster": "recovery", "c2": true, "compact": true },
     "J06": { "source": "Writer.java", "kind": "synthetic-branch-scope", "cluster": "java" },

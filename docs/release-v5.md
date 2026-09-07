@@ -1,9 +1,11 @@
 # v5 release candidate
 
 Package: `pi-context@5.0.0-dev.0` (`private: true`).
-Tarball SHA256: `08db4066fc6a8e82039e7d3cabd42c31c1f878e67104c1f77bc0a21fd6060c08`.
 
-Install (verified against official Pi 0.85.1 CLI — extracts to `dist/extension.js`):
+Verified host: official npm `@earendil-works/pi-coding-agent@0.85.1` **gitHead `d981de12`**.
+Design-pack stated source `9767ba2` was **not** installed (`hostIdentityMatch: false`). Do not substitute a git checkout.
+
+Install:
 
 ```bash
 nvm use v22.19.0
@@ -15,8 +17,9 @@ pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
 
 ## Recommendation
 
-From `artifacts/v5-evaluation/report.json` / `artifacts/release-candidate/g0-g5-table.json`:
+**observe** (T24): ITT 8 paired cases; both-pass 6/8. J03 Spring B2 passed / B0 failed. J05 C2: compact did not leak; B0 failed; B2 `pctx_history` proven. J06 uses `SessionManager.branch` (no workspace HINT). `twoPercentNiClaimAllowed` is false. No resource ledger → not balanced.
 
-**observe** — ITT 8 paired cases; both-pass 7/8 (J06 B0 and B2 failed the other-branch hint). No resource net-gain ledger, so **not balanced**. `twoPercentNiClaimAllowed` is false even if all 8 had passed.
+T17 has a unit-tested staging state machine; it is not crash-restore against native CompactionEntry yet.
+T18 stays **off**; `experimental-semantic` does not inject a model summary (native compact still owns the path).
 
-Host npm gitHead `d981de12` ≠ stated source `9767ba2`. T17/T18 unsupported. J03 is a synthetic self-invocation fixture, not Spring Boot. No independent reviewer on this freeze. No npm publish / push `main`.
+Independent review: `artifacts/v5-tasks/T26/independent-review.md` (must-fix items recorded; J05 history instrument tightened after review). No npm publish / push `main`.

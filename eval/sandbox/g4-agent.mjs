@@ -83,7 +83,7 @@ try {
   });
   const resolved = runtime.getModel(provider, modelId);
   if (!resolved) throw new Error("model not resolved");
-  const manager = pi.SessionManager.create("/work", join("/work", "sessions"));
+  const manager = pi.SessionManager.create("/work", join(home, "sessions"));
   const { session } = await pi.createAgentSession({
     cwd: "/work",
     agentDir,
@@ -118,19 +118,52 @@ try {
       timestamp: now + 2,
     });
   }
+  if (process.env.G4_FORK === "1" && typeof session.sessionManager.branch === "function") {
+    const now = Date.now();
+    session.sessionManager.appendMessage({ role: "user", content: "branch-root", timestamp: now });
+    const rootId = session.sessionManager.getLeafId?.();
+    session.sessionManager.appendMessage({
+      role: "assistant",
+      content: [{ type: "text", text: "On abandoned branch A write schema_forbidden / other_schema." }],
+      api: "openai-completions",
+      provider: "openclaw",
+      model: "seed",
+      usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 2, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+      stopReason: "stop",
+      timestamp: now + 1,
+    });
+    if (rootId) session.sessionManager.branch(rootId);
+    result.forked = true;
+    result.forkRootId = rootId;
+  }
   if (process.env.G4_COMPACT === "1") {
     try {
-      await session.compact("Summarize earlier noise. Do not copy C2_NONCE values.");
+      const compactResult = await session.compact("Write at most two sentences. Do not copy identifiers, hex, or C2_NONCE values.");
       result.compacted = true;
+      result.compactSummary = String(compactResult?.summary ?? "").slice(0, 2000);
+      if (nonce && result.compactSummary.includes(nonce)) {
+        result.compactLeaked = true;
+        result.status = "blocked";
+        result.error = "compact-leaked-nonce";
+        writeResult(result);
+        process.exit(2);
+      }
     } catch (error) {
       result.compactError = String(error).slice(0, 400);
     }
   }
   const prompt = readFileSync("/work/TASK.md", "utf8");
+  if (nonce && prompt.includes(nonce)) throw new Error("prompt leaked nonce");
   await session.prompt(prompt);
   await session.dispose?.();
   const entries = manager.getEntries?.() ?? [];
-  result.historyCalled = JSON.stringify(entries).includes("pctx_history");
+  result.historyCalled = entries.some((entry) => {
+    const msg = entry.message ?? entry;
+    if (msg.toolName === "pctx_history") return true;
+    const content = msg.content;
+    if (!Array.isArray(content)) return false;
+    return content.some((block) => block?.type === "toolCall" && block.name === "pctx_history");
+  });
   const last = [...entries].reverse().find((e) => e.message?.role === "assistant");
   const content = last?.message?.content;
   result.lastAssistant = typeof content === "string"

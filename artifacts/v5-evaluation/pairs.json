@@ -1,98 +1,6 @@
 [
   {
     "kind": "real-run",
-    "taskId": "J01",
-    "clusterId": "J01",
-    "repetition": 0,
-    "provenance": "real-independent",
-    "baseline": {
-      "arm": "B0",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 15056,
-      "monetaryCost": null
-    },
-    "candidate": {
-      "arm": "B2",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 14024,
-      "monetaryCost": null
-    }
-  },
-  {
-    "kind": "real-run",
-    "taskId": "J02",
-    "clusterId": "J02",
-    "repetition": 0,
-    "provenance": "real-independent",
-    "baseline": {
-      "arm": "B0",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 14129,
-      "monetaryCost": null
-    },
-    "candidate": {
-      "arm": "B2",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 15442,
-      "monetaryCost": null
-    }
-  },
-  {
-    "kind": "real-run",
-    "taskId": "J03",
-    "clusterId": "J03",
-    "repetition": 0,
-    "provenance": "real-independent",
-    "baseline": {
-      "arm": "B0",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 8892,
-      "monetaryCost": null
-    },
-    "candidate": {
-      "arm": "B2",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 12103,
-      "monetaryCost": null
-    }
-  },
-  {
-    "kind": "real-run",
-    "taskId": "J04",
-    "clusterId": "J04",
-    "repetition": 0,
-    "provenance": "real-independent",
-    "baseline": {
-      "arm": "B0",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 9490,
-      "monetaryCost": null
-    },
-    "candidate": {
-      "arm": "B2",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 6904,
-      "monetaryCost": null
-    }
-  },
-  {
-    "kind": "real-run",
     "taskId": "J05",
     "clusterId": "J05",
     "repetition": 0,
@@ -100,32 +8,9 @@
     "baseline": {
       "arm": "B0",
       "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 19508,
-      "monetaryCost": null
-    },
-    "candidate": {
-      "arm": "B2",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 14699,
-      "monetaryCost": null
-    }
-  },
-  {
-    "kind": "real-run",
-    "taskId": "J06",
-    "clusterId": "J06",
-    "repetition": 0,
-    "provenance": "real-independent",
-    "baseline": {
-      "arm": "B0",
-      "status": "complete",
       "taskPassed": false,
       "criticalViolation": null,
-      "wallMs": 6165,
+      "wallMs": 19614,
       "monetaryCost": null
     },
     "candidate": {
@@ -133,53 +18,7 @@
       "status": "complete",
       "taskPassed": false,
       "criticalViolation": null,
-      "wallMs": 8068,
-      "monetaryCost": null
-    }
-  },
-  {
-    "kind": "real-run",
-    "taskId": "J07",
-    "clusterId": "J07",
-    "repetition": 0,
-    "provenance": "real-independent",
-    "baseline": {
-      "arm": "B0",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 20535,
-      "monetaryCost": null
-    },
-    "candidate": {
-      "arm": "B2",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 17564,
-      "monetaryCost": null
-    }
-  },
-  {
-    "kind": "real-run",
-    "taskId": "J08",
-    "clusterId": "J08",
-    "repetition": 0,
-    "provenance": "real-independent",
-    "baseline": {
-      "arm": "B0",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 8595,
-      "monetaryCost": null
-    },
-    "candidate": {
-      "arm": "B2",
-      "status": "complete",
-      "taskPassed": true,
-      "criticalViolation": null,
-      "wallMs": 4218,
+      "wallMs": 17505,
       "monetaryCost": null
     }
   }

@@ -1,0 +1,24 @@
+{
+  "recommendation": {
+    "level": "observe",
+    "reason": "closed-loop cases 0 < 8 or planned 1"
+  },
+  "summary": {
+    "n": 1,
+    "complete": 1,
+    "blocked": 0,
+    "notRun": 0,
+    "incomplete": 0,
+    "failed": 1
+  },
+  "twoPercentNiClaimAllowed": false,
+  "cases": {
+    "J06": {
+      "B0": "failed",
+      "B2": "failed",
+      "B0oracle": "failed",
+      "B2oracle": "failed",
+      "B2c2": null
+    }
+  }
+}

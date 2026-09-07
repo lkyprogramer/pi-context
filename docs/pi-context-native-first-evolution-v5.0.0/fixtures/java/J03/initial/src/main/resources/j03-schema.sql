@@ -1,0 +1,3 @@
+CREATE TABLE accounts (id INT PRIMARY KEY, balance INT);
+CREATE TABLE journal (id INT AUTO_INCREMENT PRIMARY KEY, amount INT);
+INSERT INTO accounts VALUES (1, 100);

@@ -1,0 +1,63 @@
+{
+  "J01": {
+    "B0": "passed",
+    "B2": "passed",
+    "B0oracle": "passed",
+    "B2oracle": "passed",
+    "B2c2": null
+  },
+  "J02": {
+    "B0": "passed",
+    "B2": "passed",
+    "B0oracle": "passed",
+    "B2oracle": "passed",
+    "B2c2": null
+  },
+  "J03": {
+    "B0": "failed",
+    "B2": "passed",
+    "B0oracle": "failed",
+    "B2oracle": "passed",
+    "B2c2": null
+  },
+  "J04": {
+    "B0": "passed",
+    "B2": "passed",
+    "B0oracle": "passed",
+    "B2oracle": "passed",
+    "B2c2": null
+  },
+  "J05": {
+    "B0": "failed",
+    "B2": "passed",
+    "B0oracle": "failed",
+    "B2oracle": "passed",
+    "B2c2": {
+      "historyCalled": true,
+      "nonceMatched": true,
+      "compactLeaked": false,
+      "recoveryPathProven": true
+    }
+  },
+  "J06": {
+    "B0": "passed",
+    "B2": "passed",
+    "B0oracle": "passed",
+    "B2oracle": "passed",
+    "B2c2": null
+  },
+  "J07": {
+    "B0": "passed",
+    "B2": "passed",
+    "B0oracle": "passed",
+    "B2oracle": "passed",
+    "B2c2": null
+  },
+  "J08": {
+    "B0": "passed",
+    "B2": "passed",
+    "B0oracle": "passed",
+    "B2oracle": "passed",
+    "B2c2": null
+  }
+}

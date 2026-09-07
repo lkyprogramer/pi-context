@@ -1,0 +1,43 @@
+{
+  "recommendation": {
+    "level": "observe",
+    "reason": "closed-loop cases 0 < 8 or planned 3"
+  },
+  "summary": {
+    "n": 3,
+    "complete": 3,
+    "blocked": 0,
+    "notRun": 0,
+    "incomplete": 0,
+    "failed": 3
+  },
+  "twoPercentNiClaimAllowed": false,
+  "cases": {
+    "J03": {
+      "B0": "failed",
+      "B2": "passed",
+      "B0oracle": "blocked",
+      "B2oracle": "passed",
+      "B2c2": null
+    },
+    "J05": {
+      "B0": "failed",
+      "B2": "passed",
+      "B0oracle": "failed",
+      "B2oracle": "passed",
+      "B2c2": {
+        "historyCalled": true,
+        "nonceMatched": true,
+        "compactLeaked": false,
+        "recoveryPathProven": true
+      }
+    },
+    "J06": {
+      "B0": "failed",
+      "B2": "failed",
+      "B0oracle": "failed",
+      "B2oracle": "failed",
+      "B2c2": null
+    }
+  }
+}
