@@ -1,62 +1,60 @@
 {
   "package": "pi-context@5.0.0-dev.0",
   "private": true,
-  "commit": "cddc50f4d123dc48d99ba3c86633eb490ccbe538",
+  "commit": "e0f4701fe9c32bcfbe8fc2f917c31b1583332e34",
   "node": "v22.19.0",
   "piCli": "0.85.1",
   "statedSource": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
   "npmGitHead": "d981de1229ef899957bbe968bc8dcda02a21f477",
   "hostIdentityMatch": false,
   "tarball": "artifacts/release-candidate/pi-context-5.0.0-dev.0.tgz",
-  "tarballSha256": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
+  "tarballSha256": "08db4066fc6a8e82039e7d3cabd42c31c1f878e67104c1f77bc0a21fd6060c08",
   "installSpec": "npm:pi-context@file:<abs-tarball>",
   "verifiedInstallCommand": "pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz",
-  "recommendation": "history-only / observe; G3 n=1 and G4 J01/J02/J07 n=3 are real closed loops, not an 8-cluster balanced claim",
+  "recommendation": "observe: closed-loop cases 7 < 8 or planned 8",
   "gates": [
     {
       "id": "G0",
       "name": "contract/package",
       "status": "passed",
-      "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts --config vitest.config.ts",
+      "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts",
       "exitCode": 0,
-      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
-      "note": "official Pi 0.85.1 extracts npm:file tarball to node_modules/pi-context/dist/extension.js; npm gitHead differs from stated source 9767ba2"
+      "artifactHash": "08db4066fc6a8e82039e7d3cabd42c31c1f878e67104c1f77bc0a21fd6060c08",
+      "note": "T25 unique entry; npm gitHead != stated source"
     },
     {
       "id": "G1",
       "name": "zero-damage",
       "status": "passed",
-      "command": "pnpm exec vitest run test/property test/fault test/security test/host/matrix.test.ts --config vitest.config.ts",
+      "command": "pnpm exec vitest run test/property test/fault test/security test/host/matrix.test.ts",
       "exitCode": 0,
-      "artifactHash": "5f6dc3f385597638b9307fe6219d90d28321e2b4f094d9500ab6f7d9dbaaedb8"
+      "artifactHash": null
     },
     {
       "id": "G2",
       "name": "C1 recovery",
       "status": "passed",
-      "command": "pnpm exec vitest run test/integration/history-read.test.ts --config vitest.config.ts",
+      "command": "pnpm exec vitest run test/integration/history-read.test.ts",
       "exitCode": 0,
-      "artifactHash": "a4519d8890f726be9385b9a1898785e6c7887920f7c73808346b4a6ea0558c71"
+      "artifactHash": null
     },
     {
       "id": "G3",
       "name": "C2 real model",
       "status": "passed",
-      "command": "PCR_LIVE=1 node eval/live-c2.mjs artifacts/v5-tasks/T26/g3-c2.json",
+      "command": "PCR_LIVE=1 node eval/live-c2.mjs; J05 in smoke",
       "exitCode": 0,
-      "artifactHash": "8fd4f1f07072e10d596a8c004d2a0a5559be135fbbe7e99f030621c3996c3010",
-      "n": 1,
-      "note": "official Pi 0.85.1 + packed plugin + native compact + pctx_history; nonce not in compact summary; model called history and returned nonce. Broker requests=4. Coding isolation unproven; bash was not enabled. n=1, not a cluster."
+      "n": 2,
+      "note": "g3-c2 plus J05 B2 recoveryPathProven; B0 also solved J05 so compact leak possible"
     },
     {
       "id": "G4",
       "name": "Java/E2E",
       "status": "passed",
-      "command": "PCR_LIVE=1 node eval/live-g4.mjs artifacts/v5-tasks/T26/g4-java.json",
+      "command": "PCR_LIVE=1 pnpm exec tsx eval/smoke.mjs",
       "exitCode": 0,
-      "artifactHash": "da4fec0bd2723fb17f435780d4e4fe5595daaf80db416539eff2439614bd6f4a",
-      "n": 3,
-      "note": "J01/J02/J07 live in T21 container; host oracles ORACLE_PASS. Grader unmounted. J02 first attempt failed (unmodifiable list vs oracle clear()); retry with clarified TASK passed. Not 8 independent clusters."
+      "n": 8,
+      "note": "ITT 8 pairs; both-pass 7; J06 B0 and B2 failed (followed other-branch hint). J03 synthetic-spring-equivalent."
     },
     {
       "id": "G5",
@@ -64,8 +62,8 @@
       "status": "incomplete",
       "command": "node scripts/release-gate.mjs --evidence artifacts/release-candidate",
       "exitCode": 0,
-      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
-      "note": "private:true; no npm publish; no push main"
+      "artifactHash": "08db4066fc6a8e82039e7d3cabd42c31c1f878e67104c1f77bc0a21fd6060c08",
+      "note": "private:true; no npm publish; no push main; no independent reviewer"
     }
   ]
 }

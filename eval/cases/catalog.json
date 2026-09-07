@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "cases": {
+    "J01": { "source": "Deduplicator.java", "kind": "java-fixture", "cluster": "java" },
+    "J02": { "source": "TenantRepository.java", "kind": "java-fixture", "cluster": "java" },
+    "J03": { "source": "Ledger.java", "kind": "synthetic-spring-equivalent", "cluster": "java" },
+    "J04": { "source": "App.java", "kind": "synthetic-maven-log", "cluster": "java", "extraFiles": ["build-log.txt"] },
+    "J05": { "source": "NonceBox.java", "kind": "live-recovery", "cluster": "recovery", "c2": true, "compact": true },
+    "J06": { "source": "Writer.java", "kind": "synthetic-branch-scope", "cluster": "java" },
+    "J07": { "source": "VerificationStatus.java", "kind": "java-fixture", "cluster": "java" },
+    "J08": { "source": "Routes.java", "kind": "synthetic-java-migration", "cluster": "java", "compact": true }
+  }
+}

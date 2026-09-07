@@ -6,5 +6,5 @@ The patched `@earendil-works/pi-coding-agent@0.84.4` workspace (`apps/pi-context
 - The v5 packed tarball has no PCR ingress contract and no host patch
 - User session files under Pi's native session directory are not migrated and not deleted
 - Uninstalling the v5 plugin does not require a reverse migration library
-- Historical PCR tests under `tests/` (if still present as archive) must not be treated as the default gate
+- Historical PCR tests/scripts live under `archive/pcr-tests` and `archive/pcr-scripts`; they are not the default gate
 - Live analysis reports stay in `artifacts/`; raw dumps were backed up under `artifacts/backups/` before this cut

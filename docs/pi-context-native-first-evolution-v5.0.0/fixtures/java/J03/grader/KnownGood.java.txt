@@ -1,0 +1,12 @@
+public final class Ledger {
+    public int accounts;
+    public int journal;
+    public boolean failAfterDebit;
+    public void transfer(int amount) {
+        int nextAccounts = accounts - amount;
+        int nextJournal = journal + 1;
+        if (failAfterDebit) throw new IllegalStateException("boom");
+        accounts = nextAccounts;
+        journal = nextJournal;
+    }
+}

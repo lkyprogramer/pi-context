@@ -38,6 +38,7 @@
     "compat:scan": "node scripts/check-public-imports.mjs",
     "eval:g4": "node eval/live-g4.mjs",
     "eval:c2": "node eval/live-c2.mjs",
+    "eval:smoke": "pnpm exec tsx eval/smoke.mjs",
     "sandbox:build": "node eval/sandbox/build-image.mjs"
   },
   "devDependencies": {

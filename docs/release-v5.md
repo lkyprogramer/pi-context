@@ -1,16 +1,22 @@
 # v5 release candidate
 
 Package: `pi-context@5.0.0-dev.0` (`private: true`).
-Candidate commit: `d1c2b51a` (official `toolResult` mapping via `message.toolCallId`).
-Tarball SHA256: `34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd`.
+Tarball SHA256: `08db4066fc6a8e82039e7d3cabd42c31c1f878e67104c1f77bc0a21fd6060c08`.
 
 Install (verified against official Pi 0.85.1 CLI — extracts to `dist/extension.js`):
 
 ```bash
 nvm use v22.19.0
+pnpm install
 pnpm exec tsc -p tsconfig.build.json
 node scripts/packed-host.mjs
 pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
 ```
 
-Recommendation is produced only from `artifacts/release-candidate/g0-g5-table.json` (history-only / observe). G3 C2 passed n=1. G4 J01/J02/J07 live Java E2E passed in the T21 container (grader unmounted). Semantic stage (T17/T18) is unsupported. Host npm gitHead `d981de12` ≠ stated source `9767ba2`.
+## Recommendation
+
+From `artifacts/v5-evaluation/report.json` / `artifacts/release-candidate/g0-g5-table.json`:
+
+**observe** — ITT 8 paired cases; both-pass 7/8 (J06 B0 and B2 failed the other-branch hint). No resource net-gain ledger, so **not balanced**. `twoPercentNiClaimAllowed` is false even if all 8 had passed.
+
+Host npm gitHead `d981de12` ≠ stated source `9767ba2`. T17/T18 unsupported. J03 is a synthetic self-invocation fixture, not Spring Boot. No independent reviewer on this freeze. No npm publish / push `main`.

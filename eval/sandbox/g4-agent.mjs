@@ -33,10 +33,10 @@ try {
     execFileSync("tar", ["-xzf", tarball, "--strip-components=1", "-C", pluginDir], { stdio: "pipe" });
   }
   mkdirSync(join(agentDir), { recursive: true });
-  writeFileSync(join(agentDir, "settings.json"), `${JSON.stringify({
-    extensions: [join(pluginDir, "dist", "extension.js")],
-    defaultProjectTrust: "always",
-  }, null, 2)}\n`);
+  const settingsJson = tarball
+    ? { extensions: [join(pluginDir, "dist", "extension.js")], defaultProjectTrust: "always" }
+    : { defaultProjectTrust: "always" };
+  writeFileSync(join(agentDir, "settings.json"), `${JSON.stringify(settingsJson, null, 2)}\n`);
 
   const npmRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
   const pi = await import(pathToFileURL(join(npmRoot, "@earendil-works/pi-coding-agent/dist/index.js")).href);
@@ -94,10 +94,43 @@ try {
     model: resolved,
   });
   result.tools = session.getActiveToolNames?.() ?? [];
+  const nonce = process.env.G4_SEED_NONCE;
+  if (nonce && typeof session.sessionManager.appendMessage === "function") {
+    const now = Date.now();
+    const filler = `${"noise-line\n".repeat(160)}C2_NONCE=${nonce}\n${"noise-line\n".repeat(160)}`;
+    session.sessionManager.appendMessage({ role: "user", content: "store probe", timestamp: now });
+    session.sessionManager.appendMessage({
+      role: "assistant",
+      content: [{ type: "toolCall", id: "c2call", name: "bash", arguments: { command: "probe" } }],
+      api: "openai-completions",
+      provider: "openclaw",
+      model: "seed",
+      usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 2, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+      stopReason: "toolUse",
+      timestamp: now + 1,
+    });
+    session.sessionManager.appendMessage({
+      role: "toolResult",
+      toolCallId: "c2call",
+      toolName: "bash",
+      content: [{ type: "text", text: filler }],
+      isError: false,
+      timestamp: now + 2,
+    });
+  }
+  if (process.env.G4_COMPACT === "1") {
+    try {
+      await session.compact("Summarize earlier noise. Do not copy C2_NONCE values.");
+      result.compacted = true;
+    } catch (error) {
+      result.compactError = String(error).slice(0, 400);
+    }
+  }
   const prompt = readFileSync("/work/TASK.md", "utf8");
   await session.prompt(prompt);
   await session.dispose?.();
   const entries = manager.getEntries?.() ?? [];
+  result.historyCalled = JSON.stringify(entries).includes("pctx_history");
   const last = [...entries].reverse().find((e) => e.message?.role === "assistant");
   const content = last?.message?.content;
   result.lastAssistant = typeof content === "string"

@@ -1,0 +1,114 @@
+{
+  "kind": "v5-smoke-evaluation",
+  "plan": {
+    "caseIds": [
+      "J01",
+      "J02",
+      "J03",
+      "J04",
+      "J05",
+      "J06",
+      "J07",
+      "J08"
+    ],
+    "arms": [
+      "B0",
+      "B2"
+    ],
+    "seed": "freeze-before-run"
+  },
+  "elapsedMs": 195395,
+  "remainingSeconds": 3104.608000000001,
+  "manifest": {
+    "host": "official-pi",
+    "piVersion": "0.85.1",
+    "sourceRevision": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
+    "configHash": "pending",
+    "model": "openclaw/Qwen3.8-27B-WORK",
+    "pricingIdentity": null,
+    "createdAt": "2026-09-07T08:55:07.833Z",
+    "immutable": true
+  },
+  "evaluation": {
+    "ittDenominator": 8,
+    "bothPass": 7,
+    "summary": {
+      "n": 8,
+      "complete": 8,
+      "blocked": 0,
+      "notRun": 0,
+      "incomplete": 0,
+      "failed": 1
+    },
+    "honest": true,
+    "twoPercentNiClaimAllowed": false,
+    "adverseEventUpperBound": 0.31234397806636793,
+    "recommendation": {
+      "level": "observe",
+      "reason": "closed-loop cases 7 < 8 or planned 8"
+    },
+    "syntheticExcludedFromMain": true
+  },
+  "cases": {
+    "J01": {
+      "B0": "passed",
+      "B2": "passed",
+      "B0oracle": "passed",
+      "B2oracle": "passed",
+      "B2c2": null
+    },
+    "J02": {
+      "B0": "passed",
+      "B2": "passed",
+      "B0oracle": "passed",
+      "B2oracle": "passed",
+      "B2c2": null
+    },
+    "J03": {
+      "B0": "passed",
+      "B2": "passed",
+      "B0oracle": "passed",
+      "B2oracle": "passed",
+      "B2c2": null
+    },
+    "J04": {
+      "B0": "passed",
+      "B2": "passed",
+      "B0oracle": "passed",
+      "B2oracle": "passed",
+      "B2c2": null
+    },
+    "J05": {
+      "B0": "passed",
+      "B2": "passed",
+      "B0oracle": "passed",
+      "B2oracle": "passed",
+      "B2c2": {
+        "historyCalled": true,
+        "nonceMatched": true,
+        "recoveryPathProven": true
+      }
+    },
+    "J06": {
+      "B0": "failed",
+      "B2": "failed",
+      "B0oracle": "failed",
+      "B2oracle": "failed",
+      "B2c2": null
+    },
+    "J07": {
+      "B0": "passed",
+      "B2": "passed",
+      "B0oracle": "passed",
+      "B2oracle": "passed",
+      "B2c2": null
+    },
+    "J08": {
+      "B0": "passed",
+      "B2": "passed",
+      "B0oracle": "passed",
+      "B2oracle": "passed",
+      "B2c2": null
+    }
+  }
+}
