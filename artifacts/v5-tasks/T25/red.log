@@ -1,0 +1,40 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:81925) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ test/packed/install.test.ts (5 tests | 1 failed | 4 skipped) 5ms
+   ↓ T19 packed install > observe does not rewrite provider messages and schema stays stable across profile switches
+   ↓ T19 packed install > does not forge pin confirmation without UI
+   × T19 packed install > T25 unique entry has no PCR workspace, host patch, or @pcr dependency 5ms
+     → expected true to be false // Object.is equality
+   ↓ T19 packed install > packed dist has no PCR ingress contract or tests
+   ↓ T19 packed install > official Pi extracts the npm tarball to dist/extension.js, then load/task/compact/resume/uninstall
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/packed/install.test.ts > T19 packed install > T25 unique entry has no PCR workspace, host patch, or @pcr dependency
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/packed/install.test.ts:55:70
+     53| 
+     54|   it("T25 unique entry has no PCR workspace, host patch, or @pcr depen…
+     55|     expect(existsSync(join(repoRoot, "packages/core/package.json"))).t…
+       |                                                                      ^
+     56|     expect(existsSync(join(repoRoot, "apps/pi-context-runtime/package.…
+     57|     expect(existsSync(join(repoRoot, "patches/@earendil-works__pi-codi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  15:39:39
+   Duration  385ms (transform 121ms, setup 0ms, collect 133ms, tests 5ms, environment 0ms, prepare 80ms)
+

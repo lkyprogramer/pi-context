@@ -1,0 +1,26 @@
+{
+  "task": "T25",
+  "status": "passed",
+  "liveBackup": "artifacts/backups/live-20260907",
+  "liveBackupManifest": "artifacts/v5-tasks/T21/live-backup-manifest.json",
+  "removed": [
+    "packages/",
+    "apps/pi-context-runtime/",
+    "patches/",
+    "pnpm-workspace.yaml"
+  ],
+  "untouched": [
+    "artifacts/runs/",
+    "artifacts/backups/",
+    ".env"
+  ],
+  "uniqueEntry": "src/extension.ts -> dist/extension.js",
+  "tests": {
+    "red": "artifacts/v5-tasks/T25/red.log",
+    "green": "artifacts/v5-tasks/T25/green.log",
+    "packedAndMatrix": "6 passed",
+    "invariantsFaultSecurity": "17 passed",
+    "tsc": 0
+  },
+  "note": "Default pnpm test is vitest.config.ts. Historical tests/ tree if present is archive, not the product gate. No PCR patch, no @pcr deps, no 0.84.4."
+}

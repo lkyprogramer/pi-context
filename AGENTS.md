@@ -1,6 +1,6 @@
 # pi-context 开发规范
 
-v5 unique packed entry is `src/extension.ts` → `dist/extension.js` on official Pi 0.85.1. PCR packages under `apps/` and `packages/` are superseded history; do not reintroduce `patchedDependencies` or `PCR_INGRESS_METADATA_CONTRACT` on the v5 tarball.
+v5 unique packed entry is `src/extension.ts` → `dist/extension.js` on official Pi 0.85.1. The PCR workspace (`apps/`, `packages/`, `patches/`) was removed in T25. Do not reintroduce `patchedDependencies` or `PCR_INGRESS_METADATA_CONTRACT`. Default tests are `vitest.config.ts` (`test/**`).
 
 ## 默认原则
 

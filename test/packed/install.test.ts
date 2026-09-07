@@ -51,6 +51,22 @@ describe("T19 packed install", () => {
     expect(notes.join(" ")).toMatch(/not forged|requires an interactive/);
   });
 
+  it("T25 unique entry has no PCR workspace, host patch, or @pcr dependency", () => {
+    expect(existsSync(join(repoRoot, "packages/core/package.json"))).toBe(false);
+    expect(existsSync(join(repoRoot, "apps/pi-context-runtime/package.json"))).toBe(false);
+    expect(existsSync(join(repoRoot, "patches/@earendil-works__pi-coding-agent@0.84.4.patch"))).toBe(false);
+    expect(existsSync(join(repoRoot, "pnpm-workspace.yaml"))).toBe(false);
+    const pkg = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8")) as {
+      patchedDependencies?: unknown;
+      devDependencies?: Record<string, string>;
+      dependencies?: Record<string, string>;
+    };
+    expect(pkg.patchedDependencies).toBeUndefined();
+    expect(JSON.stringify(pkg)).not.toMatch(/@pcr\//);
+    expect(pkg.devDependencies?.["@earendil-works/pi-coding-agent"]).not.toBe("0.84.4");
+    expect(pkg.devDependencies?.["pi-context-runtime"]).toBeUndefined();
+  });
+
   it("packed dist has no PCR ingress contract or tests", () => {
     execFileSync("pnpm", ["exec", "tsc", "-p", "tsconfig.build.json"], { cwd: repoRoot, stdio: "pipe" });
     const js = readFileSync(join(repoRoot, "dist/extension.js"), "utf8");

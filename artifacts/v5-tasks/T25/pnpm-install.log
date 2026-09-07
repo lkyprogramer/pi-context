@@ -1,0 +1,43 @@
+Progress: resolved 0, reused 1, downloaded 0, added 0
+
+   ╭─────────────────────────────────────────╮
+   │                                         │
+   │   Update available! 10.15.0 → 12.3.4.   │
+   │   Changelog: https://pnpm.io/v/12.3.4   │
+   │    To update, run: pnpm add -g pnpm     │
+   │                                         │
+   ╰─────────────────────────────────────────╯
+
+Progress: resolved 171, reused 84, downloaded 0, added 0
+Progress: resolved 225, reused 109, downloaded 7, added 0
+Progress: resolved 267, reused 149, downloaded 10, added 0
+Progress: resolved 283, reused 165, downloaded 12, added 0
+ WARN  1 deprecated subdependencies found: node-domexception@1.0.0
+Packages: +12
+++++++++++++
+Progress: resolved 289, reused 171, downloaded 12, added 10
+Progress: resolved 289, reused 171, downloaded 12, added 12, done
+
+dependencies:
++ @earendil-works/pi-coding-agent 0.85.1
+
+devDependencies:
+- @earendil-works/pi-coding-agent 0.84.4
+- @pcr/benchmark
+- @pcr/contracts
+- @pcr/core
+- @pcr/pi-adapter
+- @pcr/runtime
+- @pcr/storage-node
+- jiti 2.7.0
+- pi-context-runtime
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: esbuild.                                            │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Done in 5.5s using pnpm v10.15.0

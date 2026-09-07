@@ -1,8 +1,10 @@
 # Superseded PCR runtime
 
-The patched `@earendil-works/pi-coding-agent@0.84.4` runtime under `apps/pi-context-runtime` and `packages/` is **superseded** by the v5 native-first plugin in `src/extension.ts`.
+The patched `@earendil-works/pi-coding-agent@0.84.4` workspace (`apps/pi-context-runtime`, `packages/*`, `patches/`) was **removed from this repository** in T25. It is not a parallel product.
 
-- Unique installable entry: `pi.extensions` → `./dist/extension.js`
-- No PCR ingress contract and no host patch on the v5 packed tarball
-- User session files are not migrated and not deleted
-- Historical PCR tests are archive material and must not block removing the patch
+- Unique installable entry: `pi.extensions` → `./dist/extension.js` on official Pi **0.85.1**
+- The v5 packed tarball has no PCR ingress contract and no host patch
+- User session files under Pi's native session directory are not migrated and not deleted
+- Uninstalling the v5 plugin does not require a reverse migration library
+- Historical PCR tests under `tests/` (if still present as archive) must not be treated as the default gate
+- Live analysis reports stay in `artifacts/`; raw dumps were backed up under `artifacts/backups/` before this cut

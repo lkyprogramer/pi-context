@@ -1,42 +1,31 @@
 # Install
 
-Pi Context Runtime `0.1.0-alpha.1` is distributed as a **local npm-pack tarball** for `pi install`. It is `private` / `UNLICENSED`: do not `npm publish`. `pcrRelease.npmPublish` is `false`.
-
-Default `PCR_RUNTIME_MODE` is `ingress`: the packed install keeps Pi Native context order and Native compaction (`fromExtension` stays false). Full takeover requires an explicit `PCR_RUNTIME_MODE=experimental-runtime`. `publicationClaim` is a report field, not a feature switch, and stays false until a same-HEAD live run passes Hard, Quality, and Efficiency together.
+`pi-context@5.0.0-dev.0` is a **private** plugin tarball for official Pi 0.85.1. Do not `npm publish`.
 
 ## Requirements
 
-- Node `22.19.0` or `24.18.1` (required); `26.5.1` is advisory (`compat/toolchain.lock.json`)
-- Pi `@earendil-works/pi-coding-agent@0.84.4` (`compat/pi.lock.json`)
+- Node `>=22.19.0` (`nvm use v22.19.0`)
+- Official Pi CLI `@earendil-works/pi-coding-agent@0.85.1`
 - pnpm `10.15.0`
 
-## Build the tarball from this repository
+## Build and install
 
 ```bash
-node scripts/release/pack.mjs
-```
-
-That writes a compiled self-contained tarball, CycloneDX SBOM, and clean-install log. The SHA-256 of the tarball is `ReleaseManifest.packageHash` (`PCR_RELEASE_TARBALL`). `ReleaseManifest.gateBundleHash` is the SHA-256 of a T49 `writeImmutableBundle` `bundle.json` (`PCR_RELEASE_GATE_BUNDLE`), not `artifacts/task-evidence/T49/evidence.json`.
-
-## Project install
-
-```bash
-pi install ./path/to/pi-context-runtime-0.1.0-alpha.1.tgz
+pnpm install
+pnpm exec tsc -p tsconfig.build.json
+node scripts/packed-host.mjs
+pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
 pi list
 ```
 
-Development `pi -e ./apps/pi-context-runtime/dist/extension.js` is not the release artifact. Required CI and installs must use `node scripts/release/pack.mjs` / `pnpm test:packed`.
+Do not load a raw `.tgz` as an extension path. Official Pi must extract `dist/extension.js`.
 
-## Global-style / clean Pi home
-
-Use a disposable Pi home. Install the packed tarball, then remove it. User data is not deleted on uninstall.
+## Uninstall and data
 
 ```bash
-node scripts/release/pack.mjs
-# install the printed tarball path into the Pi home / project
-pi remove npm:pi-context-runtime
+pi uninstall npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
 ```
 
-## Rollback
+Native session JSONL files remain. There is no PCR→v5 data migration and no reverse migration.
 
-Follow `release/rollback-drill.md`. Uninstall never purges workspace data automatically. Reinstall the previous tarball hash from `release/manifest.json`.
+The old PCR command `pi -e ./apps/pi-context-runtime/dist/extension.js` is retired; that path is gone from this tree.
