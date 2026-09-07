@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/unit/batches.test.ts (1 test) 2ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:51:27
+   Duration  590ms (transform 63ms, setup 0ms, collect 91ms, tests 2ms, environment 0ms, prepare 122ms)
+

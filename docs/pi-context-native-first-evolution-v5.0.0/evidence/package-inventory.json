@@ -1,0 +1,16 @@
+{
+  "kind": "design-package-inventory",
+  "mainChapters": 20,
+  "taskCards": 26,
+  "caseCards": 8,
+  "adrs": 6,
+  "markdownDocuments": 70,
+  "sourceEntries": 29,
+  "cataloguedHistoricalFiles": 1548,
+  "currentSourceComponentProbes": 8,
+  "utilityUnitTests": 18,
+  "javaOracleCalibrations": 3,
+  "newProductImplemented": false,
+  "realPiIntegrationExecuted": false,
+  "liveModelBenchmarkExecuted": false
+}

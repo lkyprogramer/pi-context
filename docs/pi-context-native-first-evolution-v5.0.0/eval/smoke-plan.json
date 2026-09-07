@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "status": "planned-not-executed",
+  "host": "official-pi-0.85.1",
+  "arms": [
+    "B0",
+    "B2"
+  ],
+  "caseIds": [
+    "J01",
+    "J02",
+    "J03",
+    "J04",
+    "J05",
+    "J06",
+    "J07",
+    "J08"
+  ],
+  "totalWallBudgetSeconds": 3300,
+  "perArmWallBudgetSeconds": 180,
+  "maxConcurrentArms": 1,
+  "maxModelCallsPerArm": 12,
+  "warmupBudgetSeconds": 300,
+  "toolsRequireVerifiedSandbox": true,
+  "liveEnabledByDefault": false,
+  "remainingOnBudgetExhausted": "incomplete",
+  "seed": "freeze-before-run",
+  "pricingRequiredForMoneyClaim": true
+}

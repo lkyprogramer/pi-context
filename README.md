@@ -1,18 +1,28 @@
 # pi-context
 
-Pi Context Runtime (PCR) — host-agnostic context kernel with Pi as the first adapter.
+Native-first evidence context plugin for official Pi **0.85.1** (`pi-context@5.0.0-dev.0`, `private: true`).
 
-Current packaged version: `0.1.0-alpha.1` (deterministic MVP). Semantic/Background exists in-tree but **`semanticDefault=off`**.
+The patched PCR 0.84.4 runtime is [superseded](docs/SUPERSEDED-PCR.md). Unique packed entry: `dist/extension.js`.
 
-## Install and rollback
+## Install (verified)
 
-See [`docs/INSTALL.md`](docs/INSTALL.md). Short path from this repo:
+```bash
+nvm use v22.19.0
+pnpm exec tsc -p tsconfig.build.json
+pi install ./pi-context-5.0.0-dev.0.tgz
+```
+
+Uninstall: `pi uninstall ./pi-context-5.0.0-dev.0.tgz` (or `pi remove` the listed source). Native session files are not migrated or deleted.
+
+Default profile is `observe` (index/history only). `balanced` is opt-in. `experimental-semantic` is unsupported until T17/T18.
+
+## Install and rollback (legacy PCR)
+
+See [`docs/INSTALL.md`](docs/INSTALL.md). Historical path:
 
 ```bash
 pi -e ./apps/pi-context-runtime/dist/extension.js
 ```
-
-Remove with `pi remove npm:pi-context-runtime`. Uninstall does not delete workspace data.
 
 ## Configuration, security, operations
 

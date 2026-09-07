@@ -1,0 +1,57 @@
+test_content_logging_rejected (__main__.BundleTests.test_content_logging_rejected) ... FAIL
+test_example_config (__main__.BundleTests.test_example_config) ... ok
+test_graph_cycle (__main__.BundleTests.test_graph_cycle) ... FAIL
+test_graph_missing_dep (__main__.BundleTests.test_graph_missing_dep) ... FAIL
+test_real_graph_is_complete (__main__.BundleTests.test_real_graph_is_complete) ... FAIL
+test_sqlite_schema_integrity (__main__.BundleTests.test_sqlite_schema_integrity) ... ok
+test_unknown_config_rejected (__main__.BundleTests.test_unknown_config_rejected) ... FAIL
+
+======================================================================
+FAIL: test_content_logging_rejected (__main__.BundleTests.test_content_logging_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_bundle_tools.py", line 21, in test_content_logging_rejected
+    self.assertTrue(tool.check_schema(cfg,schema))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [] is not true
+
+======================================================================
+FAIL: test_graph_cycle (__main__.BundleTests.test_graph_cycle)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_bundle_tools.py", line 23, in test_graph_cycle
+    with self.assertRaises(ValueError):tool.topological([{'id':'A','dependsOn':['B']},{'id':'B','dependsOn':['A']}])
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_graph_missing_dep (__main__.BundleTests.test_graph_missing_dep)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_bundle_tools.py", line 25, in test_graph_missing_dep
+    with self.assertRaises(ValueError):tool.topological([{'id':'A','dependsOn':['missing']}])
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_real_graph_is_complete (__main__.BundleTests.test_real_graph_is_complete)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_bundle_tools.py", line 28, in test_real_graph_is_complete
+    self.assertEqual(len(tool.topological(tasks)),26)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 26
+
+======================================================================
+FAIL: test_unknown_config_rejected (__main__.BundleTests.test_unknown_config_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_bundle_tools.py", line 17, in test_unknown_config_rejected
+    self.assertTrue(tool.check_schema(cfg,schema))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [] is not true
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.007s
+
+FAILED (failures=5)

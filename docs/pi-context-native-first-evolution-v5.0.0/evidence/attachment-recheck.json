@@ -1,0 +1,9 @@
+{
+  "kind": "source-archive-identity",
+  "status": "passed",
+  "archiveSha256": "cc3ed701e38414e00541c7892a4c0acebc08bf7639bfe419e15334f65a6a8d51",
+  "gitTree": "15b9e6b170632c6e65d4f277ae83176182a273a3",
+  "files": 9766,
+  "matchesRecordedBaseline": true,
+  "githubRefetched": false
+}

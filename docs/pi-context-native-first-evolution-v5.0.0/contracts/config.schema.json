@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pctx v5 config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "storage",
+    "history",
+    "projection",
+    "checkpoint",
+    "semantic",
+    "telemetry"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 5
+    },
+    "profile": {
+      "enum": [
+        "off",
+        "observe",
+        "balanced",
+        "experimental-semantic"
+      ]
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "maxIndexBytes"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "persistent",
+            "memory-only"
+          ]
+        },
+        "maxIndexBytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "history": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "searchLimit",
+        "searchMaxTokens",
+        "readMaxTokens",
+        "readMaxBytes"
+      ],
+      "properties": {
+        "searchLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "searchMaxTokens": {
+          "type": "integer",
+          "minimum": 128,
+          "maximum": 8192
+        },
+        "readMaxTokens": {
+          "type": "integer",
+          "minimum": 128,
+          "maximum": 16384
+        },
+        "readMaxBytes": {
+          "type": "integer",
+          "minimum": 128,
+          "maximum": 1048576
+        }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protectRecentBatches",
+        "minEpochRequests",
+        "minRemovedTokens",
+        "minCandidateReduction"
+      ],
+      "properties": {
+        "protectRecentBatches": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "minEpochRequests": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minRemovedTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minCandidateReduction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxTokens",
+        "maxWindowFraction"
+      ],
+      "properties": {
+        "maxTokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxWindowFraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "semantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "maxLogicalCallsPerCompaction",
+        "maxRetries",
+        "maxWallMs",
+        "providerOverride"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxLogicalCallsPerCompaction": {
+          "const": 1
+        },
+        "maxRetries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maxWallMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "providerOverride": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "includeContent",
+        "maxLogBytes"
+      ],
+      "properties": {
+        "includeContent": {
+          "const": false
+        },
+        "maxLogBytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

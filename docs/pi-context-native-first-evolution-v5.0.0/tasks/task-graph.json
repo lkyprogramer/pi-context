@@ -1,0 +1,459 @@
+{
+  "schemaVersion": 1,
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "官方宿主与干净安装基线",
+      "milestone": "M1",
+      "dependsOn": [],
+      "files": [
+        "package.json",
+        "pnpm-lock.yaml",
+        "tsconfig.build.json",
+        "src/extension.ts",
+        "test/host/stock-loader.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/host/stock-loader.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T02",
+      "title": "冻结类型、配置schema与测试夹具",
+      "milestone": "M1",
+      "dependsOn": [
+        "T01"
+      ],
+      "files": [
+        "src/contracts.ts",
+        "src/testing.ts",
+        "src/config.ts",
+        "test/unit/contracts.test.ts",
+        "test/unit/config.test.ts",
+        "vitest.config.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/contracts.test.ts test/unit/config.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T03",
+      "title": "原生entry读取与公共hook适配",
+      "milestone": "M1",
+      "dependsOn": [
+        "T02"
+      ],
+      "files": [
+        "src/pi/adapter.ts",
+        "src/pi/source-reader.ts",
+        "test/host/native-source.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/host/native-source.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T04",
+      "title": "generation与生命周期失效",
+      "milestone": "M1",
+      "dependsOn": [
+        "T03"
+      ],
+      "files": [
+        "src/pi/lifecycle.ts",
+        "test/host/generation.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/host/generation.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T05",
+      "title": "来源ref、规范hash与UTF-8范围",
+      "milestone": "M1",
+      "dependsOn": [
+        "T03"
+      ],
+      "files": [
+        "src/history/refs.ts",
+        "test/unit/refs.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/refs.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T06",
+      "title": "工作区／分支授权与fork语义",
+      "milestone": "M1",
+      "dependsOn": [
+        "T04",
+        "T05"
+      ],
+      "files": [
+        "src/history/scope.ts",
+        "test/security/scope.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/security/scope.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T07",
+      "title": "派生SQLite索引与有界重建",
+      "milestone": "M1",
+      "dependsOn": [
+        "T05",
+        "T06"
+      ],
+      "files": [
+        "src/history/index.ts",
+        "src/history/sqlite-worker.ts",
+        "test/integration/index.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/integration/index.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T08",
+      "title": "授权优先的搜索与稳定分页",
+      "milestone": "M1",
+      "dependsOn": [
+        "T07"
+      ],
+      "files": [
+        "src/history/search.ts",
+        "test/integration/search.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/integration/search.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T09",
+      "title": "精确回读、图片与缺失源处理",
+      "milestone": "M1",
+      "dependsOn": [
+        "T05",
+        "T06",
+        "T08"
+      ],
+      "files": [
+        "src/history/read.ts",
+        "test/integration/history-read.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/integration/history-read.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T10",
+      "title": "成功请求暴露账本",
+      "milestone": "M2",
+      "dependsOn": [
+        "T04",
+        "T05"
+      ],
+      "files": [
+        "src/projection/exposure.ts",
+        "test/host/exposure.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/host/exposure.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T11",
+      "title": "完整工具批次和保护集合",
+      "milestone": "M2",
+      "dependsOn": [
+        "T02",
+        "T03"
+      ],
+      "files": [
+        "src/projection/batches.ts",
+        "test/unit/batches.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/batches.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T12",
+      "title": "最终预算与未知多模态成本",
+      "milestone": "M2",
+      "dependsOn": [
+        "T02"
+      ],
+      "files": [
+        "src/projection/budget.ts",
+        "test/unit/budget.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/budget.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T13",
+      "title": "稳定epoch规划器",
+      "milestone": "M2",
+      "dependsOn": [
+        "T06",
+        "T10",
+        "T11",
+        "T12"
+      ],
+      "files": [
+        "src/projection/planner.ts",
+        "test/unit/planner.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/planner.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T14",
+      "title": "纯投影renderer与保守日志摘要",
+      "milestone": "M2",
+      "dependsOn": [
+        "T09",
+        "T13"
+      ],
+      "files": [
+        "src/projection/render.ts",
+        "test/unit/render.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/render.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T15",
+      "title": "分支pin与原生摘要后的胶囊",
+      "milestone": "M3",
+      "dependsOn": [
+        "T03",
+        "T06",
+        "T09",
+        "T12"
+      ],
+      "files": [
+        "src/checkpoint/pins.ts",
+        "src/checkpoint/capsule.ts",
+        "src/checkpoint/validator.ts",
+        "test/integration/capsule.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/integration/capsule.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T16",
+      "title": "完整usage账本与缓存收益模型",
+      "milestone": "M2",
+      "dependsOn": [
+        "T02",
+        "T12"
+      ],
+      "files": [
+        "src/telemetry/usage.ts",
+        "src/telemetry/metrics.ts",
+        "src/telemetry/redaction.ts",
+        "src/projection/cache.ts",
+        "test/unit/economics.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/economics.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T17",
+      "title": "候选stage与宿主ACK恢复",
+      "milestone": "M4",
+      "dependsOn": [
+        "T04",
+        "T05",
+        "T15",
+        "T24"
+      ],
+      "files": [
+        "src/checkpoint/staging.ts",
+        "test/fault/staging.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/fault/staging.test.ts",
+      "status": "planned",
+      "optional": true
+    },
+    {
+      "id": "T18",
+      "title": "可选语义压缩及B3消融",
+      "milestone": "M4",
+      "dependsOn": [
+        "T17",
+        "T16",
+        "T24"
+      ],
+      "files": [
+        "src/checkpoint/semantic.ts",
+        "test/host/semantic.test.ts",
+        "eval/semantic-arm.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/host/semantic.test.ts",
+      "status": "planned",
+      "optional": true
+    },
+    {
+      "id": "T19",
+      "title": "工具／命令接线与真实打包",
+      "milestone": "M3",
+      "dependsOn": [
+        "T08",
+        "T09",
+        "T14",
+        "T15",
+        "T16"
+      ],
+      "files": [
+        "src/commands.ts",
+        "src/extension.ts",
+        "scripts/check-public-imports.mjs",
+        "scripts/packed-host.mjs",
+        "test/packed/install.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/packed/install.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T20",
+      "title": "性质／故障／安全矩阵",
+      "milestone": "M3",
+      "dependsOn": [
+        "T19"
+      ],
+      "files": [
+        "test/property/invariants.test.ts",
+        "test/fault/runtime.test.ts",
+        "test/security/injection.test.ts",
+        "test/host/matrix.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/property test/fault test/security test/host/matrix.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T21",
+      "title": "编码沙箱与受限provider relay",
+      "milestone": "M3",
+      "dependsOn": [
+        "T01",
+        "T02"
+      ],
+      "files": [
+        "eval/sandbox/Containerfile",
+        "eval/sandbox/runner.ts",
+        "eval/sandbox/relay.ts",
+        "eval/sandbox/isolation-probe.ts",
+        "test/integration/sandbox.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/integration/sandbox.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T22",
+      "title": "同宿主配对runner与不可变run manifest",
+      "milestone": "M3",
+      "dependsOn": [
+        "T19",
+        "T21"
+      ],
+      "files": [
+        "eval/runner.ts",
+        "eval/pairing.ts",
+        "eval/manifest.ts",
+        "test/integration/eval-runner.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/integration/eval-runner.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T23",
+      "title": "Java场景oracle与真实模型C2",
+      "milestone": "M3",
+      "dependsOn": [
+        "T21",
+        "T22"
+      ],
+      "files": [
+        "eval/cases/",
+        "eval/oracles/",
+        "eval/recovery-probe.ts",
+        "test/integration/java-cases.test.ts"
+      ],
+      "testCommand": "pnpm exec vitest run test/integration/java-cases.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T24",
+      "title": "运行评价与预注册晋级判断",
+      "milestone": "M3",
+      "dependsOn": [
+        "T20",
+        "T22",
+        "T23"
+      ],
+      "files": [
+        "eval/report.ts",
+        "eval/scorers.ts",
+        "test/unit/report.test.ts",
+        "artifacts/v5-evaluation/"
+      ],
+      "testCommand": "pnpm exec vitest run test/unit/report.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T25",
+      "title": "切换唯一入口并删除旧运行时负担",
+      "milestone": "M3",
+      "dependsOn": [
+        "T19",
+        "T20"
+      ],
+      "files": [
+        "package.json",
+        "pnpm-workspace.yaml",
+        "patches/",
+        "apps/pi-context-runtime/",
+        "packages/",
+        "README.md",
+        "AGENTS.md",
+        "docs/"
+      ],
+      "testCommand": "pnpm exec vitest run test/packed/install.test.ts test/host/matrix.test.ts",
+      "status": "planned",
+      "optional": false
+    },
+    {
+      "id": "T26",
+      "title": "独立审查与发布候选门禁",
+      "milestone": "M3",
+      "dependsOn": [
+        "T24",
+        "T25"
+      ],
+      "files": [
+        "docs/release-v5.md",
+        "artifacts/release-candidate/",
+        "scripts/release-gate.mjs"
+      ],
+      "testCommand": "node scripts/release-gate.mjs --evidence artifacts/release-candidate",
+      "status": "planned",
+      "optional": false
+    }
+  ]
+}

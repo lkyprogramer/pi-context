@@ -1,0 +1,31 @@
+{
+  "kind": "synthetic-example",
+  "plannedPairs": 3,
+  "completePairs": 2,
+  "incompletePairs": 1,
+  "plannedClusters": 3,
+  "completeClusters": 2,
+  "discordance": {
+    "bothPass": 2,
+    "baselineOnly": 0,
+    "candidateOnly": 0,
+    "bothFail": 0
+  },
+  "adverseClusters": 0,
+  "adverseClusterRateUpper95": 0.7763932022500211,
+  "twoPercentAdverseBoundSatisfied": false,
+  "inferenceScope": "conditional-on-complete-independent-task-clusters; any adverse repetition per cluster",
+  "candidateCriticalViolations": 0,
+  "knownCostPairs": 1,
+  "monetaryDeltaPct": null,
+  "knownWallPairs": 2,
+  "medianWallDeltaPct": null,
+  "resourceScope": "all planned pairs; unknown resource values prevent aggregate claims",
+  "publicationClaimAllowed": false,
+  "limitations": [
+    "Does not authenticate manifests, sample independence, model identity, or oracle execution.",
+    "Incomplete clusters are excluded from the conditional bound and remain in the planned denominator.",
+    "The adverse-event upper bound is not a confidence interval for net paired success difference.",
+    "Synthetic demonstration data cannot establish product performance."
+  ]
+}

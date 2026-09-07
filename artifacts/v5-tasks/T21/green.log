@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/integration/sandbox.test.ts (2 tests) 460ms
+   ✓ T21 sandbox > records BLOCKED when docker isolation is unavailable  456ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:51:42
+   Duration  1.06s (transform 66ms, setup 0ms, collect 92ms, tests 460ms, environment 0ms, prepare 111ms)
+

@@ -1,0 +1,115 @@
+test_adverse_cluster_and_critical_counts (__main__.StatsTests.test_adverse_cluster_and_critical_counts) ... ERROR
+test_cost_and_time_ratios (__main__.StatsTests.test_cost_and_time_ratios) ... ERROR
+test_duplicate_pair_rejected (__main__.StatsTests.test_duplicate_pair_rejected) ... FAIL
+test_eight_all_pass_does_not_prove_two_percent (__main__.StatsTests.test_eight_all_pass_does_not_prove_two_percent) ... ERROR
+test_empty_is_not_evidence (__main__.StatsTests.test_empty_is_not_evidence) ... ERROR
+test_invalid_values_rejected (__main__.StatsTests.test_invalid_values_rejected) ... FAIL
+test_missing_pair_preserved (__main__.StatsTests.test_missing_pair_preserved) ... ERROR
+test_mixed_demo_and_real_rejected (__main__.StatsTests.test_mixed_demo_and_real_rejected) ... FAIL
+test_one_sided_binomial_upper (__main__.StatsTests.test_one_sided_binomial_upper) ... FAIL
+test_partial_cost_is_not_zero (__main__.StatsTests.test_partial_cost_is_not_zero) ... ERROR
+test_repetitions_are_not_independent_tasks (__main__.StatsTests.test_repetitions_are_not_independent_tasks) ... ERROR
+
+======================================================================
+ERROR: test_adverse_cluster_and_critical_counts (__main__.StatsTests.test_adverse_cluster_and_critical_counts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 49, in test_adverse_cluster_and_critical_counts
+    self.assertEqual(s['adverseClusters'],1)
+                     ~^^^^^^^^^^^^^^^^^^^
+KeyError: 'adverseClusters'
+
+======================================================================
+ERROR: test_cost_and_time_ratios (__main__.StatsTests.test_cost_and_time_ratios)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 54, in test_cost_and_time_ratios
+    s=tool.summarize([p]);self.assertEqual(s['monetaryDeltaPct'],-25)
+                                           ~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'monetaryDeltaPct'
+
+======================================================================
+ERROR: test_eight_all_pass_does_not_prove_two_percent (__main__.StatsTests.test_eight_all_pass_does_not_prove_two_percent)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 22, in test_eight_all_pass_does_not_prove_two_percent
+    self.assertEqual(s['completeClusters'],8)
+                     ~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'completeClusters'
+
+======================================================================
+ERROR: test_empty_is_not_evidence (__main__.StatsTests.test_empty_is_not_evidence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 17, in test_empty_is_not_evidence
+    self.assertEqual(s['completePairs'],0)
+                     ~^^^^^^^^^^^^^^^^^
+KeyError: 'completePairs'
+
+======================================================================
+ERROR: test_missing_pair_preserved (__main__.StatsTests.test_missing_pair_preserved)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 34, in test_missing_pair_preserved
+    self.assertEqual(s['plannedPairs'],2)
+                     ~^^^^^^^^^^^^^^^^
+KeyError: 'plannedPairs'
+
+======================================================================
+ERROR: test_partial_cost_is_not_zero (__main__.StatsTests.test_partial_cost_is_not_zero)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 40, in test_partial_cost_is_not_zero
+    self.assertIsNone(s['monetaryDeltaPct'])
+                      ~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'monetaryDeltaPct'
+
+======================================================================
+ERROR: test_repetitions_are_not_independent_tasks (__main__.StatsTests.test_repetitions_are_not_independent_tasks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 27, in test_repetitions_are_not_independent_tasks
+    self.assertEqual(s['completePairs'],16)
+                     ~^^^^^^^^^^^^^^^^^
+KeyError: 'completePairs'
+
+======================================================================
+FAIL: test_duplicate_pair_rejected (__main__.StatsTests.test_duplicate_pair_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 45, in test_duplicate_pair_rejected
+    with self.assertRaises(ValueError):tool.summarize([pair(),pair()])
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_invalid_values_rejected (__main__.StatsTests.test_invalid_values_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 59, in test_invalid_values_rejected
+    with self.assertRaises(ValueError):tool.summarize([p])
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_mixed_demo_and_real_rejected (__main__.StatsTests.test_mixed_demo_and_real_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 43, in test_mixed_demo_and_real_rejected
+    with self.assertRaises(ValueError):tool.summarize([pair(),pair('b',kind='synthetic-example')])
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_one_sided_binomial_upper (__main__.StatsTests.test_one_sided_binomial_upper)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pi-context-native-first-evolution-v5.0.0/scripts/test_eval_tools.py", line 62, in test_one_sided_binomial_upper
+    self.assertEqual(tool.clopper_upper(3,3),1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 1
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.003s
+
+FAILED (failures=4, errors=7)

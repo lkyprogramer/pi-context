@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/unit/config.test.ts (3 tests) 3ms
+ ✓ test/unit/contracts.test.ts (2 tests) 4ms
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+   Start at  11:51:11
+   Duration  1.31s (transform 202ms, setup 0ms, collect 395ms, tests 7ms, environment 0ms, prepare 456ms)
+

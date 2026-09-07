@@ -1,0 +1,7 @@
+{
+  "provider": "openclaw",
+  "model": "openclaw/Qwen3.8-27B-WORK",
+  "baseHost": "redacted",
+  "status": "blocked",
+  "error": "HTTP Error 502: Bad Gateway"
+}

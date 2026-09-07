@@ -1,0 +1,56 @@
+{
+  "kind": "java-oracle-calibration",
+  "status": "passed",
+  "productTestsExecuted": false,
+  "liveModelExecuted": false,
+  "rows": [
+    {
+      "case": "J01",
+      "calibrated": true,
+      "outcomes": {
+        "initial": {
+          "compileExit": 0,
+          "runExit": 1,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: same eventId from another tenant must succeed\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:8)\n"
+        },
+        "known-good": {
+          "compileExit": 0,
+          "runExit": 0,
+          "output": "ORACLE_PASS:J01\n"
+        }
+      }
+    },
+    {
+      "case": "J02",
+      "calibrated": true,
+      "outcomes": {
+        "initial": {
+          "compileExit": 0,
+          "runExit": 1,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: list query leaked foreign tenant\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:13)\n"
+        },
+        "known-good": {
+          "compileExit": 0,
+          "runExit": 0,
+          "output": "ORACLE_PASS:J02\n"
+        }
+      }
+    },
+    {
+      "case": "J07",
+      "calibrated": true,
+      "outcomes": {
+        "initial": {
+          "compileExit": 0,
+          "runExit": 1,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: old success must not override current failure\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:11)\n"
+        },
+        "known-good": {
+          "compileExit": 0,
+          "runExit": 0,
+          "output": "ORACLE_PASS:J07\n"
+        }
+      }
+    }
+  ]
+}

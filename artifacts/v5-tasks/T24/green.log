@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/unit/report.test.ts (1 test) 103ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:51:47
+   Duration  632ms (transform 78ms, setup 0ms, collect 68ms, tests 103ms, environment 0ms, prepare 105ms)
+

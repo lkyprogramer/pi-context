@@ -1,0 +1,12 @@
+{
+  "kind": "bounded-secret-pattern-scan",
+  "status": "passed",
+  "patterns": [
+    "private-key",
+    "openai-like-secret",
+    "github-like-secret",
+    "bearer-token"
+  ],
+  "hits": [],
+  "limitation": "Pattern scan is not proof that all sensitive information is absent."
+}

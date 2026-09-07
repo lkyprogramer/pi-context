@@ -1,0 +1,12 @@
+test_content_logging_rejected (__main__.BundleTests.test_content_logging_rejected) ... ok
+test_example_config (__main__.BundleTests.test_example_config) ... ok
+test_graph_cycle (__main__.BundleTests.test_graph_cycle) ... ok
+test_graph_missing_dep (__main__.BundleTests.test_graph_missing_dep) ... ok
+test_real_graph_is_complete (__main__.BundleTests.test_real_graph_is_complete) ... ok
+test_sqlite_schema_integrity (__main__.BundleTests.test_sqlite_schema_integrity) ... ok
+test_unknown_config_rejected (__main__.BundleTests.test_unknown_config_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.005s
+
+OK

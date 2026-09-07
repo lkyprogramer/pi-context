@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/unit/render.test.ts (2 tests) 6ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:51:31
+   Duration  791ms (transform 71ms, setup 0ms, collect 85ms, tests 6ms, environment 0ms, prepare 63ms)
+

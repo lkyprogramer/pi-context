@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 5,
+  "profile": "observe",
+  "storage": {
+    "mode": "persistent",
+    "maxIndexBytes": 268435456
+  },
+  "history": {
+    "searchLimit": 8,
+    "searchMaxTokens": 1500,
+    "readMaxTokens": 3000,
+    "readMaxBytes": 32768
+  },
+  "projection": {
+    "protectRecentBatches": 4,
+    "minEpochRequests": 8,
+    "minRemovedTokens": 4096,
+    "minCandidateReduction": 0.15
+  },
+  "checkpoint": {
+    "maxTokens": 1000,
+    "maxWindowFraction": 0.02
+  },
+  "semantic": {
+    "enabled": false,
+    "maxLogicalCallsPerCompaction": 1,
+    "maxRetries": 1,
+    "maxWallMs": 20000,
+    "providerOverride": null
+  },
+  "telemetry": {
+    "includeContent": false,
+    "maxLogBytes": 5242880
+  }
+}

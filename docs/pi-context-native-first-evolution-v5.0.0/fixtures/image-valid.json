@@ -1,0 +1,10 @@
+{
+  "kind": "valid-png-test-vector",
+  "content": [
+    {
+      "type": "image",
+      "mimeType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC"
+    }
+  ]
+}

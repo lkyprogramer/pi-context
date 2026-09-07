@@ -1,0 +1,59 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:77924) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/unit/contracts.test.ts (2 tests) 14ms
+(node:77916) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:77923) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/integration/search.test.ts (2 tests) 10ms
+ ✓ test/host/native-source.test.ts (3 tests) 7ms
+ ✓ test/integration/java-cases.test.ts (1 test) 866ms
+   ✓ T23 java/C2 > does not mark C2 passed without a real model run  864ms
+ ✓ test/unit/report.test.ts (1 test) 836ms
+   ✓ T24 report > n=0/not-run stays not-run and missing cost is not 0  835ms
+ ✓ test/integration/eval-runner.test.ts (1 test) 952ms
+   ✓ T22 eval runner > keeps planned arms in the denominator and never fills missing cost with 0  950ms
+(node:78053) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/unit/economics.test.ts (1 test) 5ms
+ ✓ test/integration/index.test.ts (1 test) 63ms
+ ✓ test/integration/sandbox.test.ts (2 tests) 1315ms
+   ✓ T21 sandbox > records BLOCKED when docker isolation is unavailable  1313ms
+ ✓ test/security/scope.test.ts (3 tests) 3ms
+ ✓ test/unit/planner.test.ts (1 test) 2ms
+ ✓ test/unit/render.test.ts (2 tests) 2ms
+(node:78114) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/fault/runtime.test.ts (2 tests) 3ms
+ ✓ test/integration/capsule.test.ts (3 tests) 7ms
+ ✓ test/integration/history-read.test.ts (2 tests) 4ms
+ ✓ test/property/invariants.test.ts (8 tests) 3ms
+ ✓ test/unit/config.test.ts (3 tests) 3ms
+ ✓ test/unit/refs.test.ts (3 tests) 4ms
+ ✓ test/unit/batches.test.ts (1 test) 7ms
+(node:78221) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/security/injection.test.ts (1 test) 3ms
+ ✓ test/host/exposure.test.ts (1 test) 2ms
+(node:78224) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78220) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/host/generation.test.ts (1 test) 5ms
+ ✓ test/host/matrix.test.ts (1 test) 8ms
+ ✓ test/unit/budget.test.ts (2 tests) 2ms
+ ✓ test/packed/install.test.ts (3 tests) 3455ms
+   ✓ T19 packed install > packed dist has no PCR ingress contract or tests  3447ms
+(node:77917) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ test/host/stock-loader.test.ts (1 test) 4649ms
+   ✓ T01 stock loader on official Pi 0.85.1 > rejects PCR patches and loads the packed plugin via DefaultResourceLoader  4648ms
+
+ Test Files  26 passed (26)
+      Tests  52 passed (52)
+   Start at  11:49:10
+   Duration  5.62s (transform 1.73s, setup 0ms, collect 6.05s, tests 12.23s, environment 5ms, prepare 5.85s)
+

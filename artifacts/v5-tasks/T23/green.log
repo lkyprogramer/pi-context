@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/integration/java-cases.test.ts (1 test) 74ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:51:45
+   Duration  542ms (transform 49ms, setup 0ms, collect 68ms, tests 74ms, environment 0ms, prepare 73ms)
+

@@ -1,5 +1,7 @@
 # pi-context 开发规范
 
+v5 unique packed entry is `src/extension.ts` → `dist/extension.js` on official Pi 0.85.1. PCR packages under `apps/` and `packages/` are superseded history; do not reintroduce `patchedDependencies` or `PCR_INGRESS_METADATA_CONTRACT` on the v5 tarball.
+
 ## 默认原则
 
 这是个人项目，默认目标是快速完成正确的开发。先改代码，再用最窄的测试证明行为；不要把发布审计流程套在每个普通改动上。

@@ -1,0 +1,310 @@
+[
+  {
+    "id": "R01",
+    "requirement": "无需修改官方Pi",
+    "gate": "G0",
+    "tasks": [
+      "T01",
+      "T03",
+      "T25"
+    ],
+    "invariants": [
+      "INV-01"
+    ]
+  },
+  {
+    "id": "R02",
+    "requirement": "默认不改用户输入与原始工具结果",
+    "gate": "G1",
+    "tasks": [
+      "T03",
+      "T19",
+      "T20"
+    ],
+    "invariants": [
+      "INV-01"
+    ]
+  },
+  {
+    "id": "R03",
+    "requirement": "图片和未知块保留",
+    "gate": "G1",
+    "tasks": [
+      "T09",
+      "T14",
+      "T20"
+    ],
+    "invariants": [
+      "INV-03"
+    ]
+  },
+  {
+    "id": "R04",
+    "requirement": "首次暴露完整",
+    "gate": "G1",
+    "tasks": [
+      "T10",
+      "T13",
+      "T14"
+    ],
+    "invariants": [
+      "INV-02"
+    ]
+  },
+  {
+    "id": "R05",
+    "requirement": "工具批次闭合",
+    "gate": "G1",
+    "tasks": [
+      "T11",
+      "T20"
+    ],
+    "invariants": [
+      "INV-04"
+    ]
+  },
+  {
+    "id": "R06",
+    "requirement": "授权先于limit与分页",
+    "gate": "G2",
+    "tasks": [
+      "T06",
+      "T08",
+      "T09"
+    ],
+    "invariants": [
+      "INV-06"
+    ]
+  },
+  {
+    "id": "R07",
+    "requirement": "精确范围与source hash",
+    "gate": "G2",
+    "tasks": [
+      "T05",
+      "T09"
+    ],
+    "invariants": [
+      "INV-05"
+    ]
+  },
+  {
+    "id": "R08",
+    "requirement": "派生索引可重建",
+    "gate": "G2",
+    "tasks": [
+      "T07",
+      "T20"
+    ],
+    "invariants": [
+      "INV-05",
+      "INV-09"
+    ]
+  },
+  {
+    "id": "R09",
+    "requirement": "稳定epoch与cache核算",
+    "gate": "G4",
+    "tasks": [
+      "T13",
+      "T16",
+      "T24"
+    ],
+    "invariants": [
+      "INV-07"
+    ]
+  },
+  {
+    "id": "R10",
+    "requirement": "最终预算与不可达处理",
+    "gate": "G1",
+    "tasks": [
+      "T12",
+      "T14"
+    ],
+    "invariants": [
+      "INV-08"
+    ]
+  },
+  {
+    "id": "R11",
+    "requirement": "分支pin不越界",
+    "gate": "G2",
+    "tasks": [
+      "T06",
+      "T15"
+    ],
+    "invariants": [
+      "INV-06"
+    ]
+  },
+  {
+    "id": "R12",
+    "requirement": "来源胶囊不虚构当前成功",
+    "gate": "G3",
+    "tasks": [
+      "T15",
+      "T23"
+    ],
+    "invariants": [
+      "INV-05"
+    ]
+  },
+  {
+    "id": "R13",
+    "requirement": "单一native压缩调度",
+    "gate": "G1",
+    "tasks": [
+      "T04",
+      "T17",
+      "T20"
+    ],
+    "invariants": [
+      "INV-10"
+    ]
+  },
+  {
+    "id": "R14",
+    "requirement": "native确认后激活胶囊；可选语义候选匹配ACK",
+    "gate": "G2",
+    "tasks": [
+      "T15",
+      "T17",
+      "T20"
+    ],
+    "invariants": [
+      "INV-09"
+    ]
+  },
+  {
+    "id": "R15",
+    "requirement": "失败退回Native不吞输入",
+    "gate": "G1",
+    "tasks": [
+      "T03",
+      "T04",
+      "T20"
+    ],
+    "invariants": [
+      "INV-01"
+    ]
+  },
+  {
+    "id": "R16",
+    "requirement": "数据拒绝fail-closed",
+    "gate": "G2",
+    "tasks": [
+      "T06",
+      "T09",
+      "T20"
+    ],
+    "invariants": [
+      "INV-06"
+    ]
+  },
+  {
+    "id": "R17",
+    "requirement": "成本未知不写0",
+    "gate": "G4",
+    "tasks": [
+      "T16",
+      "T24"
+    ],
+    "invariants": [
+      "INV-08"
+    ]
+  },
+  {
+    "id": "R18",
+    "requirement": "真实模型C2回读",
+    "gate": "G3",
+    "tasks": [
+      "T22",
+      "T23",
+      "T24"
+    ],
+    "invariants": [
+      "INV-05"
+    ]
+  },
+  {
+    "id": "R19",
+    "requirement": "Java真实闭环与外部oracle",
+    "gate": "G4",
+    "tasks": [
+      "T21",
+      "T22",
+      "T23",
+      "T24"
+    ],
+    "invariants": [
+      "INV-10"
+    ]
+  },
+  {
+    "id": "R20",
+    "requirement": "同宿主与ITT/cluster统计",
+    "gate": "G4",
+    "tasks": [
+      "T22",
+      "T24",
+      "T26"
+    ],
+    "invariants": [
+      "INV-01"
+    ]
+  },
+  {
+    "id": "R21",
+    "requirement": "普通安装／卸载与数据不迁移",
+    "gate": "G5",
+    "tasks": [
+      "T01",
+      "T19",
+      "T25",
+      "T26"
+    ],
+    "invariants": [
+      "INV-01"
+    ]
+  },
+  {
+    "id": "R22",
+    "requirement": "隐私与限权沙箱",
+    "gate": "G2",
+    "tasks": [
+      "T06",
+      "T16",
+      "T21"
+    ],
+    "invariants": [
+      "INV-06"
+    ]
+  },
+  {
+    "id": "R23",
+    "requirement": "语义层默认关闭且单独消融",
+    "gate": "G5",
+    "tasks": [
+      "T18",
+      "T19",
+      "T24"
+    ],
+    "invariants": [
+      "INV-09"
+    ]
+  },
+  {
+    "id": "R24",
+    "requirement": "包边界精简与不自动发布",
+    "gate": "G5",
+    "tasks": [
+      "T19",
+      "T25",
+      "T26"
+    ],
+    "invariants": [
+      "INV-01"
+    ]
+  }
+]

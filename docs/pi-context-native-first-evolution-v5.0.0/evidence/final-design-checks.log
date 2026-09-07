@@ -1,0 +1,129 @@
+[1/4] Validate design bundle
+{
+  "kind": "design-bundle-validation",
+  "status": "passed",
+  "productImplementationVerified": false,
+  "jsonFilesChecked": 14,
+  "localLinksChecked": 71,
+  "taskOrder": [
+    "T01",
+    "T02",
+    "T03",
+    "T12",
+    "T21",
+    "T04",
+    "T05",
+    "T11",
+    "T16",
+    "T06",
+    "T10",
+    "T07",
+    "T13",
+    "T08",
+    "T09",
+    "T14",
+    "T15",
+    "T19",
+    "T20",
+    "T22",
+    "T23",
+    "T25",
+    "T24",
+    "T17",
+    "T26",
+    "T18"
+  ],
+  "errors": [],
+  "limitations": [
+    "No external URL availability checked.",
+    "No product host integration or live model benchmark executed."
+  ]
+}
+[2/4] Test reporting utility
+test_adverse_cluster_and_critical_counts (__main__.StatsTests.test_adverse_cluster_and_critical_counts) ... ok
+test_cost_and_time_ratios (__main__.StatsTests.test_cost_and_time_ratios) ... ok
+test_duplicate_pair_rejected (__main__.StatsTests.test_duplicate_pair_rejected) ... ok
+test_eight_all_pass_does_not_prove_two_percent (__main__.StatsTests.test_eight_all_pass_does_not_prove_two_percent) ... ok
+test_empty_is_not_evidence (__main__.StatsTests.test_empty_is_not_evidence) ... ok
+test_invalid_values_rejected (__main__.StatsTests.test_invalid_values_rejected) ... ok
+test_missing_pair_preserved (__main__.StatsTests.test_missing_pair_preserved) ... ok
+test_mixed_demo_and_real_rejected (__main__.StatsTests.test_mixed_demo_and_real_rejected) ... ok
+test_one_sided_binomial_upper (__main__.StatsTests.test_one_sided_binomial_upper) ... ok
+test_partial_cost_is_not_zero (__main__.StatsTests.test_partial_cost_is_not_zero) ... ok
+test_repetitions_are_not_independent_tasks (__main__.StatsTests.test_repetitions_are_not_independent_tasks) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.001s
+
+OK
+[3/4] Test schemas, DAG and SQLite DDL
+test_content_logging_rejected (__main__.BundleTests.test_content_logging_rejected) ... ok
+test_example_config (__main__.BundleTests.test_example_config) ... ok
+test_graph_cycle (__main__.BundleTests.test_graph_cycle) ... ok
+test_graph_missing_dep (__main__.BundleTests.test_graph_missing_dep) ... ok
+test_real_graph_is_complete (__main__.BundleTests.test_real_graph_is_complete) ... ok
+test_sqlite_schema_integrity (__main__.BundleTests.test_sqlite_schema_integrity) ... ok
+test_unknown_config_rejected (__main__.BundleTests.test_unknown_config_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.005s
+
+OK
+[4/4] Calibrate bundled Java oracles (not product tests)
+{
+  "kind": "java-oracle-calibration",
+  "status": "passed",
+  "productTestsExecuted": false,
+  "liveModelExecuted": false,
+  "rows": [
+    {
+      "case": "J01",
+      "calibrated": true,
+      "outcomes": {
+        "initial": {
+          "compileExit": 0,
+          "runExit": 1,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: same eventId from another tenant must succeed\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:8)\n"
+        },
+        "known-good": {
+          "compileExit": 0,
+          "runExit": 0,
+          "output": "ORACLE_PASS:J01\n"
+        }
+      }
+    },
+    {
+      "case": "J02",
+      "calibrated": true,
+      "outcomes": {
+        "initial": {
+          "compileExit": 0,
+          "runExit": 1,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: list query leaked foreign tenant\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:13)\n"
+        },
+        "known-good": {
+          "compileExit": 0,
+          "runExit": 0,
+          "output": "ORACLE_PASS:J02\n"
+        }
+      }
+    },
+    {
+      "case": "J07",
+      "calibrated": true,
+      "outcomes": {
+        "initial": {
+          "compileExit": 0,
+          "runExit": 1,
+          "output": "Exception in thread \"main\" java.lang.AssertionError: old success must not override current failure\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:11)\n"
+        },
+        "known-good": {
+          "compileExit": 0,
+          "runExit": 0,
+          "output": "ORACLE_PASS:J07\n"
+        }
+      }
+    }
+  ]
+}
+Design checks complete. No real Pi integration or live model benchmark was performed.

@@ -1,0 +1,107 @@
+{
+  "kind": "audit-component-probes",
+  "sourceCommit": "e14804daf9aa31b342ddca718d789fa6860c2244",
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "realPiHostExecuted": false,
+  "fullSuiteExecuted": false,
+  "rows": [
+    {
+      "id": "A01-stock-host-guard",
+      "observed": "PCR_PI_INGRESS_METADATA_CONTRACT_MISSING",
+      "regressionReproduced": true,
+      "scope": "module loading with an unpatched-export-shape stub; not a real Pi loader"
+    },
+    {
+      "id": "A02-image-view-loss",
+      "mode": "reduced",
+      "outputTypes": [
+        "text",
+        "text"
+      ],
+      "regressionReproduced": true
+    },
+    {
+      "id": "A03-view-budget-not-enforced",
+      "mode": "reduced",
+      "budget": 500,
+      "estimatedOutputTokens": 5006,
+      "regressionReproduced": true
+    },
+    {
+      "id": "A04-read-first-exposure-tail-loss",
+      "originalContainsMarker": true,
+      "viewContainsMarker": false,
+      "visibleCharacters": 4069,
+      "regressionReproduced": true
+    },
+    {
+      "id": "A05-shared-object-not-a-cycle",
+      "jsonStringifyWorks": true,
+      "observed": {
+        "message": "PCR_OBSERVATION_ENVELOPE_NON_CANONICAL",
+        "details": {
+          "reason": "cyclic"
+        }
+      },
+      "regressionReproduced": true
+    },
+    {
+      "id": "A06-unknown-block-composition",
+      "normalizedTypes": [
+        "bypass"
+      ],
+      "mode": "reduced",
+      "outputTypes": [
+        "text",
+        "text"
+      ],
+      "regressionReproduced": true,
+      "scope": "future/third-party content boundary; current official tool-result type is text|image"
+    },
+    {
+      "id": "A07-maven-classifier",
+      "eligibleReducers": [
+        "bash",
+        "default-pointer"
+      ],
+      "firstMatch": "bash",
+      "observation": "command arguments do not route ordinary bash Maven output into test-log reducer",
+      "regressionReproduced": true
+    },
+    {
+      "id": "A08-input-image-rejection",
+      "action": "reject",
+      "aborted": 1,
+      "captures": 0,
+      "failurePhase": "unsupported-images",
+      "regressionReproduced": true,
+      "scope": "real registered handler with host context stub"
+    }
+  ],
+  "sourceFiles": {
+    "packages/runtime/src/observation-envelope.ts": "ad7cb5815b1dec01a85a3eec7fb2c7162330c2fd54553d24b9da0ba839e03a11",
+    "packages/contracts/src/index.ts": "5bd0a4f2a22b6c7e15eae79b08a275145f3064c3822e68a0171407f7e3861545",
+    "packages/contracts/src/canonical.ts": "35392a88ae4ddf7e6f3542db1aecf7d1f81eb56dde36c8d1ba39293cb20343ce",
+    "packages/contracts/src/errors.ts": "4ab8a31e86239bfe526a9a4928f0f7f012f73613c429a38a354b885a7a5da5d9",
+    "packages/contracts/src/hash.ts": "bfa30fc856a2f9da159809b4cb03914b4f7a26e6849c8936cce818ffc161a18a",
+    "packages/contracts/src/ids.ts": "1baa12c83efbf20d9eee823407218f2ecac85de846bdbd08ad481ebab49356df",
+    "packages/contracts/src/identity.ts": "b74127dca5d8b9cbeb942834f1321b443a2cdcfc10402bca103345f037a5af2b",
+    "packages/contracts/src/package-boundary.ts": "a83102e9fb633b0c6e5503b9740c4211ab91b619f86647bcb62d102eccb09a3c",
+    "packages/contracts/src/providers.ts": "f9f9be0a4d100012920bb009b37881669e1b7da86dce065e571ffbee7af76586",
+    "packages/contracts/src/semantic.ts": "9f99552f911fffd3817277691d217cca7d878c99785479aa60ea5667e85a2677",
+    "packages/contracts/src/types.ts": "749a8dad61a813b15cb880d1d0c2bc1b69dd839d4f7deb6fbac01ecbd16cdd8d",
+    "packages/contracts/src/v2.ts": "a797d5b944fa0f7a8dd7f184aa5b84c1cc17f19ea8549f71140d5384691920d6",
+    "packages/core/src/reducers/read.ts": "186a7873b662fbd832c5b28329802f551e1fae5e10e7ca88d748128be2c3bf2b",
+    "packages/core/src/reducers/text.ts": "43b0d69320a510cc7eb34ae5be4a6ea276e686e5661800453e592fddb61035b2",
+    "packages/core/src/reducers/production.ts": "2693677039712bc71ec871a1983f37497be5d331f470a17e3fddb975f092d1b9",
+    "packages/core/src/reducers/bash.ts": "f4fd4987c2ea15673f7b5ef6a86fc7f76f80434024fc7116edf98bf925f8b18b",
+    "packages/core/src/reducers/build-log.ts": "44df29a9f52b43e8761ae2daf114fe224d853cbd297632d228b9f910ad14c5e9",
+    "packages/core/src/reducers/file-mutation.ts": "5e44b744d2ff17f8c06d6fae83459e631346e070b9a9d959e65a2dc9cdcf796f",
+    "packages/core/src/reducers/pointer.ts": "72f7f6d1d5eb1af6299934ee538144765ffb698765ce893802b03855af5f27b6",
+    "packages/core/src/reducers/search.ts": "c144782e061f8b0a9579ea0deb2b37f67e85988c454135a64b1875d60a1734a3",
+    "packages/core/src/reducers/test-log.ts": "0ed43b6b359e530b2f4246ca416263d8c402cd5e5aa1400ca8f0803a36ca0b2e",
+    "packages/core/src/budget/pricer.ts": "c2486946102f5878eaa43653be4e110fbe5aa3d2826fc9d4ae174f2fe86faca6",
+    "packages/pi-adapter/src/user-input-hook.ts": "aa231186bdfcbc02f18c9880ac20cb33113abe7c54566066f1ae5b7ef70f6006"
+  }
+}

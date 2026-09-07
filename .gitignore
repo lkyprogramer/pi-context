@@ -1,4 +1,5 @@
 .DS_Store
+/*.tgz
 node_modules
 dist
 !apps/pi-context-runtime/dist/

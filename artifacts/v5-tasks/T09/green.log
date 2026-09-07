@@ -1,0 +1,10 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ test/integration/history-read.test.ts (2 tests) 5ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:51:24
+   Duration  676ms (transform 73ms, setup 0ms, collect 115ms, tests 5ms, environment 0ms, prepare 95ms)
+
