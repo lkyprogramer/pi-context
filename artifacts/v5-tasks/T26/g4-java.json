@@ -58,7 +58,141 @@
       }
     ]
   },
+  "cases": {
+    "J01": {
+      "attempted": true,
+      "status": "passed",
+      "isolation": "t21-container",
+      "brokerSocket": true,
+      "agentExit": 0,
+      "agentResult": {
+        "kind": "g4-agent",
+        "status": "ok",
+        "plugin": {
+          "errors": [],
+          "paths": [
+            "/home/node/.pi/agent/plugins/pi-context/dist/extension.js"
+          ],
+          "commands": [
+            "pctx"
+          ]
+        },
+        "tools": [
+          "read",
+          "bash",
+          "edit",
+          "write",
+          "pctx_history"
+        ],
+        "lastAssistant": "Fixed. The key change: `seen.add(eventId)` → `seen.add(tenant + '\\u0000' + eventId)`, making uniqueness the pair (tenant, eventId). The `\\u0000` separator is unambiguous (it can't appear in a tenant/eventId string), so `(\"a:b\",\"c\")` and `(\"a\",\"b:c\")` are never merged. `seen` is already an instance field, so separate instances don't share state, and the null/empty validation was kept.\n\nVerified with a test run:\n- `claim(\"A\",\"event-1\")` → true\n- `claim(\"B\",\"event-1\")` → true\n- `claim(\"A\",\"event-1\"",
+        "files": [
+          "Deduplicator.class",
+          "Deduplicator.java",
+          "TASK.md",
+          "sessions"
+        ],
+        "error": null
+      },
+      "oracle": {
+        "status": "passed",
+        "compileExit": 0,
+        "runExit": 0,
+        "output": "ORACLE_PASS:J01\n"
+      },
+      "note": "J01 live agent in T21 container; oracle passed; grader was not mounted",
+      "error": null
+    },
+    "J02": {
+      "caseId": "J02",
+      "attempted": true,
+      "status": "passed",
+      "isolation": "t21-container",
+      "brokerSocket": true,
+      "agentExit": 0,
+      "agentResult": {
+        "kind": "g4-agent",
+        "status": "ok",
+        "plugin": {
+          "errors": [],
+          "paths": [
+            "/home/node/.pi/agent/plugins/pi-context/dist/extension.js"
+          ],
+          "commands": [
+            "pctx"
+          ]
+        },
+        "tools": [
+          "read",
+          "bash",
+          "edit",
+          "write",
+          "pctx_history"
+        ],
+        "lastAssistant": "DONE — fixed in /work/TenantRepository.java: `findAll` now filters by `tenant` and returns a fresh mutable `ArrayList` copy (so caller `clear()` is safe and doesn't affect later results), and `findOne` matches on both `tenant` and `id`, returning `null` when the tenant is absent. Verified with a quick compile-and-run test — all cases pass.",
+        "files": [
+          "TASK.md",
+          "TenantRepository.java",
+          "sessions"
+        ],
+        "error": null
+      },
+      "oracle": {
+        "status": "passed",
+        "compileExit": 0,
+        "runExit": 0,
+        "output": "ORACLE_PASS:J02\n"
+      },
+      "note": "J02 live agent in T21 container; oracle passed; grader was not mounted",
+      "error": null
+    },
+    "J07": {
+      "caseId": "J07",
+      "attempted": true,
+      "status": "passed",
+      "isolation": "t21-container",
+      "brokerSocket": true,
+      "agentExit": 0,
+      "agentResult": {
+        "kind": "g4-agent",
+        "status": "ok",
+        "plugin": {
+          "errors": [],
+          "paths": [
+            "/home/node/.pi/agent/plugins/pi-context/dist/extension.js"
+          ],
+          "commands": [
+            "pctx"
+          ]
+        },
+        "tools": [
+          "read",
+          "bash",
+          "edit",
+          "write",
+          "pctx_history"
+        ],
+        "lastAssistant": "Fixed. `isCurrentSuccess` now selects the run with the max `observedAt` among runs matching the given revision, and returns success only if that latest run has `passed == TRUE`. Verified with a quick test harness: older pass doesn't override newer failure (both input orders), different revisions ignored, latest `passed=null` → false, empty list → false, latest pass → true. Only VerificationStatus.java was modified.\n\nDONE",
+        "files": [
+          "TASK.md",
+          "VerificationStatus$Run.class",
+          "VerificationStatus.class",
+          "VerificationStatus.java",
+          "sessions"
+        ],
+        "error": null
+      },
+      "oracle": {
+        "status": "passed",
+        "compileExit": 0,
+        "runExit": 0,
+        "output": "ORACLE_PASS:J07\n"
+      },
+      "note": "J07 live agent in T21 container; oracle passed; grader was not mounted",
+      "error": null
+    }
+  },
   "liveAgent": {
+    "caseId": "J02",
     "attempted": true,
     "status": "passed",
     "isolation": "t21-container",
@@ -83,11 +217,10 @@
         "write",
         "pctx_history"
       ],
-      "lastAssistant": "Fixed. The key change: `seen.add(eventId)` → `seen.add(tenant + '\\u0000' + eventId)`, making uniqueness the pair (tenant, eventId). The `\\u0000` separator is unambiguous (it can't appear in a tenant/eventId string), so `(\"a:b\",\"c\")` and `(\"a\",\"b:c\")` are never merged. `seen` is already an instance field, so separate instances don't share state, and the null/empty validation was kept.\n\nVerified with a test run:\n- `claim(\"A\",\"event-1\")` → true\n- `claim(\"B\",\"event-1\")` → true\n- `claim(\"A\",\"event-1\"",
+      "lastAssistant": "DONE — fixed in /work/TenantRepository.java: `findAll` now filters by `tenant` and returns a fresh mutable `ArrayList` copy (so caller `clear()` is safe and doesn't affect later results), and `findOne` matches on both `tenant` and `id`, returning `null` when the tenant is absent. Verified with a quick compile-and-run test — all cases pass.",
       "files": [
-        "Deduplicator.class",
-        "Deduplicator.java",
         "TASK.md",
+        "TenantRepository.java",
         "sessions"
       ],
       "error": null
@@ -96,10 +229,10 @@
       "status": "passed",
       "compileExit": 0,
       "runExit": 0,
-      "output": "ORACLE_PASS:J01\n"
+      "output": "ORACLE_PASS:J02\n"
     },
-    "note": "J01 live agent in T21 container; oracle passed; grader was not mounted",
+    "note": "J02 live agent in T21 container; oracle passed; grader was not mounted",
     "error": null
   },
-  "note": "J01 live agent in T21 container; oracle passed; grader was not mounted"
+  "note": "J01=passed; J02=passed; J07=passed"
 }

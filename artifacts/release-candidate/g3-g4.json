@@ -12,11 +12,17 @@
   },
   "g4": {
     "status": "passed",
-    "n": 1,
-    "case": "J01",
-    "isolation": "t21-container",
-    "brokerSocket": true,
-    "oracle": "ORACLE_PASS:J01",
-    "note": "live agent in network-none image; grader unmounted; J02/J07 not live-run"
+    "n": 3,
+    "cases": [
+      "J01",
+      "J02",
+      "J07"
+    ],
+    "oracles": {
+      "J01": "ORACLE_PASS:J01",
+      "J02": "ORACLE_PASS:J02",
+      "J07": "ORACLE_PASS:J07"
+    },
+    "note": "J02 needed one retry after unmodifiable-list fail; grader unmounted"
   }
 }

@@ -1,0 +1,22 @@
+{
+  "status": "failed",
+  "note": "J01=passed; J02=failed; J07=passed",
+  "oracleCalibration": "passed",
+  "cases": {
+    "J01": {
+      "status": "passed",
+      "oracle": "passed",
+      "brokerSocket": true
+    },
+    "J02": {
+      "status": "failed",
+      "oracle": "failed",
+      "brokerSocket": true
+    },
+    "J07": {
+      "status": "passed",
+      "oracle": "passed",
+      "brokerSocket": true
+    }
+  }
+}

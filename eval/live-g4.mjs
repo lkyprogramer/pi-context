@@ -11,6 +11,55 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 const IMAGE = process.env.PCR_SANDBOX_IMAGE || "pctx-t21-sandbox:0.85.1";
+const FIXTURES = join(repo, "docs/pi-context-native-first-evolution-v5.0.0/fixtures/java");
+
+const CASES = {
+  J01: {
+    source: "Deduplicator.java",
+    pass: "ORACLE_PASS:J01",
+    task: `Fix Deduplicator.java in this directory.
+
+claim(tenant, eventId) must treat uniqueness as the pair (tenant, eventId), not eventId alone.
+- first claim("A","event-1") succeeds (true)
+- claim("B","event-1") also succeeds (different tenant)
+- second claim("A","event-1") returns false
+- claim("a:b","c") and claim("a","b:c") must both succeed (do not merge tenants)
+- new Deduplicator instances must not share state
+- null or empty tenant/eventId throws IllegalArgumentException
+
+Use read/write/edit/bash as needed. Only modify Deduplicator.java. Reply DONE when saved.
+`,
+  },
+  J02: {
+    source: "TenantRepository.java",
+    pass: "ORACLE_PASS:J02",
+    task: `Fix TenantRepository.java in this directory.
+
+findAll(tenant) and findOne(tenant, id) must be tenant-scoped.
+- findAll("A") must not include rows from tenant B
+- findOne("A","same") must return A's row, not B's row with the same id
+- findOne("missing","same") must return null
+- the caller may invoke clear() on the list returned by findAll; that must not throw and must not change later findAll results (return a mutable copy, not an unmodifiable view)
+
+Use read/write/edit/bash as needed. Only modify TenantRepository.java. Reply DONE when saved.
+`,
+  },
+  J07: {
+    source: "VerificationStatus.java",
+    pass: "ORACLE_PASS:J07",
+    task: `Fix VerificationStatus.java in this directory.
+
+isCurrentSuccess(runs, revision) must use the latest evidence for that revision only.
+- an older passing run must not override a newer failure on the same revision
+- latest evidence wins regardless of input order
+- a different revision must not override the current revision's success
+- latest unknown (passed=null) is not success
+- empty evidence is not success
+
+Use read/write/edit/bash as needed. Only modify VerificationStatus.java. Reply DONE when saved.
+`,
+  },
+};
 
 function redact(value) {
   return String(value)
@@ -57,12 +106,12 @@ function calibrateOracles() {
   }
 }
 
-function gradeCandidate(sourceFile, oracleFile) {
+function gradeCandidate(sourceFile, sourceName, oracleFile, passToken) {
   const grade = mkdtempSync(join(tmpdir(), "pctx-g4-grade-"));
   try {
-    copyFileSync(sourceFile, join(grade, "Deduplicator.java"));
+    copyFileSync(sourceFile, join(grade, sourceName));
     copyFileSync(oracleFile, join(grade, "Oracle.java"));
-    const build = spawnSync("javac", ["--release", "8", "Deduplicator.java", "Oracle.java"], {
+    const build = spawnSync("javac", ["--release", "8", sourceName, "Oracle.java"], {
       cwd: grade,
       encoding: "utf8",
       timeout: 25_000,
@@ -73,7 +122,7 @@ function gradeCandidate(sourceFile, oracleFile) {
     const run = spawnSync("java", ["-cp", grade, "Oracle"], { encoding: "utf8", timeout: 10_000 });
     const output = `${run.stdout || ""}${run.stderr || ""}`;
     return {
-      status: run.status === 0 && output.includes("ORACLE_PASS:J01") ? "passed" : "failed",
+      status: run.status === 0 && output.includes(passToken) ? "passed" : "failed",
       compileExit: 0,
       runExit: run.status,
       output: output.slice(0, 1500),
@@ -93,13 +142,15 @@ function waitBrokerSocket(name, timeoutMs = 20_000) {
   return false;
 }
 
-function runLiveAgent(env) {
-  const id = `g4-${Date.now()}`;
+function runLiveAgent(env, caseId) {
+  const spec = CASES[caseId];
+  const id = `g4-${caseId}-${Date.now()}`;
   const volume = `pctx-${id}-broker`;
   const brokerName = `pctx-${id}-broker`;
   const work = mkdtempSync(join(tmpdir(), "pctx-g4-work-"));
   const tarballDir = mkdtempSync(join(tmpdir(), "pctx-g4-tar-"));
   const out = {
+    caseId,
     attempted: true,
     status: "blocked",
     isolation: "t21-container",
@@ -117,22 +168,8 @@ function runLiveAgent(env) {
       return out;
     }
     copyFileSync(tarballSrc, join(tarballDir, "plugin.tgz"));
-    copyFileSync(
-      join(repo, "docs/pi-context-native-first-evolution-v5.0.0/fixtures/java/J01/initial/Deduplicator.java"),
-      join(work, "Deduplicator.java"),
-    );
-    writeFileSync(join(work, "TASK.md"), `Fix Deduplicator.java in this directory.
-
-claim(tenant, eventId) must treat uniqueness as the pair (tenant, eventId), not eventId alone.
-- first claim("A","event-1") succeeds (true)
-- claim("B","event-1") also succeeds (different tenant)
-- second claim("A","event-1") returns false
-- claim("a:b","c") and claim("a","b:c") must both succeed (do not merge tenants)
-- new Deduplicator instances must not share state
-- null or empty tenant/eventId throws IllegalArgumentException
-
-Use read/write/edit/bash as needed. Only modify Deduplicator.java. Reply DONE when saved.
-`);
+    copyFileSync(join(FIXTURES, caseId, "initial", spec.source), join(work, spec.source));
+    writeFileSync(join(work, "TASK.md"), spec.task);
     docker(["volume", "create", volume]);
     const broker = docker([
       "run", "-d", "--name", brokerName,
@@ -187,21 +224,23 @@ Use read/write/edit/bash as needed. Only modify Deduplicator.java. Reply DONE wh
     const agentLog = redact(`${agent.stdout || ""}\n${agent.stderr || ""}`).slice(0, 2000);
     const resultPath = join(work, "agent-result.json");
     out.agentResult = existsSync(resultPath) ? JSON.parse(readFileSync(resultPath, "utf8")) : { status: "missing", log: agentLog };
-    if (!existsSync(join(work, "Deduplicator.java"))) {
+    if (!existsSync(join(work, spec.source))) {
       out.status = "failed";
-      out.note = "agent did not leave Deduplicator.java";
+      out.note = `agent did not leave ${spec.source}`;
       return out;
     }
     out.oracle = gradeCandidate(
-      join(work, "Deduplicator.java"),
-      join(repo, "docs/pi-context-native-first-evolution-v5.0.0/fixtures/java/J01/grader/Oracle.java"),
+      join(work, spec.source),
+      spec.source,
+      join(FIXTURES, caseId, "grader", "Oracle.java"),
+      spec.pass,
     );
     if (out.oracle.status === "passed") {
       out.status = "passed";
-      out.note = "J01 live agent in T21 container; oracle passed; grader was not mounted";
+      out.note = `${caseId} live agent in T21 container; oracle passed; grader was not mounted`;
     } else {
       out.status = "failed";
-      out.note = `J01 live agent ran; oracle ${out.oracle.status}`;
+      out.note = `${caseId} live agent ran; oracle ${out.oracle.status}`;
     }
     return out;
   } catch (error) {
@@ -220,11 +259,16 @@ Use read/write/edit/bash as needed. Only modify Deduplicator.java. Reply DONE wh
 export function runLiveG4() {
   loadDotenv();
   process.env.PCR_LIVE = "1";
+  const requested = String(process.env.PCR_G4_CASES || "J02,J07")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((id) => CASES[id]);
   const out = {
     kind: "g4-java-e2e",
     status: "not-run",
     image: IMAGE,
     oracleCalibration: null,
+    cases: {},
     liveAgent: null,
     note: "",
   };
@@ -249,27 +293,44 @@ export function runLiveG4() {
     out.note = "PCR_LIVE credentials missing";
     return out;
   }
-  out.liveAgent = runLiveAgent({ apiKey, baseUrl, model, provider });
-  out.status = out.liveAgent.status;
-  out.note = out.liveAgent.note;
+  const env = { apiKey, baseUrl, model, provider };
+  for (const caseId of requested) {
+    out.cases[caseId] = runLiveAgent(env, caseId);
+  }
+  const statuses = requested.map((id) => out.cases[id]?.status);
+  out.liveAgent = out.cases[requested[requested.length - 1] ?? ""] ?? null;
+  if (statuses.every((s) => s === "passed")) out.status = "passed";
+  else if (statuses.some((s) => s === "blocked" || s === "not-run")) out.status = statuses.includes("failed") ? "failed" : "blocked";
+  else out.status = "failed";
+  out.note = requested.map((id) => `${id}=${out.cases[id]?.status}`).join("; ");
   return out;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const result = runLiveG4();
   const dest = process.argv[2] || join(repo, "artifacts/v5-tasks/T26/g4-java.json");
+  const previous = existsSync(dest) ? JSON.parse(readFileSync(dest, "utf8")) : {};
+  const result = runLiveG4();
+  if (previous.cases && typeof previous.cases === "object") {
+    result.cases = { ...previous.cases, ...result.cases };
+  } else if (previous.liveAgent?.note?.includes("J01") && !result.cases.J01) {
+    result.cases = { J01: previous.liveAgent, ...result.cases };
+  }
+  const all = Object.values(result.cases);
+  if (all.length) {
+    result.status = all.every((c) => c.status === "passed")
+      ? "passed"
+      : all.some((c) => c.status === "blocked") && !all.some((c) => c.status === "failed")
+        ? "blocked"
+        : all.every((c) => c.status === "not-run") ? "not-run" : "failed";
+    result.note = Object.entries(result.cases).map(([id, c]) => `${id}=${c.status}`).join("; ");
+  }
   mkdirSync(dirname(dest), { recursive: true });
   writeFileSync(dest, `${JSON.stringify(result, null, 2)}\n`);
   console.log(JSON.stringify({
     status: result.status,
     note: result.note,
     oracleCalibration: result.oracleCalibration?.status,
-    live: {
-      attempted: result.liveAgent?.attempted,
-      brokerSocket: result.liveAgent?.brokerSocket,
-      agentExit: result.liveAgent?.agentExit,
-      oracle: result.liveAgent?.oracle?.status,
-    },
+    cases: Object.fromEntries(Object.entries(result.cases).map(([id, c]) => [id, { status: c.status, oracle: c.oracle?.status, brokerSocket: c.brokerSocket }])),
   }, null, 2));
   process.exit(result.status === "passed" ? 0 : result.status === "blocked" || result.status === "not-run" ? 2 : 1);
 }
