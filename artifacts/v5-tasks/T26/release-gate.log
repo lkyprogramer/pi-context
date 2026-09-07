@@ -1,0 +1,44 @@
+compdef:153: _comps: assignment to invalid subscript range
+{
+  "ok": true,
+  "private": true,
+  "table": {
+    "G0": {
+      "name": "contract/package",
+      "status": "passed",
+      "command": "pnpm exec tsc -p tsconfig.build.json",
+      "artifactHash": "34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19"
+    },
+    "G1": {
+      "name": "zero-damage",
+      "status": "passed",
+      "command": "pnpm exec vitest run test/property/invariants.test.ts",
+      "artifactHash": null
+    },
+    "G2": {
+      "name": "C1 recovery",
+      "status": "passed",
+      "command": "pnpm exec vitest run test/integration/history-read.test.ts",
+      "artifactHash": null
+    },
+    "G3": {
+      "name": "C2 real model",
+      "status": "not-run",
+      "command": "live C2",
+      "artifactHash": null,
+      "note": "provider/sandbox not claimed"
+    },
+    "G4": {
+      "name": "Java/E2E",
+      "status": "not-run",
+      "command": "java oracle",
+      "artifactHash": null
+    },
+    "G5": {
+      "name": "release",
+      "status": "incomplete",
+      "command": "private:true; no npm publish",
+      "artifactHash": null
+    }
+  }
+}
