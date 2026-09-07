@@ -1,6 +1,0 @@
-packages:
-  - apps/*
-  - packages/*
-
-patchedDependencies:
-  '@earendil-works/pi-coding-agent@0.84.4': patches/@earendil-works__pi-coding-agent@0.84.4.patch
