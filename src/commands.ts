@@ -1,7 +1,10 @@
 import type { PluginState } from "./plugin.js";
 import { historyTool, setProfile } from "./plugin.js";
-import type { HistoryRequest, Profile } from "./contracts.js";
-import { PIN_TYPE, pinId, quoteHash } from "./checkpoint/pins.js";
+import type { HistoryRequest, NativeEntry, Profile } from "./contracts.js";
+import { utf8Slice } from "./contracts.js";
+import { PIN_TYPE, pinId, quoteHash, type Pin } from "./checkpoint/pins.js";
+import { textSourceHash } from "./history/refs.js";
+import { authorize, buildScope } from "./history/scope.js";
 import { decodeRef } from "./history/refs.js";
 import { entriesFromCtx, type PiExtensionAPI } from "./pi/adapter.js";
 
@@ -18,6 +21,51 @@ const HISTORY_PARAMS = {
   },
   required: ["action"],
 };
+
+export function buildPinRecord(input: {
+  cwd: string;
+  sessionId: string;
+  leafId: string | null;
+  entries: NativeEntry[];
+  entryId: string;
+  blockIndex: number;
+  startByte: number;
+  endByteExclusive: number;
+}): { pin: Pin } | { error: string } {
+  const getEntry = (id: string) => input.entries.find((entry) => entry.id === id);
+  const scope = buildScope({ cwd: input.cwd, sessionId: input.sessionId, leafId: input.leafId, getEntry });
+  if (!authorize(scope, input.entryId)) return { error: "not visible" };
+  const entry = getEntry(input.entryId);
+  if (!entry) return { error: "source-missing" };
+  const raw = entry.message?.content;
+  const blocks = Array.isArray(raw) ? raw : typeof raw === "string" ? [{ type: "text", text: raw }] : [];
+  const block = blocks[input.blockIndex];
+  if (!block || block.type !== "text" || typeof block.text !== "string") return { error: "missing text block" };
+  try {
+    utf8Slice(block.text, input.startByte, input.endByteExclusive);
+  } catch {
+    return { error: "invalid-range" };
+  }
+  const source = {
+    version: 5 as const,
+    workspaceId: scope.workspaceId,
+    sessionId: scope.sessionId,
+    entryId: input.entryId,
+    field: { kind: "text" as const, blockIndex: input.blockIndex },
+    sourceHash: textSourceHash(block.text),
+  };
+  return {
+    pin: {
+      pinId: pinId(source, input.startByte, input.endByteExclusive),
+      source,
+      startByte: input.startByte,
+      endByteExclusive: input.endByteExclusive,
+      quoteHash: quoteHash(block.text, input.startByte, input.endByteExclusive),
+      createdByEntryId: input.entryId,
+      state: "active",
+    },
+  };
+}
 
 export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
   pi.registerTool({
@@ -75,25 +123,29 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
         const ok = await ui?.confirm?.("Pin source", "Pin the selected native text range?") ?? false;
         if (!ok) return;
         const [entryId, block, start, end] = rest;
-        const append = (pi as { appendEntry?: (t: string, d: unknown) => void }).appendEntry;
+        const append = pi.appendEntry;
         if (append && entryId) {
-          const startByte = Number(start);
-          const endByte = Number(end);
-          append(PIN_TYPE, {
-            pinId: pinId({ version: 5, workspaceId: "w", sessionId: "s", entryId, field: { kind: "text", blockIndex: Number(block) }, sourceHash: "0".repeat(64) }, startByte, endByte),
-            source: { version: 5, workspaceId: "w", sessionId: "s", entryId, field: { kind: "text", blockIndex: Number(block) }, sourceHash: "0".repeat(64) },
-            startByte,
-            endByteExclusive: endByte,
-            quoteHash: quoteHash("x", 0, 1),
-            createdByEntryId: entryId,
-            state: "active",
+          const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+          const built = buildPinRecord({
+            cwd,
+            sessionId,
+            leafId,
+            entries,
+            entryId,
+            blockIndex: Number(block),
+            startByte: Number(start),
+            endByteExclusive: Number(end),
           });
+          if ("error" in built) {
+            notify(built.error);
+            return;
+          }
+          append(PIN_TYPE, built.pin);
         }
         return;
       }
       if (cmd === "unpin") {
-        const append = (pi as { appendEntry?: (t: string, d: unknown) => void }).appendEntry;
-        append?.(PIN_TYPE, { pinId: rest[0], state: "released" });
+        pi.appendEntry?.(PIN_TYPE, { pinId: rest[0], state: "released" });
       }
     },
   });

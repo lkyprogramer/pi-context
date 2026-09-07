@@ -16,33 +16,45 @@ function isProtected(block: ContentBlock): boolean {
   return block.type === "image" || (block.type !== "text" && block.type !== "toolResult");
 }
 
+export function cloneMessages<T>(value: T): T {
+  return clone(value);
+}
+
 export function renderMessages(input: {
   messages: AgentMessage[];
   plan: FrozenPlan | null;
   profile: "off" | "observe" | "balanced" | "experimental-semantic";
   optionalBudget: number;
+  mappedEntries?: Map<number, { id: string }>;
 }): { messages: AgentMessage[]; bypassed: boolean } {
   const original = input.messages;
-  if (input.profile === "off" || input.profile === "observe" || !input.plan) {
+  if (input.profile === "off" || input.profile === "observe" || !input.plan || input.plan.replacements.length === 0) {
     return { messages: original, bypassed: false };
   }
   const byId = new Map(input.plan.replacements.map((r) => [r.entryId, r]));
   let optional = 0;
   const next = clone(original);
-  for (const msg of next) {
-    if (!Array.isArray(msg.content)) continue;
-    if (msg.content.some(isProtected) && msg.content.some((b) => b.type === "image")) {
-      continue;
+  next.forEach((msg, index) => {
+    const entryId = input.mappedEntries?.get(index)?.id;
+    const replacement = entryId ? byId.get(entryId) : undefined;
+    if (!replacement) return;
+    if (Array.isArray(msg.content)) {
+      if (msg.content.some((block) => block.type === "image") || msg.content.some(isProtected) && msg.content.some((block) => block.type === "image")) {
+        return;
+      }
+      for (const block of msg.content) {
+        if (block.type !== "text" && block.type !== "toolResult") continue;
+        if (typeof block.text !== "string") continue;
+        optional += estimateText(replacement.replacementText).value;
+        block.text = replacement.replacementText;
+      }
+      return;
     }
-    for (const block of msg.content) {
-      if (block.type !== "text" && block.type !== "toolResult") continue;
-      const key = typeof block.entryId === "string" ? block.entryId : undefined;
-      const replacement = key ? byId.get(key) : undefined;
-      if (!replacement) continue;
+    if (typeof msg.content === "string") {
       optional += estimateText(replacement.replacementText).value;
-      if (typeof block.text === "string") block.text = replacement.replacementText;
+      msg.content = replacement.replacementText;
     }
-  }
+  });
   const decision = decideBudget({
     protectedTokens: estimateText(JSON.stringify(original)).value,
     optionalTokens: optional,
@@ -50,7 +62,6 @@ export function renderMessages(input: {
     unknownImageCost: original.some((m) => Array.isArray(m.content) && m.content.some((b) => b.type === "image")),
   });
   if (decision.kind === "bypass") return { messages: original, bypassed: true };
-  Object.freeze(original);
   return { messages: next, bypassed: false };
 }
 

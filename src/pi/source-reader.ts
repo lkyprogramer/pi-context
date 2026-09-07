@@ -23,7 +23,30 @@ export function readVisibleSnapshot(reader: SessionReader): NativeEntry[] {
   return out.reverse();
 }
 
-export function mapOutbound(messages: Array<{ role?: string; content?: unknown }>, entries: NativeEntry[]): Map<number, NativeEntry> {
+export function contentFingerprint(content: unknown): string {
+  if (typeof content === "string") return hashCanonical([{ type: "text", text: content }]);
+  if (!Array.isArray(content)) return hashCanonical(content ?? null);
+  return hashCanonical(
+    content.map((block) => ({
+      type: block.type,
+      text: typeof block.text === "string" ? block.text : null,
+      mimeType: typeof block.mimeType === "string" ? block.mimeType : null,
+      data: typeof block.data === "string" ? block.data : null,
+    })),
+  );
+}
+
+function toolCallIdOf(message: { toolCallId?: unknown; content?: unknown }): string | undefined {
+  if (typeof message.toolCallId === "string") return message.toolCallId;
+  const content = message.content;
+  if (!Array.isArray(content)) return undefined;
+  for (const block of content as ContentBlock[]) {
+    if (typeof block.toolCallId === "string") return block.toolCallId;
+  }
+  return undefined;
+}
+
+export function mapOutbound(messages: Array<{ role?: string; content?: unknown; toolCallId?: unknown }>, entries: NativeEntry[]): Map<number, NativeEntry> {
   const map = new Map<number, NativeEntry>();
   const byTool = new Map<string, NativeEntry[]>();
   for (const entry of entries) {
@@ -34,16 +57,12 @@ export function mapOutbound(messages: Array<{ role?: string; content?: unknown }
     }
   }
   messages.forEach((msg, i) => {
-    const content = msg.content;
-    if (!Array.isArray(content)) return;
-    for (const block of content as ContentBlock[]) {
-      const callId = typeof block.toolCallId === "string" ? block.toolCallId : undefined;
-      if (!callId) continue;
-      const candidates = byTool.get(callId) ?? [];
-      const hash = hashCanonical(block);
-      const matched = candidates.filter((e) => hashCanonical(e.message?.content ?? e) === hash);
-      if (matched.length === 1) map.set(i, matched[0]!);
-    }
+    const callId = toolCallIdOf(msg);
+    if (!callId) return;
+    const candidates = byTool.get(callId) ?? [];
+    const fingerprint = contentFingerprint(msg.content);
+    const matched = candidates.filter((entry) => contentFingerprint(entry.message?.content) === fingerprint);
+    if (matched.length === 1) map.set(i, matched[0]!);
   });
   return map;
 }

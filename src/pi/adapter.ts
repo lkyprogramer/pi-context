@@ -7,6 +7,7 @@ export interface PiExtensionAPI {
   on(event: string, handler: (event: Record<string, unknown>, ctx: Record<string, unknown>) => unknown): void;
   registerTool(tool: unknown): void;
   registerCommand(name: string, options: Record<string, unknown>): void;
+  appendEntry?(customType: string, data?: unknown): void;
 }
 
 export function entriesFromCtx(ctx: Record<string, unknown>): { entries: NativeEntry[]; sessionId: string; leafId: string | null; cwd: string } {

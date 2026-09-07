@@ -10,10 +10,10 @@ import { authorize, buildScope } from "./history/scope.js";
 import { collectBatches } from "./projection/batches.js";
 import { ExposureLedger, outcomeFromStop } from "./projection/exposure.js";
 import { planEpoch, type FrozenPlan } from "./projection/planner.js";
-import { deepEqual, renderMessages, type AgentMessage } from "./projection/render.js";
+import { cloneMessages, deepEqual, renderMessages, type AgentMessage } from "./projection/render.js";
 import { restorePins, type Pin } from "./checkpoint/pins.js";
 import { buildCapsule, appendCapsuleClone } from "./checkpoint/capsule.js";
-import { readVisibleSnapshot } from "./pi/source-reader.js";
+import { mapOutbound, readVisibleSnapshot } from "./pi/source-reader.js";
 
 export interface PluginState {
   config: PctxConfig;
@@ -116,6 +116,12 @@ export function applyContext(state: PluginState, messages: AgentMessage[], entri
         sourceHash: hash,
       }));
     }
+    const mapped = mapOutbound(messages, entries);
+    const includedOriginalRefs: SourceRef[] = [];
+    for (const entry of mapped.values()) {
+      const ref = refs.get(entry.id);
+      if (ref) includedOriginalRefs.push(ref);
+    }
     const batches = collectBatches(entries, (id) => {
       const ref = refs.get(id);
       return ref ? state.ledger.isExposed(ref, state.generation) : false;
@@ -144,7 +150,7 @@ export function applyContext(state: PluginState, messages: AgentMessage[], entri
     state.ledger.begin({
       attemptId,
       snapshot,
-      includedOriginalRefs: [...refs.values()],
+      includedOriginalRefs,
       startedAtMs: started,
     });
     const rendered = renderMessages({
@@ -152,22 +158,28 @@ export function applyContext(state: PluginState, messages: AgentMessage[], entri
       plan: state.plan,
       profile: state.profile,
       optionalBudget: state.config.checkpoint.maxTokens,
+      mappedEntries: mapped,
     });
     if (rendered.bypassed) return messages;
-    if (state.lastCapsule && rendered.messages.length) {
-      const last = rendered.messages[rendered.messages.length - 1]!;
+    let outbound = rendered.messages;
+    if (state.lastCapsule && outbound.length) {
+      if (outbound === messages) outbound = cloneMessages(messages);
+      const last = outbound[outbound.length - 1]!;
+      const capsule = buildCapsule({
+        snapshot,
+        nativeCompactionEntryId: "native",
+        pins: restorePins(entries, scope.visibleEntryIds),
+        unexposedRefs: includedOriginalRefs.filter((r) => !state.ledger.isExposed(r, state.generation)),
+        config: state.config,
+        windowTokens: 128000,
+      });
       if (typeof last.content === "string" && last.role === "user") {
-        last.content = appendCapsuleClone(last.content, buildCapsule({
-          snapshot,
-          nativeCompactionEntryId: "native",
-          pins: restorePins(entries, scope.visibleEntryIds),
-          unexposedRefs: [...refs.values()].filter((r) => !state.ledger.isExposed(r, state.generation)),
-          config: state.config,
-          windowTokens: 128000,
-        }));
+        last.content = appendCapsuleClone(last.content, capsule);
+      } else if (Array.isArray(last.content) && last.role === "user") {
+        last.content = [...last.content, { type: "text", text: capsule.text }];
       }
     }
-    return rendered.messages;
+    return outbound;
   } catch {
     return messages;
   }
