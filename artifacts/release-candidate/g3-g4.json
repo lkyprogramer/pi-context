@@ -1,15 +1,21 @@
 {
   "g3": {
-    "status": "provider-reachable",
-    "command": "chat/completions ping",
-    "provider": "openclaw",
-    "model": "openclaw/Qwen3.8-27B-WORK",
-    "http": 200,
-    "note": "ping HTTP 200; ping is not C2 history recovery"
+    "status": "passed",
+    "command": "PCR_LIVE=1 node eval/live-c2.mjs",
+    "n": 1,
+    "historyCalled": true,
+    "nonceInOutput": true,
+    "nonceInCompactSummary": false,
+    "recoveryPathProven": true,
+    "brokerRequests": 4,
+    "note": "native compact then pctx_history readback; ping is not this result"
   },
   "g4": {
-    "status": "not-run",
+    "status": "blocked",
     "javac": true,
-    "docker": "ok"
+    "docker": "ok",
+    "oracleCalibration": "passed",
+    "liveE2E": false,
+    "note": "host oracles RED/GREEN; live Java blocked: isolation-unproven, no javac in node:22.19.0-bookworm, Containerfile has no JDK/unix relay"
   }
 }

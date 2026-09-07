@@ -1,0 +1,88 @@
+{
+  "kind": "g4-java-e2e",
+  "status": "blocked",
+  "javac": true,
+  "dockerInfo": {
+    "ok": true,
+    "blocked": null
+  },
+  "sandboxRun": {
+    "status": "ok"
+  },
+  "containerNetworkNone": {
+    "status": 143,
+    "stdout": "",
+    "stderr": "Unable to find image 'node:22.19.0-bookworm' locally\n22.19.0-bookworm: Pulling from library/node\na9331b686701: Pulling fs layer\ne108925666d6: Pulling fs layer\n133142790bc0: Pulling fs layer\n2a74a28f7860: Pulling fs layer\n466a56b828bf: Pulling fs layer\n793b9e17564d: Pulling fs layer\n2a74a28f7860: Waiting\n6be0e38cf5c5: Pulling fs layer\n7fc784eecf10: Pulling fs layer\n466a56b828bf: Waiting\n793b9e17564"
+  },
+  "jdkInNodeImage": {
+    "status": 0,
+    "stdout": "NO_JAVAC"
+  },
+  "oracleCalibration": {
+    "kind": "java-oracle-calibration",
+    "status": "passed",
+    "productTestsExecuted": false,
+    "liveModelExecuted": false,
+    "rows": [
+      {
+        "case": "J01",
+        "calibrated": true,
+        "outcomes": {
+          "initial": {
+            "compileExit": 0,
+            "runExit": 1,
+            "output": "Exception in thread \"main\" java.lang.AssertionError: same eventId from another tenant must succeed\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:8)\n"
+          },
+          "known-good": {
+            "compileExit": 0,
+            "runExit": 0,
+            "output": "ORACLE_PASS:J01\n"
+          }
+        }
+      },
+      {
+        "case": "J02",
+        "calibrated": true,
+        "outcomes": {
+          "initial": {
+            "compileExit": 0,
+            "runExit": 1,
+            "output": "Exception in thread \"main\" java.lang.AssertionError: list query leaked foreign tenant\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:13)\n"
+          },
+          "known-good": {
+            "compileExit": 0,
+            "runExit": 0,
+            "output": "ORACLE_PASS:J02\n"
+          }
+        }
+      },
+      {
+        "case": "J07",
+        "calibrated": true,
+        "outcomes": {
+          "initial": {
+            "compileExit": 0,
+            "runExit": 1,
+            "output": "Exception in thread \"main\" java.lang.AssertionError: old success must not override current failure\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:11)\n"
+          },
+          "known-good": {
+            "compileExit": 0,
+            "runExit": 0,
+            "output": "ORACLE_PASS:J07\n"
+          }
+        }
+      }
+    ]
+  },
+  "liveAgent": {
+    "attempted": false,
+    "status": "blocked",
+    "reason": "coding tools require T21 container (network none, loopback unix relay, unmounted grader, JDK). docker info / env isolation is not that sandbox.",
+    "envIsolationProven": false,
+    "toolsEnabledAllowed": {
+      "allowed": false,
+      "reason": "isolation-unproven"
+    }
+  },
+  "note": "oracle calibrated on host; live Java E2E blocked: network-none container=false jdkInSandbox=false. Containerfile has no JDK/Maven/unix relay."
+}

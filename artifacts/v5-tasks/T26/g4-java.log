@@ -1,0 +1,11 @@
+{
+  "status": "blocked",
+  "note": "oracle calibrated on host; live Java E2E blocked: network-none container=false jdkInSandbox=false. Containerfile has no JDK/Maven/unix relay.",
+  "javac": true,
+  "dockerInfo": {
+    "ok": true,
+    "blocked": null
+  },
+  "containerNetworkNone": 143,
+  "oracle": "passed"
+}

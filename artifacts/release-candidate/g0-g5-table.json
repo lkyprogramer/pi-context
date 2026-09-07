@@ -1,7 +1,7 @@
 {
   "package": "pi-context@5.0.0-dev.0",
   "private": true,
-  "commit": "d1c2b51a86cc3a098a7a1db77ce6e2de586b3acf",
+  "commit": "cddc50f4d123dc48d99ba3c86633eb490ccbe538",
   "node": "v22.19.0",
   "piCli": "0.85.1",
   "statedSource": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
@@ -11,7 +11,7 @@
   "tarballSha256": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
   "installSpec": "npm:pi-context@file:<abs-tarball>",
   "verifiedInstallCommand": "pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz",
-  "recommendation": "history-only / observe; do not recommend balanced until G3/G4 have n>0 real C2/E2E runs",
+  "recommendation": "history-only / observe; G3 C2 n=1 on this host is not enough for balanced; G4 live Java E2E is blocked",
   "gates": [
     {
       "id": "G0",
@@ -19,8 +19,7 @@
       "status": "passed",
       "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts --config vitest.config.ts",
       "exitCode": 0,
-      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
-      "note": "official Pi 0.85.1 extracts npm:file tarball to node_modules/pi-context/dist/extension.js; npm gitHead differs from stated source 9767ba2"
+      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd"
     },
     {
       "id": "G1",
@@ -41,20 +40,22 @@
     {
       "id": "G3",
       "name": "C2 real model",
-      "status": "not-run",
-      "command": "live C2 recovery with official Pi + pctx_history",
-      "exitCode": null,
-      "artifactHash": null,
-      "note": "provider ping HTTP 200 after d1c2b51a; ping is not C2. No model history-readback loop executed."
+      "status": "passed",
+      "command": "PCR_LIVE=1 node eval/live-c2.mjs artifacts/v5-tasks/T26/g3-c2.json",
+      "exitCode": 0,
+      "artifactHash": "8fd4f1f07072e10d596a8c004d2a0a5559be135fbbe7e99f030621c3996c3010",
+      "n": 1,
+      "note": "official Pi + pctx_history after native compact; nonce recovered; n=1"
     },
     {
       "id": "G4",
       "name": "Java/E2E",
-      "status": "not-run",
-      "command": "java oracle closed loop",
-      "exitCode": null,
-      "artifactHash": null,
-      "note": "javac present; docker info ok; E2E n=0 without C2"
+      "status": "blocked",
+      "command": "PCR_LIVE=1 node eval/live-g4.mjs artifacts/v5-tasks/T26/g4-java.json",
+      "exitCode": 2,
+      "artifactHash": "9f95df72cca36a08b7bd9bc312f643d9cdd66afd671cd21d1f8ad75ed465a2b2",
+      "n": 0,
+      "note": "oracle calibrated; live E2E blocked (no JDK in sandbox image, isolation-unproven)"
     },
     {
       "id": "G5",

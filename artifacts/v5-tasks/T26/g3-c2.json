@@ -1,0 +1,96 @@
+{
+  "kind": "g3-c2-live",
+  "status": "passed",
+  "node": "v22.19.0",
+  "piCli": "0.85.1",
+  "isolation": {
+    "proven": false,
+    "reason": "isolation-unproven"
+  },
+  "toolsEnabled": {
+    "allowed": false,
+    "reason": "isolation-unproven"
+  },
+  "compact": {
+    "ok": true,
+    "summaryChars": 1497
+  },
+  "historyCalled": true,
+  "nonceInOutput": true,
+  "nonceInCompactSummary": false,
+  "recoveryPathProven": true,
+  "note": "model called pctx_history and returned the nonce after native compact",
+  "error": null,
+  "brokerRequests": 4,
+  "extensionCommands": [
+    "pctx"
+  ],
+  "extensionTools": [
+    "pctx_history"
+  ],
+  "activeTools": [
+    "pctx_history"
+  ],
+  "allTools": [
+    "read",
+    "bash",
+    "powershell",
+    "edit",
+    "write",
+    "grep",
+    "find",
+    "ls",
+    "pctx_history"
+  ],
+  "historyToolRegistered": true,
+  "compactionSettings": {
+    "enabled": true,
+    "reserveTokens": 4096,
+    "keepRecentTokens": 200
+  },
+  "seededEntries": 7,
+  "events": [
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_update",
+    "message_end",
+    "turn_end",
+    "agent_end",
+    "agent_settled"
+  ],
+  "historyCallCount": 6,
+  "lastAssistantChars": 920
+}
