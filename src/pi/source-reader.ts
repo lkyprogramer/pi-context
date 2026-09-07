@@ -36,7 +36,8 @@ export function contentFingerprint(content: unknown): string {
   );
 }
 
-function toolCallIdOf(message: { toolCallId?: unknown; content?: unknown }): string | undefined {
+export function toolCallIdOf(message: { toolCallId?: unknown; content?: unknown } | undefined): string | undefined {
+  if (!message) return undefined;
   if (typeof message.toolCallId === "string") return message.toolCallId;
   const content = message.content;
   if (!Array.isArray(content)) return undefined;
@@ -50,13 +51,15 @@ export function mapOutbound(messages: Array<{ role?: string; content?: unknown; 
   const map = new Map<number, NativeEntry>();
   const byTool = new Map<string, NativeEntry[]>();
   for (const entry of entries) {
-    if (entry.toolCallId) {
-      const list = byTool.get(entry.toolCallId) ?? [];
-      list.push(entry);
-      byTool.set(entry.toolCallId, list);
-    }
+    if (entry.message?.role !== "toolResult") continue;
+    const callId = toolCallIdOf(entry.message);
+    if (!callId) continue;
+    const list = byTool.get(callId) ?? [];
+    list.push(entry);
+    byTool.set(callId, list);
   }
   messages.forEach((msg, i) => {
+    if (msg.role !== "toolResult") return;
     const callId = toolCallIdOf(msg);
     if (!callId) return;
     const candidates = byTool.get(callId) ?? [];

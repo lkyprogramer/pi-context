@@ -179,10 +179,12 @@ export interface NativeEntry {
     content?: ContentBlock[] | string;
     stopReason?: string;
     errorMessage?: string;
+    toolCallId?: string;
+    toolName?: string;
+    isError?: boolean;
   };
   customType?: string;
   data?: unknown;
-  toolCallId?: string;
 }
 
 export function utf8Bytes(text: string): Buffer {

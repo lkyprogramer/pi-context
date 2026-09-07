@@ -36,13 +36,20 @@ export function assistantEntry(
   return { id, parentId, type: "message", message: { role: "assistant", content, stopReason } };
 }
 
+/** Official Pi SessionMessageEntry wrapping ToolResultMessage — no top-level toolCallId. */
 export function toolResultEntry(
   id: string,
   parentId: string | null,
   toolCallId: string,
   content: ContentBlock[],
 ): NativeEntry {
-  return { id, parentId, type: "message", toolCallId, message: { role: "tool", content } };
+  return {
+    type: "message",
+    id,
+    parentId,
+    timestamp: 1,
+    message: { role: "toolResult", toolCallId, toolName: "bash", content, isError: false },
+  };
 }
 
 export function independentBranch(ids = ["a", "b"]): BranchFixture {

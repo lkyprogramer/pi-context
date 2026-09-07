@@ -28,14 +28,24 @@ function balancedPlugin() {
 }
 
 function lineage(): NativeEntry[] {
-  return [
+  const entries = [
     userEntry("u0", null, textBlocks("run old")),
-    assistantEntry("a0", "u0", [{ type: "toolCall", id: "c0" }]),
+    assistantEntry("a0", "u0", [{ type: "toolCall", id: "c0" }], "toolUse"),
     toolResultEntry("r0", "a0", "c0", textBlocks(LONG)),
     userEntry("u1", "r0", textBlocks("run new")),
-    assistantEntry("a1", "u1", [{ type: "toolCall", id: "c1" }]),
+    assistantEntry("a1", "u1", [{ type: "toolCall", id: "c1" }], "toolUse"),
     toolResultEntry("r1", "a1", "c1", textBlocks("recent-ok")),
   ];
+  for (const entry of entries) {
+    expect(Object.prototype.hasOwnProperty.call(entry, "toolCallId")).toBe(false);
+  }
+  const results = entries.filter((entry) => entry.message?.role === "toolResult");
+  expect(results).toHaveLength(2);
+  expect(results.every((entry) => entry.message?.role === "toolResult")).toBe(true);
+  expect(results.every((entry) => typeof entry.message?.toolCallId === "string")).toBe(true);
+  expect(mapOutbound(officialMessages(), entries).get(2)?.id).toBe("r0");
+  expect(mapOutbound(officialMessages(), entries).get(5)?.id).toBe("r1");
+  return entries;
 }
 
 function officialMessages(): AgentMessage[] {

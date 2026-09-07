@@ -23,17 +23,38 @@ describe("T03 native source", () => {
     expect(img).toBeTruthy();
   });
 
-  it("does not merge same-text different entries; colliding toolCallIds with different hashes are ambiguous", () => {
+  it("does not merge same-text different entries; colliding toolCallIds with the same hash stay ambiguous", () => {
     const a = userEntry("a", null, textBlocks("same"));
     const b = userEntry("b", "a", textBlocks("same"));
     expect(sameTextDifferentEntries(a, b)).toBe(true);
     const mapped = mapOutbound(
-      [{ role: "tool", content: [{ type: "toolResult", toolCallId: "x", text: "one" }] }],
+      [{ role: "toolResult", toolCallId: "x", content: [{ type: "text", text: "one" }] }],
       [
-        { id: "r1", parentId: "a", type: "message", toolCallId: "x", message: { role: "tool", content: [{ type: "text", text: "one" }] } },
-        { id: "r2", parentId: "a", type: "message", toolCallId: "x", message: { role: "tool", content: [{ type: "text", text: "two" }] } },
+        { id: "r1", parentId: "a", type: "message", message: { role: "toolResult", toolCallId: "x", content: [{ type: "text", text: "one" }] } },
+        { id: "r2", parentId: "a", type: "message", message: { role: "toolResult", toolCallId: "x", content: [{ type: "text", text: "one" }] } },
       ],
     );
     expect(mapped.size).toBe(0);
+  });
+
+  it("maps official SessionMessageEntry via message.toolCallId and ignores a decoy top-level field", () => {
+    const official = {
+      type: "message",
+      id: "r0",
+      parentId: "a0",
+      timestamp: 1,
+      message: {
+        role: "toolResult",
+        toolCallId: "c0",
+        toolName: "bash",
+        content: [{ type: "text", text: "hello" }],
+        isError: false,
+      },
+    };
+    expect(Object.prototype.hasOwnProperty.call(official, "toolCallId")).toBe(false);
+    const outbound = [{ role: "toolResult", toolCallId: "c0", content: [{ type: "text", text: "hello" }] }];
+    expect(mapOutbound(outbound, [official]).get(0)?.id).toBe("r0");
+    const decoy = { ...official, toolCallId: "DECOY" };
+    expect(mapOutbound(outbound, [decoy]).get(0)?.id).toBe("r0");
   });
 });

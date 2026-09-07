@@ -1,4 +1,5 @@
 import type { EntryId, NativeEntry } from "../contracts.js";
+import { toolCallIdOf } from "../pi/source-reader.js";
 
 export interface ToolBatch {
   id: string;
@@ -18,11 +19,12 @@ function contentOf(entry: NativeEntry) {
 export function collectBatches(entries: NativeEntry[], isExposed?: (id: EntryId) => boolean): ToolBatch[] {
   const resultsByCall = new Map<string, NativeEntry[]>();
   for (const entry of entries) {
-    if (entry.toolCallId) {
-      const list = resultsByCall.get(entry.toolCallId) ?? [];
-      list.push(entry);
-      resultsByCall.set(entry.toolCallId, list);
-    }
+    if (entry.message?.role !== "toolResult") continue;
+    const callId = toolCallIdOf(entry.message);
+    if (!callId) continue;
+    const list = resultsByCall.get(callId) ?? [];
+    list.push(entry);
+    resultsByCall.set(callId, list);
   }
   const batches: ToolBatch[] = [];
   for (const entry of entries) {
