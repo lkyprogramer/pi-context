@@ -1,42 +1,42 @@
 {
   "package": "pi-context@5.0.0-dev.0",
   "private": true,
-  "commit": "de3c8b4b",
+  "commit": "d1c2b51a86cc3a098a7a1db77ce6e2de586b3acf",
   "node": "v22.19.0",
   "piCli": "0.85.1",
   "statedSource": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
   "npmGitHead": "d981de1229ef899957bbe968bc8dcda02a21f477",
   "hostIdentityMatch": false,
   "tarball": "artifacts/release-candidate/pi-context-5.0.0-dev.0.tgz",
-  "tarballSha256": "ebc0bf5c3fb85fa4ab06134ae1cd241c850f3459dd03e7fdeaff63e8d34fcfce",
+  "tarballSha256": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
   "installSpec": "npm:pi-context@file:<abs-tarball>",
+  "verifiedInstallCommand": "pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz",
   "recommendation": "history-only / observe; do not recommend balanced until G3/G4 have n>0 real C2/E2E runs",
   "gates": [
     {
       "id": "G0",
       "name": "contract/package",
       "status": "passed",
-      "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts",
+      "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts --config vitest.config.ts",
       "exitCode": 0,
-      "artifactHash": "ebc0bf5c3fb85fa4ab06134ae1cd241c850f3459dd03e7fdeaff63e8d34fcfce",
-      "note": "official Pi extracts npm:file tarball to node_modules/pi-context/dist/extension.js; npm gitHead differs from stated source 9767ba2"
+      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
+      "note": "official Pi 0.85.1 extracts npm:file tarball to node_modules/pi-context/dist/extension.js; npm gitHead differs from stated source 9767ba2"
     },
     {
       "id": "G1",
       "name": "zero-damage",
       "status": "passed",
-      "command": "pnpm exec vitest run test/property test/fault test/security test/host/matrix.test.ts",
+      "command": "pnpm exec vitest run test/property test/fault test/security test/host/matrix.test.ts --config vitest.config.ts",
       "exitCode": 0,
-      "artifactHash": null,
-      "note": "includes official-shaped applyContext tests: no host mutation, toolCallId mapping, in-request exposure"
+      "artifactHash": "5f6dc3f385597638b9307fe6219d90d28321e2b4f094d9500ab6f7d9dbaaedb8"
     },
     {
       "id": "G2",
       "name": "C1 recovery",
       "status": "passed",
-      "command": "pnpm exec vitest run test/integration/history-read.test.ts",
+      "command": "pnpm exec vitest run test/integration/history-read.test.ts --config vitest.config.ts",
       "exitCode": 0,
-      "artifactHash": null
+      "artifactHash": "a4519d8890f726be9385b9a1898785e6c7887920f7c73808346b4a6ea0558c71"
     },
     {
       "id": "G3",
@@ -45,7 +45,7 @@
       "command": "live C2 recovery with official Pi + pctx_history",
       "exitCode": null,
       "artifactHash": null,
-      "note": "provider ping HTTP 200 after T20 fixes; ping is not C2. No model history-readback loop executed."
+      "note": "provider ping HTTP 200 after d1c2b51a; ping is not C2. No model history-readback loop executed."
     },
     {
       "id": "G4",
@@ -62,7 +62,7 @@
       "status": "incomplete",
       "command": "node scripts/release-gate.mjs --evidence artifacts/release-candidate",
       "exitCode": 0,
-      "artifactHash": "ebc0bf5c3fb85fa4ab06134ae1cd241c850f3459dd03e7fdeaff63e8d34fcfce",
+      "artifactHash": "34152efe24ca2d8a9509705ec64f34942f66d3a15fe76d6872d6095a6a593ffd",
       "note": "private:true; no npm publish; no push main"
     }
   ]

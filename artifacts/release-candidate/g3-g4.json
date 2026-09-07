@@ -5,7 +5,7 @@
     "provider": "openclaw",
     "model": "openclaw/Qwen3.8-27B-WORK",
     "http": 200,
-    "note": "ping only; not C2 history recovery"
+    "note": "ping HTTP 200; ping is not C2 history recovery"
   },
   "g4": {
     "status": "not-run",
