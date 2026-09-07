@@ -1,0 +1,31 @@
+$ pi install npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz --no-approve
+Installing npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz...
+
+added 1 package, and audited 3 packages in 661ms
+
+found 0 vulnerabilities
+Installed npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz
+npm notice
+npm notice New major version of npm available! 10.9.3 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+$ pi list
+User packages:
+  npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz
+    /var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/pctx-v5-cli-home/.pi/agent/npm/node_modules/pi-context
+extracted_exists=True path=/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/pctx-v5-cli-home/.pi/agent/npm/node_modules/pi-context/dist/extension.js
+$ pi uninstall npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz --no-approve
+Removing npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz...
+
+removed 1 package, and audited 3 packages in 647ms
+
+found 0 vulnerabilities
+Removed npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz
+
+{
+  "tarball": "/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz",
+  "sha256": "2c54eb17f078c88843773dfc33ce8a95ecfe0813b39107ee0ed3b4a68dbc45c6",
+  "name": "pi-context-5.0.0-dev.0.tgz",
+  "installSpec": "npm:pi-context@file:/Users/luo/Documents/github/pi-context/pi-context-5.0.0-dev.0.tgz"
+}

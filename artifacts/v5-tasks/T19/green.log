@@ -1,13 +1,14 @@
 
  RUN  v3.2.4 /Users/luo/Documents/github/pi-context
 
-(node:83218) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:97050) ExperimentalWarning: SQLite is an experimental feature and might change at any time
 (Use `node --trace-warnings ...` to show where the warning was created)
- ✓ test/packed/install.test.ts (3 tests) 1637ms
-   ✓ T19 packed install > packed dist has no PCR ingress contract or tests  1622ms
+ ✓ test/packed/install.test.ts (4 tests) 9415ms
+   ✓ T19 packed install > packed dist has no PCR ingress contract or tests  1032ms
+   ✓ T19 packed install > official Pi extracts the npm tarball to dist/extension.js, then load/task/compact/resume/uninstall  8370ms
 
  Test Files  1 passed (1)
-      Tests  3 passed (3)
-   Start at  11:51:36
-   Duration  2.38s (transform 159ms, setup 0ms, collect 283ms, tests 1.64s, environment 0ms, prepare 99ms)
+      Tests  4 passed (4)
+   Start at  12:02:01
+   Duration  9.87s (transform 115ms, setup 0ms, collect 143ms, tests 9.41s, environment 0ms, prepare 77ms)
 

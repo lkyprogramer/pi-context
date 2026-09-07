@@ -31,5 +31,4 @@ const table = {
 };
 
 writeFileSync(join(evidenceDir, "g0-g5-table.json"), JSON.stringify(table, null, 2));
-writeFileSync(join(repo, "docs/release-v5.md"), `# v5 release candidate\n\nprivate:true. Recommendation: history-only / observe until G3/G4 have real n>0 runs.\n`);
 console.log(JSON.stringify({ ok: true, private: pkg.private, table }, null, 2));

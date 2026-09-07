@@ -9,10 +9,13 @@ The patched PCR 0.84.4 runtime is [superseded](docs/SUPERSEDED-PCR.md). Unique p
 ```bash
 nvm use v22.19.0
 pnpm exec tsc -p tsconfig.build.json
-pi install ./pi-context-5.0.0-dev.0.tgz
+node scripts/packed-host.mjs
+pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
 ```
 
-Uninstall: `pi uninstall ./pi-context-5.0.0-dev.0.tgz` (or `pi remove` the listed source). Native session files are not migrated or deleted.
+Official Pi extracts the tarball to `~/.pi/agent/npm/node_modules/pi-context/dist/extension.js`. Do not pass the raw `.tgz` as a local extension path.
+
+Uninstall: `pi uninstall npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz`. Native session files are not migrated or deleted.
 
 Default profile is `observe` (index/history only). `balanced` is opt-in. `experimental-semantic` is unsupported until T17/T18.
 
