@@ -6,16 +6,18 @@ import { decodeRef, encodeRef } from "../../src/history/refs.js";
 describe("T02 contracts", () => {
   it("rejects unknown config fields and forged refs", () => {
     expect(() => parseConfig({ schemaVersion: 6, profile: "observe", extra: true })).toThrow(/unknown config field/);
-    expect(() => decodeRef("not-a-ref")).toThrow();
+    expect("code" in decodeRef("not-a-ref")).toBe(true);
     const ref = encodeRef({
-      version: 5,
+      v: 6,
       workspaceId: "w",
       sessionId: "s",
       entryId: "e",
-      field: { kind: "text", blockIndex: 0 },
+      blockIndex: 0,
+      kind: "text",
       sourceHash: "a".repeat(64),
     });
-    expect(decodeRef(ref).entryId).toBe("e");
+    const decoded = decodeRef(ref);
+    expect("entryId" in decoded && decoded.entryId).toBe("e");
   });
 
   it("hash is stable and cycles fail closed", () => {

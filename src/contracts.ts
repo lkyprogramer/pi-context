@@ -7,6 +7,7 @@ export type ResultCode =
   | "denied"
   | "source-missing"
   | "source-changed"
+  | "stale-ref"
   | "stale-cursor"
   | "insufficient-context"
   | "degraded"
@@ -107,9 +108,26 @@ export function hashCanonical(value: unknown): Sha256 {
 
 export interface Scope {
   workspaceId: string;
-  worktreeId: string;
+  worktreeId?: string;
   sessionId: string;
+  leafId: string | null;
   visibleEntryIds: ReadonlySet<EntryId>;
+}
+
+export type RefErrorCode = "REF_OUT_OF_RANGE" | "REF_KIND" | "REF_ENTRY" | "REF_SCOPE" | "REF_VERSION";
+
+export interface RefError {
+  code: RefErrorCode;
+}
+
+export interface FieldRef {
+  v: 6;
+  workspaceId: string;
+  sessionId: string;
+  entryId: string;
+  blockIndex: number;
+  kind: "text" | "image";
+  sourceHash: Sha256;
 }
 
 export interface SnapshotKey {

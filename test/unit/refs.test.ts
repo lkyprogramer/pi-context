@@ -32,11 +32,12 @@ describe("T05 refs utf-8", () => {
 
   it("rejects negative offsets and path-like refs", () => {
     expect(() => encodeRef({
-      version: 5,
+      v: 6,
       workspaceId: "w",
       sessionId: "s",
       entryId: "e",
-      field: { kind: "text", blockIndex: -1 },
+      blockIndex: -1,
+      kind: "text",
       sourceHash: "a".repeat(64),
     })).not.toThrow();
     expect(() => utf8Slice("hi", -1, 1)).toThrow();

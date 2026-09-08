@@ -5,7 +5,7 @@ import { hashCanonical } from "./contracts.js";
 import type { AssistantRecord } from "./telemetry/metrics.js";
 import { HistoryIndex } from "./history/index.js";
 import { readHistory } from "./history/read.js";
-import { encodeRef } from "./history/refs.js";
+import { encodeRef, isFieldRef, refForField } from "./history/refs.js";
 import { searchHistory } from "./history/search.js";
 import { authorize, buildScope } from "./history/scope.js";
 import { collectBatches } from "./projection/batches.js";
@@ -97,13 +97,7 @@ export function historyTool(state: PluginState, req: HistoryRequest, entries: Na
       index: state.index,
       config: state.config,
       sourceRevision: state.index.sourceRevision(entries),
-      getText: (id) => {
-        const e = getEntry(id);
-        const c = e?.message?.content;
-        if (typeof c === "string") return c;
-        if (Array.isArray(c)) return c.filter((b) => b.type === "text").map((b) => String(b.text ?? "")).join("\n");
-        return undefined;
-      },
+      getEntry,
     });
   }
   return readHistory({
@@ -132,20 +126,18 @@ export function applyContext(state: PluginState, messages: AgentMessage[], entri
     const hashes = new Map<string, string>();
     for (const entry of entries) {
       if (!authorize(scope, entry.id)) continue;
-      const text = Array.isArray(entry.message?.content)
-        ? entry.message!.content!.filter((b) => b.type === "text").map((b) => String(b.text ?? "")).join("\n")
-        : "";
-      if (!text) continue;
-      const hash = textSourceHashSafe(text);
-      hashes.set(entry.id, hash);
-      refs.set(entry.id, encodeRef({
-        version: 5,
-        workspaceId: scope.workspaceId,
-        sessionId: scope.sessionId,
-        entryId: entry.id,
-        field: { kind: "text", blockIndex: 0 },
-        sourceHash: hash,
-      }));
+      const blockCount = Array.isArray(entry.message?.content)
+        ? entry.message.content.length
+        : typeof entry.message?.content === "string"
+          ? 1
+          : 0;
+      for (let blockIndex = 0; blockIndex < blockCount; blockIndex += 1) {
+        const field = refForField(scope, entry, blockIndex);
+        if (!isFieldRef(field) || field.kind !== "text") continue;
+        hashes.set(entry.id, field.sourceHash);
+        refs.set(entry.id, encodeRef(field));
+        break;
+      }
     }
     const mapped = mapOutbound(messages, entries);
     const includedOriginalRefs: SourceRef[] = [];
@@ -215,10 +207,6 @@ export function applyContext(state: PluginState, messages: AgentMessage[], entri
   } catch {
     return messages;
   }
-}
-
-function textSourceHashSafe(text: string): string {
-  return hashCanonical(text);
 }
 
 export function confirmAttempt(state: PluginState, stopReason?: string, errorMessage?: string, streamOutcome?: string): void {

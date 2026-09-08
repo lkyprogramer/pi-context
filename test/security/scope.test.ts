@@ -10,6 +10,7 @@ describe("T06 scope", () => {
       workspaceId: "w",
       worktreeId: "w",
       sessionId: fx.sessionId,
+      leafId: "b",
       visibleEntryIds: new Set(["a", "b"]),
     };
     const hits = authorizeHits(scope, [
@@ -20,8 +21,8 @@ describe("T06 scope", () => {
   });
 
   it("fork copies entry id across sessions without sharing authorization", () => {
-    const a = { workspaceId: "w", worktreeId: "w", sessionId: "s1", visibleEntryIds: new Set(["e1"]) };
-    const b = { workspaceId: "w", worktreeId: "w", sessionId: "s2", visibleEntryIds: new Set(["e1-fork"]) };
+    const a = { workspaceId: "w", worktreeId: "w", sessionId: "s1", leafId: "e1", visibleEntryIds: new Set(["e1"]) };
+    const b = { workspaceId: "w", worktreeId: "w", sessionId: "s2", leafId: "e1-fork", visibleEntryIds: new Set(["e1-fork"]) };
     expect(authorizeHits(a, [{ entryId: "e1-fork", score: 100 }], 1)).toEqual([]);
     expect(authorizeHits(b, [{ entryId: "e1", score: 100 }], 1)).toEqual([]);
   });

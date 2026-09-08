@@ -1,15 +1,8 @@
-import type { ContentBlock, HistoryResult, NativeEntry, Scope } from "../contracts.js";
+import type { HistoryResult, NativeEntry, Scope } from "../contracts.js";
 import { estimateTokens, utf8Bytes, utf8Slice } from "../contracts.js";
 import { authorize } from "./scope.js";
-import { decodeCursor, decodeRef, encodeCursor, encodeRef, pageHash, textSourceHash } from "./refs.js";
+import { blocksOf, decodeCursor, decodeRef, encodeCursor, encodeRef, isFieldRef, pageHash, refForField } from "./refs.js";
 import type { PctxConfig } from "../config.js";
-
-function blocksOf(entry: NativeEntry): ContentBlock[] {
-  const content = entry.message?.content;
-  if (Array.isArray(content)) return content;
-  if (typeof content === "string") return [{ type: "text", text: content }];
-  return [];
-}
 
 export function readHistory(input: {
   scope: Scope;
@@ -19,11 +12,9 @@ export function readHistory(input: {
   config: PctxConfig;
   getEntry: (id: string) => NativeEntry | undefined;
 }): HistoryResult {
-  let locator;
-  try {
-    locator = decodeRef(input.ref);
-  } catch {
-    return { code: "denied", cursor: null, diagnostic: "invalid ref" };
+  const locator = decodeRef(input.ref);
+  if (!isFieldRef(locator)) {
+    return { code: "denied", cursor: null, diagnostic: locator.code };
   }
   if (locator.sessionId !== input.scope.sessionId || locator.workspaceId !== input.scope.workspaceId) {
     return { code: "denied", cursor: null, diagnostic: "scope mismatch" };
@@ -33,10 +24,17 @@ export function readHistory(input: {
   }
   const entry = input.getEntry(locator.entryId);
   if (!entry) return { code: "source-missing", cursor: null, diagnostic: "native entry missing" };
+  const recomputed = refForField(input.scope, entry, locator.blockIndex);
+  if (!isFieldRef(recomputed)) {
+    return { code: "source-missing", cursor: null, diagnostic: recomputed.code };
+  }
+  if (recomputed.sourceHash !== locator.sourceHash || recomputed.kind !== locator.kind) {
+    return { code: "stale-ref", cursor: null, diagnostic: "STALE_REF" };
+  }
   const blocks = blocksOf(entry);
-  const block = blocks[locator.field.blockIndex];
+  const block = blocks[locator.blockIndex];
   if (!block) return { code: "source-missing", cursor: null, diagnostic: "block missing" };
-  if (locator.field.kind === "image") {
+  if (locator.kind === "image") {
     if (block.type !== "image" || typeof block.data !== "string") {
       return { code: "source-missing", cursor: null, diagnostic: "image block missing" };
     }
@@ -49,10 +47,7 @@ export function readHistory(input: {
   if (block.type !== "text" || typeof block.text !== "string") {
     return { code: "degraded", cursor: null, diagnostic: "non-text cannot be ranged" };
   }
-  const currentHash = textSourceHash(block.text);
-  if (currentHash !== locator.sourceHash) {
-    return { code: "source-changed", cursor: null, diagnostic: "native source hash changed" };
-  }
+  const currentHash = locator.sourceHash;
   const buf = utf8Bytes(block.text);
   let start = 0;
   if (input.cursor) {
@@ -66,7 +61,13 @@ export function readHistory(input: {
   while (end < start + maxBytes && estimateTokens(buf.subarray(start, end + 1).toString("utf8")) <= tokenBudget) {
     end += 1;
   }
-  if (end <= start) return { code: "insufficient-context", cursor: input.cursor ?? encodeCursor({ endByte: start, sourceHash: currentHash }), diagnostic: "no remaining budget" };
+  if (end <= start) {
+    return {
+      code: "insufficient-context",
+      cursor: input.cursor ?? encodeCursor({ endByte: start, sourceHash: currentHash }),
+      diagnostic: "no remaining budget",
+    };
+  }
   while (end < buf.length && (buf[end] & 0xc0) === 0x80) end += 1;
   const text = utf8Slice(block.text, start, end);
   const next = end < buf.length ? encodeCursor({ endByte: end, sourceHash: currentHash }) : null;

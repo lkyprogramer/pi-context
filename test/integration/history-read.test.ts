@@ -11,18 +11,19 @@ describe("T09 history read", () => {
     const entry = fx.entries.find((e) => e.id === "b")!;
     const text = "keep-http-paths";
     const ref = encodeRef({
-      version: 5,
+      v: 6,
       workspaceId: "w",
       sessionId: fx.sessionId,
       entryId: "b",
-      field: { kind: "text", blockIndex: 0 },
+      blockIndex: 0,
+      kind: "text",
       sourceHash: textSourceHash(text),
     });
     const pages = [];
     let cursor: string | null = null;
     for (let i = 0; i < 8; i += 1) {
       const page = readHistory({
-        scope: { workspaceId: "w", worktreeId: "w", sessionId: fx.sessionId, visibleEntryIds: new Set(["b"]) },
+        scope: { workspaceId: "w", worktreeId: "w", sessionId: fx.sessionId, leafId: "b", visibleEntryIds: new Set(["b"]) },
         ref,
         cursor,
         maxTokens: 1,
@@ -40,15 +41,16 @@ describe("T09 history read", () => {
   it("returns native image blocks and denies cross-scope refs", () => {
     const img = imageTurn();
     const ref = encodeRef({
-      version: 5,
+      v: 6,
       workspaceId: "other",
       sessionId: "nope",
       entryId: "u1",
-      field: { kind: "image", blockIndex: 0 },
+      blockIndex: 0,
+      kind: "image",
       sourceHash: "a".repeat(64),
     });
     const denied = readHistory({
-      scope: { workspaceId: "w", worktreeId: "w", sessionId: "sess-img", visibleEntryIds: new Set(["u1"]) },
+      scope: { workspaceId: "w", worktreeId: "w", sessionId: "sess-img", leafId: "u1", visibleEntryIds: new Set(["u1"]) },
       ref,
       config: DEFAULT_CONFIG,
       getEntry: (id) => img.entries.find((e) => e.id === id),

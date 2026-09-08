@@ -46,6 +46,7 @@ export function buildScope(input: {
     workspaceId: ids.workspaceId,
     worktreeId: ids.worktreeId,
     sessionId: input.sessionId,
+    leafId: input.leafId,
     visibleEntryIds: visibleAncestors(input.leafId, input.getEntry),
     persist: ids.persist,
   };

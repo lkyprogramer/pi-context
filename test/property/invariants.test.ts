@@ -57,7 +57,7 @@ describe("T20 INV matrix", () => {
 
   it("INV-06 authorization before limit", () => {
     const hits = authorizeHits(
-      { workspaceId: "w", worktreeId: "w", sessionId: "s", visibleEntryIds: new Set(["b"]) },
+      { workspaceId: "w", worktreeId: "w", sessionId: "s", leafId: "b", visibleEntryIds: new Set(["b"]) },
       [{ entryId: "sibling", score: 99 }, { entryId: "b", score: 1 }],
       1,
     );
