@@ -8,7 +8,6 @@ import { imageTurn, independentBranch } from "../../src/testing.js";
 describe("T09 history read", () => {
   it("reassembles exact utf-8 pages", () => {
     const fx = independentBranch();
-    const entry = fx.entries.find((e) => e.id === "b")!;
     const text = "keep-http-paths";
     const ref = encodeRef({
       v: 6,
@@ -19,9 +18,9 @@ describe("T09 history read", () => {
       kind: "text",
       sourceHash: textSourceHash(text),
     });
-    const pages = [];
+    const pages: string[] = [];
     let cursor: string | null = null;
-    for (let i = 0; i < 8; i += 1) {
+    for (let i = 0; i < 16; i += 1) {
       const page = readHistory({
         scope: { workspaceId: "w", worktreeId: "w", sessionId: fx.sessionId, leafId: "b", visibleEntryIds: new Set(["b"]) },
         ref,

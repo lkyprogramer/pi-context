@@ -7,6 +7,7 @@ import { PIN_TYPE, pinId, quoteHash, type Pin } from "./checkpoint/pins.js";
 import { textSourceHash } from "./history/refs.js";
 import { authorize, buildScope } from "./history/scope.js";
 import { decodeRef } from "./history/refs.js";
+import { formatHistoryResult } from "./history/read.js";
 import { entriesFromCtx, type PiExtensionAPI } from "./pi/adapter.js";
 
 const HISTORY_PARAMS = {
@@ -131,8 +132,17 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
       }
       const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
       const req = params as unknown as HistoryRequest;
-      const result = await historyTool(state, req, entries, cwd, sessionId, leafId);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      const usageRaw = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
+      const contextWindow = usageRaw?.contextWindow ?? ctx.model?.contextWindow ?? 0;
+      const usage = usageRaw || contextWindow
+        ? {
+            tokens: usageRaw?.tokens ?? null,
+            contextWindow,
+            percent: usageRaw?.percent ?? null,
+          }
+        : null;
+      const result = await historyTool(state, req, entries, cwd, sessionId, leafId, usage);
+      return formatHistoryResult(result);
     },
   } as never);
 

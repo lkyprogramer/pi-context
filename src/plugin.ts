@@ -5,6 +5,7 @@ import { hashCanonical } from "./contracts.js";
 import type { AssistantRecord } from "./telemetry/metrics.js";
 import { HistoryIndex } from "./history/index.js";
 import { readHistory } from "./history/read.js";
+import { readBudgetFor } from "./projection/budget.js";
 import { encodeRef, isFieldRef, refForField } from "./history/refs.js";
 import { searchHistory } from "./history/search.js";
 import { authorize, buildScope } from "./history/scope.js";
@@ -131,7 +132,15 @@ export function closeSessionIndex(state: PluginState): void {
   state.index = HistoryIndex.unavailable();
 }
 
-export async function historyTool(state: PluginState, req: HistoryRequest, entries: NativeEntry[], cwd: string, sessionId: string, leafId: string | null): Promise<HistoryResult> {
+export async function historyTool(
+  state: PluginState,
+  req: HistoryRequest,
+  entries: NativeEntry[],
+  cwd: string,
+  sessionId: string,
+  leafId: string | null,
+  usage?: { tokens: number | null; contextWindow: number; percent: number | null } | null,
+): Promise<HistoryResult> {
   if (state.profile === "off") return { code: "disabled", cursor: null, diagnostic: "plugin off" };
   const getEntry = (id: string) => entries.find((e) => e.id === id);
   const scope = buildScope({ cwd, sessionId, leafId, getEntry });
@@ -155,11 +164,15 @@ export async function historyTool(state: PluginState, req: HistoryRequest, entri
     });
   }
   state.historyReads += 1;
+  const budget = readBudgetFor(state.config, req.maxTokens, usage ?? null);
+  if ("insufficient" in budget) {
+    return { ok: false, code: "insufficient-context", cursor: null, diagnostic: "INSUFFICIENT_CONTEXT" };
+  }
   return readHistory({
     scope,
     ref: req.ref,
     cursor: req.cursor,
-    maxTokens: req.maxTokens,
+    budget,
     config: state.config,
     getEntry,
   });

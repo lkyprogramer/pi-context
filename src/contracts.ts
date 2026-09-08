@@ -189,20 +189,34 @@ export type HistoryRequest =
   | { action: "search"; query: string; limit?: number; cursor?: string | null }
   | { action: "read"; ref: SourceRef; cursor?: string | null; maxTokens?: number };
 
-export interface HistoryResult {
-  code: ResultCode;
-  hits?: SearchHit[];
-  page?: HistoricalTextPage;
-  image?: { type: "image"; mimeType: string; data: string };
-  cursor: string | null;
-  diagnostic?: string;
-}
-
 export interface TokenEstimate {
   value: number;
   method: "provider" | "tokenizer" | "character-estimate";
   includesImages: boolean;
   upperBoundKnown: boolean;
+}
+
+export interface ReadBudget {
+  maxTokens: number;
+  maxBytes: number;
+  estimateKind: "provider-window" | "character-estimate";
+}
+
+export interface HistoryResult {
+  code: ResultCode;
+  ok?: boolean;
+  hits?: SearchHit[];
+  page?: string;
+  image?: { type: "image"; mimeType: string; data: string };
+  cursor: string | null;
+  nextCursor?: string | null;
+  byteOffset?: number;
+  nextByteOffset?: number | null;
+  totalBytes?: number;
+  sourceHash?: string;
+  verified?: boolean;
+  diagnostic?: string;
+  details?: unknown;
 }
 
 export type BudgetDecision =
