@@ -1,0 +1,467 @@
+{
+  "schemaVersion": 1,
+  "purpose": "personal-canary-not-publication",
+  "status": "complete",
+  "decision": "inconclusive",
+  "blockedReason": "isolation-unproven",
+  "identity": {
+    "sourceSetSha256": "16f2a7d93c985c23738b57451ed078116fb25242ae47604656cb40fbf42b8402",
+    "hostPatchSha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
+    "modelFingerprint": "openclaw/Qwen3.8-27B-WORK",
+    "corpusSha256": "5a65894d85972f82bf47454beb2206bf27c8384d7c9eb972c6855d8d5ccf029a",
+    "configSha256": "2e7064b45bb70bd2a7888fef2891f2d19e86259c5c9e0c28c07e02f8266016c9",
+    "scorerRevision": "lean-v4-t07-probe"
+  },
+  "summary": {
+    "primaryCompletePairs": 16,
+    "plannedPairs": 24,
+    "diagnosticFailures": 0,
+    "ittPairs": 24
+  },
+  "monetaryCost": null,
+  "publicationClaim": false,
+  "widelyBetterThanNative": false,
+  "sufficientToProve2pctNonInferiority": false,
+  "environment": {
+    "os": "darwin",
+    "node": "v22.19.0",
+    "isolationReason": "isolation-unproven",
+    "toolsEnabledAllowed": false
+  },
+  "provenanceCounts": {
+    "real-independent": 0,
+    "adapted-real": 0,
+    "synthetic": 12
+  },
+  "reader": {
+    "pairs": 16,
+    "clusters": 8,
+    "meanDelta": 0,
+    "discordance": {
+      "bothPass": 4,
+      "baselineOnly": 0,
+      "candidateOnly": 0,
+      "bothFail": 12
+    },
+    "ci95": [
+      0,
+      0
+    ]
+  },
+  "artifact": {
+    "covered": 0,
+    "total": 0,
+    "missing": [],
+    "ok": false,
+    "status": "not-tested"
+  },
+  "productRecovery": {
+    "definition": "C1-product-hooks",
+    "liveArm": false,
+    "eligible": 5,
+    "attempted": 5,
+    "passed": 5,
+    "passRate": 1,
+    "status": "passed",
+    "cases": [
+      {
+        "id": "protocol-text",
+        "eligible": true,
+        "attempted": true,
+        "exactBytesMatch": true,
+        "wrongScopeDenied": true
+      },
+      {
+        "id": "protocol-utf8",
+        "eligible": true,
+        "attempted": true,
+        "exactBytesMatch": true,
+        "wrongScopeDenied": true
+      },
+      {
+        "id": "protocol-image",
+        "eligible": true,
+        "attempted": true,
+        "exactBytesMatch": true,
+        "wrongScopeDenied": true
+      },
+      {
+        "id": "protocol-append",
+        "eligible": true,
+        "attempted": true,
+        "exactBytesMatch": true,
+        "wrongScopeDenied": true
+      },
+      {
+        "id": "protocol-restart-model-fence",
+        "eligible": true,
+        "attempted": true,
+        "exactBytesMatch": true,
+        "wrongScopeDenied": true
+      }
+    ]
+  },
+  "liveArmRecovery": {
+    "definition": "C2-live-arm-after-compact",
+    "liveArm": true,
+    "eligible": 1,
+    "attempted": 1,
+    "passed": 0,
+    "passRate": 0,
+    "status": "failed",
+    "cases": [
+      {
+        "eligible": true,
+        "attempted": true,
+        "exactBytesMatch": false,
+        "wrongScopeDenied": false
+      }
+    ]
+  },
+  "recovery": {
+    "uses": "C1-product-hooks",
+    "liveArm": false,
+    "note": "productRecovery is harness fixtures, not live-arm checkpoint recovery",
+    "eligible": 5,
+    "attempted": 5,
+    "passed": 5,
+    "passRate": 1,
+    "status": "passed"
+  },
+  "pairedSuccess": {
+    "pairs": 16,
+    "clusters": 8,
+    "meanDelta": 0,
+    "discordance": {
+      "bothPass": 4,
+      "baselineOnly": 0,
+      "candidateOnly": 0,
+      "bothFail": 12
+    },
+    "ci95": [
+      0,
+      0
+    ]
+  },
+  "compaction": {
+    "attempted": 32,
+    "withEntry": 0,
+    "fromHookTrue": 0,
+    "fromHookFalse": 0,
+    "cancelled": 0,
+    "tooSmall": 32,
+    "timeout": 0,
+    "rpc": 0,
+    "errors": [
+      {
+        "pairId": "branch-restart-ancestor",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "branch-restart-ancestor",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "branch-restart-ancestor",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "branch-restart-ancestor",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "branch-sibling-isolation",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "branch-sibling-isolation",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "branch-sibling-isolation",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "branch-sibling-isolation",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-hash",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-hash",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-hash",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-hash",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-utf8",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-utf8",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-utf8",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "delayed-fact-utf8",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-distant-error",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-distant-error",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-distant-error",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-distant-error",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-timeout-cause",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-timeout-cause",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-timeout-cause",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "log-timeout-cause",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "requirement-deploy-reader",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "requirement-deploy-reader",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "requirement-deploy-reader",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "requirement-deploy-reader",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "version-target-reader",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "version-target-reader",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "version-target-reader",
+        "arm": "B2",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      },
+      {
+        "pairId": "version-target-reader",
+        "arm": "B0",
+        "piReason": "too-small",
+        "error": "Nothing to compact (session too small)",
+        "fromHook": null,
+        "count": 0
+      }
+    ]
+  },
+  "efficiency": {
+    "medianTaskInputDelta": 0.0055287037921482474,
+    "medianWallTimeDelta": 0.0077496481993474834,
+    "medianCompactWaitDelta": 0,
+    "itt": {
+      "B0": {
+        "arms": 16,
+        "wallTimeMs": 36671,
+        "compactWaitMs": 22,
+        "logicalInput": 5788
+      },
+      "B2": {
+        "arms": 16,
+        "wallTimeMs": 36918,
+        "compactWaitMs": 26,
+        "logicalInput": 5820
+      }
+    }
+  },
+  "extras": {
+    "recoveryDefinition": "C1-product-hooks",
+    "recoveryLiveArm": "false",
+    "productRecoveryStatus": "passed",
+    "productRecoveryEligible": "5",
+    "productRecoveryAttempted": "5",
+    "productRecoveryPassed": "5",
+    "productRecoveryPassRate": "1",
+    "liveArmRecoveryStatus": "failed",
+    "liveArmRecoveryAttempted": "1",
+    "liveArmRecoveryPassed": "0",
+    "artifactStatus": "not-tested",
+    "artifactCovered": "0",
+    "artifactTotal": "0",
+    "discordanceBothPass": "4",
+    "discordanceBaselineOnly": "0",
+    "discordanceCandidateOnly": "0",
+    "discordanceBothFail": "12",
+    "pairedSuccessMeanDelta": "0",
+    "pairedSuccessClusters": "8",
+    "pairedSuccessCi95": "0,0",
+    "compactionAttempted": "32",
+    "compactionWithEntry": "0",
+    "compactionFromHookTrue": "0",
+    "compactionFromHookFalse": "0",
+    "compactionCancelled": "0",
+    "compactionTooSmall": "32",
+    "medianTaskInputDelta": "0.0055287037921482474",
+    "medianWallTimeDelta": "0.0077496481993474834",
+    "medianCompactWaitDelta": "0",
+    "ittB0LogicalInput": "5788",
+    "ittB2LogicalInput": "5820",
+    "toolsEnabled": "false"
+  }
+}
