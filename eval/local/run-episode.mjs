@@ -8,7 +8,7 @@
  * Writes into <dir>: manifest.json, events.jsonl, requests.jsonl, status.json (observe/balanced),
  * metrics-before.json, metrics-after.json, session/ (copy of the Pi JSONL), result.json.
  * Never writes tool-result bodies into events.jsonl (bytes + sha256 only).
- * E02 adds the sandbox path (sandbox/run-agent.sh); until then --no-sandbox is required.
+ * Sandbox is the default. --no-sandbox is only allowed for H03.
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -23,18 +23,22 @@ const args = parseArgs(process.argv.slice(2));
 const caseId = need("case"), arm = need("arm"), window = need("window"), out = resolve(need("out"));
 const rep = Number(args.rep ?? 0);
 const sandboxScript = join(here, "sandbox", "run-agent.sh");
-const sandbox = existsSync(sandboxScript) && !("no-sandbox" in args);
 const pluginEntry = resolve(args.plugin ?? join(repo, "dist/extension.js"));
 const BUDGET = { wallMs: caseId === "H03" ? 3_600_000 : 900_000, modelCalls: caseId === "H03" ? 200 : 40, toolCalls: caseId === "H03" ? 400 : 80 };
 
+mkdirSync(out, { recursive: true });
 if (!["native", "observe", "balanced"].includes(arm)) die(`bad arm ${arm}`);
 if (!["w262k", "w64k"].includes(window)) die(`bad window ${window}`);
-mkdirSync(out, { recursive: true });
 
 const cases = JSON.parse(readFileSync(join(here, "cases.json"), "utf8")).cases;
 const spec = cases.find((c) => c.id === caseId);
 if (!spec || spec.runner !== "episode") die(`case ${caseId} is not an episode case`);
 if (!spec.arms.includes(arm)) die(`case ${caseId} does not run arm ${arm}`);
+const sandbox = spec.sandbox !== false && !("no-sandbox" in args);
+if (("no-sandbox" in args || spec.sandbox === false) && caseId !== "H03") {
+  blocked("host execution of model-written code is only allowed for H03");
+}
+if (sandbox && !existsSync(sandboxScript)) blocked("sandbox/run-agent.sh missing");
 
 // ---- 1. tunnel + engine identity (blocked if wrong) -----------------------------------------
 const tunnel = spawnSync("bash", [join(here, "ensure-tunnel.sh")], { encoding: "utf8" });
@@ -57,7 +61,7 @@ cpSync(join(here, "pi-config", window, "models.json"), join(agentDir, "models.js
 const settings = JSON.parse(readFileSync(join(here, "pi-config", "settings.json"), "utf8"));
 if (arm !== "native") {
   if (!existsSync(pluginEntry)) blocked(`plugin entry missing: ${pluginEntry} (run pnpm build)`);
-  settings.extensions = [pluginEntry];
+  settings.extensions = [sandbox ? "/plugin/extension.js" : pluginEntry];
   mkdirSync(join(cwd, ".pi"), { recursive: true });
   writeFileSync(join(cwd, ".pi", "pctx.json"), JSON.stringify({ schemaVersion: 6, profile: arm, telemetry: { includeContent: false, jsonl: true, maxLogBytes: 5242880 } }, null, 2));
 }
@@ -97,9 +101,21 @@ const prompts = splitPrompts(readFileSync(join(repo, spec.taskFile), "utf8"));
 const t0 = Date.now();
 let status = "complete", error = null;
 if (sandbox) {
-  // E02: sandbox/run-agent.sh <cwd> <agentDir> <out> <window>; it runs run-in-container.mjs with the same logic as runOnHost.
-  const r = spawnSync("bash", [join(here, "sandbox", "run-agent.sh"), cwd, agentDir, out, window, JSON.stringify(prompts), seedCopy ?? ""], { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] });
-  if (r.status !== 0) { status = "error"; error = `sandbox exit ${r.status}`; }
+  writeFileSync(join(out, "prompts.json"), JSON.stringify(prompts));
+  if (seedCopy) cpSync(seedCopy, join(out, "seed.jsonl"));
+  const r = spawnSync("bash", [sandboxScript, cwd, agentDir, out, window], { encoding: "utf8" });
+  if (r.stdout) process.stdout.write(r.stdout);
+  if (r.stderr) process.stderr.write(r.stderr);
+  if (r.status === 3) {
+    status = "blocked";
+    error = (r.stderr || r.stdout || "sandbox image missing").trim();
+  } else if (r.status !== 0) {
+    status = "error";
+    error = `sandbox exit ${r.status}`;
+  } else if (existsSync(join(out, "container-status.json"))) {
+    const cs = JSON.parse(readFileSync(join(out, "container-status.json"), "utf8"));
+    if (cs.status && cs.status !== "complete") status = cs.status;
+  }
 } else {
   try { status = await runOnHost({ cwd, agentDir, sessionDir, seedCopy, prompts, out, BUDGET }); }
   catch (e) { status = "error"; error = String(e?.stack ?? e); }
@@ -119,9 +135,10 @@ if (arm !== "native") {
 }
 const before = JSON.parse(readFileSync(join(out, "metrics-before.json"), "utf8")), after = JSON.parse(readFileSync(join(out, "metrics-after.json"), "utf8"));
 const delta = (k) => (before.available && after.available && before[k] != null && after[k] != null && after[k] >= before[k]) ? after[k] - before[k] : null;
+const oracle = gradeCandidate(caseId, cwd, spec);
 const result = {
   manifest, status, error,
-  oracle: { passed: null, exitCode: null, protectedIntact: protectedSha(cwd, spec.protectedPaths) === baselineSha, detail: "graded by grade.sh (E02)" },
+  oracle,
   requests,
   mechanism: statusJson ? {
     folds: statusJson.folds ?? 0, replacements: statusJson.activePlan?.replacements ?? 0,
@@ -221,6 +238,40 @@ function splitPrompts(md) {
   return parts.length ? parts : [md.trim()];
 }
 function snap(name) { spawnSync("bash", [join(here, "metrics-snap.sh"), join(out, `metrics-${name}.json`)], { stdio: "ignore" }); if (!existsSync(join(out, `metrics-${name}.json`))) writeFileSync(join(out, `metrics-${name}.json`), '{"available":false}'); }
+function gradeCandidate(id, candidate, spec) {
+  const gradeOut = join(out, "grade");
+  mkdirSync(gradeOut, { recursive: true });
+  const secret = nonceSecret(spec);
+  const argv = [join(here, "grade.sh"), id, candidate, gradeOut];
+  if (secret) argv.push(secret);
+  const r = spawnSync("bash", argv, { encoding: "utf8" });
+  if (r.stdout) process.stdout.write(r.stdout);
+  if (r.stderr) process.stderr.write(r.stderr);
+  const gradePath = join(gradeOut, "grade.json");
+  if (!existsSync(gradePath)) {
+    return { passed: false, exitCode: r.status, protectedIntact: false, detail: "grade.sh wrote no grade.json" };
+  }
+  const g = JSON.parse(readFileSync(gradePath, "utf8"));
+  return {
+    passed: g.passed ?? false,
+    exitCode: g.exitCode ?? r.status,
+    protectedIntact: g.protectedIntact ?? false,
+    outsideEditable: g.outsideEditable ?? null,
+    nonceCorrect: g.nonceCorrect ?? null,
+    honest: g.honest ?? null,
+    detail: g.reason ?? null,
+  };
+}
+function nonceSecret(spec) {
+  if (!String(spec?.grader?.kind ?? "").includes("nonce")) return "";
+  const candidates = [];
+  if (spec.seed) {
+    candidates.push(join(repo, `${spec.seed}.secret`));
+    candidates.push(join(repo, spec.seed.replace(/\.jsonl$/, ".secret")));
+  }
+  candidates.push(join(here, "seeds", `${caseId}.secret`));
+  return candidates.find((p) => existsSync(p)) ?? "";
+}
 function countEvents(dir, type) { const f = join(dir, "events.jsonl"); if (!existsSync(f)) return 0; return readFileSync(f, "utf8").split("\n").filter((l) => l.includes(`"type":"${type}"`) && !l.includes('"willRetry":true')).length; }
 function protectedSha(root, paths) { const h = createHash("sha256"); for (const p of paths ?? []) { const abs = join(root, p); if (!existsSync(abs)) { h.update(`missing:${p}`); continue; } const files = execFileSync("find", [abs, "-type", "f"], { encoding: "utf8" }).trim().split("\n").filter(Boolean).sort(); for (const f of files) { h.update(f.slice(root.length)); h.update(readFileSync(f)); } } return h.digest("hex"); }
 function git(dir, a) { execFileSync("git", ["-C", dir, ...a], { stdio: "ignore" }); }

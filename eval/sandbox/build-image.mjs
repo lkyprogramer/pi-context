@@ -34,7 +34,7 @@ try {
   const versions = execFileSync("docker", [
     "run", "--rm", "--network", "none", "--read-only", "--tmpfs", "/tmp:uid=1000,gid=1000",
     "--cap-drop", "ALL", "--user", "1000:1000", tag,
-    "sh", "-c", "node -v; pi --version; javac -version; mvn -version | head -1",
+    "sh", "-c", "node -v; pi --version; git --version; javac -version; mvn -version | head -1",
   ], { encoding: "utf8", timeout: 60_000 });
   result.versions = versions.trim();
   result.status = "passed";

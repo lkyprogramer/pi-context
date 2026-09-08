@@ -65,3 +65,12 @@ GREEN: `pnpm smoke` exit 0 — 12 tests; `pnpm typecheck` exit 0
 Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (`pi` not on PATH) / not-run
 Remaining: host tests disable Pi auto-compaction (`enabled: false`, `keepRecentTokens: 256`) so threshold fold can be observed; seed final assistant `usage.totalTokens` is 65% of `contextWindow` because `getContextUsage` is usage-backed; `scripts/packed-host.mjs` already emitted tarball sha256; `dist/extension.js` sha256 `34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19`; Node v22.17.0 vs engines >=22.19.0
 
+## Task: E01
+Commit: d5355a7662b33d1189985be542a8b8d0fe851d31
+Changed: eval/local/**, test/unit/local-cases.test.ts, test/fixtures/local-eval/sample-session.jsonl, docs/iterations/native-first-v6.md
+RED: `pnpm exec vitest run test/unit/local-cases.test.ts --config vitest.config.ts` originally import-failed before `eval/local` existed; this landing re-ran GREEN
+GREEN: `pnpm exec vitest run test/unit/local-cases.test.ts --config vitest.config.ts` exit 0 — 2 tests; `pnpm typecheck` exit 0
+Host/model: tunnel to `hhtele@192.168.10.29:18343` — `Connection closed by 192.168.10.29 port 22`; `node eval/local/run-episode.mjs --case L04 --arm native --window w262k --rep 0 --out /tmp/pctx-e01-smoke` wrote `status: blocked` and did not start Pi; `metrics-snap.sh` wrote `available:false`; seed recording not-run
+Remaining: live native L04 episode and `record-seed.mjs` need a working 4090 tunnel; E01 also copied `cases/H03/TASK.md` and `seeds/.gitkeep` beyond the card list so cases.json paths resolve; sandbox default is off until `eval/local/sandbox/run-agent.sh` exists; `pi` not on PATH so the runner reads 0.85.1 from workspace node_modules
+
+

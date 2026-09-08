@@ -37,7 +37,6 @@
     "test:packed": "vitest run test/packed/install.test.ts --config vitest.config.ts",
     "smoke": "vitest run test/host/observe-identity.test.ts test/host/balanced-wire.test.ts test/packed/install.test.ts --config vitest.config.ts",
     "compat:scan": "node scripts/check-public-imports.mjs",
-    "eval:g4": "node eval/live-g4.mjs",
     "eval:c2": "node eval/live-c2.mjs",
     "eval:smoke": "pnpm exec tsx eval/smoke.mjs",
     "sandbox:build": "node eval/sandbox/build-image.mjs"

@@ -9,6 +9,10 @@ RUN apt-get update \
   && npm install -g @earendil-works/pi-coding-agent@0.85.1 \
   && npm cache clean --force
 
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends git \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY docker-entrypoint.sh /usr/local/bin/pctx-sandbox-entry
 RUN chmod 0755 /usr/local/bin/pctx-sandbox-entry \
   && mkdir -p /work /run/pctx \

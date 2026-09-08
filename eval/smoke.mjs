@@ -3,9 +3,12 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
-import { runLiveAgent } from "./live-g4.mjs";
 import { buildEvaluation } from "./report.ts";
 import { armOrderFor, hostManifest, loadSmokePlan } from "./runner.ts";
+
+function runLiveAgent() {
+  throw new Error("historical: eval/live-g4.mjs was removed in E02; use eval/local");
+}
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "..");
 
