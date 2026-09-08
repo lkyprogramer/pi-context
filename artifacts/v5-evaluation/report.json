@@ -18,8 +18,8 @@
     "seed": "freeze-before-run",
     "tarball": "/Users/luo/Documents/github/pi-context/artifacts/release-candidate/pi-context-5.0.0-dev.0.tgz"
   },
-  "elapsedMs": 284254,
-  "remainingSeconds": 3015.7490000000007,
+  "elapsedMs": 228618,
+  "remainingSeconds": 3071.3969999999995,
   "manifest": {
     "host": "official-pi",
     "piVersion": "0.85.1",
@@ -27,26 +27,27 @@
     "configHash": "pending",
     "model": "openclaw/Qwen3.8-27B-WORK",
     "pricingIdentity": null,
-    "createdAt": "2026-09-08T01:50:54.411Z",
+    "createdAt": "2026-09-08T02:07:16.959Z",
     "immutable": true
   },
   "evaluation": {
     "ittDenominator": 8,
-    "bothPass": 2,
+    "bothPass": 7,
+    "closedLoopCases": 8,
     "summary": {
       "n": 8,
       "complete": 8,
       "blocked": 0,
       "notRun": 0,
       "incomplete": 0,
-      "failed": 6
+      "failed": 1
     },
     "honest": true,
     "twoPercentNiClaimAllowed": false,
     "adverseEventUpperBound": 0.31234397806636793,
     "recommendation": {
-      "level": "observe",
-      "reason": "closed-loop cases 2 < 8 or planned 8"
+      "level": "limited-trial",
+      "reason": "8 closed loops without resource net-gain evidence; not balanced"
     },
     "resourceNetEvidence": false,
     "c2Proven": true,
@@ -55,90 +56,114 @@
   "cases": {
     "J01": {
       "B0": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: same eventId from another tenant must succeed\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:8)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J01\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 18144,
-        "billedTokens": null,
-        "note": "J01 B0 live agent ran; oracle failed"
+        "wallMs": 16217,
+        "billedTokens": 8805,
+        "lastAssistant": "All requirements verified with a test run (javac + `java -ea`): pair-based uniqueness, no cross-tenant collision (`a:b`/`c` vs `a`/`b:c`), independent instance state, and `IllegalArgumentException` for null/empty tenant or eventId. DONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J01 B0 live agent in T21 container; oracle passed; grader was not mounted"
       },
       "B2": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: same eventId from another tenant must succeed\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:8)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J01\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 18106,
-        "billedTokens": null,
-        "note": "J01 B2 live agent ran; oracle failed"
+        "wallMs": 17009,
+        "billedTokens": 9821,
+        "lastAssistant": "DONE\n\nFixed `Deduplicator.java`: the `seen` set now uses a private immutable `Key` pair (tenant + eventId) with proper `equals`/`hashCode`, so uniqueness is per (tenant, eventId) pair and tenants are never merged even with separator-like characters. Per-instance state is unchanged, and null/empty validation still throws `IllegalArgumentException`. Verified by compiling and running the specified scenarios — all pass.",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J01 B2 live agent in T21 container; oracle passed; grader was not mounted"
       }
     },
     "J02": {
       "B2": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: list query leaked foreign tenant\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:13)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J02\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 17740,
-        "billedTokens": null,
-        "note": "J02 B2 live agent ran; oracle failed"
+        "wallMs": 9311,
+        "billedTokens": 8640,
+        "lastAssistant": "Done. Both methods now filter by `row.tenant`:\n- `findAll(tenant)` builds a new mutable `ArrayList` containing only that tenant's rows — safe to `clear()` by the caller, and later calls re-scan the internal store.\n- `findOne(tenant, id)` requires both tenant and id to match, so a missing tenant returns null.\n\nCompiles cleanly.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J02 B2 live agent in T21 container; oracle passed; grader was not mounted"
       },
       "B0": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: list query leaked foreign tenant\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:13)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J02\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 18098,
-        "billedTokens": null,
-        "note": "J02 B0 live agent ran; oracle failed"
+        "wallMs": 9570,
+        "billedTokens": 8225,
+        "lastAssistant": "DONE\n\nBoth methods are now tenant-scoped:\n- `findAll(tenant)` returns a new mutable `ArrayList` containing only that tenant's rows, so `clear()` on the returned list is safe and doesn't affect later calls.\n- `findOne(tenant, id)` matches on both tenant and id, returning null when no row matches.\n\nVerified with `javac` — compiles cleanly.",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J02 B0 live agent in T21 container; oracle passed; grader was not mounted"
       }
     },
     "J03": {
       "B0": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.1.0:java (default-cli) on project j03: An exception occurred while executing the Java class. failed transfer must not change accounts -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException\nWARNING: A restricted method in java.lang.System has been called\nWARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/Users/luo/.sdkman/candidates/maven/current/lib/jansi-2.4.1.jar)\nWARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module\nWARNING: Restricted methods will be blocked in a future release unless native access is enabled\n\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/Users/luo/.sdkman/candidates/maven/current/lib/guava-33.2.1-jre.jar)\nWARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper\nWARNING: sun.misc.Unsafe::objectFieldOffset will be remove",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J03\nWARNING: A restricted method in java.lang.System has been called\nWARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/Users/luo/.sdkman/candidates/maven/current/lib/jansi-2.4.1.jar)\nWARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module\nWARNING: Restricted methods will be blocked in a future release unless native access is enabled\n\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/Users/luo/.sdkman/candidates/maven/current/lib/guava-33.2.1-jre.jar)\nWARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper\nWARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release\n9月 08, 2026 10:04:34 上午 org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory initDatabase\nINFO: Starting embedded database: url='jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false', username='sa'\n9月 08, 2026 10:04:34 上午 org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory shutdownDatabase\nINFO: Shutting down embedded database: url='jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false'\n9月 08, 2026 10:04:34 上午 org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory initDatabase\nINF",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 19685,
-        "billedTokens": null,
-        "note": "J03 B0 live agent ran; oracle failed"
+        "wallMs": 14156,
+        "billedTokens": 6652,
+        "lastAssistant": "Fixed. `transfer()` is now `@Transactional` and performs both SQL statements directly: the balance debit and the journal insert. When `failAfterDebit=true`, the `IllegalStateException` propagates uncaught, so Spring's proxy rolls back the transaction — the balance stays 100 and the journal has 0 rows. On success, both commits happen.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J03 B0 live agent in T21 container; oracle passed; grader was not mounted"
       },
       "B2": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.1.0:java (default-cli) on project j03: An exception occurred while executing the Java class. failed transfer must not change accounts -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException\nWARNING: A restricted method in java.lang.System has been called\nWARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/Users/luo/.sdkman/candidates/maven/current/lib/jansi-2.4.1.jar)\nWARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module\nWARNING: Restricted methods will be blocked in a future release unless native access is enabled\n\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/Users/luo/.sdkman/candidates/maven/current/lib/guava-33.2.1-jre.jar)\nWARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper\nWARNING: sun.misc.Unsafe::objectFieldOffset will be remove",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J03\nWARNING: A restricted method in java.lang.System has been called\nWARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/Users/luo/.sdkman/candidates/maven/current/lib/jansi-2.4.1.jar)\nWARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module\nWARNING: Restricted methods will be blocked in a future release unless native access is enabled\n\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/Users/luo/.sdkman/candidates/maven/current/lib/guava-33.2.1-jre.jar)\nWARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper\nWARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release\n9月 08, 2026 10:04:48 上午 org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory initDatabase\nINFO: Starting embedded database: url='jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false', username='sa'\n9月 08, 2026 10:04:48 上午 org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory shutdownDatabase\nINFO: Shutting down embedded database: url='jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false'\n9月 08, 2026 10:04:48 上午 org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory initDatabase\nINF",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 19545,
-        "billedTokens": null,
-        "note": "J03 B2 live agent ran; oracle failed"
+        "wallMs": 14531,
+        "billedTokens": 7129,
+        "lastAssistant": "DONE — `transfer()` now has `@Transactional` and executes the balance debit, journal insert, and credit directly via `JdbcTemplate` (no self-invocation of `this.debit()`). On `failAfterDebit=true` the `IllegalStateException` propagates, rolling back both tables.",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J03 B2 live agent in T21 container; oracle passed; grader was not mounted"
       }
     },
     "J04": {
       "B2": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: add must return the sum, not a - b\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:6)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J04\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 17910,
-        "billedTokens": null,
-        "note": "J04 B2 live agent ran; oracle failed"
+        "wallMs": 8363,
+        "billedTokens": 9943,
+        "lastAssistant": "DONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J04 B2 live agent in T21 container; oracle passed; grader was not mounted"
       },
       "B0": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: add must return the sum, not a - b\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:6)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J04\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 18161,
-        "billedTokens": null,
-        "note": "J04 B0 live agent ran; oracle failed"
+        "wallMs": 9516,
+        "billedTokens": 11692,
+        "lastAssistant": "Done — `App.java` now returns `a + b`, and `build-log.txt` is untouched.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J04 B0 live agent in T21 container; oracle passed; grader was not mounted"
       }
     },
     "J05": {
@@ -153,24 +178,30 @@
           "compactLeaked": false,
           "recoveryPathProven": false
         },
-        "wallMs": 17545,
-        "billedTokens": 2,
+        "wallMs": 5359,
+        "billedTokens": 1361,
+        "lastAssistant": "I don't have a `pctx_history` tool (or a bash tool) available in this session — my only tools are `write` and `edit`. I also won't guess the nonce value.\n\nIf you can paste the `C2_NONCE=<hex>` value here (or the contents of the read result), I'll immediately update `NonceBox.token()` in NonceBox.java with that hex and reply DONE.",
+        "agentError": null,
+        "retriedEmptyTurn": false,
         "note": "J05 B0 live agent ran; oracle failed"
       },
       "B2": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: nonce not installed\n\tat Oracle.main(Oracle.java:5)\n",
-        "historyCalled": false,
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J05:6826c64886d9b8c4a8e249ec75fceb8c\n",
+        "historyCalled": true,
         "c2": {
-          "historyCalled": false,
-          "nonceMatched": false,
+          "historyCalled": true,
+          "nonceMatched": true,
           "compactLeaked": false,
-          "recoveryPathProven": false
+          "recoveryPathProven": true
         },
-        "wallMs": 18796,
-        "billedTokens": 2,
-        "note": "J05 C2 unproven historyCalled=false nonceMatched=false leaked=false"
+        "wallMs": 53172,
+        "billedTokens": 92588,
+        "lastAssistant": "DONE\n\n- Retrieved `C2_NONCE=6826c64886d9b8c4a8e249ec75fceb8c` from the history entry via `pctx_history` search + read (not guessed).\n- Updated `/work/NonceBox.java`: `token()` now returns `\"6826c64886d9b8c4a8e249ec75fceb8c\"` (no prefix). Only that file was modified.",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J05 B2 live agent in T21 container; oracle passed; grader was not mounted"
       }
     },
     "J06": {
@@ -180,8 +211,11 @@
         "oracleOutput": "ORACLE_PASS:J06\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 17480,
-        "billedTokens": 2,
+        "wallMs": 7630,
+        "billedTokens": 5658,
+        "lastAssistant": "Writer.java already has `targetSchema()` returning exactly `\"app\"` — no modification needed.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
         "note": "J06 B2 live agent in T21 container; oracle passed; grader was not mounted"
       },
       "B0": {
@@ -190,31 +224,40 @@
         "oracleOutput": "ORACLE_PASS:J06\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 17982,
-        "billedTokens": 2,
+        "wallMs": 8182,
+        "billedTokens": 5115,
+        "lastAssistant": "Writer.java already returns exactly \"app\" from `targetSchema()`, with no additional schemas. No changes needed — file is as required.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
         "note": "J06 B0 live agent in T21 container; oracle passed; grader was not mounted"
       }
     },
     "J07": {
       "B0": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: old success must not override current failure\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:11)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J07\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 17904,
-        "billedTokens": null,
-        "note": "J07 B0 live agent ran; oracle failed"
+        "wallMs": 18077,
+        "billedTokens": 12068,
+        "lastAssistant": "Fixed `VerificationStatus.java` — `isCurrentSuccess` now picks only runs matching the revision, selects the one with the highest `observedAt` (so the newest evidence wins regardless of input order), and returns true only if that latest run has `passed == TRUE` (null/unknown and empty evidence are not success). Verified with a compiled test covering all listed cases — all pass.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J07 B0 live agent in T21 container; oracle passed; grader was not mounted"
       },
       "B2": {
-        "status": "failed",
-        "oracle": "failed",
-        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: old success must not override current failure\n\tat Oracle.check(Oracle.java:5)\n\tat Oracle.main(Oracle.java:11)\n",
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J07\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 17499,
-        "billedTokens": null,
-        "note": "J07 B2 live agent ran; oracle failed"
+        "wallMs": 14446,
+        "billedTokens": 9419,
+        "lastAssistant": "DONE\n\n`isCurrentSuccess` now picks the run with the greatest `observedAt` among runs matching the given `revision` (input-order independent) and returns success only if that latest run has `passed == TRUE`. Other revisions are ignored, unknown (`passed=null`) latest evidence fails, and empty/absent evidence fails.",
+        "agentError": null,
+        "retriedEmptyTurn": false,
+        "note": "J07 B2 live agent in T21 container; oracle passed; grader was not mounted"
       }
     },
     "J08": {
@@ -224,8 +267,11 @@
         "oracleOutput": "ORACLE_PASS:J08\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 21208,
-        "billedTokens": 5418,
+        "wallMs": 7851,
+        "billedTokens": 5699,
+        "lastAssistant": "The file already meets all requirements: `ORDERS` is `\"/v1/orders\"`, `METHOD` is `\"POST\"`, and `handle` returns `\"ok:\" + body` for that pair and `\"no\"` otherwise. No changes needed.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
         "note": "J08 B2 live agent in T21 container; oracle passed; grader was not mounted"
       },
       "B0": {
@@ -234,8 +280,11 @@
         "oracleOutput": "ORACLE_PASS:J08\n",
         "historyCalled": false,
         "c2": null,
-        "wallMs": 8448,
-        "billedTokens": 5184,
+        "wallMs": 15213,
+        "billedTokens": 12304,
+        "lastAssistant": "Routes.java already satisfies the contract: `ORDERS = \"/v1/orders\"`, `METHOD = \"POST\"`, and `handle` returns `ok:`+body only for that exact pair, `\"no\"` otherwise. Verified by compiling and running the checks above — no modification needed.\n\nDONE",
+        "agentError": null,
+        "retriedEmptyTurn": false,
         "note": "J08 B0 live agent in T21 container; oracle passed; grader was not mounted"
       }
     }

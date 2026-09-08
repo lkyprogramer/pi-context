@@ -76,12 +76,23 @@ for (const caseId of caseIds) {
     }
     const nonce = randomBytes(16).toString("hex");
     const t0 = Date.now();
-    const result = runLiveAgent(env, caseId, {
+    let result = runLiveAgent(env, caseId, {
       arm,
       plugin: arm === "B2",
       timeoutMs: Math.min(plan.perArmWallBudgetSeconds, remaining) * 1000,
       seedNonce: caseId === "J05" ? nonce : undefined,
     });
+    const billed = result.billedTokens ?? result.agentResult?.billedTokens ?? 0;
+    if (result.status !== "passed" && result.status !== "blocked" && billed <= 2 && remaining > 30) {
+      const retry = runLiveAgent(env, caseId, {
+        arm,
+        plugin: arm === "B2",
+        timeoutMs: Math.min(plan.perArmWallBudgetSeconds, remaining) * 1000,
+        seedNonce: caseId === "J05" ? randomBytes(16).toString("hex") : undefined,
+      });
+      retry.retriedEmptyTurn = true;
+      result = retry;
+    }
     const used = (Date.now() - t0) / 1000;
     remaining -= used;
     const slot = arm === "B0" ? pair.baseline : pair.candidate;
@@ -98,14 +109,18 @@ for (const caseId of caseIds) {
       c2: result.c2 ?? null,
       wallMs: slot.wallMs,
       billedTokens: slot.billedTokens,
+      lastAssistant: result.agentResult?.lastAssistant ?? null,
+      agentError: result.agentResult?.error ?? result.error ?? null,
+      retriedEmptyTurn: result.retriedEmptyTurn ?? false,
       note: result.note,
     };
   }
   pairs.push(pair);
 }
 
-const c2Proven = caseResults.J05?.B2?.c2?.recoveryPathProven === true;
-const evaluation = buildEvaluation(pairs, { c2Proven });
+const j05c2 = caseResults.J05?.B2?.c2 ?? null;
+const c2Proven = j05c2?.recoveryPathProven === true;
+const evaluation = buildEvaluation(pairs, { c2Proven, j05c2 });
 const report = {
   kind: "v5-smoke-evaluation",
   plan: { caseIds: plan.caseIds, arms: plan.arms, seed: plan.seed, tarball: process.env.PCR_TARBALL || null },

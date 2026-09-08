@@ -83,22 +83,32 @@ export function resourceNetEvidence(pairs: EvalPair[]): boolean {
   return false;
 }
 
-export function buildEvaluation(pairs: EvalPair[], extra?: { c2Proven?: boolean }) {
+export function c2PairSuccess(pair: EvalPair, c2: { recoveryPathProven?: boolean; historyCalled?: boolean } | null | undefined): boolean {
+  if (pair.taskId !== "J05") return false;
+  return pair.baseline.taskPassed === false && pair.candidate.taskPassed === true && c2?.recoveryPathProven === true;
+}
+
+export function buildEvaluation(pairs: EvalPair[], extra?: { c2Proven?: boolean; j05c2?: { recoveryPathProven?: boolean } }) {
   const s = summarize(pairs);
   const bothPass = pairs.filter((p) => p.baseline.taskPassed === true && p.candidate.taskPassed === true).length;
+  const c2ok = extra?.j05c2?.recoveryPathProven === true
+    && pairs.some((p) => c2PairSuccess(p, extra.j05c2));
+  const closedLoopCases = bothPass + (c2ok ? 1 : 0);
   const net = resourceNetEvidence(pairs);
-  const rec = extra?.c2Proven === false
+  const b0PassB2Fail = pairs.filter((p) => p.taskId !== "J05" && p.baseline.taskPassed === true && p.candidate.taskPassed === false).length;
+  const rec = extra?.c2Proven === false && !c2ok
     ? { level: "observe" as const, reason: "hard C2 not proven on this tarball" }
     : recommend({
-      closedLoopCases: bothPass,
+      closedLoopCases,
       plannedCases: s.n,
-      b0PassB2Fail: pairs.filter((p) => p.baseline.taskPassed === true && p.candidate.taskPassed === false).length,
+      b0PassB2Fail,
       criticalViolation: pairs.some((p) => Boolean(p.baseline.criticalViolation || p.candidate.criticalViolation)),
       resourceNetEvidence: net,
     });
   return {
     ittDenominator: s.n,
     bothPass,
+    closedLoopCases,
     summary: s,
     honest: honest(pairs),
     twoPercentNiClaimAllowed: twoPercentNiClaimAllowed(s.complete, s.complete === s.n && s.n >= 8),

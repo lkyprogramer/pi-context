@@ -8,20 +8,20 @@
     "baseline": {
       "arm": "B0",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 18144,
+      "wallMs": 16217,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 8805
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 18106,
+      "wallMs": 17009,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 9821
     }
   },
   {
@@ -33,20 +33,20 @@
     "baseline": {
       "arm": "B0",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 18098,
+      "wallMs": 9570,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 8225
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 17740,
+      "wallMs": 9311,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 8640
     }
   },
   {
@@ -58,20 +58,20 @@
     "baseline": {
       "arm": "B0",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 19685,
+      "wallMs": 14156,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 6652
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 19545,
+      "wallMs": 14531,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 7129
     }
   },
   {
@@ -83,20 +83,20 @@
     "baseline": {
       "arm": "B0",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 18161,
+      "wallMs": 9516,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 11692
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 17910,
+      "wallMs": 8363,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 9943
     }
   },
   {
@@ -110,18 +110,18 @@
       "status": "complete",
       "taskPassed": false,
       "criticalViolation": null,
-      "wallMs": 17545,
+      "wallMs": 5359,
       "monetaryCost": null,
-      "billedTokens": 2
+      "billedTokens": 1361
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 18796,
+      "wallMs": 53172,
       "monetaryCost": null,
-      "billedTokens": 2
+      "billedTokens": 92588
     }
   },
   {
@@ -135,18 +135,18 @@
       "status": "complete",
       "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 17982,
+      "wallMs": 8182,
       "monetaryCost": null,
-      "billedTokens": 2
+      "billedTokens": 5115
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
       "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 17480,
+      "wallMs": 7630,
       "monetaryCost": null,
-      "billedTokens": 2
+      "billedTokens": 5658
     }
   },
   {
@@ -158,20 +158,20 @@
     "baseline": {
       "arm": "B0",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 17904,
+      "wallMs": 18077,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 12068
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
-      "taskPassed": false,
+      "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 17499,
+      "wallMs": 14446,
       "monetaryCost": null,
-      "billedTokens": null
+      "billedTokens": 9419
     }
   },
   {
@@ -185,18 +185,18 @@
       "status": "complete",
       "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 8448,
+      "wallMs": 15213,
       "monetaryCost": null,
-      "billedTokens": 5184
+      "billedTokens": 12304
     },
     "candidate": {
       "arm": "B2",
       "status": "complete",
       "taskPassed": true,
       "criticalViolation": null,
-      "wallMs": 21208,
+      "wallMs": 7851,
       "monetaryCost": null,
-      "billedTokens": 5418
+      "billedTokens": 5699
     }
   }
 ]

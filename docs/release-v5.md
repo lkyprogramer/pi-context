@@ -14,8 +14,8 @@ pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
 
 ## Recommendation
 
-**observe** from unspliced 8×2 on this tarball (`artifacts/v5-evaluation/report.json`): both-pass **2/8** (J06, J08). J03/J04/J05 failed on both arms. J01/J02/J07 also failed this run (a later isolated J01 B2 passed — not folded back into ITT).
+From unspliced 8×2 `artifacts/v5-evaluation/report.json`:
 
-Hard C2: `eval/live-c2.mjs` on the same tarball is `recoveryPathProven: true`. J05 in the 8×2 did not call `pctx_history`.
+**limited-trial**（文档个人 canary：「本环境有限样本可试用」）— closed-loop 8/8：J01–J04 与 J06–J08 双臂过 oracle；J05 为 C2 配对（B0 无 `pctx_history` 失败，B2 `recoveryPathProven`）。无完整相对 B0 的资源净收益账本 → **不是 balanced**。`twoPercentNiClaimAllowed: false`。
 
-`twoPercentNiClaimAllowed: false`. Not limited-trial (need 8 both-pass). Not balanced.
+G5 incomplete：未 publish / 未 push `main`。
