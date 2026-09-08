@@ -28,10 +28,15 @@ export async function loadOfficialPi(): Promise<{
     create: (cwd: string, agentDir?: string, options?: Record<string, unknown>) => unknown;
     inMemory: (settings?: unknown, options?: unknown) => unknown;
   };
-  SessionManager: {
+    SessionManager: {
     create: (cwd: string, sessionDir?: string) => {
       getSessionFile: () => string | undefined;
       getEntries: () => unknown[];
+      appendMessage: (message: unknown) => string;
+      getSessionId: () => string;
+      getLeafId: () => string | null;
+      getEntry: (id: string) => unknown;
+      buildSessionContext: () => { messages: unknown[] };
     };
     open: (path: string, sessionDir?: string, cwd?: string) => { getEntries: () => unknown[]; getSessionFile: () => string | undefined };
   };
@@ -44,6 +49,13 @@ export async function loadOfficialPi(): Promise<{
       prompt: (text: string) => Promise<void>;
       compact: (instructions?: string) => Promise<unknown>;
       dispose?: () => void | Promise<void>;
+      bindExtensions?: (opts: Record<string, unknown>) => Promise<void>;
+      getToolDefinition?: (name: string) => {
+        execute: (id: string, params: Record<string, unknown>, signal: unknown, upd: unknown, ctx: unknown) => Promise<unknown>;
+      } | undefined;
+      getActiveTools?: () => unknown;
+      messages: unknown[];
+      sessionManager?: { appendMessage: (message: unknown) => string };
     };
     extensionsResult: { extensions: Array<{ path?: string; resolvedPath?: string; commands?: Map<string, unknown> }> };
   }>;

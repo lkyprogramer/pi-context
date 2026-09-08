@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import register from "../../src/extension.js";
 import { createPlugin, setProfile } from "../../src/plugin.js";
+import { runObserveIdentity } from "../helpers/controlled-provider.js";
 import { loadOfficialPi, packedInstallSpec } from "../helpers/official-pi.js";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -199,4 +200,22 @@ describe("T19 packed install", () => {
       rmSync(cwd, { recursive: true, force: true });
     }
   }, 90_000);
+
+  it("packed tarball observe identity matches a session without the plugin", async () => {
+    const { tarball } = packTarball();
+    const dest = mkdtempSync(join(tmpdir(), "pctx-d01-pack-"));
+    execFileSync("tar", ["-xzf", tarball, "-C", dest]);
+    const pkg = join(dest, "package");
+    const pi = await loadOfficialPi();
+    const prevHome = process.env.HOME;
+    try {
+      const { temps } = await runObserveIdentity(pi, { extensionRoot: pkg });
+      expect(temps.length).toBeGreaterThan(0);
+      for (const dir of temps) rmSync(dir, { recursive: true, force: true });
+    } finally {
+      if (prevHome === undefined) delete process.env.HOME;
+      else process.env.HOME = prevHome;
+      rmSync(dest, { recursive: true, force: true });
+    }
+  }, 120_000);
 });

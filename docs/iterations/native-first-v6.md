@@ -48,3 +48,11 @@ RED: `pnpm exec vitest run test/unit/derived-exposure.test.ts --config vitest.co
 GREEN: `pnpm exec vitest run test/unit/derived-exposure.test.ts test/unit/batches.test.ts --config vitest.config.ts` exit 0 — 8 tests; `pnpm typecheck` exit 0; full `pnpm exec vitest run --config vitest.config.ts` exit 0 — 92 tests
 Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not on PATH) / not-run
 Remaining: fold still returns null until C03; protectSet keeps result entry ids only; K=0 protects none of the last complete batches
+
+## Task: C03
+Commit: d99cc1677463d4fdcfdb06f2cc7bc82940ba140d
+Changed: src/projection/planner.ts, src/projection/render.ts, src/projection/budget.ts, src/plugin.ts, src/pi/adapter.ts, src/pi/source-reader.ts, src/telemetry/usage.ts, src/telemetry/metrics.ts, src/commands.ts, src/config.ts, src/contracts.ts, test/unit/fold-plan.test.ts, test/unit/render.test.ts, test/unit/planner.test.ts, test/property/invariants.test.ts, test/unit/budget.test.ts, test/fault/runtime.test.ts, test/packed/install.test.ts
+RED: `pnpm exec vitest run test/unit/fold-plan.test.ts --config vitest.config.ts` — `shouldFold is not a function`
+GREEN: `pnpm exec vitest run test/unit/fold-plan.test.ts test/unit/render.test.ts test/unit/planner.test.ts test/property/invariants.test.ts --config vitest.config.ts` exit 0 — 14 tests; `pnpm typecheck` exit 0; full vitest 95 passed
+Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not on PATH) / not-run
+Remaining: defaults trigger=60 target=40 protectRecentBatches=4 minRemoved=4096 minFoldable=1024 stubHeadChars=120; planFold keeps folding after target until minRemoved is met so the C03 fixture can produce a plan; `/pctx fold` still respects triggerPercent inside planFold; D01 live smoke not run
