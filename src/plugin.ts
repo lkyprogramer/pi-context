@@ -1,7 +1,8 @@
-import type { PctxConfig } from "./config.js";
-import { DEFAULT_CONFIG, parseConfig } from "./config.js";
+import type { LoadedConfig, PctxConfig } from "./config.js";
+import { DEFAULT_CONFIG, configHashOf, parseConfig } from "./config.js";
 import type { HistoryRequest, HistoryResult, NativeEntry, Profile, SourceRef } from "./contracts.js";
 import { hashCanonical } from "./contracts.js";
+import type { AssistantRecord } from "./telemetry/metrics.js";
 import { HistoryIndex } from "./history/index.js";
 import { readHistory } from "./history/read.js";
 import { encodeRef } from "./history/refs.js";
@@ -28,6 +29,12 @@ export interface PluginState {
   pendingAttempt: string | null;
   lastCapsule: string | null;
   proposal: Proposal;
+  configHash: string;
+  configSource: string;
+  warnings: string[];
+  hostVersion: string;
+  nativeCompactions: number;
+  lastAssistant: AssistantRecord | null;
 }
 
 export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
@@ -42,13 +49,33 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     pendingAttempt: null,
     lastCapsule: null,
     proposal: emptyProposal(0),
+    configHash: configHashOf(config),
+    configSource: "default",
+    warnings: [],
+    hostVersion: "unknown",
+    nativeCompactions: 0,
+    lastAssistant: null,
   };
 }
 
+export function applyLoadedConfig(state: PluginState, loaded: LoadedConfig): void {
+  state.config = loaded.config;
+  state.profile = loaded.config.profile;
+  state.configHash = loaded.configHash;
+  state.configSource = loaded.source;
+  state.warnings = loaded.warnings;
+}
+
+export function applyConfigFailure(state: PluginState, err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err);
+  state.config = { ...DEFAULT_CONFIG, profile: "observe" };
+  state.profile = "observe";
+  state.configHash = configHashOf(state.config);
+  state.configSource = "default";
+  state.warnings = [`config-error:${message}`];
+}
+
 export function setProfile(state: PluginState, profile: Profile): void {
-  if (profile === "balanced" && state.config.schemaVersion !== 5) {
-    throw new Error("balanced requires schemaVersion 5");
-  }
   state.profile = profile;
   state.config = parseConfig({ ...state.config, profile });
   state.generation += 1;
@@ -161,7 +188,7 @@ export function applyContext(state: PluginState, messages: AgentMessage[], entri
       messages,
       plan: state.plan,
       profile: state.profile,
-      optionalBudget: state.config.checkpoint.maxTokens,
+      optionalBudget: 1000,
       mappedEntries: mapped,
       generation: state.generation,
     });
@@ -259,7 +286,7 @@ export function restoreStagingFromEntries(state: PluginState, entries: NativeEnt
 }
 
 export function noteSemanticAttempt(state: PluginState, hash: string): void {
-  if (!shouldGenerateSemantic(state.profile, state.config.semantic.enabled)) return;
+  if (!shouldGenerateSemantic(state.profile, false)) return;
   state.proposal = { generation: state.generation, proposedHash: hash, nativeEntryId: null, ackCount: 0, status: "proposed" };
 }
 

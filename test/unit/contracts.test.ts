@@ -5,7 +5,7 @@ import { decodeRef, encodeRef } from "../../src/history/refs.js";
 
 describe("T02 contracts", () => {
   it("rejects unknown config fields and forged refs", () => {
-    expect(() => parseConfig({ schemaVersion: 5, profile: "observe", extra: true })).toThrow(/unknown config field/);
+    expect(() => parseConfig({ schemaVersion: 6, profile: "observe", extra: true })).toThrow(/unknown config field/);
     expect(() => decodeRef("not-a-ref")).toThrow();
     const ref = encodeRef({
       version: 5,

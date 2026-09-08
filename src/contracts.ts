@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export type Profile = "off" | "observe" | "balanced" | "experimental-semantic";
+export type Profile = "off" | "observe" | "balanced";
 export type ResultCode =
   | "ok"
   | "disabled"
@@ -14,6 +14,56 @@ export type ResultCode =
 export type Sha256 = string;
 export type EntryId = string;
 export type SourceRef = string;
+
+export interface PctxConfig {
+  schemaVersion: 6;
+  profile: Profile;
+  storage: { mode: "persistent" | "memory-only"; dbPath: string | null; maxIndexBytes: number };
+  history: { searchLimit: number; searchMaxTokens: number; readMaxTokens: number; readMaxBytes: number };
+  fold: {
+    triggerPercent: number;
+    targetPercent: number;
+    protectRecentBatches: number;
+    minRemovedTokens: number;
+    minFoldableBytes: number;
+    stubHeadChars: number;
+  };
+  telemetry: { includeContent: false; jsonl: boolean; maxLogBytes: number };
+}
+
+export interface RequestRecord {
+  at: string;
+  sessionId: string;
+  profile: PctxConfig["profile"];
+  planId: string | null;
+  replacementsApplied: number;
+  contextPercentBefore: number | null;
+  usage: {
+    input: number | null;
+    output: number | null;
+    cacheRead: number | null;
+    cacheWrite: number | null;
+    totalTokens: number | null;
+  };
+  stopReason: string | null;
+  ttftMs: number | null;
+}
+
+export interface StatusView {
+  resolvedProfile: string;
+  configHash: string;
+  configSource: string;
+  warnings: string[];
+  hostVersion: string;
+  contextWindow: number | null;
+  contextPercent: number | null;
+  activePlan: { planId: string; replacements: number; savedTokensEstimate: number } | null;
+  folds: number;
+  nativeCompactions: number;
+  historyReads: number;
+  historySearches: number;
+  lastRequests: RequestRecord[];
+}
 
 export const ERROR = {
   CONFIG: "PCTX_CONFIG",

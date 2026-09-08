@@ -3,9 +3,9 @@ import { DEFAULT_CONFIG, parseConfig } from "../../src/config.js";
 import { failedRequest, imageTurn, missingBatch, neverAssumeHostSuccess } from "../../src/testing.js";
 
 describe("T02 config", () => {
-  it("does not enable balanced unless schemaVersion is 5", () => {
+  it("does not enable balanced unless schemaVersion is 6", () => {
     expect(() => parseConfig({ ...DEFAULT_CONFIG, schemaVersion: 4, profile: "balanced" })).toThrow();
-    expect(parseConfig({ ...DEFAULT_CONFIG, schemaVersion: 5, profile: "balanced" }).profile).toBe("balanced");
+    expect(parseConfig({ ...DEFAULT_CONFIG, schemaVersion: 6, profile: "balanced" }).profile).toBe("balanced");
   });
 
   it("rejects telemetry.includeContent=true", () => {

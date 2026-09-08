@@ -1,51 +1,46 @@
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { ERROR, hashCanonical, type Profile, type Sha256 } from "./contracts.js";
+import { ERROR, hashCanonical, type PctxConfig, type Profile, type Sha256 } from "./contracts.js";
 
-export interface PctxConfig {
-  schemaVersion: 5;
-  profile: Profile;
-  storage: { mode: "persistent" | "memory-only"; maxIndexBytes: number };
-  history: { searchLimit: number; searchMaxTokens: number; readMaxTokens: number; readMaxBytes: number };
-  projection: {
-    protectRecentBatches: number;
-    minEpochRequests: number;
-    minRemovedTokens: number;
-    minCandidateReduction: number;
-  };
-  checkpoint: { maxTokens: number; maxWindowFraction: number };
-  semantic: {
-    enabled: boolean;
-    maxLogicalCallsPerCompaction: 1;
-    maxRetries: number;
-    maxWallMs: number;
-    providerOverride: string | null;
-  };
-  telemetry: { includeContent: false; maxLogBytes: number };
-}
+export type { PctxConfig } from "./contracts.js";
 
 export const DEFAULT_CONFIG: PctxConfig = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   profile: "observe",
-  storage: { mode: "persistent", maxIndexBytes: 268435456 },
+  storage: { mode: "persistent", dbPath: null, maxIndexBytes: 268435456 },
   history: { searchLimit: 8, searchMaxTokens: 1500, readMaxTokens: 3000, readMaxBytes: 32768 },
-  projection: {
+  fold: {
+    triggerPercent: 60,
+    targetPercent: 40,
     protectRecentBatches: 4,
-    minEpochRequests: 8,
     minRemovedTokens: 4096,
-    minCandidateReduction: 0.15,
+    minFoldableBytes: 1024,
+    stubHeadChars: 120,
   },
-  checkpoint: { maxTokens: 1000, maxWindowFraction: 0.02 },
-  semantic: {
-    enabled: false,
-    maxLogicalCallsPerCompaction: 1,
-    maxRetries: 1,
-    maxWallMs: 20000,
-    providerOverride: null,
-  },
-  telemetry: { includeContent: false, maxLogBytes: 5242880 },
+  telemetry: { includeContent: false, jsonl: false, maxLogBytes: 5242880 },
 };
+
+export interface LoadedConfig {
+  config: PctxConfig;
+  configHash: Sha256;
+  source: string;
+  warnings: string[];
+}
+
+const TOP_KEYS = new Set(["schemaVersion", "profile", "storage", "history", "fold", "telemetry"]);
+const STORAGE_KEYS = new Set(["mode", "dbPath", "maxIndexBytes"]);
+const HISTORY_KEYS = new Set(["searchLimit", "searchMaxTokens", "readMaxTokens", "readMaxBytes"]);
+const FOLD_KEYS = new Set([
+  "triggerPercent",
+  "targetPercent",
+  "protectRecentBatches",
+  "minRemovedTokens",
+  "minFoldableBytes",
+  "stubHeadChars",
+]);
+const TELEMETRY_KEYS = new Set(["includeContent", "jsonl", "maxLogBytes"]);
+const LEGACY_KEYS = ["checkpoint", "semantic", "projection"];
 
 function fail(message: string): never {
   const err = new Error(message);
@@ -53,57 +48,139 @@ function fail(message: string): never {
   throw err;
 }
 
-export function parseConfig(input: unknown): PctxConfig {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) fail("config must be an object");
-  const raw = input as Record<string, unknown>;
-  const allowed = new Set(["schemaVersion", "profile", "storage", "history", "projection", "checkpoint", "semantic", "telemetry"]);
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function rejectUnknown(raw: Record<string, unknown>, allowed: Set<string>, label: string): void {
   for (const key of Object.keys(raw)) {
-    if (!allowed.has(key)) fail(`unknown config field: ${key}`);
+    if (!allowed.has(key)) fail(`unknown config field: ${label}${key}`);
   }
-  if (raw.schemaVersion !== 5) fail("schemaVersion must be 5");
-  const profile = raw.profile ?? "observe";
-  if (profile !== "off" && profile !== "observe" && profile !== "balanced" && profile !== "experimental-semantic") {
+}
+
+function finiteNumber(value: unknown, name: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) fail(`${name} must be a finite number`);
+  return value;
+}
+
+function nonNegative(value: unknown, name: string): number {
+  const n = finiteNumber(value, name);
+  if (n < 0) fail(`${name} must not be negative`);
+  return n;
+}
+
+function mergeSection<T extends object>(base: T, overlay: unknown, allowed: Set<string>, label: string): T {
+  if (overlay === undefined) return { ...base };
+  if (!isPlainObject(overlay)) fail(`${label} must be an object`);
+  rejectUnknown(overlay, allowed, `${label}.`);
+  return { ...base, ...overlay };
+}
+
+export function parseConfig(input: unknown): PctxConfig {
+  if (!isPlainObject(input)) fail("config must be an object");
+  for (const legacy of LEGACY_KEYS) {
+    if (legacy in input) fail(`schemaVersion 6; remove ${legacy}`);
+  }
+  rejectUnknown(input, TOP_KEYS, "");
+  if (input.schemaVersion === 5) fail("schemaVersion 6; remove semantic");
+  if (input.schemaVersion !== 6) fail("schemaVersion must be 6");
+
+  const profile = (input.profile ?? DEFAULT_CONFIG.profile) as Profile | string;
+  if (profile !== "off" && profile !== "observe" && profile !== "balanced") {
     fail("invalid profile");
   }
-  if (profile === "balanced" && raw.schemaVersion !== 5) fail("balanced requires schemaVersion 5");
-  const telemetry = (raw.telemetry ?? DEFAULT_CONFIG.telemetry) as Record<string, unknown>;
-  if (telemetry.includeContent === true) fail("telemetry.includeContent must be false");
-  const storage = { ...DEFAULT_CONFIG.storage, ...((raw.storage as object) ?? {}) };
-  const history = { ...DEFAULT_CONFIG.history, ...((raw.history as object) ?? {}) };
-  const projection = { ...DEFAULT_CONFIG.projection, ...((raw.projection as object) ?? {}) };
-  const checkpoint = { ...DEFAULT_CONFIG.checkpoint, ...((raw.checkpoint as object) ?? {}) };
-  const semantic = { ...DEFAULT_CONFIG.semantic, ...((raw.semantic as object) ?? {}) };
+
+  const storage = mergeSection(DEFAULT_CONFIG.storage, input.storage, STORAGE_KEYS, "storage");
+  if (storage.mode !== "persistent" && storage.mode !== "memory-only") fail("storage.mode invalid");
+  if (storage.dbPath !== null && typeof storage.dbPath !== "string") fail("storage.dbPath must be string or null");
+  storage.maxIndexBytes = nonNegative(storage.maxIndexBytes, "storage.maxIndexBytes");
+
+  const history = mergeSection(DEFAULT_CONFIG.history, input.history, HISTORY_KEYS, "history");
+  history.searchLimit = nonNegative(history.searchLimit, "history.searchLimit");
+  history.searchMaxTokens = nonNegative(history.searchMaxTokens, "history.searchMaxTokens");
+  history.readMaxTokens = nonNegative(history.readMaxTokens, "history.readMaxTokens");
+  history.readMaxBytes = nonNegative(history.readMaxBytes, "history.readMaxBytes");
+
+  const fold = mergeSection(DEFAULT_CONFIG.fold, input.fold, FOLD_KEYS, "fold");
+  fold.triggerPercent = nonNegative(fold.triggerPercent, "fold.triggerPercent");
+  fold.targetPercent = nonNegative(fold.targetPercent, "fold.targetPercent");
+  fold.protectRecentBatches = nonNegative(fold.protectRecentBatches, "fold.protectRecentBatches");
+  fold.minRemovedTokens = nonNegative(fold.minRemovedTokens, "fold.minRemovedTokens");
+  fold.minFoldableBytes = nonNegative(fold.minFoldableBytes, "fold.minFoldableBytes");
+  fold.stubHeadChars = nonNegative(fold.stubHeadChars, "fold.stubHeadChars");
+  if (fold.triggerPercent >= 85) fail("fold.triggerPercent must be < 85");
+  if (fold.targetPercent >= fold.triggerPercent) fail("fold.targetPercent must be < fold.triggerPercent");
+
+  const telemetryIn = input.telemetry;
+  if (telemetryIn !== undefined && !isPlainObject(telemetryIn)) fail("telemetry must be an object");
+  if (telemetryIn) rejectUnknown(telemetryIn, TELEMETRY_KEYS, "telemetry.");
+  if (telemetryIn?.includeContent === true) fail("telemetry.includeContent must be false");
+  const jsonl = telemetryIn?.jsonl ?? DEFAULT_CONFIG.telemetry.jsonl;
+  if (typeof jsonl !== "boolean") fail("telemetry.jsonl must be boolean");
+  const maxLogBytes = nonNegative(telemetryIn?.maxLogBytes ?? DEFAULT_CONFIG.telemetry.maxLogBytes, "telemetry.maxLogBytes");
+
   return {
-    schemaVersion: 5,
-    profile: profile as Profile,
-    storage: storage as PctxConfig["storage"],
-    history: history as PctxConfig["history"],
-    projection: projection as PctxConfig["projection"],
-    checkpoint: checkpoint as PctxConfig["checkpoint"],
-    semantic: { ...semantic, maxLogicalCallsPerCompaction: 1, enabled: Boolean(semantic.enabled) } as PctxConfig["semantic"],
-    telemetry: { includeContent: false, maxLogBytes: Number(telemetry.maxLogBytes ?? DEFAULT_CONFIG.telemetry.maxLogBytes) },
+    schemaVersion: 6,
+    profile,
+    storage,
+    history,
+    fold,
+    telemetry: { includeContent: false, jsonl, maxLogBytes },
   };
 }
 
-export function loadConfig(cwd: string, projectTrusted: boolean): { config: PctxConfig; configHash: Sha256; source: string } {
-  const globalPath = join(homedir(), ".pi", "agent", "pctx-v5.json");
-  let merged: unknown = DEFAULT_CONFIG;
+function readJson(path: string): unknown {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch (err) {
+    fail(`invalid JSON in ${path}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+function deepMergeConfig(base: Record<string, unknown>, overlay: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(overlay)) {
+    const prev = out[key];
+    if (isPlainObject(prev) && isPlainObject(value)) out[key] = { ...prev, ...value };
+    else out[key] = value;
+  }
+  return out;
+}
+
+export function loadConfig(cwd: string, projectTrusted: boolean): LoadedConfig {
+  const warnings: string[] = [];
+  const globalDir = join(homedir(), ".pi", "agent");
+  const globalPath = join(globalDir, "pctx.json");
+  const globalLegacy = join(globalDir, "pctx-v5.json");
+  const projectPath = join(cwd, ".pi", "pctx.json");
+  const projectLegacy = join(cwd, ".pi", "pctx-v5.json");
+
+  if ((existsSync(globalLegacy) && !existsSync(globalPath)) || (existsSync(projectLegacy) && !existsSync(projectPath))) {
+    warnings.push("ignored-legacy-config");
+  }
+
+  let merged: Record<string, unknown> = structuredClone(DEFAULT_CONFIG) as unknown as Record<string, unknown>;
   let source = "default";
+
   if (existsSync(globalPath)) {
-    merged = { ...DEFAULT_CONFIG, ...JSON.parse(readFileSync(globalPath, "utf8")) };
+    const raw = readJson(globalPath);
+    if (!isPlainObject(raw)) fail("global pctx.json must be an object");
+    merged = deepMergeConfig(merged, raw);
     source = globalPath;
   }
-  const projectPath = join(cwd, ".pi", "pctx-v5.json");
-  if (projectTrusted && existsSync(projectPath)) {
-    const project = JSON.parse(readFileSync(projectPath, "utf8")) as Record<string, unknown>;
-    if ("telemetry" in project && (project.telemetry as { includeContent?: boolean })?.includeContent === true) {
-      fail("project config cannot enable includeContent");
+
+  if (existsSync(projectPath)) {
+    if (!projectTrusted) warnings.push("untrusted-project-config");
+    else {
+      const raw = readJson(projectPath);
+      if (!isPlainObject(raw)) fail("project pctx.json must be an object");
+      merged = deepMergeConfig(merged, raw);
+      source = projectPath;
     }
-    merged = { ...(merged as object), ...project };
-    source = projectPath;
   }
+
   const config = parseConfig(merged);
-  return { config, configHash: hashCanonical(config), source };
+  return { config, configHash: hashCanonical(config), source, warnings };
 }
 
 export function configHashOf(config: PctxConfig): Sha256 {

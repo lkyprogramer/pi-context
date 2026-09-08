@@ -38,8 +38,8 @@ export function planEpoch(input: {
   hashes: Map<string, string>;
   successfulRequests: number;
 }): FrozenPlan | null {
-  if (input.successfulRequests < input.config.projection.minEpochRequests) return null;
-  const protectedIds = protectSet(input.batches, input.config.projection.protectRecentBatches);
+  if (input.successfulRequests < 8) return null;
+  const protectedIds = protectSet(input.batches, input.config.fold.protectRecentBatches);
   const replacements: Replacement[] = [];
   let removed = 0;
   let original = 0;
@@ -68,8 +68,8 @@ export function planEpoch(input: {
       estimatedAfterTokens: after,
     });
   }
-  if (removed < input.config.projection.minRemovedTokens) return null;
-  if (original > 0 && removed / original < input.config.projection.minCandidateReduction) return null;
+  if (removed < input.config.fold.minRemovedTokens) return null;
+  if (original > 0 && removed / original < 0.15) return null;
   const plan: FrozenPlan = {
     epochId: `epoch:${input.snapshot.generation}:${input.snapshot.sourceRevision.slice(0, 8)}`,
     snapshot: input.snapshot,

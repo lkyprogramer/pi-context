@@ -1,6 +1,4 @@
-import type { Profile } from "../contracts.js";
-
-export function shouldGenerateSemantic(profile: Profile, enabled: boolean): boolean {
+export function shouldGenerateSemantic(profile: string, enabled: boolean): boolean {
   return profile === "experimental-semantic" && enabled;
 }
 

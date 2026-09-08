@@ -33,7 +33,9 @@ export function buildCapsule(input: {
   lines.push("Next safe action: inspect current workspace before reporting success.");
   if (input.unexposedRefs.length) lines.push(`Evidence: ${input.unexposedRefs.join(", ")}`);
   let text = lines.join("\n");
-  const max = Math.min(input.config.checkpoint.maxTokens, Math.floor(input.windowTokens * input.config.checkpoint.maxWindowFraction) || input.config.checkpoint.maxTokens);
+  const maxTokens = 1000;
+  const maxWindowFraction = 0.02;
+  const max = Math.min(maxTokens, Math.floor(input.windowTokens * maxWindowFraction) || maxTokens);
   const unverified: string[] = [];
   if (estimateTokens(text) > max) {
     text = lines.slice(0, 2).join("\n") + "\nCapsule truncated; original pins remain readable via pctx_history.";

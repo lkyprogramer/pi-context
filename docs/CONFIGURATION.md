@@ -1,29 +1,51 @@
-# Configuration
+# Configuration (6.1)
 
-## Release profile
+pi-context 6.1 reads `pctx.json` (`schemaVersion: 6`). Old `pctx-v5.json` is ignored and surfaces as `ignored-legacy-config` on `/pctx status`. There is no automatic migration.
 
-T45 stopped at the deterministic slice. T46 recorded `not-enabled-by-release-profile`.
+## Paths
 
-- `semanticDefault=off`
-- Do not turn Semantic/Background on without paired live evidence that covers stale cost.
-- `publicationClaim` stays `false` until a later T42/T45 pairing against **Pi Native** compaction passes the efficiency gate.
+| File | When it applies |
+|---|---|
+| `~/.pi/agent/pctx.json` | Always, if present |
+| `<cwd>/.pi/pctx.json` | Only when the host reports the project as trusted (`ctx.isProjectTrusted()`). Requires Pi `settings.json` `defaultProjectTrust: "always"` or an explicit trust decision. Untrusted project files are skipped with `untrusted-project-config`. |
+| `~/.pi/agent/pctx-v5.json` / `<cwd>/.pi/pctx-v5.json` | Never loaded. Warning only. |
 
-## Product defaults
+Project files are never trusted by default.
 
-Do not copy live-gate isolation settings into product defaults:
+## Defaults
 
-- Isolated `maxTokens=256` is a smoke-test window only.
-- Formal gates use the model’s real `maxTokens`.
+```json
+{
+  "schemaVersion": 6,
+  "profile": "observe",
+  "storage": { "mode": "persistent", "dbPath": null, "maxIndexBytes": 268435456 },
+  "history": { "searchLimit": 8, "searchMaxTokens": 1500, "readMaxTokens": 3000, "readMaxBytes": 32768 },
+  "fold": {
+    "triggerPercent": 60,
+    "targetPercent": 40,
+    "protectRecentBatches": 4,
+    "minRemovedTokens": 4096,
+    "minFoldableBytes": 1024,
+    "stubHeadChars": 120
+  },
+  "telemetry": { "includeContent": false, "jsonl": false, "maxLogBytes": 5242880 }
+}
+```
 
-## First run
+`persistent` indexing needs an explicit `storage.dbPath` (recommended `~/.pi/agent/pctx/index.sqlite`); otherwise the index stays memory-only. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`.
 
-The extension factory only registers handlers. After `session_start` the runtime can create `dataRoot`, keys, and store, then run doctor and claim the context owner.
+## Profiles
 
-## Feature flags
+| Profile | Native request | `pctx_history` | Fold |
+|---|---|---|---|
+| `off` | unchanged | disabled | none |
+| `observe` (default) | unchanged | on, scope-limited | none |
+| `balanced` | fold old exposed tool results after the usage threshold | same as observe | threshold, then freeze |
 
-| Flag | Default | Notes |
-|---|---|---|
-| `PCR_RUNTIME_MODE` | `ingress` | `off` registers no mutating hooks. `ingress` observes/read-tools and keeps Pi Native context+compaction. `experimental-runtime` must be set explicitly to take over materialization and compaction. Illegal values throw `CONFIG_ERROR`. |
-| semanticDefault / `PCR_SEMANTIC_BETA` | off | Background worker only when `PCR_SEMANTIC_BETA=1`. Quality-profile-only requires T45 continue **and** T46 stale-cost coverage |
-| `PCR_EVAL_MATERIALIZER` | n/a | Eval-arm identity vs PCR materializer. Not a product runtime-mode switch. |
-| publicationClaim | false | Report field only. Synthetic W1/W2 and informal live compact are not publication evidence and must not enable experimental-runtime |
+`/pctx profile <p>` changes the in-memory profile only. It does not write `pctx.json`.
+
+## Status
+
+`/pctx status` prints `resolvedProfile`, `configHash`, `configSource`, `warnings`, `hostVersion`, `contextWindow`, and `contextPercent` (the last two from `ctx.getContextUsage()`). Load failures force `observe`, keep the error in `warnings`, and notify once.
+
+`checkpoint`, `semantic`, and `projection` config sections are rejected. Those features are removed in 6.1.

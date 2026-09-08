@@ -15,15 +15,14 @@ function balancedPlugin() {
   const config = parseConfig({
     ...DEFAULT_CONFIG,
     profile: "balanced",
-    projection: {
+    fold: {
+      ...DEFAULT_CONFIG.fold,
       protectRecentBatches: 1,
-      minEpochRequests: 1,
       minRemovedTokens: 8,
-      minCandidateReduction: 0.01,
     },
   });
   const state = createPlugin(config);
-  state.successfulRequests = 4;
+  state.successfulRequests = 8;
   return state;
 }
 

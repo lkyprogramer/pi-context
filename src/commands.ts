@@ -1,6 +1,7 @@
+import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { PluginState } from "./plugin.js";
 import { historyTool, setProfile } from "./plugin.js";
-import type { HistoryRequest, NativeEntry, Profile } from "./contracts.js";
+import type { HistoryRequest, NativeEntry, StatusView } from "./contracts.js";
 import { utf8Slice } from "./contracts.js";
 import { PIN_TYPE, pinId, quoteHash, type Pin } from "./checkpoint/pins.js";
 import { textSourceHash } from "./history/refs.js";
@@ -67,13 +68,51 @@ export function buildPinRecord(input: {
   };
 }
 
+export function buildStatusView(state: PluginState, ctx: ExtensionContext): StatusView {
+  const usage = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
+  return {
+    resolvedProfile: state.profile,
+    configHash: state.configHash,
+    configSource: state.configSource,
+    warnings: state.warnings,
+    hostVersion: state.hostVersion,
+    contextWindow: usage?.contextWindow ?? ctx.model?.contextWindow ?? null,
+    contextPercent: usage?.percent ?? null,
+    activePlan: null,
+    folds: 0,
+    nativeCompactions: state.nativeCompactions,
+    historyReads: 0,
+    historySearches: 0,
+    lastRequests: [],
+  };
+}
+
+export function formatStatus(view: StatusView): string {
+  const warnings = view.warnings.length > 0 ? view.warnings.join(",") : "none";
+  return [
+    `profile=${view.resolvedProfile}`,
+    `resolvedProfile=${view.resolvedProfile}`,
+    `configHash=${view.configHash}`,
+    `configSource=${view.configSource}`,
+    `warnings=${warnings}`,
+    `hostVersion=${view.hostVersion}`,
+    `contextWindow=${view.contextWindow ?? "null"}`,
+    `contextPercent=${view.contextPercent ?? "null"}`,
+    `activePlan=null`,
+    `folds=${view.folds}`,
+    `nativeCompactions=${view.nativeCompactions}`,
+    `historyReads=${view.historyReads}`,
+    `historySearches=${view.historySearches}`,
+  ].join(" ");
+}
+
 export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
   pi.registerTool({
     name: "pctx_history",
     label: "History",
     description: "Search or read authorized native history. Cannot select workspace or branch.",
     parameters: HISTORY_PARAMS,
-    async execute(_id: string, params: Record<string, unknown>, _signal: unknown, _upd: unknown, ctx: Record<string, unknown>) {
+    async execute(_id: string, params: Record<string, unknown>, _signal: unknown, _upd: unknown, ctx: ExtensionContext) {
       const extra = Object.keys(params).filter((k) => !["action", "query", "limit", "cursor", "ref", "maxTokens"].includes(k));
       if (extra.length || "workspace" in params || "session" in params) {
         return { content: [{ type: "text", text: JSON.stringify({ code: "denied", diagnostic: "unknown field" }) }] };
@@ -83,16 +122,15 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
       const result = historyTool(state, req, entries, cwd, sessionId, leafId);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     },
-  });
+  } as never);
 
   pi.registerCommand("pctx", {
     description: "pi-context native-first controls",
-    handler: async (args: string, ctx: Record<string, unknown>) => {
+    handler: async (args: string, ctx: ExtensionCommandContext) => {
       const [cmd, ...rest] = args.trim().split(/\s+/);
-      const ui = ctx.ui as { notify?: (m: string, t?: string) => void; confirm?: (t: string, m: string) => Promise<boolean> } | undefined;
-      const notify = (m: string) => ui?.notify?.(m, "info");
+      const notify = (m: string) => ctx.ui.notify(m, "info");
       if (!cmd || cmd === "status") {
-        notify(`profile=${state.profile} generation=${state.generation} requests=${state.successfulRequests}`);
+        notify(formatStatus(buildStatusView(state, ctx)));
         return;
       }
       if (cmd === "doctor") {
@@ -100,14 +138,12 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
         return;
       }
       if (cmd === "profile") {
-        const next = rest[0] as Profile;
-        if (next === "experimental-semantic") {
-          notify("experimental-semantic unsupported until T17/T18");
-          return;
-        }
+        const next = rest[0];
         if (next === "off" || next === "observe" || next === "balanced") {
           setProfile(state, next);
-          notify(`profile set to ${next}; generation bumped`);
+          notify(`profile set to ${next} in memory; will not write the config file`);
+        } else {
+          notify("profile must be off, observe, or balanced");
         }
         return;
       }
@@ -120,7 +156,7 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
           notify("pin requires an interactive confirmation; not forged");
           return;
         }
-        const ok = await ui?.confirm?.("Pin source", "Pin the selected native text range?") ?? false;
+        const ok = (await ctx.ui.confirm("Pin source", "Pin the selected native text range?")) ?? false;
         if (!ok) return;
         const [entryId, block, start, end] = rest;
         const append = pi.appendEntry;
