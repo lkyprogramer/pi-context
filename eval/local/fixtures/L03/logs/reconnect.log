@@ -1,0 +1,4 @@
+2026-09-05T13:20:01.000Z INFO  session=S1 state=DISCONNECTED lastHeartbeatMs=1000000 nowMs=1003000 action=reconnect
+2026-09-05T13:20:01.005Z INFO  session=S1 state=CONNECTED registrySize=1
+2026-09-05T13:20:04.001Z WARN  session=S2 state=DISCONNECTED lastHeartbeatMs=2000000 nowMs=2006001 action=expired-reconnect
+2026-09-05T13:20:04.002Z ERROR session=S2 message="reconnect returned connected object but registry lookup is null" registrySize=1

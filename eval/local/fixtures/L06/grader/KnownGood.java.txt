@@ -1,0 +1,22 @@
+import java.util.List;
+public final class VerificationStatus {
+    public static final class Run {
+        public final String revision;
+        public final long observedAt;
+        public final Boolean passed;
+        public Run(String revision, long observedAt, Boolean passed) {
+            this.revision=revision; this.observedAt=observedAt; this.passed=passed;
+        }
+    }
+    public static boolean isCurrentSuccess(List<Run> runs, String revision) {
+        if (revision == null) return false;
+        long latest=Long.MIN_VALUE;
+        Boolean verdict=null;
+        for (Run r: runs) {
+            if (!revision.equals(r.revision)) continue;
+            if (r.observedAt>latest) { latest=r.observedAt; verdict=r.passed; }
+            else if (r.observedAt==latest && !Boolean.TRUE.equals(r.passed)) verdict=false;
+        }
+        return Boolean.TRUE.equals(verdict);
+    }
+}

@@ -56,3 +56,12 @@ RED: `pnpm exec vitest run test/unit/fold-plan.test.ts --config vitest.config.ts
 GREEN: `pnpm exec vitest run test/unit/fold-plan.test.ts test/unit/render.test.ts test/unit/planner.test.ts test/property/invariants.test.ts --config vitest.config.ts` exit 0 — 14 tests; `pnpm typecheck` exit 0; full vitest 95 passed
 Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not on PATH) / not-run
 Remaining: defaults trigger=60 target=40 protectRecentBatches=4 minRemoved=4096 minFoldable=1024 stubHeadChars=120; planFold keeps folding after target until minRemoved is met so the C03 fixture can produce a plan; `/pctx fold` still respects triggerPercent inside planFold; D01 live smoke not run
+
+## Task: D01
+Commit: 355536943be1c7f50025807515b15128438b2f55
+Changed: test/helpers/controlled-provider.ts, test/helpers/official-pi.ts, test/host/balanced-wire.test.ts, test/host/observe-identity.test.ts, test/packed/install.test.ts, package.json, docs/iterations/native-first-v6.md
+RED: `pnpm exec vitest run test/host/balanced-wire.test.ts --config vitest.config.ts` — captured messages had no `toolResult` because `SessionManager.appendMessage` after `createAgentSession` does not update `agent.state.messages`
+GREEN: `pnpm smoke` exit 0 — 12 tests; `pnpm typecheck` exit 0
+Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (`pi` not on PATH) / not-run
+Remaining: host tests disable Pi auto-compaction (`enabled: false`, `keepRecentTokens: 256`) so threshold fold can be observed; seed final assistant `usage.totalTokens` is 65% of `contextWindow` because `getContextUsage` is usage-backed; `scripts/packed-host.mjs` already emitted tarball sha256; `dist/extension.js` sha256 `34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19`; Node v22.17.0 vs engines >=22.19.0
+

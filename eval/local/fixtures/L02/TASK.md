@@ -1,0 +1,1 @@
+A production retry wrapper violates its documented max-attempt contract and mishandles terminal failures. Start with `./verify.sh`, trace the behavior across RetryPolicy and RetryingClient, fix production code without changing public APIs, and verify. Do not edit tests.

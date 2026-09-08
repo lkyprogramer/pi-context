@@ -1,0 +1,1 @@
+Fix the concurrency/idempotency defect in this Java service. Reproduce the failure with `./verify.sh`, inspect the code, implement the smallest production-safe fix, and rerun tests. The public method signature and Reservation record must not change. Do not edit tests. Finish only after the verifier passes.
