@@ -1,43 +1,53 @@
-# Operations
+# Operations (6.1)
 
-Required GitHub checks are defined in `.github/workflows/required.yml`.
+This plugin talks to official Pi 0.85.1 only. Default profile is observe. Balanced fold is default-off and **not recommended in this environment** (`decision: observe-only`, run `20260908-215433`).
 
-Required job ids:
+## Model endpoint
 
-- install-frozen
-- format-lint
-- package-boundaries
-- build
-- typecheck
-- unit
-- contract
-- acceptance
-- integration
-- oracle-validation
-- security-fast
-- pi-contract-0-84-4
-- packed-install-hermetic
-- product-vertical
-- recovery-crash
-- w1-locked
-- w2-boundary-smoke
-- run-bundle-verify
+Eval harness reads repo `.env` (`PCR_LIVE_BASE_URL`, `PCR_LIVE_API_KEY`) and never commits those values.
 
-The aggregator job is `required-gate`. Compatibility's aggregator is `compatibility-required`.
+- This run used `http://47.106.205.246:1082/v1` (`openclaw/Qwen3.8-27B-WORK`, `n_ctx=262144`).
+- The original runbook tunnel is `ssh -L 18343:127.0.0.1:18343 hhtele@192.168.10.29` then `http://127.0.0.1:18343/v1`.
+- `GET {base}/models` must show that model id and `meta.n_ctx=262144`. Loopback URLs go through `eval/local/ensure-tunnel.sh`; a public `http(s)` base URL skips SSH.
+- `{origin}/metrics` is optional. If nginx returns 404, `metrics-snap.sh` writes `{"available":false}` and engine prefix/prefill stay unknown. Do not invent zeros.
 
-`node scripts/ci/verify-protection.mjs` only checks that those job ids exist in `required.yml`. It does **not** read or apply GitHub Branch Protection.
+## `/pctx status`
 
-Read-only API verify (fails closed when `required-gate` / `compatibility-required` are not configured):
+After `pi -e ./dist/extension.js` or a packed install:
 
-```bash
-node scripts/ci/github-protection.mjs verify
+```text
+profile=observe resolvedProfile=observe configHash=<64 hex> configSource=<path|default>
+warnings=none hostVersion=0.85.1 contextWindow=<n> contextPercent=<n>
 ```
 
-`apply` is **not implemented** in W0. It requires repository admin credentials and a later explicit task. Do not treat a YAML job-name parse or a throwing `--apply` stub as Branch Protection being enabled. NF025 stays open until a real API read shows those two contexts.
+`/pctx status --json` prints the same view as JSON and writes `<agentDir>/pctx-status.json`. `hostVersion` must be `0.85.1`. Load failures force observe, keep the error in `warnings`, and notify once.
 
-Current product claim policy:
+## Telemetry jsonl
 
-- `default_compactor`: pi-native
-- `publicationClaim`: false
-- `npmPublish`: false
-- distribution: internal `npm-pack` tarball (`private` / `UNLICENSED`)
+Default `telemetry.jsonl` is `false`. When enabled (`"telemetry": { "jsonl": true }`), files land in `~/.pi/agent/pctx/telemetry/<sessionId>.jsonl`. Rotate or delete that directory; `maxLogBytes` (default 5 MiB) caps a single file. `telemetry.includeContent` cannot be true.
+
+Eval episodes also write `artifacts/local-eval/<runId>/episodes/<id>/requests.jsonl` (gitignored).
+
+## Return to observe
+
+1. Set `"profile": "observe"` in `~/.pi/agent/pctx.json` and/or trusted `<cwd>/.pi/pctx.json`.
+2. Or `/pctx profile observe` for the current session only (does not persist).
+3. Confirm `/pctx status` shows `resolvedProfile=observe` and `folds=0` on a short prompt.
+4. Do not leave `"profile": "balanced"` in a shared config after this eval.
+
+## Eval commands
+
+```bash
+pnpm build
+pnpm eval:local -- --out artifacts/local-eval/$(date +%Y%m%d-%H%M%S)
+pnpm eval:report artifacts/local-eval/<runId>
+```
+
+`--resume <runDir>` fills missing episode dirs only. Do not retune fold parameters and keep only the second run.
+
+## Packaging
+
+```bash
+pnpm build && node scripts/packed-host.mjs
+pi install npm:pi-context@file:$PWD/pi-context-6.1.0.tgz
+```

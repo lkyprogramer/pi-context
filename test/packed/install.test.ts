@@ -24,6 +24,17 @@ function packTarball(): { tarball: string; spec: string } {
 }
 
 describe("T19 packed install", () => {
+  it("docs describe only the 6.1 surface and the iterations log has a decision", () => {
+    const readme = readFileSync(join(repoRoot, "README.md"), "utf8");
+    expect(readme).not.toMatch(/capsule|\bpin\b|semantic|PCR|pctx-v5\.json/i);
+    expect(readme).toMatch(/schemaVersion.*6/);
+    const iter = readFileSync(join(repoRoot, "docs/iterations/native-first-v6.md"), "utf8");
+    expect(iter).toMatch(/A01[\s\S]*E03/);
+    expect(iter).toMatch(/decision:\s*(observe-only|limited-balanced-trial|inconclusive)/);
+    expect(existsSync(join(repoRoot, "docs/CONFIGURATION.md"))).toBe(true);
+    expect(readFileSync(join(repoRoot, "docs/CONFIGURATION.md"), "utf8")).toMatch(/triggerPercent/);
+  });
+
   it("observe does not rewrite provider messages and schema stays stable across profile switches", () => {
     const messages = [{ role: "user", content: [{ type: "text", text: "hello" }] }];
     const snapshot = structuredClone(messages);

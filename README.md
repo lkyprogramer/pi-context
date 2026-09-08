@@ -1,43 +1,63 @@
 # pi-context
 
-Native-first evidence context plugin for official Pi **0.85.1** (`pi-context@5.0.0-dev.0`, `private: true`).
+Native-first history plugin for official Pi **0.85.1**. Package `pi-context@6.1.0` (`private: true`).
 
-Unique packed entry: `src/extension.ts` → `dist/extension.js`. The patched PCR 0.84.4 workspace (`apps/`, `packages/`, `patches/`) has been **removed from this tree**. Historical notes: [docs/SUPERSEDED-PCR.md](docs/SUPERSEDED-PCR.md).
+Default profile is **observe**: index native history and expose `pctx_history` search/read. Provider bytes stay unchanged except for that extra tool schema.
 
-## Install (verified)
+`balanced` threshold fold is **default-off, not recommended** in this environment (local-eval `20260908-215433` → `decision: observe-only`). Fold code remains; do not set `"profile": "balanced"` unless a later eval run says otherwise.
+
+Config is `pctx.json` with `schemaVersion: 6`. Unique packed entry: `src/extension.ts` → `dist/extension.js`.
+
+## Install
 
 ```bash
-nvm use v22.19.0
 pnpm install
-pnpm exec tsc -p tsconfig.build.json
+pnpm build
 node scripts/packed-host.mjs
-pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz
+pi install npm:pi-context@file:$PWD/pi-context-6.1.0.tgz
+```
+
+Or load the built file without packing:
+
+```bash
+pi -e ./dist/extension.js
 ```
 
 Official Pi extracts the tarball to `~/.pi/agent/npm/node_modules/pi-context/dist/extension.js`. Do not pass the raw `.tgz` as a local extension path.
 
-Uninstall: `pi uninstall npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz`. Native Pi session files are **not** migrated and **not** deleted.
+Uninstall: `pi uninstall npm:pi-context@file:$PWD/pi-context-6.1.0.tgz`. Native Pi session files are not deleted.
 
-Default profile is `observe` (index/history only). `balanced` is opt-in. `experimental-semantic` is unsupported until T17/T18.
+## `/pctx` commands
+
+| Command | Effect |
+|---|---|
+| `/pctx status` | `resolvedProfile`, `configHash`, `configSource`, `warnings`, `hostVersion`, `contextWindow`, `contextPercent` |
+| `/pctx status --json` | same view as JSON (also writes `pctx-status.json` under the agent dir) |
+| `/pctx profile observe\|balanced\|off` | in-memory only; does not write `pctx.json` |
+| `/pctx doctor` | host/profile sanity line |
+| `/pctx fold` | ask balanced to plan a fold if the trigger is met |
+| `/pctx search` / `/pctx read` | tells you to use the `pctx_history` tool |
+
+Enable history from `pctx.json`:
+
+```json
+{ "schemaVersion": 6, "profile": "observe" }
+```
+
+To try balanced (not recommended here): set `"profile": "balanced"` in a trusted `pctx.json`, then confirm `/pctx status` shows `resolvedProfile=balanced`.
 
 ## Tests
 
 ```bash
+pnpm smoke
+pnpm typecheck
 pnpm exec vitest run --config vitest.config.ts
-pnpm exec tsc --noEmit -p tsconfig.build.json
 ```
 
-## Configuration, security, operations
+## Docs
 
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md)
-- [`docs/SECURITY.md`](docs/SECURITY.md)
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
-- [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md)
+- [`docs/iterations/native-first-v6.md`](docs/iterations/native-first-v6.md)
+- [`docs/SECURITY.md`](docs/SECURITY.md)
 - [`docs/INSTALL.md`](docs/INSTALL.md)
-- [`CHANGELOG.md`](CHANGELOG.md)
-
-## Specs
-
-- [`docs/pi-context-native-first-evolution-v5.0.0`](docs/pi-context-native-first-evolution-v5.0.0) — v5 native-first plugin
-- [`docs/pi-context-runtime-greenfield-spec-v1.0.0`](docs/pi-context-runtime-greenfield-spec-v1.0.0) — superseded PCR product spec
-- [`docs/pi-context-compression-benchmark-spec`](docs/pi-context-compression-benchmark-spec) — historical W1/W2 evaluation

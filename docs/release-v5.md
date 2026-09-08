@@ -1,5 +1,7 @@
 # v5 release candidate
 
+**已被 6.1 取代。** 当前决策、安装与限制见 [docs/iterations/native-first-v6.md](iterations/native-first-v6.md)。下面的 v5 结论文本不改写。
+
 Package: `pi-context@5.0.0-dev.0` (`private: true`).
 Tarball SHA256: `53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7`.
 

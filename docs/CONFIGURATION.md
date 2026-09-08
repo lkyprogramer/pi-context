@@ -44,6 +44,8 @@ Project files are never trusted by default.
 
 `/pctx profile <p>` changes the in-memory profile only. It does not write `pctx.json`.
 
+Local-eval run `20260908-215433` on `openclaw/Qwen3.8-27B-WORK` decided **`observe-only`**. Keep the default profile `observe`. `balanced` / `fold` remain in the schema so a later environment can opt in, but they are **not recommended in this environment**.
+
 ## Status
 
 `/pctx status` prints `resolvedProfile`, `configHash`, `configSource`, `warnings`, `hostVersion`, `contextWindow`, and `contextPercent` (the last two from `ctx.getContextUsage()`). Load failures force `observe`, keep the error in `warnings`, and notify once.

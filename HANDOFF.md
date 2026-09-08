@@ -1,76 +1,36 @@
 # HANDOFF
 
-## 当前任务
+## 当前状态（6.1）
 
-### lean-v4 T12 canary (2026-09-06)
+`v5/native-first` 上 A01–E04 的代码与本地评测已按 [docs/pi-context-native-first-audit-v6.0.0](docs/pi-context-native-first-audit-v6.0.0/AI-START-HERE.md) 收口。
 
-T01–T12 已在本仓库落地。T12 对 `experiments/personal-canary.json` 跑了一次 `PCR_LIVE=1` 产品 Pi RPC canary（Node `v22.19.0`，模型 `openclaw/Qwen3.8-27B-WORK`，contextWindow 200192）。父进程凭据代理必须保持异步 `spawn`：`spawnSync` 会冻住 broker 事件循环，Pi 请求停在 Recv-Q。
+- 宿主：官方 Pi **0.85.1**（工作区 `node_modules/@earendil-works/pi-coding-agent`；本机 PATH 上可能没有 `pi`）。
+- 默认 profile：**observe**（history 工具 + 不改写发往 provider 的消息）。
+- 本环境决策：`decision: observe-only`（`artifacts/local-eval/20260908-215433/report.md`）。balanced 阈值折叠 **default-off, not recommended**。不要改默认 profile。
+- 模型：`openclaw/Qwen3.8-27B-WORK` via `http://47.106.205.246:1082/v1`（用户指定；原 runbook `192.168.10.29:18343` 本机不可达）。`/metrics` 为 404，engine prefix/prefill 为 unknown。
+- 不要 push、publish、打 tag，除非用户另行授权。不要提交 `.env`、`eval/local/seeds/*.secret`、`artifacts/local-eval/`。
 
-Live 结果（`artifacts/lean-v4/`，勿把 `work/` 提交）：48 条主臂 ITT 全在；reader 32 条 `completed` 且 scorer 通过；coding 16 条因 Darwin 上 agent 仍可读宿主配置而为 `not-run` / `isolation-unproven`。`primaryCompletePairs=16/24`，`ittPairs=24`，`monetaryCost=null`，`recovery` n=0 → `decision=inconclusive`，`publicationClaim=false`，`widelyBetterThanNative=false`。这不足以证明 2% 非劣，默认保持 ingress / Pi Native。
+## 下一步（仅当这些证据出现）
 
-复算：`node scripts/verify-small-run.mjs artifacts/lean-v4`。Live `sourceSetSha256=8899d4db…` 绑定当时源码；其后为避免 `--preflight` 覆盖 `docs/reports/lean-v4-result.md` 又改了 `small-runner.ts`，新 source-set 不得续跑该 rows。
+不要为了让 balanced 过门而改 fold 参数或改题。下一轮只在同时出现时才重新打开 balanced 试验：
 
-不要自行 publish / deploy；push 需用户明确授权。
+1. H01 balanced 至少 1 个 episode `oracle.passed` 且 `verifiedReads >= 1`（nonce 经 `pctx_history read` 取得，而不是仍留在 stub/原文里）。
+2. 折叠后请求的 `cacheRead`（或可用的 engine `/metrics` prefill）能证明前缀作废后恢复，而不是全程 `cacheRead=0` / `metrics available:false`。
+3. H03 在生产窗口下用量真正接近 trigger（本次只到约 20% context，未折叠）。
 
-### v3 W5 continuation (2026-09-04)
+## 已知限制
 
-当前代码已完成 C19/C20/C24 的增量修复（transport attempt 记录、planned/complete-case/worst-case 统计、corpus/session source binding、partial rows fail-closed、权威 live verifier）；C25–C28 也已有实现与定向测试。真实 Provider live evidence、Evidence v3 和 C24 300-pair gate 仍未完成；发布决策继续保持 `keep-pi-native` / `publicationClaim=false`。按用户要求，300 gate 延后至全部开发任务完成后执行一次。代码 HEAD 以接手时 `git rev-parse HEAD` 为准，本文件不硬编码易漂移的 commit。
+- Node 本机 `v22.17.0` vs `engines >=22.19.0`（警告）；沙箱镜像是 22.19.0。
+- `usage.cacheRead` 在此 OpenAI-compat 端点上恒为 0；不能据此谈成本。
+- H02 三臂 `outsideEditable>0`（模型在 fixture 外写文件）；质量门只看 L01–L06 的 balanced vs native。
+- H03 在 host 上跑：评测前会把 `HOME` 指到临时目录，评测后必须恢复，否则 `grade.sh` 的 Docker 会找不到 `~/.docker`。
+- 旧 lean-v4 / W5 / PCR live 产物仍在 `artifacts/` 下，与 6.1 决策无关，不要当本轮证据。
 
-C15 cache/metadata ablation has now completed against the configured Provider on Node `v22.19.0` with four samples and `qualityHardGate=true`; the Provider did not expose a complete price/cache-discount snapshot, so `winner=null` and publication remains blocked (`PCR_CACHE_COST_UNAVAILABLE`).
-
-W5 continuation additionally records the interrupted Pi live runs in `artifacts/runs/w2-v4-live/LIVE-COMPARISON.md`. The tracked RC manifest is a sanitized bundle index only; it must be regenerated in the final release job so its `commit` binds the release checkout HEAD. A locally committed manifest can become stale after the commit that updates it and is not release evidence by itself.
-
-C30 bundle hardening is committed as `ed8d701`: raw `session.jsonl` files are included, structured message content is redacted, post-redaction 8MiB overflow fails closed, archive member paths match manifest paths, and artifact symlinks are rejected. The local RC manifest was regenerated at that code HEAD and is intentionally stale after subsequent documentation commits; the final release job must regenerate it against the release checkout HEAD. It remains an uncommitted release artifact by design. Node `v22.19.0` `typecheck` passed and `test:packed` passed 19/19.
-
-The retained paired-gate report now has recomputed artifact and canonical hashes, and `scripts/benchmark/verify_run_bundle.py` accepts that manifest. It still records 280/300 completed pairs and remains diagnostic evidence; the C24 fresh `w2-v4-live` authority run is still pending.
-
-At the current Node `v22.19.0`, the local validation gates also passed: `test:unit` 167 files/790 tests, `test:contract` 10 files/38 tests, `test:integration` 13 files/31 tests, `test:acceptance` 22 files/64 tests, and `test:publication` 10 files/43 tests. These results validate the implementation and contracts; they do not upgrade the incomplete live run or create a publication claim.
-
-The post-fix bounded v14 recursive smoke reached a terminal report and verified fork/branch pointer/correction evidence, but restart continuity and three-compaction criteria remained false. A subsequent v15 smoke verified cross-session restart continuity and branch lineage; Provider correction/compaction assertions still failed. Both are retained as fail-closed evidence, not a C27/C28 acceptance result.
-
-W5 live diagnostic prompts now honor `PCR_W5_PROMPT_TIMEOUT_MS` (5 seconds to 10 minutes, default 3 minutes), and the Pi RPC request timeout is capped by the same per-prompt budget. This keeps bounded smoke runs interruptible; a 3-turn overflow smoke with a 5-second budget terminated in about 31 seconds with the expected fail-closed `PCR_W5_OVERFLOW_NOT_OBSERVED` result. This is a diagnostic timeout control, not evidence that the real Provider overflow behavior passed.
-
-下一轮执行入口仍以 `docs/pi-context-current-head-audit-and-autonomous-remediation-v3.0.0/` 的未完成任务和当前工作树为准；审计附件中的旧 HEAD 仅作为历史基线，不代表当前实现 HEAD。
-
-不要再 claim 上一版 `T00–T54` / `A00–A49` 为已验收完成。上一版 declared-done 已与 acceptance 分离；`A43`/`A44`/`A45`/`A48` 必须保持 reopen，直到对应 Live Lane 真正通过。
-
-不要自行 publish / deploy；push 需用户明确授权。
-
-## 当前产品决策
-
-```text
-default_compactor: pi-native
-pcr_checkpoint: shadow-or-explicit-experimental
-semantic_background: disabled
-publicationClaim: false
-releaseReady: false
-npmPublish: false
-```
-
-## 已观察（审计时）
-
-- Required run `33478592667` 在审计 HEAD 上绿。
-- Compatibility run `33478592798` 在 Ubuntu / Node 24.18.1 / Pi min `0.84.4` 红：unit 里的 W1 Gate 吃了 wall-clock `hookP95Ms`。
-- 修复前 100×3 与修复后小样本不得合成“既保指令又降 72% 输入”。
-- Natural threshold / provider overflow / recursive 三次压缩均未验收通过。
-
-## 绝对不要再踩的坑
-
-- 不要把 YAML job 名自检写成 Branch Protection 已应用。
-- 不要在 Unit 中断言真实墙钟性能。
-- 不要用空壳 `evidence.json` 把任务标 Done。
-- 不要把 Compatibility 的 `continue-on-error` advisory cell 算进 supported matrix。
-- 不要自行 npm publish。push 需用户明确授权。
-
-## 关键文件 / 命令
+## 常用命令
 
 ```bash
-export NVM_DIR=/Users/luo/.nvm
-. /usr/local/opt/nvm/nvm.sh
-nvm use v22.19.0
-
-python3 docs/pi-context-deep-audit-and-next-iteration-v2.0.0/scripts/taskctl.py next
-pnpm test:unit
-pnpm test:contract
-node scripts/ci/github-protection.mjs verify
+pnpm smoke
+pnpm typecheck
+pnpm eval:report artifacts/local-eval/20260908-215433
+pnpm build && node scripts/packed-host.mjs
 ```

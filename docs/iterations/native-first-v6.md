@@ -81,4 +81,41 @@ GREEN: `pnpm exec vitest run test/security/grader-isolation.test.ts --config vit
 Host/model: Docker 29.4.0 (OrbStack); tunnel to `hhtele@192.168.10.29:18343` — `Connection closed by 192.168.10.29 port 22`; `node eval/local/run-episode.mjs --case L04 --arm native --window w262k --rep 0 --out /tmp/pctx-e02-smoke` wrote `status: blocked` and did not start Pi; `--no-sandbox` on L04 blocked as required
 Remaining: no live container Agent episode until the 4090 tunnel is up (grader isolation is proven; Agent path is not); Agent container may still egress beyond `host.docker.internal:18343` (known limit, Docker Desktop/OrbStack bridge); `eval/oracles/java.ts` and `eval/sandbox/isolation-probe.ts` still mention host `javac`; `eval/smoke.mjs` and `package.json` `eval:g4` were patched/removed because E02 deleted `live-g4.mjs`; `run-in-container.mjs` is beyond the card file list; E03 matrix not-run
 
+## Task: E03
+Commit: 6486703bc70a1e41dbe88739981774ff3ea44b33
+Changed: eval/local/arm-contract.mjs, eval/local/report.mjs, eval/local/run-matrix.mjs, eval/local/run-episode.mjs, test/unit/eval-accounting.test.ts, eval/live-c2.mjs, eval/smoke.mjs, eval/report.ts, eval/runner.ts, package.json, .gitignore, docs/iterations/native-first-v6.md
+RED: `pnpm exec vitest run test/unit/eval-accounting.test.ts --config vitest.config.ts` originally import-failed before `eval/local/report.mjs` existed; this landing re-ran GREEN
+GREEN: `pnpm exec vitest run test/unit/eval-accounting.test.ts --config vitest.config.ts` exit 0 — 5 tests; `pnpm typecheck` exit 0; `pnpm eval:local -- --dry --out /tmp/pctx-dry` printed 37 episodes (AB/BA rotation, seed 42)
+Host/model: live run `20260908-215433` against `openclaw/Qwen3.8-27B-WORK` at `http://47.106.205.246:1082/v1` (user override; `192.168.10.29:18343` still unreachable). `pnpm eval:local -- --resume artifacts/local-eval/20260908-215433` then `pnpm eval:report` exit 0. 37/37 `complete`. `{origin}/metrics` 404 → engine deltas unknown. `usage.cacheRead` always 0.
+Remaining: see report. Seed `eval/local/seeds/java-three-nonce.jsonl` recorded locally (`.secret` gitignored). Live harness follow-up commit `68ce1f6689e905d27a5c264e0a3f7abf064155ac` — freeze `configHash` per arm; host plugin load via `additionalExtensionPaths` only; restore `HOME` before `grade.sh`; public model URL.
+
+```text
+decision: observe-only (failed gate: mechanism)
+- H01 balanced never recovered the nonce through a verified read
+candidates: none
+```
+
+Quality L01–L06 native vs balanced all 2/2 (wrong-action never higher on balanced). H01/H02 balanced 4/4 `folds>=1`. H01 nonce correct 2/2 on all three arms without `pctx_history` read. H03 complete, context ~20%, folds 0, native compactions 0.
+
+## Task: E04
+Commit: (filled after `docs(e04)` commit)
+Changed: docs/iterations/native-first-v6.md, README.md, docs/CONFIGURATION.md, docs/OPERATIONS.md, docs/release-v5.md, HANDOFF.md, package.json, test/packed/install.test.ts, test/host/stock-loader.test.ts
+RED: `pnpm exec vitest run test/packed/install.test.ts --config vitest.config.ts` — README still named v5 surfaces / iterations lacked a decision line
+GREEN: `pnpm smoke` exit 0 — 13 tests; `pnpm typecheck` exit 0; `pnpm exec vitest run --config vitest.config.ts` exit 0 — 115 tests
+Host/model: same as E03; `pnpm build && node scripts/packed-host.mjs` → `pi-context-6.1.0.tgz` sha256 `a0cbf8b082a1e6d03e2bf779ef905ed60efd5d2753579a53bb6c894ef2f0c12b`
+
+
+
+
+## Round decision
+
+decision: observe-only
+
+Evidence: run `20260908-215433`, E03 landing `6486703bc70a1e41dbe88739981774ff3ea44b33`, live harness `68ce1f6689e905d27a5c264e0a3f7abf064155ac`, Pi 0.85.1, plugin `34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19`, model `openclaw/Qwen3.8-27B-WORK` thinking medium. Quality cells all passed. Balanced fold triggered on H01/H02 but never produced a verified history read; cacheRead and NInfer `/metrics` are unavailable here so the cost gate cannot pass either.
+
+Limits: one model, one machine, n=2 per cell, public OpenAI-compat endpoint without prefix-cache accounting.
+
+Next round only if: (1) H01 balanced recovers the nonce with `verifiedReads>=1`, (2) post-fold `cacheRead` or engine prefill is actually observed, (3) H03 usage reaches the 60% trigger. Do not retune fold parameters to chase a `limited-balanced-trial` on this dataset.
+
+
 

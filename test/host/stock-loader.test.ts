@@ -37,7 +37,7 @@ describe("T01 stock loader on official Pi 0.85.1", () => {
     };
     expect(manifest.private).toBe(true);
     expect(manifest.name).toBe("pi-context");
-    expect(manifest.version).toBe("5.0.0-dev.0");
+    expect(manifest.version).toBe("6.1.0");
     expect(manifest.patchedDependencies).toBeUndefined();
     expect(manifest.piHostContract?.runtimeExport).toBeUndefined();
     expect(JSON.stringify(manifest)).not.toMatch(/PCR_INGRESS_METADATA_CONTRACT/);
