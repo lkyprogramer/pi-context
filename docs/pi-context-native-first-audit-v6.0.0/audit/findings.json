@@ -1,0 +1,202 @@
+[
+  {
+    "id": "F01",
+    "severity": "P1",
+    "title": "配置未加载，balanced没有产品激活证据",
+    "source": "src/extension.ts:6-9; src/config.ts:56-106",
+    "evidence": "P01/P15",
+    "cause": "入口固定DEFAULT_CONFIG；嵌套值靠类型断言",
+    "task": "A01",
+    "legacyTask": "N01"
+  },
+  {
+    "id": "F02",
+    "severity": "P1",
+    "title": "公共hook使用自定义宽类型，compaction字段读错",
+    "source": "src/pi/adapter.ts:7-12,49-53",
+    "evidence": "P10",
+    "cause": "官方compactionEntry被读作entry，编译没有拦住",
+    "task": "A01",
+    "legacyTask": "N01"
+  },
+  {
+    "id": "F03",
+    "severity": "P1",
+    "title": "折叠引用hash口径与read不一致",
+    "source": "src/plugin.ts:108-121,193-195; src/history/read.ts:52",
+    "evidence": "P02",
+    "cause": "canonical JSON字符串hash不等于UTF8正文hash",
+    "task": "B01",
+    "legacyTask": "N02"
+  },
+  {
+    "id": "F04",
+    "severity": "P1",
+    "title": "搜索多块结果指向错误字段",
+    "source": "src/history/search.ts:36-45; src/plugin.ts:73-78",
+    "evidence": "P03",
+    "cause": "检索丢blockIndex/sourceHash，统一指到0且使用拼接正文",
+    "task": "B01",
+    "legacyTask": "N02"
+  },
+  {
+    "id": "F05",
+    "severity": "P0",
+    "title": "跨session相同entryId可泄漏检索片段",
+    "source": "src/history/index.ts:54-92",
+    "evidence": "P05",
+    "cause": "内存行没有scope字段；仅按allowed entryId过滤",
+    "task": "B02",
+    "legacyTask": "N03"
+  },
+  {
+    "id": "F06",
+    "severity": "P1",
+    "title": "游标不推进且不绑定query/scope",
+    "source": "src/history/search.ts:21-57",
+    "evidence": "P04",
+    "cause": "decode后忽略offset，永远取首页",
+    "task": "B02",
+    "legacyTask": "N03"
+  },
+  {
+    "id": "F07",
+    "severity": "P1",
+    "title": "持久索引与worker只有外观，热路径全量扫描",
+    "source": "src/history/index.ts:1-54,95-101; src/plugin.ts:59-64; src/pi/adapter.ts:14-33",
+    "evidence": "static",
+    "cause": "默认:memory:；worker未连接；每次history全部upsert",
+    "task": "B02",
+    "legacyTask": "N03"
+  },
+  {
+    "id": "F08",
+    "severity": "P1",
+    "title": "历史工具回声过滤无效",
+    "source": "src/history/index.ts:59,82",
+    "evidence": "P06",
+    "cause": "fieldKey永远text:i，不含工具名",
+    "task": "B02",
+    "legacyTask": "N03"
+  },
+  {
+    "id": "F09",
+    "severity": "P1",
+    "title": "回读最终预算与多模态合同不成立",
+    "source": "src/history/read.ts:39-70; src/commands.ts:history execute",
+    "evidence": "P13/P14",
+    "cause": "图片不验hash无预算，图片转JSON文本；UTF8向前越界；maxTokens未夹紧",
+    "task": "B03",
+    "legacyTask": "N04"
+  },
+  {
+    "id": "F10",
+    "severity": "P1",
+    "title": "暴露确认只验generation且确认伪snapshot",
+    "source": "src/projection/exposure.ts:begin/confirm; src/plugin.ts:197-213",
+    "evidence": "P07",
+    "cause": "未比较session/model/config；includedOriginalRefs在渲染前生成",
+    "task": "C02",
+    "legacyTask": "N05"
+  },
+  {
+    "id": "F11",
+    "severity": "P1",
+    "title": "generation回退与会话生命周期未隔离",
+    "source": "src/plugin.ts:48-57,noteFence; src/pi/adapter.ts:25-27,57-65",
+    "evidence": "P08",
+    "cause": "多个generation来源，shutdown不关闭index、不清状态",
+    "task": "C03",
+    "legacyTask": "N05"
+  },
+  {
+    "id": "F12",
+    "severity": "P1",
+    "title": "错误工具批次可能被折叠，epoch没有冻结",
+    "source": "src/projection/batches.ts:44-68; src/plugin.ts:141-151; src/projection/planner.ts",
+    "evidence": "P09+static",
+    "cause": "isError未检查；每次过累计阈值重建plan；伪预算不裁决实际output",
+    "task": "C03",
+    "legacyTask": "N06"
+  },
+  {
+    "id": "F13",
+    "severity": "P1",
+    "title": "胶囊改了最新用户消息，pin不是有效证据",
+    "source": "src/plugin.ts:170-188; src/checkpoint/capsule.ts",
+    "evidence": "P11/P12",
+    "cause": "lastCapsule充当布尔；固定128k；see original替代原话；pin ref无法decode",
+    "task": "C01",
+    "legacyTask": "N07"
+  },
+  {
+    "id": "F14",
+    "severity": "P1",
+    "title": "G4的B2未启用balanced，无法证明机制",
+    "source": "src/extension.ts:7; eval/sandbox/g4-agent.mjs:1-170",
+    "evidence": "static",
+    "cause": "只有加载插件无profile切换；没有epoch/replacement receipt",
+    "task": "E03",
+    "legacyTask": "N10"
+  },
+  {
+    "id": "F15",
+    "severity": "P1",
+    "title": "全请求计量与retry证据不完整",
+    "source": "src/telemetry/usage.ts; eval/smoke.mjs:77-116; eval/sandbox/g4-agent.mjs:184-190",
+    "evidence": "static",
+    "cause": "未知按0判empty，覆盖首attempt；totalTokens误名billedTokens",
+    "task": "E03",
+    "legacyTask": "N08"
+  },
+  {
+    "id": "F16",
+    "severity": "P0",
+    "title": "判题把不可信代码带回有凭据宿主",
+    "source": "eval/live-g4.mjs:119-131,169-213",
+    "evidence": "static",
+    "cause": "javac/java/mvn宿主执行；Maven仅凭stdout token即可过",
+    "task": "E02",
+    "legacyTask": "N09"
+  },
+  {
+    "id": "F17",
+    "severity": "P1",
+    "title": "C2挑战非公平配对且nonce不只在历史",
+    "source": "eval/smoke.mjs:77,91; eval/live-g4.mjs:74-80; eval/sandbox/g4-agent.mjs:86-109",
+    "evidence": "static",
+    "cause": "两臂不同nonce、环境传nonce、B0必须失败、toolCalled未证明使用",
+    "task": "E01",
+    "legacyTask": "N11"
+  },
+  {
+    "id": "F18",
+    "severity": "P1",
+    "title": "任务集不能识别大部分压缩回归",
+    "source": "eval/live-g4.mjs:16-110; eval/report.ts",
+    "evidence": "static",
+    "cause": "提示直接含解法、J08允许无compact、null当无违规、选择双方通过评效率",
+    "task": "E01",
+    "legacyTask": "N11"
+  },
+  {
+    "id": "F19",
+    "severity": "P2",
+    "title": "实验源码身份与文档/测试覆盖漂移",
+    "source": "eval/runner.ts; eval/smoke.mjs:38,129; tsconfig.build.json; docs/CONFIGURATION.md",
+    "evidence": "static",
+    "cause": "manifest.host代替plugin身份，eval未纳入严格编译，固定目录覆盖，旧PCR配置",
+    "task": "E04",
+    "legacyTask": "N10"
+  },
+  {
+    "id": "F20",
+    "severity": "P1",
+    "title": "受控真宿主测试未证明优化确实应用",
+    "source": "test/host/*; test/packed/install.test.ts; artifacts/v5-tasks/T26",
+    "evidence": "static",
+    "cause": "注册hook/加载tarball与实际balanced投影、胶囊位置、end-to-end ref是不同门",
+    "task": "D01",
+    "legacyTask": "N12"
+  }
+]

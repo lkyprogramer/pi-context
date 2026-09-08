@@ -1,0 +1,202 @@
+[
+  {
+    "kind": "real-run",
+    "taskId": "J01",
+    "clusterId": "J01",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 16217,
+      "monetaryCost": null,
+      "billedTokens": 8805
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 17009,
+      "monetaryCost": null,
+      "billedTokens": 9821
+    }
+  },
+  {
+    "kind": "real-run",
+    "taskId": "J02",
+    "clusterId": "J02",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 9570,
+      "monetaryCost": null,
+      "billedTokens": 8225
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 9311,
+      "monetaryCost": null,
+      "billedTokens": 8640
+    }
+  },
+  {
+    "kind": "real-run",
+    "taskId": "J03",
+    "clusterId": "J03",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 14156,
+      "monetaryCost": null,
+      "billedTokens": 6652
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 14531,
+      "monetaryCost": null,
+      "billedTokens": 7129
+    }
+  },
+  {
+    "kind": "real-run",
+    "taskId": "J04",
+    "clusterId": "J04",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 9516,
+      "monetaryCost": null,
+      "billedTokens": 11692
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 8363,
+      "monetaryCost": null,
+      "billedTokens": 9943
+    }
+  },
+  {
+    "kind": "real-run",
+    "taskId": "J05",
+    "clusterId": "J05",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": false,
+      "criticalViolation": null,
+      "wallMs": 5359,
+      "monetaryCost": null,
+      "billedTokens": 1361
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 53172,
+      "monetaryCost": null,
+      "billedTokens": 92588
+    }
+  },
+  {
+    "kind": "real-run",
+    "taskId": "J06",
+    "clusterId": "J06",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 8182,
+      "monetaryCost": null,
+      "billedTokens": 5115
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 7630,
+      "monetaryCost": null,
+      "billedTokens": 5658
+    }
+  },
+  {
+    "kind": "real-run",
+    "taskId": "J07",
+    "clusterId": "J07",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 18077,
+      "monetaryCost": null,
+      "billedTokens": 12068
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 14446,
+      "monetaryCost": null,
+      "billedTokens": 9419
+    }
+  },
+  {
+    "kind": "real-run",
+    "taskId": "J08",
+    "clusterId": "J08",
+    "repetition": 0,
+    "provenance": "real-independent",
+    "baseline": {
+      "arm": "B0",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 15213,
+      "monetaryCost": null,
+      "billedTokens": 12304
+    },
+    "candidate": {
+      "arm": "B2",
+      "status": "complete",
+      "taskPassed": true,
+      "criticalViolation": null,
+      "wallMs": 7851,
+      "monetaryCost": null,
+      "billedTokens": 5699
+    }
+  }
+]

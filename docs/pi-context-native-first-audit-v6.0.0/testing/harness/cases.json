@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 2,
+  "scenarioSource": "docs/pi-context-native-first-audit-v6.0.0/testing/scenarios.json",
+  "model": "openclaw/Qwen3.8-27B-WORK",
+  "thinking": "medium",
+  "cases": [
+    {
+      "id": "W01",
+      "runner": "vitest",
+      "test": "test/host/observe-identity.test.ts",
+      "arms": [],
+      "reps": 0,
+      "windowProfile": null
+    },
+    {
+      "id": "W02",
+      "runner": "vitest",
+      "test": "test/host/balanced-wire.test.ts",
+      "arms": [],
+      "reps": 0,
+      "windowProfile": null
+    },
+    {
+      "id": "W03",
+      "runner": "vitest",
+      "test": "test/host/balanced-wire.test.ts",
+      "arms": [],
+      "reps": 0,
+      "windowProfile": null
+    },
+    {
+      "id": "L01",
+      "runner": "episode",
+      "windowProfile": "w262k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L01",
+      "taskFile": "eval/local/fixtures/L01/TASK.md",
+      "seed": null,
+      "grader": {
+        "kind": "verify-sh",
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main"
+        ]
+      },
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ]
+    },
+    {
+      "id": "L02",
+      "runner": "episode",
+      "windowProfile": "w262k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L02",
+      "taskFile": "eval/local/fixtures/L02/TASK.md",
+      "seed": null,
+      "grader": {
+        "kind": "verify-sh",
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main"
+        ]
+      },
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ]
+    },
+    {
+      "id": "L03",
+      "runner": "episode",
+      "windowProfile": "w262k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L03",
+      "taskFile": "eval/local/fixtures/L03/TASK.md",
+      "seed": null,
+      "grader": {
+        "kind": "verify-sh",
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main"
+        ]
+      },
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ]
+    },
+    {
+      "id": "L04",
+      "runner": "episode",
+      "windowProfile": "w262k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L04",
+      "taskFile": "eval/local/fixtures/L04/TASK.md",
+      "seed": null,
+      "grader": {
+        "kind": "oracle-java",
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "Deduplicator.java"
+        ]
+      },
+      "protectedPaths": [
+        "grader"
+      ]
+    },
+    {
+      "id": "L05",
+      "runner": "episode",
+      "windowProfile": "w262k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L05",
+      "taskFile": "eval/local/fixtures/L05/TASK.md",
+      "seed": null,
+      "grader": {
+        "kind": "oracle-java",
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "TenantRepository.java"
+        ]
+      },
+      "protectedPaths": [
+        "grader"
+      ]
+    },
+    {
+      "id": "L06",
+      "runner": "episode",
+      "windowProfile": "w262k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L06",
+      "taskFile": "eval/local/fixtures/L06/TASK.md",
+      "seed": null,
+      "grader": {
+        "kind": "oracle-java",
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "VerificationStatus.java"
+        ]
+      },
+      "protectedPaths": [
+        "grader"
+      ]
+    },
+    {
+      "id": "H01",
+      "runner": "episode",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "observe",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L06",
+      "taskFile": "eval/local/cases/H01/TASK.md",
+      "seed": "eval/local/seeds/java-three-nonce.jsonl",
+      "grader": {
+        "kind": "oracle-java+nonce",
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "VerificationStatus.java",
+          "src/main/resources/build-id.txt"
+        ],
+        "nonceFile": "src/main/resources/build-id.txt"
+      },
+      "protectedPaths": [
+        "grader"
+      ]
+    },
+    {
+      "id": "H02",
+      "runner": "episode",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "observe",
+        "balanced"
+      ],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L01",
+      "taskFile": "eval/local/cases/H02/TASK.md",
+      "seed": "eval/local/seeds/java-three-nonce.jsonl",
+      "grader": {
+        "kind": "verify-sh",
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main"
+        ]
+      },
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ],
+      "evidence": {
+        "kind": "verbatim-quote",
+        "source": "earliest isError=true toolResult in the episode session (seed verify.sh failure)",
+        "linePattern": "expected .* but got .*"
+      }
+    },
+    {
+      "id": "H03",
+      "runner": "episode",
+      "windowProfile": "w262k",
+      "arms": [
+        "balanced"
+      ],
+      "reps": 1,
+      "sandbox": false,
+      "fixture": "eval/local/fixtures",
+      "taskFile": "eval/local/cases/H03/TASK.md",
+      "seed": null,
+      "grader": {
+        "kind": "observational",
+        "trusted": [],
+        "editable": [
+          "t1",
+          "t2",
+          "t3",
+          "t4",
+          "t5",
+          "t6"
+        ]
+      },
+      "protectedPaths": []
+    }
+  ]
+}

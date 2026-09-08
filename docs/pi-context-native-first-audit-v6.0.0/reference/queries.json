@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-08",
+  "engine": "Exa",
+  "queries": [
+    {
+      "query": "Pi coding agent GitHub context compaction extensions native compaction pi-smart-compact pi-posthorse pi-async-compaction September 2026 implementation",
+      "numResults": 10
+    },
+    {
+      "query": "GitHub Pi context extension tool result consumed once collapse stable prefix cache pctx_history Middlewatch context-fold JPrier pi-context",
+      "numResults": 8
+    },
+    {
+      "query": "site:github.com/earendil-works/pi compaction usage cache boundary safe tool results 0.85.1 session_before_compact",
+      "numResults": 6
+    },
+    {
+      "query": "GitHub Pi coding agent compaction extension least complexity dedicated summary model native compaction cached prefix async pi-compaction-model verified",
+      "numResults": 6
+    }
+  ],
+  "fetches": [
+    {
+      "url": "https://github.com/psmfd/pi-context-manager/blob/main/prune.ts",
+      "result": "Exa metadata only; followed by complete GitHub connector source"
+    },
+    {
+      "url": "https://github.com/almogdepaz/pi-async-compaction/blob/main/README.md",
+      "result": "README obtained"
+    },
+    {
+      "url": "https://github.com/Middlewatch/context-fold/blob/main/package.json",
+      "result": "Exa timeout; GitHub connector fixed-SHA success"
+    },
+    {
+      "url": "https://github.com/JMHSV/pi-compaction-model/blob/main/index.ts",
+      "result": "not found; only README-level conclusion"
+    }
+  ],
+  "web_verification": [
+    "site:github.com/earendil-works/pi \"0.85.1\" \"compaction\" \"tools\"",
+    "site:github.com/Middlewatch/context-fold \"frozen\" \"cache\""
+  ],
+  "limit": "Search result count is retrieval size, not count of independently audited implementations. No third-party benchmark was executed."
+}

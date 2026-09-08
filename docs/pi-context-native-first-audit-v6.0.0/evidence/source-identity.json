@@ -1,0 +1,10 @@
+{
+  "archive": "e35e85f1-f855-465a-a176-8587511da731.zip",
+  "sha256": "d68edeefc9d8bd3c8a0bdce3f26e02631598261d9d29a4ca272abd95b7ce4bd0",
+  "bytes": 15888015,
+  "files": 9660,
+  "zip_comment": "79c1ead5a611e077df5712ba50aaa7012f424cc5",
+  "computedGitTree": "b67277c0d3e0a3295f718010ea09b94fedb71437",
+  "expectedGitTree": "b67277c0d3e0a3295f718010ea09b94fedb71437",
+  "match": true
+}

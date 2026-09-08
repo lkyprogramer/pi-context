@@ -1,0 +1,142 @@
+{
+  "kind": "offline-recompute-not-a-new-benchmark",
+  "warning": "B2 label was not verified as balanced; J05 is a capability challenge, not fair quality evidence.",
+  "all8_as_reported": {
+    "n": 8,
+    "quality_counts_as_recorded": {
+      "both_pass": 7,
+      "baseline_only": 0,
+      "candidate_only": 1,
+      "both_not_pass": 0
+    },
+    "quality_paired_mean_as_recorded": 0.125,
+    "critical_checks_measured": 0,
+    "recorded_token_proxy": {
+      "paired_known": 8,
+      "planned": 8,
+      "baseline_sum": 66222,
+      "candidate_sum": 148897,
+      "baseline_median": 8515.0,
+      "candidate_median": 9029.5,
+      "paired_relative_delta_median": 0.06108184205860796,
+      "ratio_of_sums_minus_one": 1.2484521760140135,
+      "all_attempts_covered": false
+    },
+    "recorded_wall_ms": {
+      "paired_known": 8,
+      "planned": 8,
+      "baseline_sum": 96290,
+      "candidate_sum": 132313,
+      "baseline_median": 11863.0,
+      "candidate_median": 11878.5,
+      "paired_relative_delta_median": -0.04726445414878392,
+      "ratio_of_sums_minus_one": 0.3741094610032194,
+      "all_attempts_covered": false
+    },
+    "monetary_cost": {
+      "paired_known": 0,
+      "planned": 8,
+      "baseline_sum": null,
+      "candidate_sum": null,
+      "baseline_median": null,
+      "candidate_median": null,
+      "paired_relative_delta_median": null,
+      "ratio_of_sums_minus_one": null,
+      "all_attempts_covered": false
+    }
+  },
+  "ordinary_without_J05": {
+    "n": 7,
+    "quality_counts_as_recorded": {
+      "both_pass": 7,
+      "baseline_only": 0,
+      "candidate_only": 0,
+      "both_not_pass": 0
+    },
+    "quality_paired_mean_as_recorded": 0,
+    "critical_checks_measured": 0,
+    "recorded_token_proxy": {
+      "paired_known": 7,
+      "planned": 7,
+      "baseline_sum": 64861,
+      "candidate_sum": 56309,
+      "baseline_median": 8805,
+      "candidate_median": 8640,
+      "paired_relative_delta_median": 0.050455927051671734,
+      "ratio_of_sums_minus_one": -0.1318511894667057,
+      "all_attempts_covered": false
+    },
+    "recorded_wall_ms": {
+      "paired_known": 7,
+      "planned": 7,
+      "baseline_sum": 90931,
+      "candidate_sum": 79141,
+      "baseline_median": 14156,
+      "candidate_median": 9311,
+      "paired_relative_delta_median": -0.06746516744072353,
+      "ratio_of_sums_minus_one": -0.12965875224071,
+      "all_attempts_covered": false
+    },
+    "monetary_cost": {
+      "paired_known": 0,
+      "planned": 7,
+      "baseline_sum": null,
+      "candidate_sum": null,
+      "baseline_median": null,
+      "candidate_median": null,
+      "paired_relative_delta_median": null,
+      "ratio_of_sums_minus_one": null,
+      "all_attempts_covered": false
+    }
+  },
+  "J05_capability_only": {
+    "n": 1,
+    "quality_counts_as_recorded": {
+      "both_pass": 0,
+      "baseline_only": 0,
+      "candidate_only": 1,
+      "both_not_pass": 0
+    },
+    "quality_paired_mean_as_recorded": 1,
+    "critical_checks_measured": 0,
+    "recorded_token_proxy": {
+      "paired_known": 1,
+      "planned": 1,
+      "baseline_sum": 1361,
+      "candidate_sum": 92588,
+      "baseline_median": 1361,
+      "candidate_median": 92588,
+      "paired_relative_delta_median": 67.02939015429831,
+      "ratio_of_sums_minus_one": 67.02939015429831,
+      "all_attempts_covered": false
+    },
+    "recorded_wall_ms": {
+      "paired_known": 1,
+      "planned": 1,
+      "baseline_sum": 5359,
+      "candidate_sum": 53172,
+      "baseline_median": 5359,
+      "candidate_median": 53172,
+      "paired_relative_delta_median": 8.922000373203955,
+      "ratio_of_sums_minus_one": 8.922000373203955,
+      "all_attempts_covered": false
+    },
+    "monetary_cost": {
+      "paired_known": 0,
+      "planned": 1,
+      "baseline_sum": null,
+      "candidate_sum": null,
+      "baseline_median": null,
+      "candidate_median": null,
+      "paired_relative_delta_median": null,
+      "ratio_of_sums_minus_one": null,
+      "all_attempts_covered": false
+    }
+  },
+  "unique_tasks": 8,
+  "repetition_labels": [
+    0
+  ],
+  "balanced_effect_verified": false,
+  "new_publication_claim": false
+}

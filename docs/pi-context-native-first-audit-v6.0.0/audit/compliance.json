@@ -1,0 +1,210 @@
+[
+  {
+    "task": "T01",
+    "title": "官方宿主与干净安装基线",
+    "assessment": "部分",
+    "reason": "有真实stock安装测试和唯一入口；profile/config尚未接通",
+    "next": "A01,E04",
+    "legacyNext": "N01,N12"
+  },
+  {
+    "task": "T02",
+    "title": "冻结类型、配置schema与测试夹具",
+    "assessment": "部分",
+    "reason": "配置schema与类型存在；负数NaN和嵌套未知字段未拒绝",
+    "next": "A01",
+    "legacyNext": "N01"
+  },
+  {
+    "task": "T03",
+    "title": "原生entry读取与公共hook适配",
+    "assessment": "未满足",
+    "reason": "错误session_compact.entry；生产自定义宽API掩盖错位",
+    "next": "A01",
+    "legacyNext": "N01"
+  },
+  {
+    "task": "T04",
+    "title": "generation与生命周期失效",
+    "assessment": "未满足",
+    "reason": "generation可回退；session_start/shutdown清理不足",
+    "next": "C02",
+    "legacyNext": "N05"
+  },
+  {
+    "task": "T05",
+    "title": "来源ref、规范hash与UTF-8范围",
+    "assessment": "部分",
+    "reason": "read原字段hash可用；projection/search/多块生产者不一致",
+    "next": "B01",
+    "legacyNext": "N02"
+  },
+  {
+    "task": "T06",
+    "title": "工作区／分支授权与fork语义",
+    "assessment": "部分",
+    "reason": "read祖先授权存在；index同ID跨session片段可见",
+    "next": "B02",
+    "legacyNext": "N03"
+  },
+  {
+    "task": "T07",
+    "title": "派生SQLite索引与有界重建",
+    "assessment": "未满足",
+    "reason": "persistent实际:memory:，worker未接、重复全量upsert",
+    "next": "B02",
+    "legacyNext": "N03"
+  },
+  {
+    "task": "T08",
+    "title": "授权优先的搜索与稳定分页",
+    "assessment": "未满足",
+    "reason": "offset未用，query/scope未绑，回声未排除",
+    "next": "B02",
+    "legacyNext": "N03"
+  },
+  {
+    "task": "T09",
+    "title": "精确回读、图片与缺失源处理",
+    "assessment": "部分",
+    "reason": "单块文本有成功信号；UTF8预算越界与图片合同错误",
+    "next": "B03",
+    "legacyNext": "N04"
+  },
+  {
+    "task": "T10",
+    "title": "成功请求暴露账本",
+    "assessment": "未满足",
+    "reason": "只验generation且用占位snapshot ACK；未据最终payload记录",
+    "next": "C02",
+    "legacyNext": "N05"
+  },
+  {
+    "task": "T11",
+    "title": "完整工具批次和保护集合",
+    "assessment": "部分",
+    "reason": "批次集合已有；错误字段和完整性/同branch过滤不足",
+    "next": "C03",
+    "legacyNext": "N06"
+  },
+  {
+    "task": "T12",
+    "title": "最终预算与未知多模态成本",
+    "assessment": "未满足",
+    "reason": "预算decision没有裁决最终消息；无实时完整envelope",
+    "next": "B03,C03",
+    "legacyNext": "N04,N06"
+  },
+  {
+    "task": "T13",
+    "title": "稳定epoch规划器",
+    "assessment": "未满足",
+    "reason": "累计阈值后每请求重计划，未保持冻结epoch",
+    "next": "C03",
+    "legacyNext": "N06"
+  },
+  {
+    "task": "T14",
+    "title": "纯投影renderer与保守日志摘要",
+    "assessment": "部分",
+    "reason": "副本替换方向正确；错误hash/多块/未知块/预算需修",
+    "next": "C03",
+    "legacyNext": "N06"
+  },
+  {
+    "task": "T15",
+    "title": "分支pin与原生摘要后的胶囊",
+    "assessment": "未满足",
+    "reason": "错误compact事件，胶囊加user且quote/ref不可靠",
+    "next": "C01",
+    "legacyNext": "N07"
+  },
+  {
+    "task": "T16",
+    "title": "完整usage账本与缓存收益模型",
+    "assessment": "部分",
+    "reason": "usage helper存在；真实Pi字段/生产hook和attempt未联通",
+    "next": "E01",
+    "legacyNext": "N08"
+  },
+  {
+    "task": "T17",
+    "title": "候选stage与宿主ACK恢复",
+    "assessment": "可选延期",
+    "reason": "staging单测机器，不应影响核心observe/balanced generation",
+    "next": "C02,C01",
+    "legacyNext": "N05,N07"
+  },
+  {
+    "task": "T18",
+    "title": "可选语义压缩及B3消融",
+    "assessment": "可选延期",
+    "reason": "semantic明确不支持；不纳入本轮必做",
+    "next": "无",
+    "legacyNext": "无"
+  },
+  {
+    "task": "T19",
+    "title": "工具／命令接线与真实打包",
+    "assessment": "部分",
+    "reason": "命令与tarball安装存在；history图片转JSON、profile诊断不足",
+    "next": "A01,B03,E04",
+    "legacyNext": "N01,N04,N12"
+  },
+  {
+    "task": "T20",
+    "title": "性质／故障／安全矩阵",
+    "assessment": "部分",
+    "reason": "性质测试未包含本文15个反例，不能替代接线测试",
+    "next": "E04",
+    "legacyNext": "N12"
+  },
+  {
+    "task": "T21",
+    "title": "编码沙箱与受限provider relay",
+    "assessment": "部分",
+    "reason": "agent+broker隔离有效方向；host grader破坏整链隔离",
+    "next": "E02",
+    "legacyNext": "N09"
+  },
+  {
+    "task": "T22",
+    "title": "同宿主配对runner与不可变run manifest",
+    "assessment": "未满足",
+    "reason": "B2实际observe；manifest缺实际config/source；重试覆盖",
+    "next": "E01,E03",
+    "legacyNext": "N08,N10"
+  },
+  {
+    "task": "T23",
+    "title": "Java场景oracle与真实模型C2",
+    "assessment": "部分",
+    "reason": "Java oracle存在；最后prompt泄露解法，C2只引导且环境nonce",
+    "next": "E01",
+    "legacyNext": "N11"
+  },
+  {
+    "task": "T24",
+    "title": "运行评价与预注册晋级判断",
+    "assessment": "未满足",
+    "reason": "异质C2加入quality数；null安全检查、成功子集资源比较",
+    "next": "E01",
+    "legacyNext": "N08,N11"
+  },
+  {
+    "task": "T25",
+    "title": "切换唯一入口并删除旧运行时负担",
+    "assessment": "基本满足",
+    "reason": "旧运行时删除、单包入口真实存在；旧配置文档待删",
+    "next": "E04",
+    "legacyNext": "N12"
+  },
+  {
+    "task": "T26",
+    "title": "独立审查与发布候选门禁",
+    "assessment": "未满足",
+    "reason": "limited-trial不能升级balanced；当前SHA无独立云run，需本地冻结包验收",
+    "next": "E04",
+    "legacyNext": "N12"
+  }
+]

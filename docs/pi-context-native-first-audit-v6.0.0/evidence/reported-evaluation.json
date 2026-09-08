@@ -1,0 +1,56 @@
+{
+  "kind": "v5-smoke-evaluation",
+  "plan": {
+    "caseIds": [
+      "J01",
+      "J02",
+      "J03",
+      "J04",
+      "J05",
+      "J06",
+      "J07",
+      "J08"
+    ],
+    "arms": [
+      "B0",
+      "B2"
+    ],
+    "seed": "freeze-before-run",
+    "tarball": "/Users/luo/Documents/github/pi-context/artifacts/release-candidate/pi-context-5.0.0-dev.0.tgz"
+  },
+  "elapsedMs": 228618,
+  "remainingSeconds": 3071.3969999999995,
+  "manifest": {
+    "host": "official-pi",
+    "piVersion": "0.85.1",
+    "sourceRevision": "d981de1229ef899957bbe968bc8dcda02a21f477",
+    "configHash": "pending",
+    "model": "openclaw/Qwen3.8-27B-WORK",
+    "pricingIdentity": null,
+    "createdAt": "2026-09-08T02:07:16.959Z",
+    "immutable": true
+  },
+  "evaluation": {
+    "ittDenominator": 8,
+    "bothPass": 7,
+    "closedLoopCases": 8,
+    "summary": {
+      "n": 8,
+      "complete": 8,
+      "blocked": 0,
+      "notRun": 0,
+      "incomplete": 0,
+      "failed": 1
+    },
+    "honest": true,
+    "twoPercentNiClaimAllowed": false,
+    "adverseEventUpperBound": 0.31234397806636793,
+    "recommendation": {
+      "level": "limited-trial",
+      "reason": "8 closed loops without resource net-gain evidence; not balanced"
+    },
+    "resourceNetEvidence": false,
+    "c2Proven": true,
+    "syntheticExcludedFromMain": true
+  }
+}

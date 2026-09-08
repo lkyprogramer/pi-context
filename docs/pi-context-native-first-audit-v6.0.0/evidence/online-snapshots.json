@@ -1,0 +1,13 @@
+{
+  "retrieved_date": "2026-09-08",
+  "repository": "lkyprogramer/pi-context",
+  "audited_branch": "v5/native-first",
+  "head": "79c1ead5a611e077df5712ba50aaa7012f424cc5",
+  "tree": "b67277c0d3e0a3295f718010ea09b94fedb71437",
+  "branch_head_actions_count": 0,
+  "separate_main_not_audited": "e14804daf9aa31b342ddca718d789fa6860c2244",
+  "official_pi_source_head": "b2602be77cb7b0de45dd616407fd210daa48aa75",
+  "official_pi_source_package_version": "0.85.1",
+  "posthorse_head": "6cdb50a42a3474a9b89d6fed1e86c831425ed9e2",
+  "method": "GitHub connector GET; compact recorded fields, not raw API response"
+}

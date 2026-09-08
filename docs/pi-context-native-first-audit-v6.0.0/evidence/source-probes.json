@@ -1,0 +1,110 @@
+{
+  "node": "v22.16.0",
+  "method": "TypeScript transpileModule + actual source modules; fake host events, not real Pi or full Vitest",
+  "results": [
+    {
+      "id": "P01-profile-config-not-loaded",
+      "observed": "profile=observe generation=0 requests=0",
+      "expected": "profile=balanced",
+      "configHelperProfile": "balanced"
+    },
+    {
+      "id": "P02-projection-reference-hash",
+      "replacementCount": 2,
+      "sourceCode": "source-changed",
+      "expected": "ok",
+      "changed": true
+    },
+    {
+      "id": "P03-multiblock-search-ref",
+      "field": {
+        "kind": "text",
+        "blockIndex": 0
+      },
+      "readCode": "source-changed",
+      "expected": "ok blockIndex=1"
+    },
+    {
+      "id": "P04-search-pagination",
+      "first": [
+        "a"
+      ],
+      "second": [
+        "a"
+      ],
+      "sameCursor": true,
+      "expected": "second page advances"
+    },
+    {
+      "id": "P05-index-cross-session-collision",
+      "hits": [
+        {
+          "entryId": "same",
+          "excerpt": "PRIVATE_FIXTURE_A_ONLY",
+          "score": 100
+        }
+      ],
+      "expected": []
+    },
+    {
+      "id": "P06-search-self-echo",
+      "hits": 1,
+      "expected": 0
+    },
+    {
+      "id": "P07-exposure-snapshot-fence",
+      "exposed": true,
+      "expected": false
+    },
+    {
+      "id": "P08-generation-regresses",
+      "before": 2,
+      "after": 1,
+      "expected": "strictly increases"
+    },
+    {
+      "id": "P09-failure-batch",
+      "unresolvedFailure": false,
+      "expected": true
+    },
+    {
+      "id": "P10-actual-compact-event",
+      "proposal": "committed",
+      "entryId": "compact",
+      "expectedEntryId": "c",
+      "capsuleIncludesNative": false
+    },
+    {
+      "id": "P11-capsule-mutates-user-copy",
+      "userEqual": false,
+      "appendedType": "text",
+      "expected": "only compactionSummary clone may receive capsule"
+    },
+    {
+      "id": "P12-pin-handle",
+      "quoteVisible": false,
+      "refDecodable": false,
+      "expected": "verified quote and valid source ref"
+    },
+    {
+      "id": "P13-image-tool-result",
+      "codeWithWrongHash": "ok",
+      "imageReturned": true,
+      "schemaAtSurface": "commands.ts serializes entire result to one text block",
+      "expected": "validate image source and return native image block under budget"
+    },
+    {
+      "id": "P14-utf8-hard-byte-cap",
+      "code": "ok",
+      "returnedBytes": 3,
+      "cap": 1,
+      "expected": "insufficient-context; never exceed cap"
+    },
+    {
+      "id": "P15-config-invalid-values",
+      "acceptedNegativeLimit": -9,
+      "nanAccepted": true,
+      "expected": "reject"
+    }
+  ]
+}

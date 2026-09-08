@@ -1,0 +1,7 @@
+commit_prefix,date,change,audit_reading
+79c1ead5,2026-09-08,重新8个任务×两臂；空响应重试；7个双方通过+J05恢复挑战；limited-trial,评分口径已披露，但候选仍默认observe，重试覆盖前一attempt
+1eeef2d5,2026-09-08,修复noTools:undefined并把J03/J04需求写得更明确,工具丢失属有效修复；新prompt改变实验，不得和上轮成功率拼接
+01d52bf5,2026-09-08,同tarball smoke、C2、T17 ACK状态,局部状态机和引导回读可用信号，不等于balanced接通
+5ea7b763,2026-09-07,Spring/H2 J03、分支J06、C2泄漏门、语义stub,保留真实环境oracle；语义关闭是合理延期
+463f685e,2026-09-07,归档PCR tests/scripts、T22-T24两臂和场景,说明新旧工作流隔离；命名B2须由运行profile证明
+e0f4701f,2026-09-07,单包入口，删除@pcr与0.84.4补丁依赖,明确实质改善，不再次开重建monorepo任务

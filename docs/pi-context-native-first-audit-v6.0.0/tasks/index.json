@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 2,
+  "docVersion": "6.1.0",
+  "baseBranch": "v5/native-first",
+  "baseCommit": "79c1ead5a611e077df5712ba50aaa7012f424cc5",
+  "defaultMode": "observe",
+  "phases": [
+    {
+      "id": "A",
+      "title": "官方接线与配置",
+      "tasks": [
+        "A01"
+      ]
+    },
+    {
+      "id": "B",
+      "title": "history 安全与正确",
+      "tasks": [
+        "B01",
+        "B02",
+        "B03"
+      ]
+    },
+    {
+      "id": "C",
+      "title": "balanced = 阈值触发的无损折叠",
+      "tasks": [
+        "C01",
+        "C02",
+        "C03"
+      ]
+    },
+    {
+      "id": "D",
+      "title": "真官方 Pi 接线测试",
+      "tasks": [
+        "D01"
+      ]
+    },
+    {
+      "id": "E",
+      "title": "4090 本地模型验证与收口",
+      "tasks": [
+        "E01",
+        "E02",
+        "E03",
+        "E04"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "A01",
+      "phase": "A",
+      "title": "官方 ExtensionAPI 类型、真实配置加载、status 与 compactionEntry",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/extension.ts",
+        "src/pi/adapter.ts",
+        "src/config.ts",
+        "src/commands.ts",
+        "src/contracts.ts",
+        "src/telemetry/metrics.ts",
+        "package.json",
+        "tsconfig.build.json",
+        "docs/CONFIGURATION.md",
+        "test/unit/config-effective.test.ts",
+        "test/host/config-activation.test.ts"
+      ],
+      "testFile": "test/unit/config-effective.test.ts",
+      "closes": [
+        "F01",
+        "F02"
+      ],
+      "consumes": "官方 @earendil-works/pi-coding-agent 0.85.1 导出的 ExtensionAPI/ExtensionContext/SessionCompactEvent/ContextEvent；现有 loadConfig(cwd, projectTrusted)。",
+      "produces": "入口以官方类型声明；配置在 session_start 加载（schemaVersion 6，含 fold 段）；/pctx status 输出 resolvedProfile、configHash、configSource、warnings、hostVersion、contextWindow；session_compact 读取 event.compactionEntry。"
+    },
+    {
+      "id": "B01",
+      "phase": "B",
+      "title": "统一字段引用 refForField 与 UTF-8 hash 口径",
+      "dependsOn": [
+        "A01"
+      ],
+      "allowedFiles": [
+        "src/contracts.ts",
+        "src/history/refs.ts",
+        "src/history/search.ts",
+        "src/history/read.ts",
+        "src/history/index.ts",
+        "src/plugin.ts",
+        "test/unit/field-ref.test.ts"
+      ],
+      "testFile": "test/unit/field-ref.test.ts",
+      "closes": [
+        "F03",
+        "F04"
+      ],
+      "consumes": "Scope、NativeEntry；现有 textSourceHash/decodeRef。",
+      "produces": "refForField(scope, entry, blockIndex): FieldRef | RefError 是 search/fold/read 唯一的引用创建入口；ref 版本 6；text 用 UTF-8 正文 sha256，image 用 canonical JSON sha256；多 block 各自引用。"
+    },
+    {
+      "id": "B02",
+      "phase": "B",
+      "title": "scope 安全检索、真分页、增量 SQLite FTS5 索引与关闭",
+      "dependsOn": [
+        "B01"
+      ],
+      "allowedFiles": [
+        "src/history/index.ts",
+        "src/history/sqlite-worker.ts",
+        "src/history/search.ts",
+        "src/history/scope.ts",
+        "src/pi/source-reader.ts",
+        "src/pi/adapter.ts",
+        "src/plugin.ts",
+        "src/commands.ts",
+        "src/contracts.ts",
+        "test/unit/history-index-scope.test.ts",
+        "test/unit/history-pagination.test.ts",
+        "test/host/index-restart.test.ts"
+      ],
+      "testFile": "test/unit/history-index-scope.test.ts",
+      "closes": [
+        "F05",
+        "F06",
+        "F07",
+        "F08"
+      ],
+      "consumes": "B01 FieldRef；可信 SessionManager parent 关系；SearchCursor 合同。",
+      "produces": "HistoryIndex 用 node:sqlite FTS5 查询，SQL 内先 session_id 谓词；search 支持 offset 且 cursor 绑定 query/branch/indexRevision；只 upsert 未见 entry；pctx_history 自身结果不入索引；close() 在 session_shutdown 调用；persistent 必须显式 dbPath。"
+    },
+    {
+      "id": "B03",
+      "phase": "B",
+      "title": "预算内逐字回读与真实图片返回",
+      "dependsOn": [
+        "B01",
+        "B02"
+      ],
+      "allowedFiles": [
+        "src/history/read.ts",
+        "src/commands.ts",
+        "src/contracts.ts",
+        "src/projection/budget.ts",
+        "src/config.ts",
+        "test/unit/history-budget.test.ts",
+        "test/host/history-image.test.ts"
+      ],
+      "testFile": "test/unit/history-budget.test.ts",
+      "closes": [
+        "F09"
+      ],
+      "consumes": "FieldRef、ReadBudget；ctx.getContextUsage() 与 ctx.model.contextWindow。",
+      "produces": "utf8Prefix 向后退到码点边界；maxTokens=min(config, caller, 剩余安全量)；formatHistoryResult 把 metadata 与图片分开，图片校验 hash 后返回真实 image block，否则 insufficient-context。"
+    },
+    {
+      "id": "C01",
+      "phase": "C",
+      "title": "删除 checkpoint、staging、semantic、exposure ledger 与 pin 命令",
+      "dependsOn": [
+        "A01"
+      ],
+      "allowedFiles": [
+        "src/checkpoint/capsule.ts",
+        "src/checkpoint/pins.ts",
+        "src/checkpoint/staging.ts",
+        "src/checkpoint/semantic.ts",
+        "src/checkpoint/validator.ts",
+        "src/projection/exposure.ts",
+        "src/projection/cache.ts",
+        "src/plugin.ts",
+        "src/pi/adapter.ts",
+        "src/commands.ts",
+        "src/config.ts",
+        "src/contracts.ts",
+        "src/testing.ts",
+        "test/integration/capsule.test.ts",
+        "test/fault/staging.test.ts",
+        "test/host/semantic.test.ts",
+        "test/host/exposure.test.ts",
+        "test/host/generation.test.ts",
+        "test/unit/no-checkpoint.test.ts"
+      ],
+      "testFile": "test/unit/no-checkpoint.test.ts",
+      "closes": [
+        "F13"
+      ],
+      "consumes": "A01 之后的入口与配置；design/00-target 的非目标清单。",
+      "produces": "src/checkpoint 目录不存在；PluginState 只剩 config/profile/index/plan/telemetry；context 事件不再修改最后一条 user；session_before_compact 不注册；配置无 checkpoint/semantic 段。"
+    },
+    {
+      "id": "C02",
+      "phase": "C",
+      "title": "派生暴露与批次保护",
+      "dependsOn": [
+        "C01",
+        "B01"
+      ],
+      "allowedFiles": [
+        "src/projection/batches.ts",
+        "src/projection/exposed.ts",
+        "src/pi/source-reader.ts",
+        "src/contracts.ts",
+        "test/unit/derived-exposure.test.ts",
+        "test/unit/batches.test.ts"
+      ],
+      "testFile": "test/unit/derived-exposure.test.ts",
+      "closes": [
+        "F10"
+      ],
+      "consumes": "分支顺序的 NativeEntry；官方 toolResult.isError 与 assistant.stopReason/usage 字段。",
+      "produces": "exposedEntryIds(entries) 从原生日志派生；collectBatches 要求每 call 恰一个 result；protectSet 保护最近 K 个完整批次、不完整批次、含 isError 结果、含非文本块的批次。"
+    },
+    {
+      "id": "C03",
+      "phase": "C",
+      "title": "阈值触发的冻结折叠：plan、render、失效与遥测",
+      "dependsOn": [
+        "C02",
+        "B03"
+      ],
+      "allowedFiles": [
+        "src/projection/planner.ts",
+        "src/projection/render.ts",
+        "src/projection/budget.ts",
+        "src/plugin.ts",
+        "src/pi/adapter.ts",
+        "src/pi/source-reader.ts",
+        "src/telemetry/usage.ts",
+        "src/telemetry/metrics.ts",
+        "src/commands.ts",
+        "src/config.ts",
+        "src/contracts.ts",
+        "test/unit/fold-plan.test.ts",
+        "test/unit/render.test.ts",
+        "test/unit/planner.test.ts"
+      ],
+      "testFile": "test/unit/fold-plan.test.ts",
+      "closes": [
+        "F11",
+        "F12"
+      ],
+      "consumes": "C02 派生暴露与保护集；B01 refForField；ctx.getContextUsage()；官方 message_end usage。",
+      "produces": "shouldFold/planFold/renderFold/stubFor；plan 只追加、按 (entryId, blockIndex) 稳定；session_compact/session_tree/model_select/session_start 失效；RequestRecord/FoldEvent 遥测；/pctx status 显示 activePlan、folds、lastRequests。"
+    },
+    {
+      "id": "D01",
+      "phase": "D",
+      "title": "真官方 Pi + 受控 provider 的接线测试",
+      "dependsOn": [
+        "C03",
+        "B03"
+      ],
+      "allowedFiles": [
+        "test/host/balanced-wire.test.ts",
+        "test/host/observe-identity.test.ts",
+        "test/helpers/official-pi.ts",
+        "test/helpers/controlled-provider.ts",
+        "test/packed/install.test.ts",
+        "scripts/packed-host.mjs",
+        "package.json"
+      ],
+      "testFile": "test/host/balanced-wire.test.ts",
+      "closes": [
+        "F20"
+      ],
+      "consumes": "全局安装的官方 pi 0.85.1（dist/index.js）；ModelRuntime.registerProvider 的 streamSimple 受控 provider；打包 tarball。",
+      "produces": "observe 下最终 provider messages 与输入逐字节相同；balanced 在小窗口下折叠旧已暴露结果、保护集原样、ref 可回读且 hash 匹配、下一请求 stub 逐字节稳定、/compact 后 plan 清空且 JSONL 未变；pnpm smoke 一条命令。"
+    },
+    {
+      "id": "E01",
+      "phase": "E",
+      "title": "4090 本地评测套件：题目、Pi 配置、单 episode 运行器与种子历史",
+      "dependsOn": [
+        "A01"
+      ],
+      "allowedFiles": [
+        "eval/local/README.md",
+        "eval/local/cases.json",
+        "eval/local/cases/H01/TASK.md",
+        "eval/local/cases/H02/TASK.md",
+        "eval/local/fixtures",
+        "eval/local/pi-config/w262k/models.json",
+        "eval/local/pi-config/w64k/models.json",
+        "eval/local/pi-config/settings.json",
+        "eval/local/ensure-tunnel.sh",
+        "eval/local/metrics-snap.sh",
+        "eval/local/run-episode.mjs",
+        "eval/local/record-seed.mjs",
+        "eval/local/parse-session.mjs",
+        "test/fixtures/local-eval/sample-session.jsonl",
+        "test/unit/local-cases.test.ts"
+      ],
+      "testFile": "test/unit/local-cases.test.ts",
+      "closes": [
+        "F17",
+        "F18"
+      ],
+      "consumes": "testing/harness 下的脚本与题目模板；CodexGame 的 java-agent-1..3 夹具；v5 bundle 的 J01/J02/J07 夹具；现网 http://127.0.0.1:18343/v1（SSH 隧道）。",
+      "produces": "eval/local 可独立运行一个 episode：加载/不加载插件、指定窗口 profile、可选种子 session、串行 prompt、记录 Pi JSONL 与 engine metrics 差值；record-seed 生成带 nonce 的真实历史种子。"
+    },
+    {
+      "id": "E02",
+      "phase": "E",
+      "title": "判题与 Agent 在无凭据容器内运行",
+      "dependsOn": [
+        "E01"
+      ],
+      "allowedFiles": [
+        "eval/local/grade.sh",
+        "eval/local/sandbox/run-agent.sh",
+        "eval/local/run-episode.mjs",
+        "eval/sandbox/Containerfile",
+        "eval/sandbox/build-image.mjs",
+        "eval/live-g4.mjs",
+        "test/security/grader-isolation.test.ts"
+      ],
+      "testFile": "test/security/grader-isolation.test.ts",
+      "closes": [
+        "F16"
+      ],
+      "consumes": "现有 T21 镜像（node 22.19 + JDK17 + maven + pi 0.85.1）；Docker Desktop host.docker.internal。",
+      "produces": "agent 容器只能访问 host.docker.internal:18343；grader 容器 --network none，候选源码只读挂载，verify.sh/Oracle 来自可信副本，成功=可信进程 exit 0 且断言全过；eval/live-g4.mjs 的宿主 javac/mvn 路径删除。"
+    },
+    {
+      "id": "E03",
+      "phase": "E",
+      "title": "执行矩阵：arm 身份、usage 台账、engine metrics 与配对报告",
+      "dependsOn": [
+        "D01",
+        "E01",
+        "E02"
+      ],
+      "allowedFiles": [
+        "eval/local/run-matrix.mjs",
+        "eval/local/report.mjs",
+        "eval/local/arm-contract.mjs",
+        "eval/local/run-episode.mjs",
+        "eval/live-c2.mjs",
+        "eval/smoke.mjs",
+        "eval/report.ts",
+        "eval/runner.ts",
+        "package.json",
+        ".gitignore",
+        "artifacts/local-eval",
+        "test/unit/eval-accounting.test.ts"
+      ],
+      "testFile": "test/unit/eval-accounting.test.ts",
+      "closes": [
+        "F14",
+        "F15"
+      ],
+      "consumes": "scenarios.json 的 12 场景；E01 运行器；E02 容器；现网 4090（thinking=medium，max-concurrency 1）。",
+      "produces": "pnpm eval:local -- --out artifacts/local-eval/<runId> 串行跑完矩阵；每 episode 断言 arm 身份；report.md 给出配对 oracle、Σinput/ΣcacheRead/墙钟、折叠/压缩/回读次数、engine 前后差值；unknown 不计 0。"
+    },
+    {
+      "id": "E04",
+      "phase": "E",
+      "title": "决策、文档与打包收口",
+      "dependsOn": [
+        "E03"
+      ],
+      "allowedFiles": [
+        "docs/iterations/native-first-v6.md",
+        "README.md",
+        "docs/CONFIGURATION.md",
+        "docs/OPERATIONS.md",
+        "docs/release-v5.md",
+        "HANDOFF.md",
+        "package.json",
+        "test/packed/install.test.ts"
+      ],
+      "testFile": "test/packed/install.test.ts",
+      "closes": [
+        "F19"
+      ],
+      "consumes": "E03 report.md；D01 smoke；最终 tarball。",
+      "produces": "docs/iterations/native-first-v6.md 记录每任务 commit/命令/exit/剩余限制；README 与 CONFIGURATION 只描述 6.1 配置；按 testing/00-protocol 给出 observe-only 或 limited-balanced-trial 决策；可安装 tarball 与 SHA256。"
+    }
+  ]
+}
