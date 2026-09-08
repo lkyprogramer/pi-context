@@ -33,7 +33,7 @@ Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not o
 Remaining: checkpoint/pin/ledger remain until C01; `src/plugin.ts` was required so historyTool uses `readBudgetFor`; remaining window < 512 tokens fail-closes without a half page
 
 ## Task: C01
-Commit: pending
+Commit: 97a19ec844278f564c93c366e4d80326669627a6
 Changed: src/checkpoint/* (deleted), src/projection/exposure.ts, src/projection/cache.ts, src/plugin.ts, src/pi/adapter.ts, src/commands.ts, src/contracts.ts, src/projection/planner.ts, src/projection/render.ts, src/telemetry/metrics.ts, test/unit/no-checkpoint.test.ts, test/fault/runtime.test.ts, test/property/invariants.test.ts, test/unit/planner.test.ts, test/unit/render.test.ts, test/unit/economics.test.ts, test/host/matrix.test.ts, test/host/stock-loader.test.ts, test/packed/install.test.ts, test/helpers/official-pi.ts; deleted test/integration/capsule.test.ts, test/fault/staging.test.ts, test/host/semantic.test.ts, test/host/exposure.test.ts, test/host/generation.test.ts
 Deleted modules: capsule, pins, semantic, staging, validator, exposure ledger, snapshot-key cache
 RED: `pnpm exec vitest run test/unit/no-checkpoint.test.ts --config vitest.config.ts` originally failed on registered `session_before_compact` and existing `src/checkpoint`; this landing re-ran GREEN

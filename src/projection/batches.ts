@@ -1,72 +1,80 @@
-import type { EntryId, NativeEntry } from "../contracts.js";
+import type { ContentBlock, EntryId, NativeEntry, ToolBatch } from "../contracts.js";
+import { utf8Bytes } from "../contracts.js";
 import { toolCallIdOf } from "../pi/source-reader.js";
 
-export interface ToolBatch {
-  id: string;
-  assistantEntryId: EntryId;
-  toolCallIds: readonly string[];
-  resultEntryIds: readonly EntryId[];
-  complete: boolean;
-  hasUnexposedResult: boolean;
-  hasImageOrUnknown: boolean;
-  unresolvedFailure: boolean;
+export type { ToolBatch };
+
+function contentOf(entry: NativeEntry): ContentBlock[] {
+  const raw = entry.message?.content;
+  return Array.isArray(raw) ? raw : typeof raw === "string" ? [{ type: "text", text: raw }] : [];
 }
 
-function contentOf(entry: NativeEntry) {
-  return Array.isArray(entry.message?.content) ? entry.message!.content! : [];
+function callsOf(entry: NativeEntry): { id: string; name: string }[] {
+  if (entry.message?.role !== "assistant") return [];
+  return contentOf(entry).flatMap((block) => {
+    if (block.type !== "toolCall" || typeof block.id !== "string") return [];
+    return [{ id: block.id, name: typeof block.name === "string" ? block.name : "" }];
+  });
 }
 
-export function collectBatches(entries: NativeEntry[], isExposed?: (id: EntryId) => boolean): ToolBatch[] {
-  const resultsByCall = new Map<string, NativeEntry[]>();
-  for (const entry of entries) {
-    if (entry.message?.role !== "toolResult") continue;
-    const callId = toolCallIdOf(entry.message);
-    if (!callId) continue;
-    const list = resultsByCall.get(callId) ?? [];
-    list.push(entry);
-    resultsByCall.set(callId, list);
-  }
+function resultMeta(entry: NativeEntry, callId: string): ToolBatch["results"][number] {
+  const content = contentOf(entry);
+  const textBlocks: number[] = [];
+  let bytes = 0;
+  content.forEach((block, index) => {
+    if (block.type !== "text") return;
+    textBlocks.push(index);
+    bytes += utf8Bytes(typeof block.text === "string" ? block.text : "").length;
+  });
+  return {
+    entryId: entry.id,
+    callId,
+    isError: entry.message?.isError === true,
+    textBlocks,
+    bytes,
+  };
+}
+
+export function collectBatches(entries: readonly NativeEntry[]): ToolBatch[] {
   const batches: ToolBatch[] = [];
   for (const entry of entries) {
-    const content = contentOf(entry);
-    const calls = content.filter((b) => b.type === "toolCall" || b.type === "toolUse" || typeof b.toolCallId === "string" && b.type === "function");
-    const callIds = content.flatMap((b) => {
-      if (typeof b.id === "string" && (b.type === "toolCall" || b.type === "toolUse")) return [b.id];
-      if (typeof b.toolCallId === "string" && b.type !== "toolResult") return [String(b.toolCallId)];
-      return [];
-    });
-    if (!callIds.length && calls.length) {
-      for (const c of calls) if (typeof c.id === "string") callIds.push(c.id);
+    const calls = callsOf(entry);
+    if (!calls.length) continue;
+    const callIds = new Set(calls.map((c) => c.id));
+    const results: ToolBatch["results"][number][] = [];
+    let hasNonText = false;
+    for (const other of entries) {
+      if (other.message?.role !== "toolResult") continue;
+      const callId = toolCallIdOf(other.message);
+      if (!callId || !callIds.has(callId)) continue;
+      const content = contentOf(other);
+      if (content.some((block) => block.type !== "text")) hasNonText = true;
+      results.push(resultMeta(other, callId));
     }
-    if (!callIds.length) continue;
-    const resultEntries = callIds.flatMap((id) => resultsByCall.get(id) ?? []);
-    const resultEntryIds = resultEntries.map((e) => e.id);
-    const complete = callIds.every((id) => (resultsByCall.get(id) ?? []).length > 0);
-    const hasImageOrUnknown = resultEntries.some((e) =>
-      contentOf(e).some((b) => b.type !== "text"),
-    );
-    const unresolvedFailure = resultEntries.some((e) => e.message?.stopReason === "error");
+    const complete = calls.every((call) => results.filter((r) => r.callId === call.id).length === 1);
     batches.push({
-      id: `batch:${entry.id}`,
       assistantEntryId: entry.id,
-      toolCallIds: callIds,
-      resultEntryIds,
+      calls,
+      results,
       complete,
-      hasUnexposedResult: resultEntryIds.some((id) => (isExposed ? !isExposed(id) : true)),
-      hasImageOrUnknown,
-      unresolvedFailure,
+      hasNonText,
     });
   }
   return batches;
 }
 
-export function protectSet(batches: ToolBatch[], recent: number): Set<EntryId> {
+export function protectSet(batches: readonly ToolBatch[], recent: number): Set<EntryId> {
   const complete = batches.filter((b) => b.complete);
-  const keep = complete.slice(-recent);
+  const keepLast = new Set(complete.slice(Math.max(0, complete.length - recent)));
   const ids = new Set<EntryId>();
-  for (const b of [...keep, ...batches.filter((b) => !b.complete || b.hasImageOrUnknown || b.unresolvedFailure)]) {
-    ids.add(b.assistantEntryId);
-    for (const id of b.resultEntryIds) ids.add(id);
+  for (const batch of batches) {
+    const keep =
+      keepLast.has(batch) ||
+      !batch.complete ||
+      batch.hasNonText ||
+      batch.results.some((r) => r.isError);
+    if (!keep) continue;
+    for (const result of batch.results) ids.add(result.entryId);
   }
   return ids;
 }

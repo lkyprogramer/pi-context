@@ -247,9 +247,30 @@ export interface NativeEntry {
     toolCallId?: string;
     toolName?: string;
     isError?: boolean;
+    usage?: {
+      input?: number;
+      output?: number;
+      cacheRead?: number;
+      cacheWrite?: number;
+      totalTokens?: number;
+    };
   };
   customType?: string;
   data?: unknown;
+}
+
+export interface ToolBatch {
+  assistantEntryId: string;
+  calls: readonly { id: string; name: string }[];
+  results: readonly {
+    entryId: string;
+    callId: string;
+    isError: boolean;
+    textBlocks: number[];
+    bytes: number;
+  }[];
+  complete: boolean;
+  hasNonText: boolean;
 }
 
 export function utf8Bytes(text: string): Buffer {

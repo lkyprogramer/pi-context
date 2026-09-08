@@ -12,6 +12,18 @@ export function branchEntries(sessionManager: SessionReader): NativeEntry[] {
   return readVisibleSnapshot(sessionManager);
 }
 
+export function toolResultIndex(entries: readonly NativeEntry[]): Map<string, string | "ambiguous"> {
+  const map = new Map<string, string | "ambiguous">();
+  for (const entry of entries) {
+    if (entry.message?.role !== "toolResult") continue;
+    const callId = toolCallIdOf(entry.message);
+    if (!callId) continue;
+    if (!map.has(callId)) map.set(callId, entry.id);
+    else map.set(callId, "ambiguous");
+  }
+  return map;
+}
+
 export function toolResultByCallId(entries: readonly NativeEntry[]): Map<string, NativeEntry> {
   const map = new Map<string, NativeEntry>();
   for (const entry of entries) {
