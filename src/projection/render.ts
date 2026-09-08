@@ -23,16 +23,12 @@ export function cloneMessages<T>(value: T): T {
 export function renderMessages(input: {
   messages: AgentMessage[];
   plan: FrozenPlan | null;
-  profile: "off" | "observe" | "balanced" | "experimental-semantic";
+  profile: "off" | "observe" | "balanced";
   optionalBudget: number;
   mappedEntries?: Map<number, { id: string }>;
-  generation?: number;
 }): { messages: AgentMessage[]; bypassed: boolean } {
   const original = input.messages;
   if (input.profile === "off" || input.profile === "observe" || !input.plan || input.plan.replacements.length === 0) {
-    return { messages: original, bypassed: false };
-  }
-  if (typeof input.generation === "number" && input.plan.snapshot.generation !== input.generation) {
     return { messages: original, bypassed: false };
   }
   const byId = new Map(input.plan.replacements.map((r) => [r.entryId, r]));

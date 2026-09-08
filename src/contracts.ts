@@ -144,38 +144,6 @@ export interface FieldRef {
   sourceHash: Sha256;
 }
 
-export interface SnapshotKey {
-  generation: number;
-  sessionId: string;
-  leafId: EntryId | null;
-  sourceRevision: Sha256;
-  modelIdentity: string;
-  configHash: Sha256;
-}
-
-export interface SourceLocator {
-  version: 5;
-  workspaceId: string;
-  sessionId: string;
-  entryId: EntryId;
-  field: { kind: "text"; blockIndex: number } | { kind: "image"; blockIndex: number };
-  sourceHash: Sha256;
-}
-
-export interface HistoricalTextPage {
-  kind: "text-range-exact";
-  ref: SourceRef;
-  text: string;
-  startByte: number;
-  endByteExclusive: number;
-  totalBytes: number;
-  sourceHash: Sha256;
-  pageHash: Sha256;
-  cursor: string | null;
-  observedAt: string;
-  currentStateVerified: false;
-}
-
 export interface SearchHit {
   ref: SourceRef;
   entryId: EntryId;
@@ -246,7 +214,7 @@ export interface EvalPair {
 export interface UsageRecord {
   provider: string;
   model: string;
-  purpose: "agent" | "compaction" | "semantic" | "retry";
+  purpose: "agent" | "compaction" | "retry" | "eval";
   raw: unknown;
   uncachedInputTokens: number | null;
   cachedReadTokens: number | null;

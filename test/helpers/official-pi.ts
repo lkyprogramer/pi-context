@@ -1,10 +1,19 @@
 import { execFileSync } from "node:child_process";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export function officialPiRoot(): string {
+  const local = join(repoRoot, "node_modules/@earendil-works/pi-coding-agent");
+  if (existsSync(join(local, "package.json"))) return local;
   const npmRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
-  return join(npmRoot, "@earendil-works/pi-coding-agent");
+  const global = join(npmRoot, "@earendil-works/pi-coding-agent");
+  if (!existsSync(join(global, "package.json"))) {
+    throw new Error("blocked-environment: @earendil-works/pi-coding-agent@0.85.1 is not installed");
+  }
+  return global;
 }
 
 export async function loadOfficialPi(): Promise<{

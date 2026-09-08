@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG } from "../../src/config.js";
 import { collectBatches } from "../../src/projection/batches.js";
-import { ExposureLedger, outcomeFromStop } from "../../src/projection/exposure.js";
 import { decideBudget } from "../../src/projection/budget.js";
 import { planEpoch } from "../../src/projection/planner.js";
 import { renderMessages } from "../../src/projection/render.js";
@@ -23,17 +22,10 @@ describe("T20 INV matrix", () => {
     expect(out.messages).toBe(messages);
   });
 
-  it("INV-02 http200 stream error is not exposure", () => {
-    expect(outcomeFromStop("stop", undefined, "error")).toBe("fail");
-    const ledger = new ExposureLedger();
-    ledger.begin({
-      attemptId: "a",
-      snapshot: { generation: 1, sessionId: "s", leafId: null, sourceRevision: "a".repeat(64), modelIdentity: "m", configHash: "b".repeat(64) },
-      includedOriginalRefs: ["r"],
-      startedAtMs: 0,
-    });
-    ledger.fail("a");
-    expect(ledger.isExposed("r", 1)).toBe(false);
+  it("INV-02 without a fold plan messages stay unchanged", () => {
+    const messages = [{ role: "tool", content: [{ type: "text", text: "raw" }] }];
+    const out = renderMessages({ messages, plan: null, profile: "balanced", optionalBudget: 10 });
+    expect(out.messages).toBe(messages);
   });
 
   it("INV-03 images stay in the message", () => {
@@ -78,17 +70,10 @@ describe("T20 INV matrix", () => {
       assistantEntry("a", "u", [{ type: "toolCall", id: "c1" }]),
       toolResultEntry("r1", "a", "c1", textBlocks(String(f01.input.text))),
     ];
-    const ledger = new ExposureLedger();
     const plan = planEpoch({
       entries,
       batches: collectBatches(entries),
-      ledger,
-      generation: 1,
-      snapshot: { generation: 1, sessionId: "s", leafId: "r1", sourceRevision: "a".repeat(64), modelIdentity: "m", configHash: "b".repeat(64) },
       config: DEFAULT_CONFIG,
-      refs: new Map(),
-      hashes: new Map(),
-      successfulRequests: 0,
     });
     expect(plan).toBeNull();
     const incomplete = [
@@ -100,15 +85,12 @@ describe("T20 INV matrix", () => {
       messages: [{ role: "user", content: [{ type: "text", text: "keep" }] }],
       plan: {
         epochId: "e",
-        snapshot: { generation: 1, sessionId: "s", leafId: "r1", sourceRevision: "a".repeat(64), modelIdentity: "m", configHash: "b".repeat(64) },
-        sourceBoundary: null,
         replacements: [{ entryId: "r1", ref: "x", originalHash: "h", replacementText: "stub", estimatedBeforeTokens: 10, estimatedAfterTokens: 1 }],
         firstChangedMessageIndex: 0,
         planHash: "p",
       },
       profile: "balanced",
       optionalBudget: 100,
-      generation: 2,
     });
     expect(stale.messages[0]?.content).toEqual([{ type: "text", text: "keep" }]);
   });

@@ -48,7 +48,7 @@ describe("T19 packed install", () => {
     };
     register(pi);
     await new Promise((r) => setTimeout(r, 0));
-    expect(notes.join(" ")).toMatch(/not forged|requires an interactive/);
+    expect(notes.join(" ")).toMatch(/unknown command/);
   });
 
   it("T25 unique entry has no PCR workspace, host patch, or @pcr dependency", () => {

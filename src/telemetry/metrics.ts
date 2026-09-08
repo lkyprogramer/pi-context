@@ -1,6 +1,6 @@
 export interface RequestMetrics {
   runId: string;
-  generation: number;
+  epoch: number;
   profile: string;
   mappedSources: number;
   transforms: number;
@@ -26,10 +26,10 @@ export interface AssistantRecord {
   usage: AssistantUsage | null;
 }
 
-export function emptyMetrics(generation: number, profile: string): RequestMetrics {
+export function emptyMetrics(epoch: number, profile: string): RequestMetrics {
   return {
     runId: crypto.randomUUID(),
-    generation,
+    epoch,
     profile,
     mappedSources: 0,
     transforms: 0,

@@ -1,11 +1,7 @@
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { PluginState } from "./plugin.js";
 import { historyTool, setProfile } from "./plugin.js";
-import type { HistoryRequest, NativeEntry, StatusView } from "./contracts.js";
-import { utf8Slice } from "./contracts.js";
-import { PIN_TYPE, pinId, quoteHash, type Pin } from "./checkpoint/pins.js";
-import { textSourceHash } from "./history/refs.js";
-import { authorize, buildScope } from "./history/scope.js";
+import type { HistoryRequest, StatusView } from "./contracts.js";
 import { decodeRef } from "./history/refs.js";
 import { formatHistoryResult } from "./history/read.js";
 import { entriesFromCtx, type PiExtensionAPI } from "./pi/adapter.js";
@@ -23,51 +19,6 @@ const HISTORY_PARAMS = {
   },
   required: ["action"],
 };
-
-export function buildPinRecord(input: {
-  cwd: string;
-  sessionId: string;
-  leafId: string | null;
-  entries: NativeEntry[];
-  entryId: string;
-  blockIndex: number;
-  startByte: number;
-  endByteExclusive: number;
-}): { pin: Pin } | { error: string } {
-  const getEntry = (id: string) => input.entries.find((entry) => entry.id === id);
-  const scope = buildScope({ cwd: input.cwd, sessionId: input.sessionId, leafId: input.leafId, getEntry });
-  if (!authorize(scope, input.entryId)) return { error: "not visible" };
-  const entry = getEntry(input.entryId);
-  if (!entry) return { error: "source-missing" };
-  const raw = entry.message?.content;
-  const blocks = Array.isArray(raw) ? raw : typeof raw === "string" ? [{ type: "text", text: raw }] : [];
-  const block = blocks[input.blockIndex];
-  if (!block || block.type !== "text" || typeof block.text !== "string") return { error: "missing text block" };
-  try {
-    utf8Slice(block.text, input.startByte, input.endByteExclusive);
-  } catch {
-    return { error: "invalid-range" };
-  }
-  const source = {
-    version: 5 as const,
-    workspaceId: scope.workspaceId,
-    sessionId: scope.sessionId,
-    entryId: input.entryId,
-    field: { kind: "text" as const, blockIndex: input.blockIndex },
-    sourceHash: textSourceHash(block.text),
-  };
-  return {
-    pin: {
-      pinId: pinId(source, input.startByte, input.endByteExclusive),
-      source,
-      startByte: input.startByte,
-      endByteExclusive: input.endByteExclusive,
-      quoteHash: quoteHash(block.text, input.startByte, input.endByteExclusive),
-      createdByEntryId: input.entryId,
-      state: "active",
-    },
-  };
-}
 
 export function buildStatusView(state: PluginState, ctx: ExtensionContext): StatusView {
   const usage = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
@@ -170,41 +121,14 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
         return;
       }
       if (cmd === "export") {
-        notify(JSON.stringify({ profile: state.profile, generation: state.generation, content: undefined }));
+        notify(JSON.stringify({ profile: state.profile, content: undefined }));
         return;
       }
-      if (cmd === "pin") {
-        if (!ctx.hasUI) {
-          notify("pin requires an interactive confirmation; not forged");
-          return;
-        }
-        const ok = (await ctx.ui.confirm("Pin source", "Pin the selected native text range?")) ?? false;
-        if (!ok) return;
-        const [entryId, block, start, end] = rest;
-        const append = pi.appendEntry;
-        if (append && entryId) {
-          const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
-          const built = buildPinRecord({
-            cwd,
-            sessionId,
-            leafId,
-            entries,
-            entryId,
-            blockIndex: Number(block),
-            startByte: Number(start),
-            endByteExclusive: Number(end),
-          });
-          if ("error" in built) {
-            notify(built.error);
-            return;
-          }
-          append(PIN_TYPE, built.pin);
-        }
+      if (cmd === "search" || cmd === "read") {
+        notify("use the pctx_history tool for search and read");
         return;
       }
-      if (cmd === "unpin") {
-        pi.appendEntry?.(PIN_TYPE, { pinId: rest[0], state: "released" });
-      }
+      notify("unknown command; pctx commands: status|profile|search|read");
     },
   });
 }

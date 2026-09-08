@@ -25,9 +25,18 @@ Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not o
 Remaining: read paging still uses token-byte walk until B03; checkpoint/pin/ledger remain until C01; node:sqlite FTS5 is experimental on Node v22.17.0; createPlugin starts memory-only until session_start opens persistent
 
 ## Task: B03
-Commit: pending
+Commit: a958e96ced8429c463cd0f4ad0eab597999669ec
 Changed: src/history/read.ts, src/commands.ts, src/contracts.ts, src/projection/budget.ts, src/plugin.ts, test/unit/history-budget.test.ts, test/host/history-image.test.ts, test/integration/history-read.test.ts
 RED: `pnpm exec vitest run test/unit/history-budget.test.ts --config vitest.config.ts` exit 1 — `utf8Prefix is not a function`
 GREEN: `pnpm exec vitest run test/unit/history-budget.test.ts test/integration/history-read.test.ts --config vitest.config.ts` exit 0 — 5 tests; `pnpm exec vitest run test/host/history-image.test.ts --config vitest.config.ts` exit 0 — 1 test; `pnpm typecheck` exit 0
 Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not on PATH) / not-run
 Remaining: checkpoint/pin/ledger remain until C01; `src/plugin.ts` was required so historyTool uses `readBudgetFor`; remaining window < 512 tokens fail-closes without a half page
+
+## Task: C01
+Commit: pending
+Changed: src/checkpoint/* (deleted), src/projection/exposure.ts, src/projection/cache.ts, src/plugin.ts, src/pi/adapter.ts, src/commands.ts, src/contracts.ts, src/projection/planner.ts, src/projection/render.ts, src/telemetry/metrics.ts, test/unit/no-checkpoint.test.ts, test/fault/runtime.test.ts, test/property/invariants.test.ts, test/unit/planner.test.ts, test/unit/render.test.ts, test/unit/economics.test.ts, test/host/matrix.test.ts, test/host/stock-loader.test.ts, test/packed/install.test.ts, test/helpers/official-pi.ts; deleted test/integration/capsule.test.ts, test/fault/staging.test.ts, test/host/semantic.test.ts, test/host/exposure.test.ts, test/host/generation.test.ts
+Deleted modules: capsule, pins, semantic, staging, validator, exposure ledger, snapshot-key cache
+RED: `pnpm exec vitest run test/unit/no-checkpoint.test.ts --config vitest.config.ts` originally failed on registered `session_before_compact` and existing `src/checkpoint`; this landing re-ran GREEN
+GREEN: `pnpm exec vitest run test/unit/no-checkpoint.test.ts test/host/stock-loader.test.ts --config vitest.config.ts` exit 0 — 3 tests; `pnpm typecheck` exit 0; `pnpm exec vitest run --config vitest.config.ts` exit 0 — 85 tests
+Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not on PATH) / not-run
+Remaining: `planEpoch` returns null until C03; FrozenPlan is a placeholder not FoldPlan; PluginState keeps A01/B02 counters beyond the C01 minimal set; `src/config.ts` still names checkpoint/semantic/projection only as rejected legacy keys; host tests resolve official Pi from workspace node_modules when global npm root has no package; `/pctx pin` is unknown command

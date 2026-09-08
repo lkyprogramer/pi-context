@@ -14,8 +14,14 @@ function sha256(buf: Buffer | string): string {
 }
 
 function officialPiRoot(): string {
+  const local = join(repoRoot, "node_modules/@earendil-works/pi-coding-agent");
+  if (existsSync(join(local, "package.json"))) return local;
   const npmRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf8" }).trim();
-  return join(npmRoot, "@earendil-works/pi-coding-agent");
+  const global = join(npmRoot, "@earendil-works/pi-coding-agent");
+  if (!existsSync(join(global, "package.json"))) {
+    throw new Error("blocked-environment: @earendil-works/pi-coding-agent@0.85.1 is not installed");
+  }
+  return global;
 }
 
 describe("T01 stock loader on official Pi 0.85.1", () => {

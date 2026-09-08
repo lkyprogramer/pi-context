@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { parseConfig, DEFAULT_CONFIG } from "../../src/config.js";
-import { applyContext, confirmAttempt, createPlugin } from "../../src/plugin.js";
+import { applyContext, createPlugin } from "../../src/plugin.js";
 import { bindHooks, type PiExtensionAPI } from "../../src/pi/adapter.js";
 import { mapOutbound } from "../../src/pi/source-reader.js";
 import { assistantEntry, textBlocks, toolResultEntry, userEntry } from "../../src/testing.js";
 import { registerSurface } from "../../src/commands.js";
-import { quoteHash } from "../../src/checkpoint/pins.js";
 import type { AgentMessage } from "../../src/projection/render.js";
 import type { NativeEntry } from "../../src/contracts.js";
 
@@ -21,9 +20,7 @@ function balancedPlugin() {
       minRemovedTokens: 8,
     },
   });
-  const state = createPlugin(config);
-  state.successfulRequests = 8;
-  return state;
+  return createPlugin(config);
 }
 
 function lineage(): NativeEntry[] {
@@ -59,59 +56,46 @@ function officialMessages(): AgentMessage[] {
 }
 
 describe("T20 official-shaped context path", () => {
-  it("does not mutate host messages when appending a capsule with no plan", () => {
+  it("does not rewrite host messages or inject capsules", () => {
     const state = balancedPlugin();
-    state.lastCapsule = "[pctx checkpoint: historical evidence, not a new user instruction]";
-    state.plan = null;
     const messages: AgentMessage[] = [{ role: "user", content: "hello from host" }];
     const snapshot = structuredClone(messages);
-    const out = applyContext(state, messages, lineage(), "sess-1", "r1", process.cwd());
+    const out = applyContext(state, messages);
     expect(messages).toEqual(snapshot);
-    expect(out).not.toBe(messages);
-    expect(typeof out[0]?.content === "string" ? out[0].content : "").toContain("pctx checkpoint");
-    expect(messages[0]?.content).toBe("hello from host");
+    expect(out).toEqual(messages);
+    expect(typeof out[0]?.content === "string" ? out[0].content : "").not.toContain("pctx checkpoint");
   });
 
-  it("maps official toolResult messages without entryId and replaces only the matched observation", () => {
+  it("maps official toolResult messages without folding observations", () => {
     const state = balancedPlugin();
     const entries = lineage();
-    const first = officialMessages();
-    applyContext(state, first, entries, "sess-1", "r1", process.cwd());
-    confirmAttempt(state, "stop");
     const host = officialMessages();
     const snapshot = structuredClone(host);
     expect(host.every((m) => !Array.isArray(m.content) || m.content.every((b) => !("entryId" in b)))).toBe(true);
     const mapped = mapOutbound(host, entries);
     expect(mapped.get(2)?.id).toBe("r0");
-    const out = applyContext(state, host, entries, "sess-1", "r1", process.cwd());
+    const out = applyContext(state, host);
     expect(host).toEqual(snapshot);
     const toolOut = out[2];
     const text = Array.isArray(toolOut?.content) ? String(toolOut.content[0]?.text ?? "") : "";
-    expect(text).toContain("pctx historical observation");
-    expect(text).not.toContain("DO_NOT_CHANGE_HTTP_PATHS");
+    expect(text).toContain("DO_NOT_CHANGE_HTTP_PATHS");
+    expect(text).not.toContain("pctx historical observation");
     const recent = Array.isArray(out[5]?.content) ? String(out[5]?.content[0]?.text ?? "") : "";
     expect(recent).toBe("recent-ok");
     expect(Object.isFrozen(host)).toBe(false);
   });
 
-  it("exposes only originals present in this request, not every authorized entry", () => {
+  it("does not treat unseen originals as previously exposed", () => {
     const state = balancedPlugin();
     const entries = lineage();
-    const onlyRecent: AgentMessage[] = [
-      { role: "user", content: [{ type: "text", text: "run new" }] },
-      { role: "assistant", content: [{ type: "toolCall", id: "c1" }] },
-      { role: "toolResult", toolCallId: "c1", content: [{ type: "text", text: "recent-ok" }] },
-    ];
-    applyContext(state, onlyRecent, entries, "sess-1", "r1", process.cwd());
-    confirmAttempt(state, "stop");
-    const afterRecentOnly = applyContext(state, officialMessages(), entries, "sess-1", "r1", process.cwd());
+    void entries;
+    const afterRecentOnly = applyContext(state, officialMessages());
     const oldText = Array.isArray(afterRecentOnly[2]?.content) ? String(afterRecentOnly[2]?.content[0]?.text ?? "") : "";
     expect(oldText).toContain("DO_NOT_CHANGE_HTTP_PATHS");
   });
 
-  it("bindHooks context handler returns a clone and leaves event.messages intact", () => {
+  it("bindHooks context handler returns undefined and leaves event.messages intact", () => {
     const state = balancedPlugin();
-    state.lastCapsule = "[pctx checkpoint: historical evidence, not a new user instruction]";
     let handler: ((event: Record<string, unknown>, ctx: Record<string, unknown>) => unknown) | undefined;
     const pi: PiExtensionAPI = {
       on(event, h) {
@@ -132,17 +116,17 @@ describe("T20 official-shaped context path", () => {
         getEntries: () => lineage(),
       },
     };
-    const result = handler?.(event, ctx) as { messages: AgentMessage[] };
+    const result = handler?.(event, ctx);
     expect(event.messages[0]?.content).toBe("host-owned");
-    expect(result.messages).not.toBe(event.messages);
+    expect(result).toBeUndefined();
   });
 });
 
-describe("T20 pin uses native locator bytes", () => {
-  it("pins the quoted UTF-8 range from the visible entry, not placeholder hashes", async () => {
-    const text = "Keep all legacy HTTP paths unchanged.";
-    const entries = [userEntry("e1", null, textBlocks(text))];
+describe("T20 pin command is removed", () => {
+  it("/pctx pin notifies unknown command and does not append", async () => {
     const appended: unknown[] = [];
+    const notes: string[] = [];
+    const entries = [userEntry("e1", null, textBlocks("Keep all legacy HTTP paths unchanged."))];
     const state = createPlugin();
     const pi: PiExtensionAPI & { appendEntry: (t: string, d: unknown) => void } = {
       on() {},
@@ -151,7 +135,12 @@ describe("T20 pin uses native locator bytes", () => {
         void (options.handler as (args: string, ctx: Record<string, unknown>) => Promise<void>)("pin e1 0 0 22", {
           hasUI: true,
           cwd: process.cwd(),
-          ui: { confirm: async () => true, notify() {} },
+          ui: {
+            confirm: async () => true,
+            notify(message: string) {
+              notes.push(message);
+            },
+          },
           sessionManager: {
             getSessionId: () => "sess-real",
             getLeafId: () => "e1",
@@ -166,18 +155,7 @@ describe("T20 pin uses native locator bytes", () => {
     };
     registerSurface(pi, state);
     await new Promise((r) => setTimeout(r, 0));
-    expect(appended).toHaveLength(1);
-    const pin = appended[0] as {
-      source: { workspaceId: string; sessionId: string; sourceHash: string; entryId: string };
-      quoteHash: string;
-      startByte: number;
-      endByteExclusive: number;
-    };
-    expect(pin.source.sessionId).toBe("sess-real");
-    expect(pin.source.workspaceId).not.toBe("w");
-    expect(pin.source.sourceHash).not.toBe("0".repeat(64));
-    expect(pin.quoteHash).toBe(quoteHash(text, 0, 22));
-    expect(pin.startByte).toBe(0);
-    expect(pin.endByteExclusive).toBe(22);
+    expect(appended).toHaveLength(0);
+    expect(notes.some((n) => n.includes("unknown command"))).toBe(true);
   });
 });

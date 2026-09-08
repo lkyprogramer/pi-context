@@ -16,8 +16,6 @@ describe("T14 render", () => {
       messages,
       plan: {
         epochId: "e",
-        snapshot: { generation: 1, sessionId: "s", leafId: null, sourceRevision: "a".repeat(64), modelIdentity: "m", configHash: "b".repeat(64) },
-        sourceBoundary: null,
         replacements: [],
         firstChangedMessageIndex: null,
         planHash: "p",

@@ -11,17 +11,12 @@ import type {
 import {
   applyConfigFailure,
   applyLoadedConfig,
-  applyContext,
   closeSessionIndex,
-  confirmAttempt,
   createPlugin,
   historyTool,
   indexBranch,
-  noteCompactFailed,
-  noteFence,
   noteNativeCompact,
   openSessionIndex,
-  restoreStagingFromEntries,
   setProfile,
   type PluginState,
 } from "../plugin.js";
@@ -93,44 +88,20 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     openSessionIndex(state);
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
     indexBranch(state, entries, cwd, sessionId, leafId);
-    restoreStagingFromEntries(state, entries);
   });
-  pi.on("context", (event, ctx) => {
-    const messages = event.messages ?? [];
-    try {
-      const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
-      const next = applyContext(state, messages as never, entries, sessionId, leafId, cwd);
-      return { messages: next as unknown as typeof messages };
-    } catch {
-      return { messages };
-    }
-  });
+  pi.on("context", () => undefined);
   pi.on("tool_result", (_e, ctx) => {
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
   pi.on("before_provider_request", () => undefined);
-  pi.on("session_before_compact", () => undefined);
   pi.on("message_end", (event: MessageEndEvent) => {
     const msg = event.message as { stopReason?: string; errorMessage?: string; usage?: AssistantUsageLike };
     state.lastAssistant = recordAssistant(msg);
-    confirmAttempt(state, msg.stopReason, msg.errorMessage);
   });
-  pi.on("session_compact", (event: SessionCompactEvent, ctx) => {
+  pi.on("session_compact", (event: SessionCompactEvent) => {
     if (event.willRetry) return;
-    const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
-    const entry = event.compactionEntry;
-    noteNativeCompact(state, String(entry?.summary ?? ""), String(entry?.id ?? "compact"), entries, sessionId, leafId, cwd);
-    state.nativeCompactions += 1;
-  });
-  pi.on("session_compact_failed", () => {
-    noteCompactFailed(state);
-  });
-  pi.on("session_tree", () => {
-    noteFence(state);
-  });
-  pi.on("model_select", () => {
-    noteFence(state);
+    noteNativeCompact(state);
   });
   pi.on("session_shutdown", () => {
     closeSessionIndex(state);
