@@ -1,7 +1,11 @@
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { PluginState } from "./plugin.js";
-import { historyTool, setProfile } from "./plugin.js";
 import type { HistoryRequest, StatusView } from "./contracts.js";
+import type { PluginState } from "./plugin.js";
+import { historyTool, indexBranch, setProfile } from "./plugin.js";
+import { statusView, writeStatusFile } from "./telemetry/metrics.js";
+import { collectBatches } from "./projection/batches.js";
+import { exposedEntryIds } from "./projection/exposed.js";
+import { planFold } from "./projection/planner.js";
 import { decodeRef } from "./history/refs.js";
 import { formatHistoryResult } from "./history/read.js";
 import { entriesFromCtx, type PiExtensionAPI } from "./pi/adapter.js";
@@ -21,29 +25,7 @@ const HISTORY_PARAMS = {
 };
 
 export function buildStatusView(state: PluginState, ctx: ExtensionContext): StatusView {
-  const usage = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
-  const index = state.index.status();
-  const warnings = [...state.warnings, ...index.warnings];
-  return {
-    resolvedProfile: state.profile,
-    configHash: state.configHash,
-    configSource: state.configSource,
-    warnings,
-    hostVersion: state.hostVersion,
-    contextWindow: usage?.contextWindow ?? ctx.model?.contextWindow ?? null,
-    contextPercent: usage?.percent ?? null,
-    activePlan: null,
-    folds: 0,
-    nativeCompactions: state.nativeCompactions,
-    historyReads: state.historyReads,
-    historySearches: state.historySearches,
-    lastRequests: [],
-    indexMode: index.mode,
-    dbPath: index.dbPath,
-    indexRows: index.rows,
-    indexBytes: index.bytes,
-    lastIndexedLeaf: index.lastIndexedLeaf,
-  };
+  return statusView(state, ctx);
 }
 
 export function formatStatus(view: StatusView): string {
@@ -57,7 +39,7 @@ export function formatStatus(view: StatusView): string {
     `hostVersion=${view.hostVersion}`,
     `contextWindow=${view.contextWindow ?? "null"}`,
     `contextPercent=${view.contextPercent ?? "null"}`,
-    `activePlan=null`,
+    `activePlan=${view.activePlan ? `${view.activePlan.planId}:${view.activePlan.replacements}` : "null"}`,
     `folds=${view.folds}`,
     `nativeCompactions=${view.nativeCompactions}`,
     `historyReads=${view.historyReads}`,
@@ -103,7 +85,13 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
       const [cmd, ...rest] = args.trim().split(/\s+/);
       const notify = (m: string) => ctx.ui.notify(m, "info");
       if (!cmd || cmd === "status") {
-        notify(formatStatus(buildStatusView(state, ctx)));
+        const view = buildStatusView(state, ctx);
+        if (rest[0] === "--json") {
+          writeStatusFile(state, ctx);
+          notify(JSON.stringify(view));
+        } else {
+          notify(formatStatus(view));
+        }
         return;
       }
       if (cmd === "doctor") {
@@ -126,6 +114,38 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
       }
       if (cmd === "search" || cmd === "read") {
         notify("use the pctx_history tool for search and read");
+        return;
+      }
+      if (cmd === "fold") {
+        const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+        indexBranch(state, entries, cwd, sessionId, leafId);
+        if (!state.scope) {
+          notify("fold requires an active session scope");
+          return;
+        }
+        const usageRaw = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
+        const usage = {
+          tokens: usageRaw?.tokens ?? null,
+          contextWindow: usageRaw?.contextWindow ?? ctx.model?.contextWindow ?? 0,
+          percent: usageRaw?.percent ?? null,
+        };
+        const next = planFold({
+          scope: state.scope,
+          entries,
+          batches: collectBatches(entries),
+          exposed: exposedEntryIds(entries),
+          usage,
+          previous: state.plan,
+          modelId: ctx.model?.id ?? state.modelId,
+          cfg: state.config,
+          configHash: state.configHash,
+        });
+        if (!next || next === state.plan) {
+          notify("fold not applied");
+          return;
+        }
+        state.plan = next;
+        notify(`fold plan ${next.planId} replacements=${next.replacements.size}`);
         return;
       }
       notify("unknown command; pctx commands: status|profile|search|read");

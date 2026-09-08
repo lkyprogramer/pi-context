@@ -1,18 +1,25 @@
 import type { LoadedConfig, PctxConfig } from "./config.js";
 import { DEFAULT_CONFIG, configHashOf, parseConfig } from "./config.js";
-import type { HistoryRequest, HistoryResult, NativeEntry, Profile, Scope } from "./contracts.js";
+import type { ContextUsageLike, FoldEvent, FoldPlan, HistoryRequest, HistoryResult, NativeEntry, Profile, RequestRecord, Scope } from "./contracts.js";
 import type { AssistantRecord } from "./telemetry/metrics.js";
 import { HistoryIndex } from "./history/index.js";
 import { readHistory } from "./history/read.js";
 import { readBudgetFor } from "./projection/budget.js";
 import { searchHistory } from "./history/search.js";
 import { buildScope } from "./history/scope.js";
-import type { FrozenPlan } from "./projection/planner.js";
-import type { AgentMessage } from "./projection/render.js";
+import { collectBatches } from "./projection/batches.js";
+import { exposedEntryIds } from "./projection/exposed.js";
+import { planFold, planStillValid, shouldFold } from "./projection/planner.js";
+import { renderFold, type AgentMessage } from "./projection/render.js";
+import { estimateTokens } from "./contracts.js";
+import { latestCompactionId, mapToolResults, sessionSnapshot, type SessionReader } from "./pi/source-reader.js";
+import { recordFold } from "./telemetry/usage.js";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 export interface PluginTelemetry {
-  lastRequests: unknown[];
+  lastRequests: RequestRecord[];
   folds: number;
+  foldEvents: FoldEvent[];
 }
 
 export interface PluginState {
@@ -20,7 +27,7 @@ export interface PluginState {
   profile: Profile;
   index: HistoryIndex;
   scope: Scope | null;
-  plan: FrozenPlan | null;
+  plan: FoldPlan | null;
   telemetry: PluginTelemetry;
   configHash: string;
   configSource: string;
@@ -30,6 +37,14 @@ export interface PluginState {
   lastAssistant: AssistantRecord | null;
   historyReads: number;
   historySearches: number;
+  sessionId: string;
+  agentDir: string | null;
+  modelId: string;
+  lastApplied: number;
+  lastContextPercent: number | null;
+  ttftStartedAt: number | null;
+  ttftMs: number | null;
+  sawMessageUpdate: boolean;
 }
 
 export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
@@ -43,7 +58,7 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     }),
     scope: null,
     plan: null,
-    telemetry: { lastRequests: [], folds: 0 },
+    telemetry: { lastRequests: [], folds: 0, foldEvents: [] },
     configHash: configHashOf(config),
     configSource: "default",
     warnings: [],
@@ -52,6 +67,14 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     lastAssistant: null,
     historyReads: 0,
     historySearches: 0,
+    sessionId: "unknown",
+    agentDir: null,
+    modelId: "unknown",
+    lastApplied: 0,
+    lastContextPercent: null,
+    ttftStartedAt: null,
+    ttftMs: null,
+    sawMessageUpdate: false,
   };
 }
 
@@ -167,8 +190,111 @@ export async function historyTool(
   });
 }
 
-export function applyContext(_state: PluginState, messages: AgentMessage[]): AgentMessage[] {
-  return messages;
+export function applyContext(
+  state: PluginState,
+  messages: AgentMessage[],
+  ctx: ExtensionContext,
+): { messages: AgentMessage[] } | undefined {
+  if (state.profile !== "balanced") return undefined;
+  const usageRaw = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
+  const usage: ContextUsageLike | null = usageRaw || ctx.model?.contextWindow
+    ? {
+        tokens: usageRaw?.tokens ?? null,
+        contextWindow: usageRaw?.contextWindow ?? ctx.model?.contextWindow ?? 0,
+        percent: usageRaw?.percent ?? null,
+      }
+    : null;
+  const snap = sessionSnapshot({
+    cwd: ctx.cwd,
+    sessionManager: ctx.sessionManager as unknown as SessionReader | undefined,
+  });
+  state.sessionId = snap.sessionId;
+  const agentDir = (ctx as { agentDir?: string }).agentDir;
+  if (typeof agentDir === "string") state.agentDir = agentDir;
+  const modelId = ctx.model?.id ?? state.modelId;
+  state.modelId = modelId;
+  indexBranch(state, snap.entries, snap.cwd, snap.sessionId, snap.leafId);
+  const boundary = latestCompactionId(snap.entries);
+  if (state.plan && !planStillValid(state.plan, {
+    sessionId: snap.sessionId,
+    compactionBoundary: boundary,
+    modelId,
+    configHash: state.configHash,
+  })) {
+    state.plan = null;
+  }
+  if (state.scope && shouldFold(usage, state.plan, state.config.fold) && usage) {
+    const previous = state.plan;
+    const next = planFold({
+      scope: state.scope,
+      entries: snap.entries,
+      batches: collectBatches(snap.entries),
+      exposed: exposedEntryIds(snap.entries),
+      usage,
+      previous,
+      modelId,
+      cfg: state.config,
+      configHash: state.configHash,
+    });
+    if (next && next !== previous) {
+      const added = next.replacements.size - (previous?.replacements.size ?? 0);
+      if (added > 0) {
+        const mappingForIndex = mapToolResults(messages, snap.entries);
+        const first = firstChangedFromPlan(next, mappingForIndex);
+        recordFold(state, {
+          at: new Date().toISOString(),
+          sessionId: snap.sessionId,
+          planId: next.planId,
+          reason: "threshold",
+          added,
+          savedTokensEstimate: addedSaved(next, previous),
+          firstChangedIndex: first ?? 0,
+          invalidatedTokensEstimate: invalidateEstimate(messages, first),
+          percentBefore: usage.percent ?? 0,
+        });
+      }
+      state.plan = next;
+    }
+  }
+  state.lastContextPercent = usage?.percent ?? null;
+  if (!state.plan) {
+    state.lastApplied = 0;
+    return undefined;
+  }
+  const mapping = mapToolResults(messages, snap.entries);
+  const out = renderFold(messages, state.plan, mapping);
+  state.lastApplied = out.applied;
+  if (out.applied === 0) return undefined;
+  return { messages: out.messages };
+}
+
+function addedSaved(next: FoldPlan, previous: FoldPlan | null): number {
+  const prevKeys = new Set(previous?.replacements.keys() ?? []);
+  let saved = 0;
+  for (const [key, item] of next.replacements) {
+    if (!prevKeys.has(key)) saved += item.savedTokensEstimate;
+  }
+  return saved;
+}
+
+function firstChangedFromPlan(plan: FoldPlan, mapping: ReadonlyMap<number, { entryId: string }>): number | null {
+  let first: number | null = null;
+  for (const [idx, mapped] of mapping) {
+    for (const key of plan.replacements.keys()) {
+      if (!key.startsWith(`${mapped.entryId}:`)) continue;
+      first = first == null ? idx : Math.min(first, idx);
+    }
+  }
+  return first;
+}
+
+function invalidateEstimate(messages: AgentMessage[], first: number | null): number {
+  if (first == null) return 0;
+  let tokens = 0;
+  for (let i = first; i < messages.length; i++) {
+    tokens += estimateTokens(JSON.stringify(messages[i] ?? {}));
+  }
+  return tokens;
 }
 
 export function noteNativeCompact(state: PluginState): void {

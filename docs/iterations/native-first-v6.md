@@ -40,3 +40,11 @@ RED: `pnpm exec vitest run test/unit/no-checkpoint.test.ts --config vitest.confi
 GREEN: `pnpm exec vitest run test/unit/no-checkpoint.test.ts test/host/stock-loader.test.ts --config vitest.config.ts` exit 0 — 3 tests; `pnpm typecheck` exit 0; `pnpm exec vitest run --config vitest.config.ts` exit 0 — 85 tests
 Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not on PATH) / not-run
 Remaining: `planEpoch` returns null until C03; FrozenPlan is a placeholder not FoldPlan; PluginState keeps A01/B02 counters beyond the C01 minimal set; `src/config.ts` still names checkpoint/semantic/projection only as rejected legacy keys; host tests resolve official Pi from workspace node_modules when global npm root has no package; `/pctx pin` is unknown command
+
+## Task: C02
+Commit: 074cb2263e3d077099def7955d9054af79ef2b28
+Changed: src/projection/exposed.ts, src/projection/batches.ts, src/pi/source-reader.ts, src/contracts.ts, test/unit/derived-exposure.test.ts, test/unit/batches.test.ts
+RED: `pnpm exec vitest run test/unit/derived-exposure.test.ts --config vitest.config.ts` failed to load `src/projection/exposed.js`
+GREEN: `pnpm exec vitest run test/unit/derived-exposure.test.ts test/unit/batches.test.ts --config vitest.config.ts` exit 0 — 8 tests; `pnpm typecheck` exit 0; full `pnpm exec vitest run --config vitest.config.ts` exit 0 — 92 tests
+Host/model: pi 0.85.1 from `node_modules/@earendil-works/pi-coding-agent` (not on PATH) / not-run
+Remaining: fold still returns null until C03; protectSet keeps result entry ids only; K=0 protects none of the last complete batches

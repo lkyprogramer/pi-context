@@ -9,6 +9,7 @@ import type {
   SessionCompactEvent,
 } from "@earendil-works/pi-coding-agent";
 import {
+  applyContext,
   applyConfigFailure,
   applyLoadedConfig,
   closeSessionIndex,
@@ -23,8 +24,10 @@ import {
 import { loadConfig } from "../config.js";
 import { DEFAULT_CONFIG } from "../config.js";
 import type { NativeEntry } from "../contracts.js";
-import { recordAssistant } from "../telemetry/metrics.js";
-import { readVisibleSnapshot, type SessionReader } from "./source-reader.js";
+import { recordAssistant, writeStatusFile } from "../telemetry/metrics.js";
+import { recordRequest } from "../telemetry/usage.js";
+import type { AgentMessage } from "../projection/render.js";
+import { sessionSnapshot, type SessionReader } from "./source-reader.js";
 
 export type PiExtensionAPI = ExtensionAPI;
 
@@ -67,13 +70,10 @@ export function entriesFromCtx(ctx: ExtensionContext): {
   leafId: string | null;
   cwd: string;
 } {
-  const sm = ctx.sessionManager as unknown as SessionReader | undefined;
-  const cwd = ctx.cwd || process.cwd();
-  if (!sm) return { entries: [], sessionId: "unknown", leafId: null, cwd };
-  const sessionId = sm.getSessionId();
-  const leafId = sm.getLeafId();
-  const entries = typeof sm.getEntries === "function" ? [...(sm.getEntries() as NativeEntry[])] : readVisibleSnapshot(sm);
-  return { entries, sessionId, leafId, cwd };
+  return sessionSnapshot({
+    cwd: ctx.cwd,
+    sessionManager: ctx.sessionManager as unknown as SessionReader | undefined,
+  });
 }
 
 export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(DEFAULT_CONFIG)): PluginState {
@@ -85,33 +85,85 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
       ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
     }
     state.hostVersion = readHostVersion();
+    state.plan = null;
+    state.modelId = ctx.model?.id ?? "unknown";
+    const agentDir = (ctx as { agentDir?: string }).agentDir;
+    if (typeof agentDir === "string") state.agentDir = agentDir;
     openSessionIndex(state);
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+    state.sessionId = sessionId;
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
-  pi.on("context", () => undefined);
+  pi.on("context", ((event: { messages?: AgentMessage[] }, ctx: ExtensionContext) => {
+    const messages = event.messages;
+    if (!Array.isArray(messages)) return undefined;
+    return applyContext(state, messages, ctx);
+  }) as never);
   pi.on("tool_result", (_e, ctx) => {
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
   pi.on("before_provider_request", () => undefined);
-  pi.on("message_end", (event: MessageEndEvent) => {
+  pi.on("message_start", () => {
+    state.ttftStartedAt = Date.now();
+    state.ttftMs = null;
+    state.sawMessageUpdate = false;
+  });
+  pi.on("message_update", () => {
+    if (state.sawMessageUpdate || state.ttftStartedAt == null) return;
+    state.ttftMs = Date.now() - state.ttftStartedAt;
+    state.sawMessageUpdate = true;
+  });
+  pi.on("message_end", (event: MessageEndEvent, ctx) => {
     const msg = event.message as { stopReason?: string; errorMessage?: string; usage?: AssistantUsageLike };
     state.lastAssistant = recordAssistant(msg);
+    const { sessionId } = entriesFromCtx(ctx);
+    recordRequest(state, {
+      at: new Date().toISOString(),
+      sessionId,
+      profile: state.profile,
+      planId: state.plan?.planId ?? null,
+      replacementsApplied: state.lastApplied,
+      contextPercentBefore: state.lastContextPercent,
+      usage: {
+        input: numOrNull(msg.usage?.input),
+        output: numOrNull(msg.usage?.output),
+        cacheRead: numOrNull(msg.usage?.cacheRead),
+        cacheWrite: numOrNull(msg.usage?.cacheWrite),
+        totalTokens: numOrNull(msg.usage?.totalTokens),
+      },
+      stopReason: typeof msg.stopReason === "string" ? msg.stopReason : null,
+      ttftMs: state.sawMessageUpdate ? state.ttftMs : null,
+    });
   });
   pi.on("session_compact", (event: SessionCompactEvent) => {
     if (event.willRetry) return;
     noteNativeCompact(state);
   });
-  pi.on("session_shutdown", () => {
+  pi.on("session_tree", () => {
+    state.plan = null;
+  });
+  pi.on("model_select", (event: { model?: { id?: string } }) => {
+    state.plan = null;
+    if (event?.model?.id) state.modelId = event.model.id;
+  });
+  pi.on("session_shutdown", (_e, ctx) => {
+    writeStatusFile(state, ctx);
     closeSessionIndex(state);
     state.plan = null;
+  });
+  pi.on("agent_end" as never, (_e: unknown, ctx: ExtensionContext) => {
+    writeStatusFile(state, ctx);
   });
   pi.on("agent_settled", (_e, ctx) => {
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
   return state;
+}
+
+function numOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 type AssistantUsageLike = {

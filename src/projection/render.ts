@@ -1,68 +1,35 @@
-import type { ContentBlock } from "../contracts.js";
-import type { FrozenPlan } from "./planner.js";
-import { decideBudget, estimateText } from "./budget.js";
+import { sha256Hex, utf8Bytes, type FoldPlan } from "../contracts.js";
 
 export interface AgentMessage {
   role: string;
-  content: ContentBlock[] | string;
+  content: unknown;
+  toolCallId?: unknown;
   [key: string]: unknown;
 }
 
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
-}
-
-function isProtected(block: ContentBlock): boolean {
-  return block.type === "image" || (block.type !== "text" && block.type !== "toolResult");
-}
-
-export function cloneMessages<T>(value: T): T {
-  return clone(value);
-}
-
-export function renderMessages(input: {
-  messages: AgentMessage[];
-  plan: FrozenPlan | null;
-  profile: "off" | "observe" | "balanced";
-  optionalBudget: number;
-  mappedEntries?: Map<number, { id: string }>;
-}): { messages: AgentMessage[]; bypassed: boolean } {
-  const original = input.messages;
-  if (input.profile === "off" || input.profile === "observe" || !input.plan || input.plan.replacements.length === 0) {
-    return { messages: original, bypassed: false };
-  }
-  const byId = new Map(input.plan.replacements.map((r) => [r.entryId, r]));
-  let optional = 0;
-  const next = clone(original);
-  next.forEach((msg, index) => {
-    const entryId = input.mappedEntries?.get(index)?.id;
-    const replacement = entryId ? byId.get(entryId) : undefined;
-    if (!replacement) return;
-    if (Array.isArray(msg.content)) {
-      if (msg.content.some((block) => block.type === "image") || msg.content.some(isProtected) && msg.content.some((block) => block.type === "image")) {
-        return;
-      }
-      for (const block of msg.content) {
-        if (block.type !== "text" && block.type !== "toolResult") continue;
-        if (typeof block.text !== "string") continue;
-        optional += estimateText(replacement.replacementText).value;
-        block.text = replacement.replacementText;
-      }
-      return;
-    }
-    if (typeof msg.content === "string") {
-      optional += estimateText(replacement.replacementText).value;
-      msg.content = replacement.replacementText;
-    }
+export function renderFold(
+  messages: AgentMessage[],
+  plan: FoldPlan,
+  mapping: ReadonlyMap<number, { entryId: string }>,
+): { messages: AgentMessage[]; applied: number; firstChangedIndex: number | null } {
+  let applied = 0;
+  let firstChangedIndex: number | null = null;
+  messages.forEach((msg, idx) => {
+    if (msg.role !== "toolResult") return;
+    const id = mapping.get(idx)?.entryId;
+    if (!id || !Array.isArray(msg.content)) return;
+    msg.content.forEach((block, i) => {
+      if (!block || typeof block !== "object") return;
+      const rec = block as { type?: string; text?: string };
+      const replacement = plan.replacements.get(`${id}:${i}`);
+      if (!replacement || rec.type !== "text" || typeof rec.text !== "string") return;
+      if (sha256Hex(utf8Bytes(rec.text)) !== replacement.sourceHash) return;
+      rec.text = replacement.stub;
+      applied += 1;
+      if (firstChangedIndex == null) firstChangedIndex = idx;
+    });
   });
-  const decision = decideBudget({
-    protectedTokens: estimateText(JSON.stringify(original)).value,
-    optionalTokens: optional,
-    limit: Math.max(input.optionalBudget, estimateText(JSON.stringify(original)).value),
-    unknownImageCost: original.some((m) => Array.isArray(m.content) && m.content.some((b) => b.type === "image")),
-  });
-  if (decision.kind === "bypass") return { messages: original, bypassed: true };
-  return { messages: next, bypassed: false };
+  return { messages, applied, firstChangedIndex };
 }
 
 export function deepEqual(a: unknown, b: unknown): boolean {

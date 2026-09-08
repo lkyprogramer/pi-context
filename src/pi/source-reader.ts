@@ -8,8 +8,55 @@ export interface SessionReader {
   getEntries?(): NativeEntry[];
 }
 
+export function sessionSnapshot(ctx: { cwd?: string; sessionManager?: SessionReader }): {
+  entries: NativeEntry[];
+  sessionId: string;
+  leafId: string | null;
+  cwd: string;
+} {
+  const sm = ctx.sessionManager;
+  const cwd = ctx.cwd || process.cwd();
+  if (!sm) return { entries: [], sessionId: "unknown", leafId: null, cwd };
+  const sessionId = sm.getSessionId();
+  const leafId = sm.getLeafId();
+  const entries = typeof sm.getEntries === "function" ? [...(sm.getEntries() as NativeEntry[])] : readVisibleSnapshot(sm);
+  return { entries, sessionId, leafId, cwd };
+}
+
 export function branchEntries(sessionManager: SessionReader): NativeEntry[] {
   return readVisibleSnapshot(sessionManager);
+}
+
+export function latestCompactionId(entries: readonly NativeEntry[]): string | null {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const entry = entries[i]!;
+    if (entry.type === "compaction" || entry.customType === "compaction") return entry.id;
+  }
+  return null;
+}
+
+export function mapToolResults(
+  messages: ReadonlyArray<{ role?: string; toolCallId?: unknown; content?: unknown }>,
+  entries: readonly NativeEntry[],
+): Map<number, { entryId: string }> {
+  const index = toolResultIndex(entries);
+  const byCall = new Map<string, number[]>();
+  messages.forEach((msg, i) => {
+    if (msg.role !== "toolResult") return;
+    const callId = toolCallIdOf(msg);
+    if (!callId) return;
+    const list = byCall.get(callId) ?? [];
+    list.push(i);
+    byCall.set(callId, list);
+  });
+  const mapped = new Map<number, { entryId: string }>();
+  for (const [callId, indexes] of byCall) {
+    if (indexes.length !== 1) continue;
+    const hit = index.get(callId);
+    if (!hit || hit === "ambiguous") continue;
+    mapped.set(indexes[0]!, { entryId: hit });
+  }
+  return mapped;
 }
 
 export function toolResultIndex(entries: readonly NativeEntry[]): Map<string, string | "ambiguous"> {

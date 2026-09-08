@@ -4,33 +4,47 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG } from "../../src/config.js";
 import { collectBatches } from "../../src/projection/batches.js";
-import { decideBudget } from "../../src/projection/budget.js";
-import { planEpoch } from "../../src/projection/planner.js";
-import { renderMessages } from "../../src/projection/render.js";
+import { planFold, shouldFold } from "../../src/projection/planner.js";
+import { renderFold } from "../../src/projection/render.js";
 import { authorizeHits } from "../../src/history/scope.js";
-import { utf8Slice, utf8Bytes } from "../../src/contracts.js";
+import { utf8Slice, utf8Bytes, type FoldPlan } from "../../src/contracts.js";
 import { assistantEntry, textBlocks, toolResultEntry, userEntry } from "../../src/testing.js";
 
 const protocol = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../docs/pi-context-native-first-evolution-v5.0.0/fixtures/protocol-cases.json"), "utf8"),
 ) as { cases: Array<{ id: string; expect: Record<string, unknown>; input: Record<string, unknown> }> };
 
+function emptyPlan(): FoldPlan {
+  return {
+    planId: "p",
+    sessionId: "s",
+    compactionBoundary: null,
+    modelId: "m",
+    configHash: "h",
+    createdAt: "t",
+    usagePercentAtPlan: 65,
+    replacements: new Map(),
+    savedTokensEstimate: 0,
+  };
+}
+
 describe("T20 INV matrix", () => {
   it("INV-01 observe does not rewrite messages", () => {
     const messages = [{ role: "tool", content: [{ type: "text", text: "raw" }] }];
-    const out = renderMessages({ messages, plan: null, profile: "observe", optionalBudget: 10 });
+    const out = renderFold(messages, emptyPlan(), new Map());
     expect(out.messages).toBe(messages);
+    expect(out.applied).toBe(0);
   });
 
   it("INV-02 without a fold plan messages stay unchanged", () => {
     const messages = [{ role: "tool", content: [{ type: "text", text: "raw" }] }];
-    const out = renderMessages({ messages, plan: null, profile: "balanced", optionalBudget: 10 });
+    const out = renderFold(messages, emptyPlan(), new Map());
     expect(out.messages).toBe(messages);
   });
 
   it("INV-03 images stay in the message", () => {
     const messages = [{ role: "user", content: [{ type: "image", mimeType: "image/png", data: "xx" }, { type: "text", text: "see" }] }];
-    const out = renderMessages({ messages, plan: null, profile: "balanced", optionalBudget: 10 });
+    const out = renderFold(messages, emptyPlan(), new Map());
     expect(JSON.stringify(out.messages)).toMatch(/image/);
   });
 
@@ -56,8 +70,8 @@ describe("T20 INV matrix", () => {
     expect(hits.map((h) => h.entryId)).toEqual(["b"]);
   });
 
-  it("INV-08 unknown image cost bypasses", () => {
-    expect(decideBudget({ protectedTokens: 1, optionalTokens: 1, limit: 100, unknownImageCost: true }).kind).toBe("bypass");
+  it("INV-08 unknown usage percent does not fold", () => {
+    expect(shouldFold({ tokens: null, contextWindow: 1000, percent: null }, null, DEFAULT_CONFIG.fold)).toBe(false);
   });
 
   it("covers protocol vectors F01-F05 against shipped planner/batches", () => {
@@ -70,10 +84,16 @@ describe("T20 INV matrix", () => {
       assistantEntry("a", "u", [{ type: "toolCall", id: "c1" }]),
       toolResultEntry("r1", "a", "c1", textBlocks(String(f01.input.text))),
     ];
-    const plan = planEpoch({
+    const plan = planFold({
+      scope: { workspaceId: "w", sessionId: "s", leafId: "r1", visibleEntryIds: new Set(entries.map((e) => e.id)) },
       entries,
       batches: collectBatches(entries),
-      config: DEFAULT_CONFIG,
+      exposed: new Set(),
+      usage: { tokens: 100, contextWindow: 1000, percent: 10 },
+      previous: null,
+      modelId: "m",
+      cfg: DEFAULT_CONFIG,
+      configHash: "h",
     });
     expect(plan).toBeNull();
     const incomplete = [
@@ -81,17 +101,11 @@ describe("T20 INV matrix", () => {
       toolResultEntry("r1", "a", "c1", textBlocks("only-one")),
     ];
     expect(collectBatches(incomplete)[0]?.complete).toBe(false);
-    const stale = renderMessages({
-      messages: [{ role: "user", content: [{ type: "text", text: "keep" }] }],
-      plan: {
-        epochId: "e",
-        replacements: [{ entryId: "r1", ref: "x", originalHash: "h", replacementText: "stub", estimatedBeforeTokens: 10, estimatedAfterTokens: 1 }],
-        firstChangedMessageIndex: 0,
-        planHash: "p",
-      },
-      profile: "balanced",
-      optionalBudget: 100,
-    });
+    const stale = renderFold(
+      [{ role: "user", content: [{ type: "text", text: "keep" }] }],
+      emptyPlan(),
+      new Map([[0, { entryId: "r1" }]]),
+    );
     expect(stale.messages[0]?.content).toEqual([{ type: "text", text: "keep" }]);
   });
 });

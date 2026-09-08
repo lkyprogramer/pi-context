@@ -60,10 +60,20 @@ describe("T20 official-shaped context path", () => {
     const state = balancedPlugin();
     const messages: AgentMessage[] = [{ role: "user", content: "hello from host" }];
     const snapshot = structuredClone(messages);
-    const out = applyContext(state, messages);
+    const out = applyContext(state, messages, {
+      cwd: process.cwd(),
+      getContextUsage: () => ({ tokens: 10, contextWindow: 1000, percent: 1 }),
+      model: { id: "m", contextWindow: 1000 },
+      sessionManager: {
+        getSessionId: () => "sess-1",
+        getLeafId: () => "r1",
+        getEntry: (id: string) => lineage().find((e) => e.id === id),
+        getEntries: () => lineage(),
+      },
+    } as never);
     expect(messages).toEqual(snapshot);
-    expect(out).toEqual(messages);
-    expect(typeof out[0]?.content === "string" ? out[0].content : "").not.toContain("pctx checkpoint");
+    expect(out).toBeUndefined();
+    expect(typeof messages[0]?.content === "string" ? messages[0].content : "").not.toContain("pctx checkpoint");
   });
 
   it("maps official toolResult messages without folding observations", () => {
@@ -74,13 +84,24 @@ describe("T20 official-shaped context path", () => {
     expect(host.every((m) => !Array.isArray(m.content) || m.content.every((b) => !("entryId" in b)))).toBe(true);
     const mapped = mapOutbound(host, entries);
     expect(mapped.get(2)?.id).toBe("r0");
-    const out = applyContext(state, host);
+    const out = applyContext(state, host, {
+      cwd: process.cwd(),
+      getContextUsage: () => ({ tokens: 10, contextWindow: 1000, percent: 1 }),
+      model: { id: "m", contextWindow: 1000 },
+      sessionManager: {
+        getSessionId: () => "sess-1",
+        getLeafId: () => "r1",
+        getEntry: (id: string) => entries.find((e) => e.id === id),
+        getEntries: () => entries,
+      },
+    } as never);
     expect(host).toEqual(snapshot);
-    const toolOut = out[2];
+    expect(out).toBeUndefined();
+    const toolOut = host[2];
     const text = Array.isArray(toolOut?.content) ? String(toolOut.content[0]?.text ?? "") : "";
     expect(text).toContain("DO_NOT_CHANGE_HTTP_PATHS");
     expect(text).not.toContain("pctx historical observation");
-    const recent = Array.isArray(out[5]?.content) ? String(out[5]?.content[0]?.text ?? "") : "";
+    const recent = Array.isArray(host[5]?.content) ? String(host[5]?.content[0]?.text ?? "") : "";
     expect(recent).toBe("recent-ok");
     expect(Object.isFrozen(host)).toBe(false);
   });
@@ -89,8 +110,19 @@ describe("T20 official-shaped context path", () => {
     const state = balancedPlugin();
     const entries = lineage();
     void entries;
-    const afterRecentOnly = applyContext(state, officialMessages());
-    const oldText = Array.isArray(afterRecentOnly[2]?.content) ? String(afterRecentOnly[2]?.content[0]?.text ?? "") : "";
+    const afterRecentOnly = applyContext(state, officialMessages(), {
+      cwd: process.cwd(),
+      getContextUsage: () => ({ tokens: 10, contextWindow: 1000, percent: 1 }),
+      model: { id: "m", contextWindow: 1000 },
+      sessionManager: {
+        getSessionId: () => "sess-1",
+        getLeafId: () => "r1",
+        getEntry: (id: string) => entries.find((e) => e.id === id),
+        getEntries: () => entries,
+      },
+    } as never);
+    expect(afterRecentOnly).toBeUndefined();
+    const oldText = Array.isArray(officialMessages()[2]?.content) ? String(officialMessages()[2]?.content[0]?.text ?? "") : "";
     expect(oldText).toContain("DO_NOT_CHANGE_HTTP_PATHS");
   });
 

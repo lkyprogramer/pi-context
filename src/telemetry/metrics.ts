@@ -1,3 +1,10 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { StatusView } from "../contracts.js";
+import type { PluginState } from "../plugin.js";
+
 export interface RequestMetrics {
   runId: string;
   epoch: number;
@@ -71,3 +78,43 @@ export function recordAssistant(message: {
       : null,
   };
 }
+
+export function statusView(state: PluginState, ctx: ExtensionContext): StatusView {
+  const usage = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
+  const index = state.index.status();
+  const warnings = [...state.warnings, ...index.warnings];
+  return {
+    resolvedProfile: state.profile,
+    configHash: state.configHash,
+    configSource: state.configSource,
+    warnings,
+    hostVersion: state.hostVersion,
+    contextWindow: usage?.contextWindow ?? ctx.model?.contextWindow ?? null,
+    contextPercent: usage?.percent ?? null,
+    activePlan: state.plan
+      ? {
+          planId: state.plan.planId,
+          replacements: state.plan.replacements.size,
+          savedTokensEstimate: state.plan.savedTokensEstimate,
+        }
+      : null,
+    folds: state.telemetry.folds,
+    nativeCompactions: state.nativeCompactions,
+    historyReads: state.historyReads,
+    historySearches: state.historySearches,
+    lastRequests: state.telemetry.lastRequests.slice(-5),
+    indexMode: index.mode,
+    dbPath: index.dbPath,
+    indexRows: index.rows,
+    indexBytes: index.bytes,
+    lastIndexedLeaf: index.lastIndexedLeaf,
+  };
+}
+
+export function writeStatusFile(state: PluginState, ctx?: { agentDir?: string; getContextUsage?: ExtensionContext["getContextUsage"]; model?: ExtensionContext["model"] }): void {
+  const dir = state.agentDir ?? (typeof ctx?.agentDir === "string" ? ctx.agentDir : join(homedir(), ".pi", "agent"));
+  mkdirSync(dir, { recursive: true });
+  const view = statusView(state, (ctx ?? {}) as ExtensionContext);
+  writeFileSync(join(dir, "pctx-status.json"), JSON.stringify(view));
+}
+

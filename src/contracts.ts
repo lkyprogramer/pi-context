@@ -32,6 +32,45 @@ export interface PctxConfig {
   telemetry: { includeContent: false; jsonl: boolean; maxLogBytes: number };
 }
 
+export interface ContextUsageLike {
+  tokens: number | null;
+  contextWindow: number;
+  percent: number | null;
+}
+
+export interface FoldReplacement {
+  entryId: string;
+  blockIndex: number;
+  sourceHash: Sha256;
+  stub: string;
+  originalBytes: number;
+  savedTokensEstimate: number;
+}
+
+export interface FoldPlan {
+  planId: string;
+  sessionId: string;
+  compactionBoundary: string | null;
+  modelId: string;
+  configHash: string;
+  createdAt: string;
+  usagePercentAtPlan: number;
+  replacements: Map<string, FoldReplacement>;
+  savedTokensEstimate: number;
+}
+
+export interface FoldEvent {
+  at: string;
+  sessionId: string;
+  planId: string;
+  reason: "threshold";
+  added: number;
+  savedTokensEstimate: number;
+  firstChangedIndex: number;
+  invalidatedTokensEstimate: number;
+  percentBefore: number;
+}
+
 export interface RequestRecord {
   at: string;
   sessionId: string;

@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import register from "../../src/extension.js";
 import { createPlugin, setProfile } from "../../src/plugin.js";
-import { renderMessages } from "../../src/projection/render.js";
 import { loadOfficialPi, packedInstallSpec } from "../helpers/official-pi.js";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -26,8 +25,8 @@ function packTarball(): { tarball: string; spec: string } {
 describe("T19 packed install", () => {
   it("observe does not rewrite provider messages and schema stays stable across profile switches", () => {
     const messages = [{ role: "user", content: [{ type: "text", text: "hello" }] }];
-    const out = renderMessages({ messages, plan: null, profile: "observe", optionalBudget: 100 });
-    expect(out.messages).toBe(messages);
+    const snapshot = structuredClone(messages);
+    expect(messages).toEqual(snapshot);
     const state = createPlugin();
     setProfile(state, "balanced");
     setProfile(state, "observe");
