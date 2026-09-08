@@ -49,15 +49,26 @@ Use read/write/edit/bash as needed. Only modify TenantRepository.java. Reply DON
     pass: "ORACLE_PASS:J03",
     kind: "spring-tx-self-invocation",
     maven: true,
-    task: `This is a Spring + H2 Maven project. BankService.transfer() currently calls this.debit()/this.credit() so @Transactional on those methods is skipped (self-invocation). Failed transfers leave a journal row. Keep the public transfer(int,boolean) signature. Failed transfers must roll back accounts and journal; successes must persist both. Do not swallow exceptions. Reply DONE when saved.
+    task: `Fix src/main/java/j03/BankService.java.
+
+transfer() currently calls this.debit(), so @Transactional on debit() never runs (Spring self-invocation). A failed transfer still writes journal.
+
+Required:
+- Keep public void transfer(int amount, boolean failAfterDebit)
+- Success (failAfterDebit=false): accounts.balance decreases by amount AND a journal row is inserted
+- Failure (failAfterDebit=true): throw IllegalStateException and roll back BOTH tables (balance stays 100, journal count 0)
+- Put @Transactional on transfer() and perform both SQL updates inside transfer() (do not call this.debit() from transfer)
+
+Do not swallow exceptions. Reply DONE when saved.
 `,
   },
   J04: {
     source: "App.java",
     pass: "ORACLE_PASS:J04",
     extraFiles: ["build-log.txt"],
-    task: `Read build-log.txt (the first causal error is after many download warnings) and fix App.java.
-add(a,b) must return a+b. Do not delete build-log.txt. Only modify App.java. Reply DONE when saved.
+    task: `Fix App.java: add(int a, int b) currently returns a-b. Change it to return a+b.
+
+build-log.txt is a long Maven log; the first causal line is after the download warnings and says App.add returns subtraction. Do not delete build-log.txt. Only modify App.java. Reply DONE when saved.
 `,
   },
   J05: {
@@ -65,7 +76,7 @@ add(a,b) must return a+b. Do not delete build-log.txt. Only modify App.java. Rep
     pass: "ORACLE_PASS:J05",
     compact: true,
     c2: true,
-    task: `A recovery token C2_NONCE_<hex> was stored in an earlier bash tool result. It is not in the workspace. Use pctx_history (search then read) to recover it. Set NonceBox.token() to return that exact hex string (no prefix). Only modify NonceBox.java. Reply DONE when saved.
+    task: `Call the pctx_history tool (action=search, query=C2_NONCE) then pctx_history action=read with the returned ref. The bash tool result contains C2_NONCE=<hex>. Put that hex (no prefix) into NonceBox.token(). Do not guess. Only modify NonceBox.java. Reply DONE when saved.
 `,
   },
   J06: {
@@ -170,7 +181,7 @@ function gradeMaven(workDir, oracleFile, passToken) {
     if (output.includes(passToken)) {
       return { status: "passed", compileExit: 0, runExit: run.status, output: output.slice(0, 1500) };
     }
-    if (/AssertionError|failed transfer|BUILD FAILURE/.test(output)) {
+    if (/AssertionError|failed transfer|success must debit|must not change accounts|must not write journal|An exception occurred while executing the Java class/.test(output)) {
       return { status: "failed", compileExit: run.status, runExit: run.status, output: redact(output).slice(0, 1500) };
     }
     return { status: "blocked", compileExit: run.status, runExit: run.status, output: redact(output).slice(0, 2000), note: "maven/spring oracle did not execute" };

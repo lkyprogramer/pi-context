@@ -78,13 +78,17 @@ try {
       input: ["text"],
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
       contextWindow: 32_000,
-      maxTokens: 2048,
+      maxTokens: 4096,
     }],
   });
   const resolved = runtime.getModel(provider, modelId);
   if (!resolved) throw new Error("model not resolved");
   const manager = pi.SessionManager.create("/work", join(home, "sessions"));
-  const { session } = await pi.createAgentSession({
+  const nonce = process.env.G4_SEED_NONCE;
+  if (nonce) {
+    settings.applyOverrides?.({ compaction: { enabled: true, keepRecentTokens: 200, reserveTokens: 4096 } });
+  }
+  const sessionOpts = {
     cwd: "/work",
     agentDir,
     settingsManager: settings,
@@ -92,13 +96,14 @@ try {
     sessionManager: manager,
     modelRuntime: runtime,
     model: resolved,
-  });
+  };
+  if (nonce) sessionOpts.noTools = "builtin";
+  const { session } = await pi.createAgentSession(sessionOpts);
   result.tools = session.getActiveToolNames?.() ?? [];
-  if (process.env.G4_SEED_NONCE && typeof session.setActiveToolsByName === "function") {
-    session.setActiveToolsByName(["pctx_history", "read", "write", "edit"]);
+  if (nonce && typeof session.setActiveToolsByName === "function") {
+    session.setActiveToolsByName(["pctx_history", "write", "edit"]);
     result.tools = session.getActiveToolNames?.() ?? result.tools;
   }
-  const nonce = process.env.G4_SEED_NONCE;
   if (nonce && typeof session.sessionManager.appendMessage === "function") {
     const now = Date.now();
     const filler = `${"noise-line\n".repeat(160)}C2_NONCE=${nonce}\n${"noise-line\n".repeat(160)}`;

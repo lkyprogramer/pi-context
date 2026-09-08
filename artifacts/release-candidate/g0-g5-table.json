@@ -1,7 +1,7 @@
 {
   "package": "pi-context@5.0.0-dev.0",
   "private": true,
-  "commit": "5ea7b76374db16ad6f8425b3fdd4f90842f7306f",
+  "commit": "01d52bf59d06a9abb27266ea89c3d06243d312c7",
   "node": "v22.19.0",
   "piCli": "0.85.1",
   "designPackSource": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
@@ -11,7 +11,7 @@
   "tarballSha256": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
   "installSpec": "npm:pi-context@file:<abs-tarball>",
   "verifiedInstallCommand": "pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz",
-  "recommendation": "observe: closed-loop cases 5 < 8 or planned 8",
+  "recommendation": "observe: closed-loop cases 2 < 8 or planned 8",
   "gates": [
     {
       "id": "G0",
@@ -20,7 +20,7 @@
       "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts",
       "exitCode": 0,
       "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
-      "note": "official Pi 0.85.1 extracts dist/extension.js; npm gitHead d981de12 != design 9767ba2"
+      "note": "npm gitHead d981de12 != design 9767ba2"
     },
     {
       "id": "G1",
@@ -40,9 +40,9 @@
     },
     {
       "id": "G3",
-      "name": "C2 real model",
+      "name": "C2",
       "status": "passed",
-      "command": "PCR_LIVE=1 node eval/live-c2.mjs artifacts/v5-tasks/T26/g3-c2.json",
+      "command": "PCR_LIVE=1 node eval/live-c2.mjs",
       "exitCode": 0,
       "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
       "note": "model called pctx_history and returned the nonce after native compact",
@@ -56,7 +56,7 @@
       "exitCode": 0,
       "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
       "n": 8,
-      "note": "unspliced 8x2 on this tarball; bothPass=5; J03 B0 oracle blocked (maven assertion); J04 both fail; J05 C2 not in smoke (see G3 live-c2)"
+      "note": "unspliced 8x2 after J03/J04/J05 task+noTools fix; bothPass=2; J03/J04/J05 still failed; J06/J08 passed"
     },
     {
       "id": "G5",
@@ -65,7 +65,7 @@
       "command": "node scripts/release-gate.mjs --evidence artifacts/release-candidate",
       "exitCode": 0,
       "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
-      "note": "private:true; no publish; no push main"
+      "note": "private:true; no publish"
     }
   ]
 }

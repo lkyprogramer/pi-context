@@ -80,7 +80,7 @@ for (const caseId of caseIds) {
       arm,
       plugin: arm === "B2",
       timeoutMs: Math.min(plan.perArmWallBudgetSeconds, remaining) * 1000,
-      seedNonce: nonce,
+      seedNonce: caseId === "J05" ? nonce : undefined,
     });
     const used = (Date.now() - t0) / 1000;
     remaining -= used;

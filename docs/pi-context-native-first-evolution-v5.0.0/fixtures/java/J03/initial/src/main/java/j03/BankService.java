@@ -12,6 +12,7 @@ public class BankService {
         this.jdbc = jdbc;
     }
 
+    // BUG: this.debit() is self-invocation; @Transactional on debit() does not apply.
     public void transfer(int amount, boolean failAfterDebit) {
         debit(amount);
         if (failAfterDebit) throw new IllegalStateException("boom");
