@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * historical: superseded by eval/local (E03). Not a current eval entry.
  * Live G3 C2: official Pi + packed plugin + native compact + pctx_history readback.
  * Keys stay in the parent broker. Agent HOME is isolated. Bash/read/grep stay off.
  */

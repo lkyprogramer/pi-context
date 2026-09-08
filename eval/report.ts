@@ -1,3 +1,4 @@
+/** historical: superseded by eval/local (E03). Not a current eval entry. */
 import type { EvalPair } from "../src/contracts.js";
 import { incompleteIsNotPass, missingCostIsNotZero } from "./scorers.js";
 

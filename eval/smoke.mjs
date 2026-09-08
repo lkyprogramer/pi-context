@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+/**
+ * historical: superseded by eval/local (E03). Not a current eval entry.
+ */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

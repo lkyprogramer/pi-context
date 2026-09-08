@@ -16,6 +16,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { parseSession, verbatimQuote } from "./parse-session.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");            // eval/local → repo root
@@ -136,6 +137,15 @@ if (arm !== "native") {
 const before = JSON.parse(readFileSync(join(out, "metrics-before.json"), "utf8")), after = JSON.parse(readFileSync(join(out, "metrics-after.json"), "utf8"));
 const delta = (k) => (before.available && after.available && before[k] != null && after[k] != null && after[k] >= before[k]) ? after[k] - before[k] : null;
 const oracle = gradeCandidate(caseId, cwd, spec);
+if (spec.evidence?.kind === "verbatim-quote") {
+  const sessionFile = join(out, "session", "session.jsonl");
+  if (existsSync(sessionFile)) {
+    oracle.quotedVerbatim = verbatimQuote(parseSession(sessionFile), {
+      linePattern: spec.evidence.linePattern,
+      sinceMs: new Date(manifest.startedAt).getTime(),
+    });
+  }
+}
 const result = {
   manifest, status, error,
   oracle,

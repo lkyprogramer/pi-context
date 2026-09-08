@@ -36,8 +36,13 @@ docs/**/evidence/local-scan/
 docs/**/evidence/repo/
 docs/**/evidence/logs/
 
+# Local 6.1 eval runs (E03). Never commit episode dumps or nonce secrets.
+artifacts/local-eval/
+eval/local/seeds/*.secret
+
 # Unexecuted local orchestration draft; not an implementation or verification record.
 /.workflow/pi-context-current-head-remediation-continuation/
+
 
 # Local live-dump backups (not analysis reports).
 artifacts/backups/
