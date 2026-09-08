@@ -1,0 +1,24 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+(node:64196) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ packages/storage-node/test/fts-index-cache.test.ts (6 tests) 51ms
+ ✓ packages/pi-adapter/test/read-pages.test.ts (9 tests) 16ms
+(node:64206) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ packages/storage-node/test/state-store-projection.test.ts (5 tests) 38ms
+(node:64217) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ packages/runtime/test/state-store.test.ts (1 test) 19ms
+ ✓ packages/pi-adapter/test/runtime-tools.test.ts (6 tests) 7ms
+(node:64232) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ packages/runtime/test/runtime-snapshot.test.ts (1 test) 17ms
+ ✓ packages/core/test/retrieval/bounded.test.ts (2 tests) 2ms
+
+ Test Files  7 passed (7)
+      Tests  30 passed (30)
+   Start at  19:42:21
+   Duration  2.59s (transform 287ms, setup 0ms, collect 1.59s, tests 151ms, environment 1ms, prepare 242ms)
+

@@ -1,0 +1,17 @@
+{
+  "paused": false,
+  "reason": "user requested stop; resume from rows-partial.json later",
+  "at": "2026-09-02T09:56:36Z",
+  "completedPairs": 224,
+  "expectedPairs": 300,
+  "lastPair": "ct-03#s2",
+  "monitorRestarts": 1,
+  "notNohup": true,
+  "resume": {
+    "outDir": "/Users/luo/Documents/github/pi-context/artifacts/runs/w2-v3-live/paired-gate",
+    "runner": "/var/folders/yt/10k_hqkn30x18d7lbn28_gnc0000gn/T/grok-goal-3664b8f137fb/implementer/run-w2-gate.ts",
+    "note": "runLivePairedW2 loads rows-partial.json and skips completed pair ids; in-flight pair at stop will be retried"
+  },
+  "resumedAt": "2026-09-03T02:54:16Z",
+  "resumeMethod": "nohup user-requested continue"
+}

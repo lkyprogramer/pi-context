@@ -1,0 +1,11 @@
+
+ RUN  v3.2.4 /Users/luo/Documents/github/pi-context
+
+ ✓ tests/acceptance/packed-install.test.ts (3 tests | 2 skipped) 7339ms
+   ✓ packed runtime acceptance > npm packs the runtime and the required patched Pi host loads exact input  7338ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 2 skipped (3)
+   Start at  19:42:24
+   Duration  7.50s (transform 31ms, setup 0ms, collect 35ms, tests 7.34s, environment 0ms, prepare 34ms)
+

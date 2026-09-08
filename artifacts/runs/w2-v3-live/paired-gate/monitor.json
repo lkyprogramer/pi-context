@@ -1,0 +1,7 @@
+{
+  "monitorRestarts": 0,
+  "reason": "user requested continue from pause; reset auto-restart budget",
+  "completedBeforeResume": 224,
+  "lastPairBeforeResume": "ct-03#s2",
+  "at": "2026-09-03T02:54:16Z"
+}
