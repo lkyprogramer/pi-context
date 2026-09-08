@@ -70,20 +70,27 @@ export function buildPinRecord(input: {
 
 export function buildStatusView(state: PluginState, ctx: ExtensionContext): StatusView {
   const usage = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
+  const index = state.index.status();
+  const warnings = [...state.warnings, ...index.warnings];
   return {
     resolvedProfile: state.profile,
     configHash: state.configHash,
     configSource: state.configSource,
-    warnings: state.warnings,
+    warnings,
     hostVersion: state.hostVersion,
     contextWindow: usage?.contextWindow ?? ctx.model?.contextWindow ?? null,
     contextPercent: usage?.percent ?? null,
     activePlan: null,
     folds: 0,
     nativeCompactions: state.nativeCompactions,
-    historyReads: 0,
-    historySearches: 0,
+    historyReads: state.historyReads,
+    historySearches: state.historySearches,
     lastRequests: [],
+    indexMode: index.mode,
+    dbPath: index.dbPath,
+    indexRows: index.rows,
+    indexBytes: index.bytes,
+    lastIndexedLeaf: index.lastIndexedLeaf,
   };
 }
 
@@ -103,6 +110,11 @@ export function formatStatus(view: StatusView): string {
     `nativeCompactions=${view.nativeCompactions}`,
     `historyReads=${view.historyReads}`,
     `historySearches=${view.historySearches}`,
+    `indexMode=${view.indexMode}`,
+    `dbPath=${view.dbPath ?? "null"}`,
+    `indexRows=${view.indexRows}`,
+    `indexBytes=${view.indexBytes}`,
+    `lastIndexedLeaf=${view.lastIndexedLeaf ?? "null"}`,
   ].join(" ");
 }
 
@@ -119,7 +131,7 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
       }
       const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
       const req = params as unknown as HistoryRequest;
-      const result = historyTool(state, req, entries, cwd, sessionId, leafId);
+      const result = await historyTool(state, req, entries, cwd, sessionId, leafId);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     },
   } as never);

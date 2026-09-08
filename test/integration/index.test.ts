@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { HistoryIndex } from "../../src/history/index.js";
+import { createHistoryIndex } from "../../src/history/index.js";
 import { independentBranch } from "../../src/testing.js";
 
 describe("T07 index", () => {
-  it("indexes authorized text and can rebuild from entries", () => {
+  it("indexes authorized text and can rebuild from entries", async () => {
     const fx = independentBranch();
-    const idx = new HistoryIndex("memory-only");
+    const idx = await createHistoryIndex({ mode: "memory-only", dbPath: null, maxIndexBytes: 1 << 20 });
     const scope = { workspaceId: "w", worktreeId: "w", sessionId: fx.sessionId, leafId: "b", visibleEntryIds: new Set(fx.visibleIds) };
-    for (const e of fx.entries) idx.upsert(scope, e);
-    const hits = idx.search(scope, "http", fx.visibleIds, 8);
+    await idx.upsertBranch(scope, fx.entries);
+    const hits = await idx.search(scope, "http", fx.visibleIds.length, 0);
     expect(hits.some((h) => h.entryId === "b")).toBe(true);
-    expect(idx.sourceRevision(fx.entries)).toHaveLength(64);
+    expect(await idx.revision(scope)).toMatch(/^\d+:\d+$/);
+    await idx.close();
   });
 });

@@ -1,10 +1,9 @@
-import { Worker } from "node:worker_threads";
-import { fileURLToPath } from "node:url";
+import { accessSync, constants, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { NativeEntry, Scope } from "../contracts.js";
-import { hashCanonical } from "../contracts.js";
-import { blocksOf, imageSourceHash, textSourceHash } from "./refs.js";
+import { ERROR, type NativeEntry, type Scope } from "../contracts.js";
+import { blocksOf, textSourceHash } from "./refs.js";
 
 export interface IndexedHit {
   workspaceId: string;
@@ -17,123 +16,346 @@ export interface IndexedHit {
   score: number;
 }
 
+export interface HistoryIndexOptions {
+  mode: "persistent" | "memory-only";
+  dbPath: string | null;
+  maxIndexBytes: number;
+}
+
+export interface HistoryIndexStatus {
+  mode: string;
+  dbPath: string | null;
+  rows: number;
+  bytes: number;
+  lastIndexedLeaf: string | null;
+  warnings: string[];
+}
+
+export const HISTORY_SEARCH_SQL = `
+SELECT b.workspace_id AS workspaceId,
+       b.session_id AS sessionId,
+       b.entry_id AS entryId,
+       b.block_index AS blockIndex,
+       b.source_hash AS sourceHash,
+       b.tool_name AS toolName,
+       snippet(blocks_fts, 0, '', '', '…', 16) AS excerpt,
+       bm25(blocks_fts) AS score
+FROM blocks_fts
+JOIN blocks b ON b.id = blocks_fts.rowid
+WHERE b.session_id = ?
+  AND b.workspace_id = ?
+  AND b.entry_id IN (SELECT entry_id FROM visible_ids)
+  AND blocks_fts MATCH ?
+ORDER BY bm25(blocks_fts), b.entry_id, b.block_index
+LIMIT ? OFFSET ?
+`;
+
 const SCHEMA = `
 PRAGMA foreign_keys=ON;
-CREATE TABLE IF NOT EXISTS indexed_text (
+CREATE TABLE IF NOT EXISTS blocks (
   id INTEGER PRIMARY KEY,
   workspace_id TEXT NOT NULL,
   session_id TEXT NOT NULL,
   entry_id TEXT NOT NULL,
   block_index INTEGER NOT NULL,
   source_hash TEXT NOT NULL,
-  body TEXT NOT NULL,
   tool_name TEXT,
+  byte_len INTEGER NOT NULL,
+  indexed_at INTEGER NOT NULL,
   UNIQUE(workspace_id, session_id, entry_id, block_index)
 );
-CREATE VIRTUAL TABLE IF NOT EXISTS text_fts USING fts5(body, content='indexed_text', content_rowid='id', tokenize='unicode61');
-CREATE TRIGGER IF NOT EXISTS indexed_text_ai AFTER INSERT ON indexed_text BEGIN INSERT INTO text_fts(rowid,body) VALUES(new.id,new.body); END;
-CREATE TRIGGER IF NOT EXISTS indexed_text_ad AFTER DELETE ON indexed_text BEGIN INSERT INTO text_fts(text_fts,rowid,body) VALUES('delete',old.id,old.body); END;
-CREATE TRIGGER IF NOT EXISTS indexed_text_au AFTER UPDATE ON indexed_text BEGIN
-  INSERT INTO text_fts(text_fts,rowid,body) VALUES('delete',old.id,old.body);
-  INSERT INTO text_fts(rowid,body) VALUES(new.id,new.body);
+CREATE TABLE IF NOT EXISTS blocks_text (
+  id INTEGER PRIMARY KEY,
+  text TEXT NOT NULL
+);
+CREATE VIRTUAL TABLE IF NOT EXISTS blocks_fts USING fts5(
+  text,
+  content='blocks_text',
+  content_rowid='id',
+  tokenize='unicode61'
+);
+CREATE TRIGGER IF NOT EXISTS blocks_text_ai AFTER INSERT ON blocks_text BEGIN
+  INSERT INTO blocks_fts(rowid, text) VALUES (new.id, new.text);
 END;
+CREATE TRIGGER IF NOT EXISTS blocks_text_ad AFTER DELETE ON blocks_text BEGIN
+  INSERT INTO blocks_fts(blocks_fts, rowid, text) VALUES('delete', old.id, old.text);
+END;
+CREATE TABLE IF NOT EXISTS session_leaf (
+  workspace_id TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  last_indexed_leaf TEXT,
+  PRIMARY KEY (workspace_id, session_id)
+);
 `;
 
-type MemoryRow = {
-  workspaceId: string;
-  sessionId: string;
-  entryId: string;
-  blockIndex: number;
-  body: string;
-  sourceHash: string;
-  toolName: string | null;
-};
+function configError(message: string): never {
+  const err = new Error(message);
+  (err as { code?: string }).code = ERROR.CONFIG;
+  throw err;
+}
+
+function indexUnavailable(message: string): never {
+  const err = new Error(message);
+  (err as { code?: string }).code = "INDEX_UNAVAILABLE";
+  throw err;
+}
+
+function defaultPersistentPath(): string {
+  return join(homedir(), ".pi", "agent", "pctx", "index.sqlite");
+}
+
+function resolveDbPath(mode: "persistent" | "memory-only", dbPath: string | null): string {
+  if (mode === "memory-only") return ":memory:";
+  if (dbPath === ":memory:") configError("persistent storage cannot use :memory:");
+  return dbPath ?? defaultPersistentPath();
+}
+
+function ensureWritableFilePath(filePath: string): void {
+  const dir = dirname(filePath);
+  try {
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+  } catch (err) {
+    configError(`index dbPath is not writable: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  try {
+    accessSync(dir, constants.W_OK);
+  } catch (err) {
+    configError(`index dbPath is not writable: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+function shouldIndexEntry(entry: NativeEntry): boolean {
+  if (entry.message?.toolName === "pctx_history") return false;
+  const role = entry.message?.role;
+  return role === "toolResult" || role === "user" || role === "assistant";
+}
+
+function ftsPhrase(query: string): string {
+  return `"${query.replace(/"/g, '""')}"`;
+}
 
 export class HistoryIndex {
-  private db: DatabaseSync;
-  private memory = new Map<string, MemoryRow>();
-  degraded = false;
+  readonly mode: "persistent" | "memory-only" | "unavailable";
+  readonly dbPath: string | null;
+  private readonly maxIndexBytes: number;
+  private db: DatabaseSync | null;
+  private indexFull = false;
+  private closed = false;
 
-  constructor(private readonly mode: "persistent" | "memory-only", dbPath = ":memory:") {
-    this.db = new DatabaseSync(mode === "memory-only" ? ":memory:" : dbPath);
+  private constructor(
+    mode: "persistent" | "memory-only" | "unavailable",
+    dbPath: string | null,
+    maxIndexBytes: number,
+    db: DatabaseSync | null,
+  ) {
+    this.mode = mode;
+    this.dbPath = dbPath;
+    this.maxIndexBytes = maxIndexBytes;
+    this.db = db;
+    if (db) {
+      db.exec("CREATE TEMP TABLE IF NOT EXISTS visible_ids (entry_id TEXT PRIMARY KEY)");
+    }
+  }
+
+  static open(opts: HistoryIndexOptions): HistoryIndex {
+    const dbPath = resolveDbPath(opts.mode, opts.dbPath);
+    if (opts.mode === "persistent") ensureWritableFilePath(dbPath);
+    let db: DatabaseSync;
     try {
-      this.db.exec(SCHEMA);
-    } catch {
-      this.degraded = true;
-    }
-  }
-
-  sourceRevision(entries: NativeEntry[]): string {
-    return hashCanonical(entries.map((e) => e.id));
-  }
-
-  upsert(scope: Scope, entry: NativeEntry): void {
-    if (entry.message?.toolName === "pctx_history") return;
-    if (entry.customType === "pctx.capsule.v5") return;
-    const blocks = blocksOf(entry);
-    const toolName = entry.message?.toolName ?? null;
-    blocks.forEach((block, blockIndex) => {
-      let sourceHash: string;
-      let body = "";
-      if (block.type === "text" && typeof block.text === "string") {
-        body = block.text;
-        sourceHash = textSourceHash(block.text);
-      } else if (block.type === "image") {
-        sourceHash = imageSourceHash(block);
-      } else {
-        return;
+      db = new DatabaseSync(dbPath);
+    } catch (err) {
+      if (opts.mode === "persistent") {
+        configError(`index dbPath is not writable: ${err instanceof Error ? err.message : String(err)}`);
       }
-      const key = `${scope.workspaceId}:${scope.sessionId}:${entry.id}:${blockIndex}`;
-      const row: MemoryRow = {
-        workspaceId: scope.workspaceId,
-        sessionId: scope.sessionId,
-        entryId: entry.id,
-        blockIndex,
-        body,
-        sourceHash,
-        toolName,
-      };
-      this.memory.set(key, row);
-      if (this.degraded) return;
-      this.db.prepare(
-        `INSERT INTO indexed_text(workspace_id,session_id,entry_id,block_index,source_hash,body,tool_name)
-         VALUES(?,?,?,?,?,?,?) ON CONFLICT(workspace_id,session_id,entry_id,block_index)
-         DO UPDATE SET source_hash=excluded.source_hash, body=excluded.body, tool_name=excluded.tool_name`,
-      ).run(scope.workspaceId, scope.sessionId, entry.id, blockIndex, sourceHash, body, toolName);
-    });
-  }
-
-  search(scope: Scope, query: string, authorizedIds: readonly string[], limit: number): IndexedHit[] {
-    const allowed = new Set(authorizedIds);
-    const q = query.toLowerCase();
-    const hits: IndexedHit[] = [];
-    for (const row of this.memory.values()) {
-      if (row.sessionId !== scope.sessionId || row.workspaceId !== scope.workspaceId) continue;
-      if (!allowed.has(row.entryId)) continue;
-      if (row.toolName === "pctx_history") continue;
-      if (!row.body) continue;
-      const haystack = row.body.toLowerCase();
-      if (q && !haystack.includes(q)) continue;
-      hits.push({
-        workspaceId: row.workspaceId,
-        sessionId: row.sessionId,
-        entryId: row.entryId,
-        blockIndex: row.blockIndex,
-        sourceHash: row.sourceHash,
-        toolName: row.toolName,
-        excerpt: row.body.slice(0, 80),
-        score: q ? 1 : 0,
-      });
+      indexUnavailable(err instanceof Error ? err.message : String(err));
     }
-    hits.sort((a, b) => b.score - a.score || a.entryId.localeCompare(b.entryId) || a.blockIndex - b.blockIndex);
-    return hits.slice(0, limit);
+    try {
+      db.exec(SCHEMA);
+    } catch (err) {
+      try {
+        db.close();
+      } catch {
+        /* ignore */
+      }
+      indexUnavailable(err instanceof Error ? err.message : String(err));
+    }
+    return new HistoryIndex(opts.mode, opts.mode === "memory-only" ? ":memory:" : dbPath, opts.maxIndexBytes, db);
   }
 
-  workerPath(): string {
-    return join(dirname(fileURLToPath(import.meta.url)), "sqlite-worker.js");
+  static unavailable(message = "INDEX_UNAVAILABLE"): HistoryIndex {
+    const idx = new HistoryIndex("unavailable", null, 0, null);
+    idx.closed = true;
+    void message;
+    return idx;
   }
 
-  spawnWorker(dbPath: string): Worker {
-    return new Worker(this.workerPath(), { workerData: { dbPath } });
+  async upsertBranch(scope: Scope, entries: readonly NativeEntry[]): Promise<{ inserted: number }> {
+    return { inserted: this.upsertBranchSync(scope, entries) };
   }
+
+  upsertBranchSync(scope: Scope, entries: readonly NativeEntry[]): number {
+    const db = this.requireDb();
+    if (scope.leafId) {
+      const prior = db.prepare(
+        "SELECT last_indexed_leaf AS leaf FROM session_leaf WHERE workspace_id = ? AND session_id = ?",
+      ).get(scope.workspaceId, scope.sessionId) as { leaf: string | null } | undefined;
+      if (prior?.leaf === scope.leafId) return 0;
+    }
+    const insertBlock = db.prepare(
+      `INSERT OR IGNORE INTO blocks(workspace_id, session_id, entry_id, block_index, source_hash, tool_name, byte_len, indexed_at)
+       VALUES(?,?,?,?,?,?,?,?)`,
+    );
+    const insertText = db.prepare("INSERT INTO blocks_text(id, text) VALUES(?, ?)");
+    let inserted = 0;
+    const now = Date.now();
+    for (const entry of entries) {
+      if (!shouldIndexEntry(entry)) continue;
+      const blocks = blocksOf(entry);
+      const toolName = entry.message?.toolName ?? null;
+      for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+        const block = blocks[blockIndex]!;
+        if (block.type !== "text" || typeof block.text !== "string") continue;
+        const byteLen = Buffer.byteLength(block.text, "utf8");
+        if (this.bytes() + byteLen > this.maxIndexBytes) {
+          this.indexFull = true;
+          return inserted;
+        }
+        const result = insertBlock.run(
+          scope.workspaceId,
+          scope.sessionId,
+          entry.id,
+          blockIndex,
+          textSourceHash(block.text),
+          toolName,
+          byteLen,
+          now,
+        );
+        if (result.changes === 0) continue;
+        insertText.run(Number(result.lastInsertRowid), block.text);
+        inserted += 1;
+      }
+    }
+    if (!this.indexFull) {
+      db.prepare(
+        `INSERT INTO session_leaf(workspace_id, session_id, last_indexed_leaf)
+         VALUES(?,?,?)
+         ON CONFLICT(workspace_id, session_id) DO UPDATE SET last_indexed_leaf = excluded.last_indexed_leaf`,
+      ).run(scope.workspaceId, scope.sessionId, scope.leafId);
+    }
+    return inserted;
+  }
+
+  async search(scope: Scope, query: string, limit: number, offset: number): Promise<IndexedHit[]> {
+    return this.searchSync(scope, query, limit, offset);
+  }
+
+  searchSync(scope: Scope, query: string, limit: number, offset: number): IndexedHit[] {
+    const db = this.requireDb();
+    const q = query.trim();
+    if (!q || limit <= 0) return [];
+    db.exec("DELETE FROM visible_ids");
+    const insertVisible = db.prepare("INSERT OR IGNORE INTO visible_ids(entry_id) VALUES(?)");
+    for (const id of scope.visibleEntryIds) insertVisible.run(id);
+    let rows: Array<{
+      workspaceId: string;
+      sessionId: string;
+      entryId: string;
+      blockIndex: number;
+      sourceHash: string;
+      toolName: string | null;
+      excerpt: string;
+      score: number;
+    }> = [];
+    try {
+      rows = db.prepare(HISTORY_SEARCH_SQL).all(
+        scope.sessionId,
+        scope.workspaceId,
+        ftsPhrase(q),
+        Math.max(0, limit),
+        Math.max(0, offset),
+      ) as typeof rows;
+    } catch {
+      return [];
+    }
+    return rows.map((row) => ({
+      workspaceId: String(row.workspaceId),
+      sessionId: String(row.sessionId),
+      entryId: String(row.entryId),
+      blockIndex: Number(row.blockIndex),
+      sourceHash: String(row.sourceHash),
+      toolName: row.toolName == null ? null : String(row.toolName),
+      excerpt: String(row.excerpt ?? ""),
+      score: Number(row.score ?? 0),
+    }));
+  }
+
+  async revision(scope: Scope): Promise<string> {
+    return this.revisionSync(scope);
+  }
+
+  revisionSync(scope: Scope): string {
+    const db = this.requireDb();
+    const row = db.prepare(
+      "SELECT COALESCE(MAX(indexed_at), 0) AS m, COUNT(*) AS c FROM blocks WHERE workspace_id = ? AND session_id = ?",
+    ).get(scope.workspaceId, scope.sessionId) as { m: number; c: number };
+    return `${row.m}:${row.c}`;
+  }
+
+  async close(): Promise<void> {
+    this.closeSync();
+  }
+
+  closeSync(): void {
+    if (this.closed) return;
+    this.closed = true;
+    try {
+      this.db?.close();
+    } catch {
+      /* already closed */
+    }
+    this.db = null;
+  }
+
+  status(): HistoryIndexStatus {
+    const warnings: string[] = [];
+    if (this.mode === "unavailable") warnings.push("history: unavailable");
+    if (this.indexFull) warnings.push("index-full");
+    if (this.closed && this.mode !== "unavailable") warnings.push("history: unavailable");
+    let lastIndexedLeaf: string | null = null;
+    if (this.db) {
+      const row = this.db.prepare(
+        "SELECT last_indexed_leaf AS leaf FROM session_leaf ORDER BY rowid DESC LIMIT 1",
+      ).get() as { leaf: string | null } | undefined;
+      lastIndexedLeaf = row?.leaf ?? null;
+    }
+    return {
+      mode: this.mode,
+      dbPath: this.dbPath,
+      rows: this.rows(),
+      bytes: this.bytes(),
+      lastIndexedLeaf,
+      warnings,
+    };
+  }
+
+  private rows(): number {
+    if (!this.db) return 0;
+    const row = this.db.prepare("SELECT COUNT(*) AS n FROM blocks").get() as { n: number };
+    return Number(row.n);
+  }
+
+  private bytes(): number {
+    if (!this.db) return 0;
+    const row = this.db.prepare("SELECT COALESCE(SUM(byte_len), 0) AS n FROM blocks").get() as { n: number };
+    return Number(row.n);
+  }
+
+  private requireDb(): DatabaseSync {
+    if (!this.db || this.mode === "unavailable") indexUnavailable("history: unavailable");
+    return this.db;
+  }
+}
+
+export async function createHistoryIndex(opts: HistoryIndexOptions): Promise<HistoryIndex> {
+  return HistoryIndex.open(opts);
 }

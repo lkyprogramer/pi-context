@@ -64,6 +64,20 @@ export interface StatusView {
   historyReads: number;
   historySearches: number;
   lastRequests: RequestRecord[];
+  indexMode: string;
+  dbPath: string | null;
+  indexRows: number;
+  indexBytes: number;
+  lastIndexedLeaf: string | null;
+}
+
+export interface SearchCursor {
+  v: 6;
+  sessionId: string;
+  branchHash: string;
+  queryHash: string;
+  indexRevision: string;
+  offset: number;
 }
 
 export const ERROR = {

@@ -1,59 +1,58 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG } from "../../src/config.js";
-import { HistoryIndex } from "../../src/history/index.js";
+import { createHistoryIndex } from "../../src/history/index.js";
 import { searchHistory } from "../../src/history/search.js";
 import { independentBranch } from "../../src/testing.js";
 
 describe("T08 search", () => {
-  it("authorizes before limit and does not expand empty results", () => {
+  it("authorizes before limit and does not expand empty results", async () => {
     const fx = independentBranch();
-    const idx = new HistoryIndex("memory-only");
+    const idx = await createHistoryIndex({ mode: "memory-only", dbPath: null, maxIndexBytes: 1 << 20 });
     const scope = { workspaceId: "w", worktreeId: "w", sessionId: fx.sessionId, leafId: "b", visibleEntryIds: new Set(["b"]) };
-    for (const e of fx.entries) idx.upsert(scope, e);
+    await idx.upsertBranch(scope, fx.entries);
     const getEntry = (id: string) => fx.entries.find((e) => e.id === id);
-    const result = searchHistory({
+    const result = await searchHistory({
       scope,
-      query: "branch",
+      query: "keep",
       limit: 1,
       index: idx,
       config: DEFAULT_CONFIG,
-      sourceRevision: idx.sourceRevision(fx.entries),
       getEntry,
     });
     expect(result.hits?.every((h) => h.entryId === "b" || scope.visibleEntryIds.has(h.entryId))).toBe(true);
-    const empty = searchHistory({
+    const empty = await searchHistory({
       scope,
       query: "zzz-no-such",
       index: idx,
       config: DEFAULT_CONFIG,
-      sourceRevision: idx.sourceRevision(fx.entries),
       getEntry,
     });
     expect(empty.hits ?? []).toEqual([]);
+    await idx.close();
   });
 
-  it("stales cursors after source revision change", () => {
+  it("restarts mismatched cursors from offset 0", async () => {
     const fx = independentBranch();
-    const idx = new HistoryIndex("memory-only");
+    const idx = await createHistoryIndex({ mode: "memory-only", dbPath: null, maxIndexBytes: 1 << 20 });
     const scope = { workspaceId: "w", worktreeId: "w", sessionId: fx.sessionId, leafId: "b", visibleEntryIds: new Set(fx.visibleIds) };
+    await idx.upsertBranch(scope, fx.entries);
     const getEntry = (id: string) => fx.entries.find((e) => e.id === id);
-    const first = searchHistory({
+    const first = await searchHistory({
       scope,
       query: "keep",
       index: idx,
       config: DEFAULT_CONFIG,
-      sourceRevision: "1".repeat(64),
       getEntry,
     });
-    const stale = searchHistory({
+    const stale = await searchHistory({
       scope,
-      query: "keep",
-      cursor: first.cursor,
+      query: "start",
+      cursor: first.cursor ?? "not-a-cursor",
       index: idx,
       config: DEFAULT_CONFIG,
-      sourceRevision: "2".repeat(64),
       getEntry,
     });
-    expect(stale.code).toBe("stale-cursor");
+    expect(stale.diagnostic).toMatch(/CURSOR_MISMATCH/);
+    await idx.close();
   });
 });

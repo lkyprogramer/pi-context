@@ -8,6 +8,21 @@ export interface SessionReader {
   getEntries?(): NativeEntry[];
 }
 
+export function branchEntries(sessionManager: SessionReader): NativeEntry[] {
+  return readVisibleSnapshot(sessionManager);
+}
+
+export function toolResultByCallId(entries: readonly NativeEntry[]): Map<string, NativeEntry> {
+  const map = new Map<string, NativeEntry>();
+  for (const entry of entries) {
+    if (entry.message?.role !== "toolResult") continue;
+    const callId = toolCallIdOf(entry.message);
+    if (!callId || map.has(callId)) continue;
+    map.set(callId, entry);
+  }
+  return map;
+}
+
 export function readVisibleSnapshot(reader: SessionReader): NativeEntry[] {
   const out: NativeEntry[] = [];
   const seen = new Set<string>();

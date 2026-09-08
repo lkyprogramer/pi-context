@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { authorizeHits, buildScope, normalizeWorkspace } from "../../src/history/scope.js";
+import { authorizeHits, buildScope, normalizeWorkspace, scopeFor } from "../../src/history/scope.js";
 import { independentBranch } from "../../src/testing.js";
 
 describe("T06 scope", () => {
@@ -37,5 +37,16 @@ describe("T06 scope", () => {
       getEntry: (id) => fx.entries.find((e) => e.id === id),
     });
     expect(scope.visibleEntryIds.has("sibling")).toBe(false);
+    const fromCtx = scopeFor({
+      cwd: process.cwd(),
+      sessionManager: {
+        getSessionId: () => fx.sessionId,
+        getLeafId: () => "b",
+        getEntry: (id) => fx.entries.find((e) => e.id === id),
+      },
+    });
+    expect(fromCtx.leafId).toBe("b");
+    expect(fromCtx.visibleEntryIds.has("sibling")).toBe(false);
+    expect(fromCtx.workspaceId).toHaveLength(16);
   });
 });

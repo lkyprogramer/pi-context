@@ -35,6 +35,8 @@ export interface PluginState {
   hostVersion: string;
   nativeCompactions: number;
   lastAssistant: AssistantRecord | null;
+  historyReads: number;
+  historySearches: number;
 }
 
 export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
@@ -43,7 +45,11 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     profile: config.profile,
     generation: 0,
     ledger: new ExposureLedger(),
-    index: new HistoryIndex(config.storage.mode),
+    index: HistoryIndex.open({
+      mode: "memory-only",
+      dbPath: null,
+      maxIndexBytes: config.storage.maxIndexBytes,
+    }),
     plan: null,
     successfulRequests: 0,
     pendingAttempt: null,
@@ -55,6 +61,8 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     hostVersion: "unknown",
     nativeCompactions: 0,
     lastAssistant: null,
+    historyReads: 0,
+    historySearches: 0,
   };
 }
 
@@ -83,12 +91,59 @@ export function setProfile(state: PluginState, profile: Profile): void {
   state.plan = null;
 }
 
-export function historyTool(state: PluginState, req: HistoryRequest, entries: NativeEntry[], cwd: string, sessionId: string, leafId: string | null): HistoryResult {
+export function openSessionIndex(state: PluginState): void {
+  try {
+    state.index.closeSync();
+  } catch {
+    /* first open */
+  }
+  try {
+    state.index = HistoryIndex.open({
+      mode: state.config.storage.mode,
+      dbPath: state.config.storage.dbPath,
+      maxIndexBytes: state.config.storage.maxIndexBytes,
+    });
+  } catch (err) {
+    const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
+    const message = err instanceof Error ? err.message : String(err);
+    if (code === "PCTX_CONFIG") state.warnings = [...state.warnings, `config-error:${message}`];
+    else state.warnings = [...state.warnings, "history: unavailable"];
+    state.index = HistoryIndex.unavailable();
+  }
+}
+
+export function indexBranch(state: PluginState, entries: NativeEntry[], cwd: string, sessionId: string, leafId: string | null): void {
+  const getEntry = (id: string) => entries.find((e) => e.id === id);
+  const scope = buildScope({ cwd, sessionId, leafId, getEntry });
+  try {
+    state.index.upsertBranchSync(scope, entries);
+  } catch {
+    /* unavailable index stays fail-closed */
+  }
+}
+
+export function closeSessionIndex(state: PluginState): void {
+  try {
+    state.index.closeSync();
+  } catch {
+    /* ignore */
+  }
+  state.index = HistoryIndex.unavailable();
+}
+
+export async function historyTool(state: PluginState, req: HistoryRequest, entries: NativeEntry[], cwd: string, sessionId: string, leafId: string | null): Promise<HistoryResult> {
   if (state.profile === "off") return { code: "disabled", cursor: null, diagnostic: "plugin off" };
   const getEntry = (id: string) => entries.find((e) => e.id === id);
   const scope = buildScope({ cwd, sessionId, leafId, getEntry });
-  for (const e of entries) state.index.upsert(scope, e);
+  try {
+    state.index.upsertBranchSync(scope, entries);
+  } catch (err) {
+    const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
+    if (code === "INDEX_UNAVAILABLE") return { code: "degraded", cursor: null, diagnostic: "history: unavailable" };
+    throw err;
+  }
   if (req.action === "search") {
+    state.historySearches += 1;
     return searchHistory({
       scope,
       query: req.query,
@@ -96,10 +151,10 @@ export function historyTool(state: PluginState, req: HistoryRequest, entries: Na
       cursor: req.cursor,
       index: state.index,
       config: state.config,
-      sourceRevision: state.index.sourceRevision(entries),
       getEntry,
     });
   }
+  state.historyReads += 1;
   return readHistory({
     scope,
     ref: req.ref,

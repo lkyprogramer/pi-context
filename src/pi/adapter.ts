@@ -12,12 +12,15 @@ import {
   applyConfigFailure,
   applyLoadedConfig,
   applyContext,
+  closeSessionIndex,
   confirmAttempt,
   createPlugin,
   historyTool,
+  indexBranch,
   noteCompactFailed,
   noteFence,
   noteNativeCompact,
+  openSessionIndex,
   restoreStagingFromEntries,
   setProfile,
   type PluginState,
@@ -87,7 +90,9 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
       ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
     }
     state.hostVersion = readHostVersion();
-    const { entries } = entriesFromCtx(ctx);
+    openSessionIndex(state);
+    const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+    indexBranch(state, entries, cwd, sessionId, leafId);
     restoreStagingFromEntries(state, entries);
   });
   pi.on("context", (event, ctx) => {
@@ -100,7 +105,10 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
       return { messages };
     }
   });
-  pi.on("tool_result", () => undefined);
+  pi.on("tool_result", (_e, ctx) => {
+    const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+    indexBranch(state, entries, cwd, sessionId, leafId);
+  });
   pi.on("before_provider_request", () => undefined);
   pi.on("session_before_compact", () => undefined);
   pi.on("message_end", (event: MessageEndEvent) => {
@@ -125,10 +133,12 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     noteFence(state);
   });
   pi.on("session_shutdown", () => {
+    closeSessionIndex(state);
     state.plan = null;
   });
-  pi.on("agent_settled", () => {
-    /* drain lightweight index only */
+  pi.on("agent_settled", (_e, ctx) => {
+    const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+    indexBranch(state, entries, cwd, sessionId, leafId);
   });
   return state;
 }

@@ -52,6 +52,36 @@ export function buildScope(input: {
   };
 }
 
+export function scopeFor(ctx: {
+  cwd: string;
+  sessionManager?: {
+    getSessionId(): string;
+    getLeafId(): string | null;
+    getEntry?(id: string): NativeEntry | undefined;
+    getEntries?(): NativeEntry[];
+  };
+}): Scope {
+  const sm = ctx.sessionManager;
+  if (!sm) {
+    const ids = normalizeWorkspace(ctx.cwd);
+    return {
+      workspaceId: ids.workspaceId,
+      worktreeId: ids.worktreeId,
+      sessionId: "unknown",
+      leafId: null,
+      visibleEntryIds: new Set(),
+    };
+  }
+  const extras = sm.getEntries?.() ?? [];
+  const getEntry = (id: string) => sm.getEntry?.(id) ?? extras.find((entry) => entry.id === id);
+  return buildScope({
+    cwd: ctx.cwd,
+    sessionId: sm.getSessionId(),
+    leafId: sm.getLeafId(),
+    getEntry,
+  });
+}
+
 export function authorize(scope: Scope, entryId: EntryId): boolean {
   return scope.visibleEntryIds.has(entryId);
 }
