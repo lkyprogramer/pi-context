@@ -2,7 +2,7 @@
   "version": 2,
   "docVersion": "6.1.0",
   "model": "openclaw/Qwen3.8-27B-WORK",
-  "baseUrl": "http://127.0.0.1:18343/v1",
+  "baseUrl": "http://47.106.205.246:1082/v1",
   "engine": "NInfer tensorninja@44a2c6c, rk4v4-e8 KV, MTP n=3, rolling-tool prefix checkpoint, max-concurrency 1",
   "thinking": "medium",
   "windowProfiles": {

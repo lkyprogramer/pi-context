@@ -1,7 +1,7 @@
 {
   "providers": {
     "work": {
-      "baseUrl": "http://127.0.0.1:18343/v1",
+      "baseUrl": "http://47.106.205.246:1082/v1",
       "api": "openai-completions",
       "apiKey": "sk-local",
       "authHeader": true,

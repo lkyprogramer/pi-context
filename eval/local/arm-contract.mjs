@@ -18,8 +18,10 @@ export function assertArm(manifest, statusJson, agentDir) {
   if (statusJson && statusJson.resolvedProfile !== manifest.arm) {
     return { ok: false, reason: `profile mismatch: manifest ${manifest.arm} vs resolved ${statusJson.resolvedProfile}` };
   }
-  if (!extensions.length) return { ok: false, reason: `${manifest.arm} arm but no extensions configured` };
-  if (!statusJson) return { ok: false, reason: `${manifest.arm} arm but plugin wrote no status (not loaded or crashed)` };
+  if (!statusJson) {
+    if (!extensions.length) return { ok: false, reason: `${manifest.arm} arm but no extensions configured` };
+    return { ok: false, reason: `${manifest.arm} arm but plugin wrote no status (not loaded or crashed)` };
+  }
   if (manifest.configHash && statusJson.configHash !== manifest.configHash) return { ok: false, reason: `configHash mismatch ${statusJson.configHash} vs frozen ${manifest.configHash}` };
   if (statusJson.hostVersion && statusJson.hostVersion !== "0.85.1") return { ok: false, reason: `hostVersion ${statusJson.hostVersion} != 0.85.1` };
   if (manifest.hostVersion && statusJson.hostVersion && statusJson.hostVersion !== manifest.hostVersion) {

@@ -13,10 +13,12 @@ import { existsSync, mkdirSync, readFileSync, appendFileSync, writeFileSync } fr
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertArm } from "./arm-contract.mjs";
+import { engineOk, fetchModels, loadRepoEnv, modelEndpoint } from "./model-endpoint.mjs";
 import { parseSession, verbatimQuote } from "./parse-session.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");
+loadRepoEnv(repo);
 const args = parseArgs(process.argv.slice(2));
 const runDir = resolve(args.resume ?? args.out ?? die("--out required"));
 const dry = "dry" in args;
@@ -42,6 +44,7 @@ if (args.resume && existsSync(manifestPath)) {
   shuffleGroups(order, seed);
   const dist = join(repo, "dist/extension.js");
   const tarball = findTarball();
+  const endpoint = modelEndpoint();
   manifest = {
     runId: runDir.split("/").pop(), createdAt: new Date().toISOString(), seed,
     git: { head: sh("git", ["rev-parse", "HEAD"]), tree: sh("git", ["rev-parse", "HEAD^{tree}"]), dirty: sh("git", ["status", "--porcelain"]).length > 0 },
@@ -51,10 +54,11 @@ if (args.resume && existsSync(manifestPath)) {
     tarball: tarball.path,
     sandboxImage: process.env.PCTX_SANDBOX_IMAGE ?? "pctx-t21-sandbox:0.85.1",
     sandboxImageId: imageId(),
-    model: "openclaw/Qwen3.8-27B-WORK", baseUrl: "http://127.0.0.1:18343/v1", thinking: "medium",
+    model: endpoint.expectModel, baseUrl: endpoint.baseUrl, thinking: "medium",
     models: modelsSnapshot(),
     budget: { totalEpisodes: order.length, totalWallMs: 3.5 * 3600 * 1000, episode: { wallMs: 900000, modelCalls: 40, toolCalls: 80 }, h03: { wallMs: 3600000, modelCalls: 200, toolCalls: 400 } },
     configHash: null,
+    configHashByArm: {},
     order,
   };
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
@@ -101,8 +105,14 @@ for (const ep of manifest.order) {
   if (result.status !== "blocked") {
     const status = existsSync(join(epDir, "status.json")) ? JSON.parse(readFileSync(join(epDir, "status.json"), "utf8")) : null;
     const agentDir = result.workdir ? join(dirname(result.workdir), ".pi", "agent") : join(epDir, "missing-agent");
-    if (ep.arm !== "native" && status && !manifest.configHash) { manifest.configHash = status.configHash; writeFileSync(manifestPath, JSON.stringify(manifest, null, 2)); }
-    const verdict = assertArm({ ...ep, configHash: manifest.configHash, hostVersion: manifest.hostVersion }, status, agentDir);
+    if (ep.arm !== "native" && status?.configHash) {
+      manifest.configHashByArm ??= {};
+      if (!manifest.configHashByArm[ep.arm]) manifest.configHashByArm[ep.arm] = status.configHash;
+      if (!manifest.configHash) manifest.configHash = status.configHash;
+      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+    }
+    const frozenHash = ep.arm === "native" ? null : (manifest.configHashByArm?.[ep.arm] ?? manifest.configHash);
+    const verdict = assertArm({ ...ep, configHash: frozenHash, hostVersion: manifest.hostVersion }, status, agentDir);
     if (!verdict.ok) { result.status = "blocked"; result.error = `arm contract: ${verdict.reason}`; }
   }
   if (result.status === "blocked") blockedCount++;
@@ -138,7 +148,7 @@ function imageId() {
   } catch { return null; }
 }
 function findTarball() {
-  const names = ["pi-context-5.0.0-dev.0.tgz", "pi-context.tgz"];
+  const names = ["pi-context-6.1.0.tgz", "pi-context-5.0.0-dev.0.tgz", "pi-context.tgz"];
   for (const n of names) {
     const p = join(repo, n);
     if (existsSync(p)) return { path: n, sha256: sha256File(p) };
@@ -146,10 +156,6 @@ function findTarball() {
   return { path: null, sha256: null };
 }
 function modelsSnapshot() {
-  try { return JSON.parse(execFileSync("curl", ["-fsS", "--max-time", "5", "http://127.0.0.1:18343/v1/models"], { encoding: "utf8" })); }
+  try { return fetchModels(); }
   catch { return null; }
-}
-function engineOk(models) {
-  const served = models?.data?.[0];
-  return served?.id === "openclaw/Qwen3.8-27B-WORK" && Number(served?.meta?.n_ctx) === 262144;
 }

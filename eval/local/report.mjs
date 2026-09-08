@@ -4,7 +4,7 @@
  *   node report.mjs <runDir>            → writes <runDir>/report.md and report.json
  * Pure functions `summarize` and `decide` are exported for tests. Unknown usage is counted, never zeroed.
  */
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -125,6 +125,19 @@ export function renderMarkdown(summary, decision, manifest) {
   return L.join("\n");
 }
 
+function loadEpisodes(runDir) {
+  const dir = join(runDir, "episodes");
+  if (existsSync(dir)) {
+    const rows = readdirSync(dir)
+      .map((name) => join(dir, name, "result.json"))
+      .filter((p) => existsSync(p))
+      .map((p) => JSON.parse(readFileSync(p, "utf8")));
+    if (rows.length) return rows;
+  }
+  const jsonl = join(runDir, "episodes.jsonl");
+  if (!existsSync(jsonl)) return [];
+  return readFileSync(jsonl, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+}
 function median(a) { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; }
 function fmt(x) { return x == null ? "n/a" : x.toFixed(3); }
 
@@ -132,7 +145,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const runDir = process.argv[2]; if (!runDir) { console.error("runDir required"); process.exit(2); }
   const here = dirname(fileURLToPath(import.meta.url));
   const repo = resolve(here, "../..");
-  const episodes = readFileSync(join(runDir, "episodes.jsonl"), "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const episodes = loadEpisodes(runDir);
   const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
   const scenPath = join(repo, "docs/pi-context-native-first-audit-v6.0.0/testing/scenarios.json");
   const scenarios = JSON.parse(readFileSync(existsSync(scenPath) ? scenPath : new URL("../scenarios.json", import.meta.url), "utf8"));

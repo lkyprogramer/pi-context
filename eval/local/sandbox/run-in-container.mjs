@@ -21,7 +21,11 @@ try {
 const pi = await import(pathToFileURL(join(piRoot, "dist/index.js")).href);
 const prompts = JSON.parse(readFileSync(process.env.PCTX_PROMPTS || join(out, "prompts.json"), "utf8"));
 const seedCopy = process.env.PCTX_SEED && existsSync(process.env.PCTX_SEED) ? process.env.PCTX_SEED : null;
-const BUDGET = { wallMs: 900_000, modelCalls: 40, toolCalls: 80 };
+const BUDGET = {
+  wallMs: Number(process.env.PCTX_BUDGET_WALL_MS || 900_000),
+  modelCalls: Number(process.env.PCTX_BUDGET_MODEL || 40),
+  toolCalls: Number(process.env.PCTX_BUDGET_TOOLS || 80),
+};
 
 const settingsManager = pi.SettingsManager.create(cwd, agentDir, { projectTrusted: true });
 const loader = new pi.DefaultResourceLoader({ cwd, agentDir, settingsManager, noSkills: true, noPromptTemplates: true, noThemes: true, noContextFiles: false });
@@ -92,7 +96,7 @@ try {
   }
 } finally {
   unsubscribe();
-  try { await session.prompt("/pctx status --json"); } catch { /* native arm */ }
+  try { await Promise.race([session.prompt("/pctx status --json"), new Promise((_, rej) => setTimeout(() => rej(new Error("status timeout")), 8_000))]); } catch { /* native arm or command UI hang */ }
   const file = sessionManager.getSessionFile?.();
   if (file && existsSync(file)) {
     mkdirSync(join(out, "session"), { recursive: true });
@@ -101,4 +105,6 @@ try {
   await session.dispose?.();
 }
 writeFileSync(join(out, "container-status.json"), JSON.stringify({ status, modelCalls, toolCalls }));
-if (status !== "complete") process.exit(status === "timeout" ? 124 : 1);
+if (status === "timeout") process.exit(124);
+if (status !== "complete") process.exit(1);
+process.exit(0);

@@ -26,6 +26,35 @@ it("an observe episode whose plugin resolved to a different profile is blocked",
   expect(verdict.reason).toMatch(/profile/);
 });
 
+it("observe is not blocked when its configHash differs from a previously frozen balanced hash", () => {
+  const agentDir = mkdtempSync(join(tmpdir(), "pctx-obs-"));
+  writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ extensions: ["/plugin/extension.js"] }));
+  const sameArm = assertArm(
+    { arm: "observe", configHash: "obs-hash" },
+    { resolvedProfile: "observe", configHash: "obs-hash", hostVersion: "0.85.1" },
+    agentDir,
+  );
+  const crossed = assertArm(
+    { arm: "observe", configHash: "bal-hash" },
+    { resolvedProfile: "observe", configHash: "obs-hash", hostVersion: "0.85.1" },
+    agentDir,
+  );
+  expect(sameArm.ok).toBe(true);
+  expect(crossed.ok).toBe(false);
+  expect(crossed.reason).toMatch(/configHash/);
+});
+
+it("an observe arm loaded via additionalExtensionPaths is ok when status matches even if settings.extensions is empty", () => {
+  const agentDir = mkdtempSync(join(tmpdir(), "pctx-host-"));
+  writeFileSync(join(agentDir, "settings.json"), "{}\n");
+  const verdict = assertArm(
+    { arm: "observe", configHash: "obs-hash" },
+    { resolvedProfile: "observe", configHash: "obs-hash", hostVersion: "0.85.1" },
+    agentDir,
+  );
+  expect(verdict.ok).toBe(true);
+});
+
 it("a native arm with a plugin status file is blocked", () => {
   const agentDir = mkdtempSync(join(tmpdir(), "pctx-native-"));
   writeFileSync(join(agentDir, "settings.json"), "{}\n");

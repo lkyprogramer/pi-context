@@ -32,6 +32,8 @@ import { sessionSnapshot, type SessionReader } from "./source-reader.js";
 export type PiExtensionAPI = ExtensionAPI;
 
 export function readHostVersion(): string {
+  const fromEnv = process.env.PCTX_HOST_VERSION?.trim();
+  if (fromEnv) return fromEnv;
   try {
     const req = createRequire(import.meta.url);
     return String(req("@earendil-works/pi-coding-agent/package.json").version);

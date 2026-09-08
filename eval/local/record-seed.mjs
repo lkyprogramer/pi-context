@@ -18,8 +18,11 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { applyEndpointToModelsJson, loadRepoEnv } from "./model-endpoint.mjs";
+
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");
+loadRepoEnv(repo);
 function officialPiRoot() {
   const local = join(repo, "node_modules/@earendil-works/pi-coding-agent");
   if (existsSync(join(local, "package.json"))) return local;
@@ -42,7 +45,10 @@ const home = mkdtempSync(join(tmpdir(), "pctx-seed-"));
 const cwd = join(home, "work"), agentDir = join(home, ".pi", "agent"), sessionDir = join(home, "sessions");
 mkdirSync(cwd, { recursive: true }); mkdirSync(agentDir, { recursive: true }); mkdirSync(sessionDir, { recursive: true });
 cpSync(join(here, "pi-config", "w64k", "models.json"), join(agentDir, "models.json"));
-writeFileSync(join(agentDir, "settings.json"), readFileSync(join(here, "pi-config", "settings.json")));
+applyEndpointToModelsJson(join(agentDir, "models.json"));
+const seedSettings = JSON.parse(readFileSync(join(here, "pi-config", "settings.json"), "utf8"));
+seedSettings.compaction = { ...(seedSettings.compaction ?? {}), enabled: false };
+writeFileSync(join(agentDir, "settings.json"), JSON.stringify(seedSettings, null, 2));
 writeFileSync(join(agentDir, "auth.json"), "{}\n");
 for (const [dst, src] of [["l01", "L01/"], ["l04", "L04/initial"], ["l05", "L05/initial"], ["l06", "L06/initial"]]) {
   cpSync(join(repo, "eval/local/fixtures", src), join(cwd, dst), { recursive: true });
@@ -54,7 +60,7 @@ mkdirSync(join(cwd, ".probe")); writeFileSync(join(cwd, ".probe", "nonce.txt"), 
 const task = (dir) => readFileSync(join(repo, "eval/local/fixtures", dir, "TASK.md"), "utf8").trim();
 const prompts = [
   `Work in l01/. Do not fix anything yet: just run ./verify.sh once and report the exact failing assertion message verbatim.`,
-  `Run: cat .probe/nonce.txt — then tell me only how many characters it contains. Do not repeat the value.`,
+  `Use the bash tool exactly once with this command and no other command: cat .probe/nonce.txt\nAfter the tool returns, reply with only the character count of that file. Do not repeat, quote, hash, or paraphrase the file contents.`,
   `Work in l04/. ${task("L04")}`,
   `Work in l05/. ${task("L05")}`,
   `Work in l06/. ${task("L06")}`,
@@ -76,6 +82,25 @@ const unsub = session.subscribe((e) => {
   if (e.type === "message_end" && e.message.role === "assistant") lastUsage = e.message.usage ?? null;
 });
 for (const p of prompts) await session.prompt(p);
+mkdirSync(join(cwd, ".pad"), { recursive: true });
+let pad = 0;
+const writePad = (n, lines) => {
+  const body = Array.from({ length: lines }, (_, i) => `pad-${n}-LINE ${i + 1} extra-history-token-filler`).join("\n") + "\n";
+  writeFileSync(join(cwd, ".pad", `log${n}.txt`), body);
+};
+const tokensNow = () => {
+  const ctx = session.getContextUsage?.();
+  const fromCtx = typeof ctx?.percent === "number" ? Math.round((ctx.percent / 100) * 65536) : 0;
+  return Math.max(lastUsage?.totalTokens ?? 0, fromCtx);
+};
+while (tokensNow() < 40_000 && pad < 4 && compactions === 0) {
+  if (tokensNow() >= 38_000) break;
+  pad++;
+  writePad(pad, 500);
+  await session.prompt(
+    `Use the bash tool exactly once with this command and no other command: cat .pad/log${pad}.txt\nAfter the tool returns, reply with only the line count. Do not modify .probe/, Java sources, or l01/l04/l05/l06.`,
+  );
+}
 unsub();
 const file = sessionManager.getSessionFile();
 await session.dispose?.();
@@ -88,7 +113,7 @@ writeFileSync(`${out}.secret`, `${nonce}\n`, { mode: 0o600 });
 writeFileSync(`${out}.meta.json`, JSON.stringify({
   recordedAt: new Date().toISOString(), nonceSha256: createHash("sha256").update(nonce).digest("hex"),
   seedSha256: createHash("sha256").update(readFileSync(out)).digest("hex"), entries: jsonl.trim().split("\n").length,
-  lastUsage, window: "w64k", prompts: prompts.map((p) => createHash("sha256").update(p).digest("hex")),
+  lastUsage, window: "w64k", padFiles: pad, prompts: prompts.map((p) => createHash("sha256").update(p).digest("hex")),
 }, null, 2));
 rmSync(join(cwd, ".probe"), { recursive: true, force: true });
 rmSync(home, { recursive: true, force: true });

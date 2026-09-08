@@ -1,12 +1,26 @@
 #!/usr/bin/env bash
 # Snapshot NInfer prefix/prefill counters from the compat layer's /metrics into JSON.
 # usage: metrics-snap.sh <out.json>
+# Missing /metrics (typical for the public nginx front) → {"available":false}, never invented zeros.
 set -euo pipefail
 OUT="${1:?out.json}"
-PORT="${PCTX_4090_PORT:-18343}"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+REPO="$HERE"
+while [[ "$REPO" != "/" && ! -f "$REPO/package.json" ]]; do REPO="$(dirname "$REPO")"; done
+if [[ -f "$REPO/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO/.env"
+  set +a
+fi
+BASE="${PCTX_MODEL_BASE_URL:-${PCR_LIVE_BASE_URL:-http://47.106.205.246:1082/v1}}"
+METRICS_URL="$(python3 -c 'from urllib.parse import urlparse; import os,sys; u=urlparse(sys.argv[1]); print(u.scheme+"://"+u.netloc+"/metrics")' "$BASE")"
+KEY="${PCTX_MODEL_API_KEY:-${PCR_LIVE_API_KEY:-}}"
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
-if ! curl -fsS --max-time 5 "http://127.0.0.1:${PORT}/metrics" >"$TMP"; then
+AUTH=()
+if [[ -n "$KEY" ]]; then AUTH=(-H "Authorization: Bearer ${KEY}"); fi
+if ! curl -fsS --max-time 8 "${AUTH[@]}" "$METRICS_URL" >"$TMP"; then
   echo '{"available":false}' >"$OUT"; exit 0
 fi
 python3 - "$TMP" "$OUT" <<'PY'
@@ -23,6 +37,8 @@ out = {"available": True, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
 for name, key in keys.items():
     m = re.search(rf"^{re.escape(key)} (\S+)", text, re.M)
     out[name] = float(m.group(1)) if m else None
+if not any(out.get(k) is not None for k in keys):
+    out["available"] = False
 json.dump(out, open(sys.argv[2], "w"), indent=2)
 print(json.dumps(out))
 PY
