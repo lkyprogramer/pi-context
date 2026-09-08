@@ -1,0 +1,33 @@
+﻿id,title,status,evidence,next
+C00,冻结 0e684e3 基线并建立增量验收台账,verified-code,旧基线与新候选报告/manifest明确分开,保留来源台账，不重建流程系统
+C01,修复当前严格 TypeScript 编译错误,verified-code,同HEAD Required typecheck成功；原implicit-any/cwd问题已修,不重开旧编译修复
+C02,让生产 Build 真正包含 strict compile 与 package compile,verified-code,当前build执行strict与编译产物校验成功,保留
+C03,恢复 packed tarball、clean install 与 SBOM,verified-code,同HEAD packed-install-hermetic成功,集中验收复用
+C04,恢复 Pi/Node/OS Compatibility Matrix,partial,十个compat cell编译成功但unit失败，后续acceptance/scan跳过,T01修fixture；精简重复min/current
+C05,把 Branch Protection 校验改为真实 fail-closed 并启用规则,re-scoped,校验已真实failclosed，main仍未保护,个人开发不强制管理员治理；报告保留真实状态
+C06,修正 session_shutdown Event/Context 契约,verified-code,Shutdown Event与Context参数已分开，类型检查绿,保留
+C07,移除 RuntimeToolCtx.cwd 假设并建立 WorkspaceResolver,verified-code,Resolver与显式工具context已修,T02另修访问cursor模型，不否认本项修复
+C08,为 Workspace/Input/Cursor 回调建立显式内部类型,verified-code,回调显式类型进入合同；strict通过,保留
+C09,新增“tsc public contract”测试，阻止 transpile-only 绿,verified-code,TSC公开合同/pack编译已成为检查,保留
+C10,重新验证 Runtime 所有权、Atomic Snapshot 和 Durable Ack,partial,入口与事务/ACK有实接线，但稳定session仍按每cursor实例化,T02跨轮业务验收
+C11,把 Recall Lease 持久化并实现 TTL/次数/撤销,verified-code,SQLite Lease与消费/TTL已实现，相关定向测试自报绿,保留并在新scope验收，不重新造lease
+C12,完成 Provider Reserve/Cache Usage 的来源分级契约,partial,来源分级类型已加；实际响应与新view绑定仍有风险,T05
+C13,拆分 logicalTokens、effectiveInput 与 monetaryCost,partial,合同区分logical/cost，Live尚未保存完整usage,T05/T08
+C14,稳定 Directory/Recall/Page 预算并加入 no-recall 负例,partial,分页/echo/预算已做；祖先访问和UTF边界仍需修,T02/T06
+C15,运行真实 Provider Cache/Metadata Ablation,not-demonstrated,无相同候选/真正cache字段的可信净费用消融,T12小实验后再决定是否扩大
+C16,拆分 Component Safety Gate 与 Product Adoption Gate,partial,B1诊断与B2主候选结构存在；恢复/覆盖/质量门仍混合,T07/T08
+C17,把 Product Adoption 主比较改为 B2 对 B0,verified-code,最新raw report primaryCandidateArm=B2，主计算使用B2,修byFamily残留B1标签，不重开主比较
+C18,分层记录 checkpoint、materialized view、request 与 provider usage,partial,usageLayers存在，summary仍标materializedView且provider总量unknown,T05/T08
+C19,制定超时、重试、缺失与 ITT 统计策略,partial,11失败组保留；主完整配对仍与可选诊断臂耦合,T08
+C20,让断点续跑强制单一 Run Epoch,partial,epoch拒绝不同run，source-set补证627项匹配,T08以真实源集合替wrapper hash
+C21,同时校验 canonical object hash 与 artifact byte hash,verified-code,实际持久JSON字节hash区分canonical hash；report byte独立匹配,保留；测试不同JSON编码
+C22,冻结真实 Trace Corpus、Source Witness 和 Train/Test Split,partial,少量真实Codex dev同cluster；当前主Gate仍synthetic-public,T10清楚标来源，不伪造独立holdout
+C23,校正 seed/replicate 语义并记录 Provider Sampling,verified-code,seedMode replicate-repeat/samplingSource unavailable明确,保留；不再叫受控随机seed
+C24,完成 current-head 100×3 四臂权威运行,partial,300已尝试289四臂完整，质量失败；不是未执行,不重复大Gate，T12小而独立
+C25,重写 Natural Pressure 为 arm-specific 状态机,partial,arm-specific检查和受控宿主补测已出现，最终目标服务证据不足,集中一次测试；区分预防与触发
+C26,拆分 Overflow Prevention 与 Forced Recovery,partial,真实Host+受控Provider overflow/retry测试自报已做；目标Provider不同层,保留controlled标签；不要求现实服务必须overflow
+C27,实现无手工 compact 的三周期 Autonomous Recursive Lane,partial,受控宿主三次自动checkpoint已有证据；不等于目标服务长程验证,集中验收只测目标声明
+C28,在长程 Lane 中验证 correction/branch/restart/side-effect oracle,partial,来源/branch/restart定向补测有进展；缺真实coding总体验收,T10/T12
+C29,同步 HANDOFF、UNRUN、Finding 与 Task 状态,partial,当前报告很诚实，但COMPATIBILITY仍有旧HEAD等残留,T01/T12只留一份权威状态
+C30,生成去敏、可复算且不污染 Git 的 RC Bundle,partial,真实密钥隔离原件、source hash、脱敏副本hash有进步；附件缺tar/完整原件,T09先预防，T08小而完整离线包
+C31,执行双主门、保护分支与发布决策,not-demonstrated,unit/compat失败且质量门未过，publication=false正确,将个人canary与广泛发布分开

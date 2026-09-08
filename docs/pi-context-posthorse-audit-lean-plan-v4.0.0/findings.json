@@ -1,0 +1,227 @@
+[
+  {
+    "id": "F01",
+    "priority": "P0",
+    "area": "运行时",
+    "title": "Reducer 可见结果未回接，模型只收到指针",
+    "source": "apps/pi-context-runtime/src/composition-root.ts:655-683; packages/runtime/src/observation-service.ts:81-101",
+    "evidence": "reduced.visibleText 仅进入 Evidence Admission；return {...projected} 保留 default-pointer visibleContent。失败测试日志的错误名不在模型可见结果中。",
+    "evidenceLevel": "原模块隔离执行 + 默认组合根静态追踪",
+    "tasks": [
+      "T03"
+    ],
+    "acceptance": "必须返回有界高信号内容和有效 Evidence 句柄；短结果不指针化；工具成功/失败、退出码、文件路径不得只进索引。",
+    "status": "open"
+  },
+  {
+    "id": "F02",
+    "priority": "P0",
+    "area": "身份与检索",
+    "title": "把变化游标当访问边界，祖先证据不可读",
+    "source": "apps/pi-context-runtime/src/composition-root.ts:179-212,1303-1318; packages/storage-node/src/fts-index.ts:180-204; packages/runtime/src/evidence-service.ts:310-337",
+    "evidence": "leaf/lineage 随消息追加变化；服务、FTS、Evidence/CAS 都要求完全相等。新游标读取上一游标记录被拒绝；模型切换也被当跨权限域。",
+    "evidenceLevel": "原 EvidenceService 隔离执行 + SQL/身份链静态证据；尚未完整 Pi 重放",
+    "tasks": [
+      "T02"
+    ],
+    "acceptance": "分离稳定会话身份、原始来源游标、当前分支祖先授权、请求快照 fence；允许同分支祖先，拒绝兄弟分支和外工作区。",
+    "status": "open"
+  },
+  {
+    "id": "F03",
+    "priority": "P0",
+    "area": "物化",
+    "title": "按内容去重丢掉不同的活动工具步骤",
+    "source": "packages/core/src/materialization/dedup.ts:1-66; packages/pi-adapter/src/message-codec.ts:120-196",
+    "evidence": "toolCall 进入 opaque 后 normalized.content=[]；同内容不同 ID 被合并。两个不同调用均输出 OK 的五条活动消息仅保留三条。",
+    "evidenceLevel": "原 MessageCodec + dedup 函数联合隔离执行",
+    "tasks": [
+      "T04"
+    ],
+    "acceptance": "活动事件按稳定事件 ID 保留，不对其做语义去重；工具批次整体选择，保留每个 call/result 的 ID、顺序和对应关系。",
+    "status": "open"
+  },
+  {
+    "id": "F04",
+    "priority": "P0",
+    "area": "多模态",
+    "title": "图片在原文入库前已经丢失",
+    "source": "packages/pi-adapter/src/tool-result-hook.ts:74-83; packages/runtime/src/observation-service.ts:81-90",
+    "evidence": "非 text block 转为空文本；rawToolBytes 又只拼文本。image 未进 CAS 也未传给模型。",
+    "evidenceLevel": "原 ToolResult Hook 隔离执行",
+    "tasks": [
+      "T03"
+    ],
+    "acceptance": "先保存完整类型化观察封装；未支持的块直接安全透传并标明未降噪，不得静默清空。",
+    "status": "open"
+  },
+  {
+    "id": "F05",
+    "priority": "P1",
+    "area": "评分",
+    "title": "正确引用被判失败，矛盾回答可能通过",
+    "source": "packages/benchmark/src/scoring/probe.ts:40,125-158",
+    "evidence": "任何 checkpoint v2 字样都被判 summary；No. Actually yes... 被 leadingPolarity 判 no。16 个成功臂被标 summary，至少有明确正确拒绝的实例。",
+    "evidenceLevel": "原 scorer 隔离执行 + 报告逐行复核",
+    "tasks": [
+      "T07"
+    ],
+    "acceptance": "summary 禁入评分由来源通道隔离保证，不用字词黑名单；结构化短答案优先，冲突/不明输出记 ambiguous，不能静默判成功。",
+    "status": "open"
+  },
+  {
+    "id": "F06",
+    "priority": "P1",
+    "area": "验证覆盖",
+    "title": "恢复 n/a 被聚合成恢复失败；覆盖率混入回答分",
+    "source": "tests/live-gate/paired-w2-live.ts:880-921; scoreArm/inspectCompaction",
+    "evidence": "所有成功臂 recoveryStatus=n/a，零可测样本；directiveCoverage 实际等于 Probe 正确性。缺覆盖并不等于存储实现失败。",
+    "evidenceLevel": "全量 report.json 复算 + Runner 静态核查",
+    "tasks": [
+      "T07"
+    ],
+    "acceptance": "分别报告 eligible/tested/passed/failed；零分母为 not-tested 并阻止恢复能力声明。Artifact 保留、Reader、Recovery 三种门独立。",
+    "status": "open"
+  },
+  {
+    "id": "F07",
+    "priority": "P1",
+    "area": "语料",
+    "title": "空工作区下目标版本与实际版本混淆",
+    "source": "tests/live-gate/paired-w2-live.ts:runPair/runArm; report pairs tu-00#s1",
+    "evidence": "F0 明确报告工作区为空而无法确认生效版本；B0 可能读取真实环境或耗时，B2 只据要求回答7。期望目标值与真实已实现状态没有分开。",
+    "evidenceLevel": "报告中的回答证据 + 隔离 Workspace 构建代码",
+    "tasks": [
+      "T10"
+    ],
+    "acceptance": "Reader 问目标版本时禁工具；Coding 问已实现版本时准备真实文件并以环境断言验证，Oracle 指明 claim kind。",
+    "status": "open"
+  },
+  {
+    "id": "F08",
+    "priority": "P1",
+    "area": "统计",
+    "title": "二元成功差的中位数 CI 没有非劣证明力",
+    "source": "tests/live-gate/paired-w2-live.ts:plannedMetric/pairedOrZero; tests/w1-gate/scorer.ts:pairedBootstrapCi",
+    "evidence": "多数配对差为0时中位数及其CI可全为0，掩盖不同失败率。100个ID来自五个模板，三次重复不等于独立任务。",
+    "evidenceLevel": "复算 discordance + Bootstrap 代码核查",
+    "tasks": [
+      "T07"
+    ],
+    "acceptance": "质量使用成功率均值差、配对不一致表和 cluster bootstrap；独立聚类按任务来源，不按参数化ID。小样本仅工程信号。",
+    "status": "open"
+  },
+  {
+    "id": "F09",
+    "priority": "P1",
+    "area": "经济性",
+    "title": "最后一次 input 不等于整次任务成本",
+    "source": "tests/live-gate/paired-w2-live.ts:lastAssistant,slimArm,936-958",
+    "evidence": "仅记录最后响应 usage.input/output；缺 cacheRead/write 与全链请求。costPerSuccess 是成功子集输入中位数之比，非总费用/成功数。summary token 被标成 materialized view。",
+    "evidenceLevel": "原始 JSON 字段审计 + Runner 静态核查",
+    "tasks": [
+      "T08"
+    ],
+    "acceptance": "按请求记录完整 usage 和来源，累计所有压缩/回读/重试/回答；未知值用 null；金额只在价格和usage已知时计算。",
+    "status": "open"
+  },
+  {
+    "id": "F10",
+    "priority": "P1",
+    "area": "实验设计",
+    "title": "诊断臂失败错误缩减主比较样本",
+    "source": "tests/live-gate/paired-w2-live.ts:880-899,986-1010",
+    "evidence": "B0/B2 两臂完整有290对，但总体只用四臂都成功的289对；byFamily 仍输出 B1 字段。固定执行次序也可能混入服务端缓存影响。",
+    "evidenceLevel": "全量300对重新配对",
+    "tasks": [
+      "T08"
+    ],
+    "acceptance": "主比较以 B0/B2 成对与ITT为准；B1/F0独立诊断。轮换执行顺序、单并发、记录缓存条件。",
+    "status": "open"
+  },
+  {
+    "id": "F11",
+    "priority": "P0",
+    "area": "安全",
+    "title": "隔离目录不隔离凭据和工具访问",
+    "source": "tests/live-gate/paired-w2-live.ts:180-213; docs/reports/2026-09-06-posthorse-300-gate.md",
+    "evidence": "Runner 复制 models/auth 配置且工具可以读本机；报告确认最终14文本及18SQLite含真实本地凭据。事后脱敏不撤回先前暴露。",
+    "evidenceLevel": "项目报告明确披露 + 代码路径",
+    "tasks": [
+      "T09"
+    ],
+    "acceptance": "真实调用前切断工具对凭据的可见性；使用外置本地凭据代理与文件系统/进程隔离，或暂停 tools-enabled live。轮换已进入日志/模型的凭据，原件隔离。",
+    "status": "open"
+  },
+  {
+    "id": "F12",
+    "priority": "P2",
+    "area": "证据",
+    "title": "主要源文件可核对，但原始归档不完整可得",
+    "source": "artifacts/runs/posthorse-300-gate-20260905-2210/source-manifest.json,closeout-manifest.json",
+    "evidence": "628项中627项当前同路径字节匹配；1脚本报告称迁移，但附件中迁移件也未找到。脱敏tar/原始store缺失，不能离线复演全部恢复。",
+    "evidenceLevel": "独立 SHA-256 比对",
+    "tasks": [
+      "T08"
+    ],
+    "acceptance": "保留这种作用域证据，不冒称整个工作树或全量Live重放；小而完整可复算的脱敏运行包优先于大量路径占位。",
+    "status": "open"
+  },
+  {
+    "id": "F13",
+    "priority": "P1",
+    "area": "性能",
+    "title": "每追加消息新建 Runtime，热路径仍全量扫描",
+    "source": "apps/pi-context-runtime/src/composition-root.ts:179-212,456,1303-1318; packages/storage-node/src/fts-index.ts:171-178",
+    "evidence": "Runtime/Service 以完整变化游标建Map；getBranch 每次派生全量；FTS缓存使用total_changes，usage/lease写也会失效。缓存单测不等价于实际性能收益。",
+    "evidenceLevel": "源代码复杂度与生命周期分析，未做完整宿主性能重跑",
+    "tasks": [
+      "T02",
+      "T06"
+    ],
+    "acceptance": "稳定会话Owner + 增量祖先索引；只缓存正确授权结果；先测真实正常追加序列，不再添加新缓存层。",
+    "status": "open"
+  },
+  {
+    "id": "F14",
+    "priority": "P2",
+    "area": "工程",
+    "title": "旧 fixture 未认证却期待 PCR takeover",
+    "source": "tests/tasks/t31.test.ts:product extension test; .github/workflows/required.yml",
+    "evidence": "当前unit805pass1fail；t31直接append用户消息缺来源回执，新规则应fallback。严格编译与packed已通过。保护检查与个人项目产品正确性耦合过重。",
+    "evidenceLevel": "当前 GitHub Required 日志 + fixture审查",
+    "tasks": [
+      "T01"
+    ],
+    "acceptance": "补真实 input/message_start 认证的正例及无回执负例；保留保护检查但改可选治理，不修改来源守卫来迎合旧测试。",
+    "status": "open"
+  },
+  {
+    "id": "F15",
+    "priority": "P1",
+    "area": "能力声明",
+    "title": "现插件不是 stock-Pi 即插即用，Posthorse又是另一套fork",
+    "source": "apps/pi-context-runtime/package.json:piHostContract; packages/pi-adapter/src/user-input-hook.ts:20; docs/COMPATIBILITY.md",
+    "evidence": "PCR0.84.4认证metadata补丁已经是v3前提；Posthorse的newContext需要0.85.0 fork。兼容文档仍有旧HEAD/过宽说明。",
+    "evidenceLevel": "包合同 + Posthorse固定源码",
+    "tasks": [
+      "T01"
+    ],
+    "acceptance": "本轮锁定现有轻补丁，不引入Posthorse原生换窗；明确当前支持范围，stock降级或上游化另立后续实验。",
+    "status": "open"
+  },
+  {
+    "id": "F16",
+    "priority": "P1",
+    "area": "部署与范围",
+    "title": "keep-pi-native 是报告结论，不是自动安装保护",
+    "source": "apps/pi-context-runtime/src/extension.ts:bindClaimedRuntime/registerCompactionHooks",
+    "evidence": "加载默认扩展即注册接管和context改写；没有同名产品profile把safe-ingress与full runtime显式分开。单独 publicationClaim=false 不会阻止用户启用。",
+    "evidenceLevel": "默认注册入口静态核查",
+    "tasks": [
+      "T11"
+    ],
+    "acceptance": "增加明示 off/ingress/experimental-runtime 配置；默认ingress保留Native compaction且context透传；实验配置才接管。",
+    "status": "open"
+  }
+]

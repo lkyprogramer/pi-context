@@ -1,0 +1,360 @@
+[
+  {
+    "id": "T01",
+    "title": "恢复正确认证fixture，并收敛检查入口",
+    "dependsOn": [],
+    "findings": [
+      "F14",
+      "F15"
+    ],
+    "allowedFiles": [
+      "tests/tasks/t31.test.ts",
+      "tests/helpers/product-harness.ts",
+      "tests/acceptance/controlled-host-compaction.test.ts",
+      "package.json",
+      ".github/workflows/required.yml",
+      ".github/workflows/compatibility.yml",
+      "docs/COMPATIBILITY.md"
+    ],
+    "test": "tests/tasks/t31.test.ts",
+    "commands": [
+      "pnpm exec vitest run tests/tasks/t31.test.ts",
+      "pnpm typecheck",
+      "pnpm test:packed"
+    ],
+    "status": "pending",
+    "document": "tasks/T01.md"
+  },
+  {
+    "id": "T02",
+    "title": "拆分访问身份与快照，修复跨轮祖先可见性",
+    "dependsOn": [
+      "T01"
+    ],
+    "findings": [
+      "F02",
+      "F13"
+    ],
+    "allowedFiles": [
+      "packages/core/src/identity/branch-access.ts",
+      "packages/core/src/index.ts",
+      "packages/contracts/src/v2.ts",
+      "packages/runtime/src/runtime-session.ts",
+      "packages/runtime/src/evidence-service.ts",
+      "packages/runtime/src/ports.ts",
+      "packages/storage-node/src/evidence-repository.ts",
+      "packages/storage-node/src/fts-index.ts",
+      "packages/storage-node/src/state-store.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/core/test/identity/branch-access.test.ts",
+      "tests/acceptance/ancestor-evidence.test.ts"
+    ],
+    "test": "packages/core/test/identity/branch-access.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/core/test/identity/branch-access.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T02.md"
+  },
+  {
+    "id": "T03",
+    "title": "把Reducer真正交给模型，并保留完整观察块",
+    "dependsOn": [
+      "T02"
+    ],
+    "findings": [
+      "F01",
+      "F04"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/observation-envelope.ts",
+      "packages/runtime/src/observation-service.ts",
+      "packages/runtime/src/ports.ts",
+      "packages/pi-adapter/src/tool-result-hook.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/runtime/test/observation-envelope.test.ts",
+      "tests/acceptance/tool-result-flow.test.ts",
+      "packages/contracts/src/types.ts",
+      "packages/contracts/src/v2.ts",
+      "packages/pi-adapter/src/message-codec.ts"
+    ],
+    "test": "packages/runtime/test/observation-envelope.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/runtime/test/observation-envelope.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T03.md"
+  },
+  {
+    "id": "T04",
+    "title": "禁止内容去重删除活动工具批次",
+    "dependsOn": [
+      "T03"
+    ],
+    "findings": [
+      "F03"
+    ],
+    "allowedFiles": [
+      "packages/core/src/materialization/dedup.ts",
+      "packages/core/src/materialization/materializer.ts",
+      "packages/pi-adapter/src/message-codec.ts",
+      "packages/core/test/materialization/dedup.test.ts",
+      "tests/acceptance/active-tool-batch.test.ts"
+    ],
+    "test": "packages/core/test/materialization/dedup.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/core/test/materialization/dedup.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T04.md"
+  },
+  {
+    "id": "T05",
+    "title": "校正请求、窗口与任务级usage",
+    "dependsOn": [
+      "T04"
+    ],
+    "findings": [
+      "F09"
+    ],
+    "allowedFiles": [
+      "packages/runtime/src/telemetry/request-usage.ts",
+      "packages/pi-adapter/src/context-hook.ts",
+      "apps/pi-context-runtime/src/extension.ts",
+      "packages/runtime/test/request-usage.test.ts",
+      "tests/acceptance/context-budget.test.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/runtime/src/usage.ts"
+    ],
+    "test": "packages/runtime/test/request-usage.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/runtime/test/request-usage.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T05.md"
+  },
+  {
+    "id": "T06",
+    "title": "完成分页与低干扰检索热路径",
+    "dependsOn": [
+      "T02",
+      "T05"
+    ],
+    "findings": [
+      "F13"
+    ],
+    "allowedFiles": [
+      "packages/core/src/retrieval/bounded.ts",
+      "packages/pi-adapter/src/tools/read.ts",
+      "packages/pi-adapter/src/tools/recall.ts",
+      "packages/storage-node/src/fts-index.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/core/test/retrieval/bounded.test.ts",
+      "packages/pi-adapter/test/read-pages.test.ts",
+      "packages/storage-node/test/fts-index-cache.test.ts"
+    ],
+    "test": "packages/pi-adapter/test/read-pages.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/pi-adapter/test/read-pages.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T06.md"
+  },
+  {
+    "id": "T07",
+    "title": "修评分器、恢复分母与配对统计",
+    "dependsOn": [
+      "T01"
+    ],
+    "findings": [
+      "F05",
+      "F06",
+      "F08"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/scoring/probe.ts",
+      "packages/benchmark/src/scoring/recovery.ts",
+      "packages/benchmark/src/statistics/paired-small.ts",
+      "tests/live-gate/paired-w2-live.ts",
+      "packages/benchmark/test/scoring/probe.test.ts",
+      "packages/benchmark/test/scoring/recovery.test.ts",
+      "packages/benchmark/test/statistics/paired.test.ts"
+    ],
+    "test": "packages/benchmark/test/scoring/probe.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/benchmark/test/scoring/probe.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T07.md"
+  },
+  {
+    "id": "T08",
+    "title": "统一小实验运行器与可复算报告",
+    "dependsOn": [
+      "T05",
+      "T07"
+    ],
+    "findings": [
+      "F09",
+      "F10",
+      "F12"
+    ],
+    "allowedFiles": [
+      "packages/benchmark/src/small-runner.ts",
+      "scripts/eval-small.mjs",
+      "scripts/verify-small-run.mjs",
+      "package.json",
+      "experiments/personal-canary.json",
+      "packages/benchmark/test/small-runner.test.ts",
+      "tests/live-gate/paired-w2-live.ts"
+    ],
+    "test": "packages/benchmark/test/small-runner.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/benchmark/test/small-runner.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T08.md"
+  },
+  {
+    "id": "T09",
+    "title": "把真实凭据移出Agent可读测试环境",
+    "dependsOn": [
+      "T08"
+    ],
+    "findings": [
+      "F11"
+    ],
+    "allowedFiles": [
+      "scripts/eval-small.mjs",
+      "scripts/credential-broker.mjs",
+      "packages/benchmark/src/small-runner.ts",
+      "tests/security/eval-secrets.test.ts",
+      "docs/SECURITY.md",
+      "experiments/personal-canary.json"
+    ],
+    "test": "tests/security/eval-secrets.test.ts",
+    "commands": [
+      "pnpm exec vitest run tests/security/eval-secrets.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T09.md"
+  },
+  {
+    "id": "T10",
+    "title": "建立小而真实的恢复与Coding任务集",
+    "dependsOn": [
+      "T02",
+      "T03",
+      "T04",
+      "T07",
+      "T08"
+    ],
+    "findings": [
+      "F06",
+      "F07"
+    ],
+    "allowedFiles": [
+      "experiments/cases/*.json",
+      "tests/helpers/product-harness.ts",
+      "tests/acceptance/ancestor-evidence.test.ts",
+      "tests/acceptance/active-tool-batch.test.ts",
+      "packages/benchmark/test/small-corpus.test.ts",
+      "packages/benchmark/src/small-runner.ts"
+    ],
+    "test": "packages/benchmark/test/small-corpus.test.ts",
+    "commands": [
+      "pnpm exec vitest run packages/benchmark/test/small-corpus.test.ts",
+      "pnpm typecheck"
+    ],
+    "status": "pending",
+    "document": "tasks/T10.md"
+  },
+  {
+    "id": "T11",
+    "title": "显式产品模式与可用的短工作状态",
+    "dependsOn": [
+      "T02",
+      "T03",
+      "T04",
+      "T06"
+    ],
+    "findings": [
+      "F16"
+    ],
+    "allowedFiles": [
+      "apps/pi-context-runtime/src/extension.ts",
+      "apps/pi-context-runtime/src/composition-root.ts",
+      "packages/core/src/compaction/checkpoint.ts",
+      "packages/runtime/src/compaction-service.ts",
+      "tests/acceptance/default-profile.test.ts",
+      "tests/acceptance/compaction-fallback.test.ts",
+      "docs/CONFIGURATION.md",
+      "docs/INSTALL.md",
+      "tests/helpers/product-harness.ts"
+    ],
+    "test": "tests/acceptance/default-profile.test.ts",
+    "commands": [
+      "pnpm exec vitest run tests/acceptance/default-profile.test.ts",
+      "pnpm typecheck",
+      "pnpm test:packed"
+    ],
+    "status": "pending",
+    "document": "tasks/T11.md"
+  },
+  {
+    "id": "T12",
+    "title": "一次集中验收并给出可复算采纳决策",
+    "dependsOn": [
+      "T01",
+      "T02",
+      "T03",
+      "T04",
+      "T05",
+      "T06",
+      "T07",
+      "T08",
+      "T09",
+      "T10",
+      "T11"
+    ],
+    "findings": [
+      "F05",
+      "F06",
+      "F07",
+      "F08",
+      "F09",
+      "F10",
+      "F12",
+      "F14",
+      "F15",
+      "F16"
+    ],
+    "allowedFiles": [
+      "experiments/personal-canary.json",
+      "scripts/verify-small-run.mjs",
+      "docs/reports/lean-v4-result.md",
+      "HANDOFF.md",
+      "artifacts/lean-v4/run.json",
+      "artifacts/lean-v4/results.jsonl",
+      "artifacts/lean-v4/report.json",
+      "packages/benchmark/test/small-runner.test.ts",
+      "packages/benchmark/src/small-runner.ts"
+    ],
+    "test": "packages/benchmark/test/small-runner.test.ts",
+    "commands": [
+      "pnpm check:local",
+      "pnpm eval:small -- --preflight",
+      "PCR_LIVE=1 pnpm eval:small -- --config experiments/personal-canary.json"
+    ],
+    "status": "pending",
+    "document": "tasks/T12.md"
+  }
+]

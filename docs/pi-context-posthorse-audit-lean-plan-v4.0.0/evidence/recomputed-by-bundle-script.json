@@ -1,0 +1,344 @@
+{
+  "kind": "offline-reaggregation-no-rescoring",
+  "planned": 300,
+  "complete4": 289,
+  "primaryComplete": 290,
+  "complete4Comparison": {
+    "n": 289,
+    "observedInputPairs": 289,
+    "relativeDeltaPairs": 289,
+    "medianPairedInputDelta": -0.09345794392523364,
+    "medianAbsoluteInputSaving": 44,
+    "lastInputSumBase": 311150,
+    "lastInputSumCandidate": 118012,
+    "lastInputSumDelta": -0.6207231238952273,
+    "reportedSuccessBase": 236,
+    "reportedSuccessCandidate": 281,
+    "meanReportedSuccessDelta": 0.15570934256055363,
+    "discordance": {
+      "1/0": 6,
+      "1/1": 230,
+      "0/0": 2,
+      "0/1": 51
+    }
+  },
+  "primaryCompleteComparison": {
+    "n": 290,
+    "observedInputPairs": 290,
+    "relativeDeltaPairs": 290,
+    "medianPairedInputDelta": -0.08690754339118825,
+    "medianAbsoluteInputSaving": 43.0,
+    "lastInputSumBase": 311288,
+    "lastInputSumCandidate": 118484,
+    "lastInputSumDelta": -0.6193749839377041,
+    "reportedSuccessBase": 237,
+    "reportedSuccessCandidate": 282,
+    "meanReportedSuccessDelta": 0.15517241379310345,
+    "discordance": {
+      "1/0": 6,
+      "1/1": 231,
+      "0/0": 2,
+      "0/1": 51
+    }
+  },
+  "intentToTreatReportedScores": {
+    "n": 300,
+    "observedInputPairs": 290,
+    "relativeDeltaPairs": 290,
+    "medianPairedInputDelta": -0.08690754339118825,
+    "medianAbsoluteInputSaving": 43.0,
+    "lastInputSumBase": 311288,
+    "lastInputSumCandidate": 118484,
+    "lastInputSumDelta": -0.6193749839377041,
+    "reportedSuccessBase": 238,
+    "reportedSuccessCandidate": 290,
+    "meanReportedSuccessDelta": 0.17333333333333334,
+    "discordance": {
+      "1/0": 7,
+      "1/1": 231,
+      "0/1": 59,
+      "0/0": 3
+    }
+  },
+  "arms": {
+    "b0": {
+      "completed": 292,
+      "failedOrMissing": 8,
+      "reportedSuccessAllCompleted": 238,
+      "reportedSuccessComplete4": 236,
+      "summaryTokensMedianComplete4": 399,
+      "probeInputMedianComplete4": 499,
+      "probeOutputMedianComplete4": 161,
+      "compactLatencyMedianComplete4": 8404,
+      "probeBuckets": {
+        "ok": 238,
+        "unparseable": 11,
+        "mismatch": 41,
+        "summary": 2
+      },
+      "recovery": {
+        "statuses": {
+          "n/a": 292
+        },
+        "testedArms": 0,
+        "passedArms": 0,
+        "passRate": null,
+        "conclusion": "not-tested"
+      }
+    },
+    "b1": {
+      "completed": 299,
+      "failedOrMissing": 1,
+      "reportedSuccessAllCompleted": 289,
+      "reportedSuccessComplete4": 279,
+      "summaryTokensMedianComplete4": 24,
+      "probeInputMedianComplete4": 7348,
+      "probeOutputMedianComplete4": 90,
+      "compactLatencyMedianComplete4": 1694,
+      "probeBuckets": {
+        "ok": 289,
+        "unparseable": 2,
+        "summary": 8
+      },
+      "recovery": {
+        "statuses": {
+          "n/a": 299
+        },
+        "testedArms": 0,
+        "passedArms": 0,
+        "passRate": null,
+        "conclusion": "not-tested"
+      }
+    },
+    "b2": {
+      "completed": 298,
+      "failedOrMissing": 2,
+      "reportedSuccessAllCompleted": 290,
+      "reportedSuccessComplete4": 281,
+      "summaryTokensMedianComplete4": 24,
+      "probeInputMedianComplete4": 514,
+      "probeOutputMedianComplete4": 93,
+      "compactLatencyMedianComplete4": 1634,
+      "probeBuckets": {
+        "summary": 6,
+        "ok": 290,
+        "unparseable": 1,
+        "mismatch": 1
+      },
+      "recovery": {
+        "statuses": {
+          "n/a": 298
+        },
+        "testedArms": 0,
+        "passedArms": 0,
+        "passRate": null,
+        "conclusion": "not-tested"
+      }
+    },
+    "f0": {
+      "completed": 299,
+      "failedOrMissing": 1,
+      "reportedSuccessAllCompleted": 268,
+      "reportedSuccessComplete4": 263,
+      "summaryTokensMedianComplete4": 1,
+      "probeInputMedianComplete4": 5573,
+      "probeOutputMedianComplete4": 99,
+      "compactLatencyMedianComplete4": 575,
+      "probeBuckets": {
+        "ok": 268,
+        "unparseable": 2,
+        "mismatch": 29
+      },
+      "recovery": {
+        "statuses": {
+          "n/a": 299
+        },
+        "testedArms": 0,
+        "passedArms": 0,
+        "passRate": null,
+        "conclusion": "not-tested"
+      }
+    }
+  },
+  "families": {
+    "branch": {
+      "n": 59,
+      "observedInputPairs": 59,
+      "relativeDeltaPairs": 59,
+      "medianPairedInputDelta": 0.03187250996015936,
+      "medianAbsoluteInputSaving": -15,
+      "lastInputSumBase": 38553,
+      "lastInputSumCandidate": 23151,
+      "lastInputSumDelta": -0.39950198428137884,
+      "reportedSuccessBase": 56,
+      "reportedSuccessCandidate": 58,
+      "meanReportedSuccessDelta": 0.03389830508474576,
+      "discordance": {
+        "1/0": 1,
+        "1/1": 55,
+        "0/1": 3
+      }
+    },
+    "constraint": {
+      "n": 59,
+      "observedInputPairs": 59,
+      "relativeDeltaPairs": 59,
+      "medianPairedInputDelta": 0.019762845849802372,
+      "medianAbsoluteInputSaving": -6,
+      "lastInputSumBase": 26991,
+      "lastInputSumCandidate": 23658,
+      "lastInputSumDelta": -0.12348560631321548,
+      "reportedSuccessBase": 59,
+      "reportedSuccessCandidate": 57,
+      "meanReportedSuccessDelta": -0.03389830508474576,
+      "discordance": {
+        "1/1": 57,
+        "1/0": 2
+      }
+    },
+    "overflow": {
+      "n": 60,
+      "observedInputPairs": 60,
+      "relativeDeltaPairs": 60,
+      "medianPairedInputDelta": -0.5149200099987501,
+      "medianAbsoluteInputSaving": 206.5,
+      "lastInputSumBase": 40241,
+      "lastInputSumCandidate": 17919,
+      "lastInputSumDelta": -0.5547078849929177,
+      "reportedSuccessBase": 51,
+      "reportedSuccessCandidate": 57,
+      "meanReportedSuccessDelta": 0.1,
+      "discordance": {
+        "1/1": 49,
+        "0/1": 8,
+        "1/0": 2,
+        "0/0": 1
+      }
+    },
+    "temporal-update": {
+      "n": 52,
+      "observedInputPairs": 52,
+      "relativeDeltaPairs": 52,
+      "medianPairedInputDelta": 0.04572694111516415,
+      "medianAbsoluteInputSaving": -10.5,
+      "lastInputSumBase": 44590,
+      "lastInputSumCandidate": 17319,
+      "lastInputSumDelta": -0.6115945279210585,
+      "reportedSuccessBase": 12,
+      "reportedSuccessCandidate": 51,
+      "meanReportedSuccessDelta": 0.75,
+      "discordance": {
+        "0/0": 1,
+        "0/1": 39,
+        "1/1": 12
+      }
+    },
+    "tool-heavy": {
+      "n": 59,
+      "observedInputPairs": 59,
+      "relativeDeltaPairs": 59,
+      "medianPairedInputDelta": -0.38415366146458585,
+      "medianAbsoluteInputSaving": 301,
+      "lastInputSumBase": 160775,
+      "lastInputSumCandidate": 35965,
+      "lastInputSumDelta": -0.776302285803141,
+      "reportedSuccessBase": 58,
+      "reportedSuccessCandidate": 58,
+      "meanReportedSuccessDelta": 0.0,
+      "discordance": {
+        "1/0": 1,
+        "1/1": 57,
+        "0/1": 1
+      }
+    }
+  },
+  "warnings": [
+    "Scores inherited from the existing grader, not corrected.",
+    "Input fields are last-request observations, not full task/currency cost.",
+    "No claim of superiority or non-inferiority follows from this summary."
+  ],
+  "summaryMarkerRejectedArms": [
+    {
+      "id": "th-00#s0",
+      "arm": "b2",
+      "family": "tool-heavy"
+    },
+    {
+      "id": "br-11#s0",
+      "arm": "b1",
+      "family": "branch"
+    },
+    {
+      "id": "ov-08#s0",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-11#s0",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s0",
+      "arm": "b0",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-19#s0",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-09#s1",
+      "arm": "b2",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-13#s1",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s1",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-16#s1",
+      "arm": "b0",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-16#s1",
+      "arm": "b2",
+      "family": "overflow"
+    },
+    {
+      "id": "ct-14#s2",
+      "arm": "b2",
+      "family": "constraint"
+    },
+    {
+      "id": "ct-18#s2",
+      "arm": "b2",
+      "family": "constraint"
+    },
+    {
+      "id": "ov-01#s2",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s2",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s2",
+      "arm": "b2",
+      "family": "overflow"
+    }
+  ],
+  "inputArtifactSha256": "d30b76d20d73f4c3f8bc2955a0a6a3d3e4d604ecec27b25f8fa157b08c1f9303",
+  "sourceReportSha256": "2fb72ab5f8fa1f44da27fc57e8078d64f689ffa1283e1fced98b57b54094005d"
+}

@@ -1,0 +1,318 @@
+{
+  "reportSha256": "2fb72ab5f8fa1f44da27fc57e8078d64f689ffa1283e1fced98b57b54094005d",
+  "planned": 300,
+  "complete4": 289,
+  "twoArmComplete": 290,
+  "arms": {
+    "b0": {
+      "completed": 292,
+      "reportedSuccessAllCompleted": 238,
+      "reportedSuccessComplete4": 236,
+      "summaryTokensMedian": 399,
+      "probeInputMedian": 499,
+      "probeInputSum": 311150,
+      "outputMedian": 161,
+      "compactLatencyMedian": 8404,
+      "buckets": {
+        "ok": 238,
+        "unparseable": 11,
+        "mismatch": 41,
+        "summary": 2
+      },
+      "recovery": {
+        "n/a": 292
+      }
+    },
+    "b1": {
+      "completed": 299,
+      "reportedSuccessAllCompleted": 289,
+      "reportedSuccessComplete4": 279,
+      "summaryTokensMedian": 24,
+      "probeInputMedian": 7348,
+      "probeInputSum": 1361761,
+      "outputMedian": 90,
+      "compactLatencyMedian": 1694,
+      "buckets": {
+        "ok": 289,
+        "unparseable": 2,
+        "summary": 8
+      },
+      "recovery": {
+        "n/a": 299
+      }
+    },
+    "b2": {
+      "completed": 298,
+      "reportedSuccessAllCompleted": 290,
+      "reportedSuccessComplete4": 281,
+      "summaryTokensMedian": 24,
+      "probeInputMedian": 514,
+      "probeInputSum": 118012,
+      "outputMedian": 93,
+      "compactLatencyMedian": 1634,
+      "buckets": {
+        "summary": 6,
+        "ok": 290,
+        "unparseable": 1,
+        "mismatch": 1
+      },
+      "recovery": {
+        "n/a": 298
+      }
+    },
+    "f0": {
+      "completed": 299,
+      "reportedSuccessAllCompleted": 268,
+      "reportedSuccessComplete4": 263,
+      "summaryTokensMedian": 1,
+      "probeInputMedian": 5573,
+      "probeInputSum": 1524435,
+      "outputMedian": 99,
+      "compactLatencyMedian": 575,
+      "buckets": {
+        "ok": 268,
+        "unparseable": 2,
+        "mismatch": 29
+      },
+      "recovery": {
+        "n/a": 299
+      }
+    }
+  },
+  "families": {
+    "branch": {
+      "n": 59,
+      "b0": {
+        "success": 56,
+        "inputMedian": 471,
+        "inputSum": 38553,
+        "inputMean": 653.4406779661017
+      },
+      "b1": {
+        "success": 57,
+        "inputMedian": 7348,
+        "inputSum": 235473,
+        "inputMean": 3991.0677966101694
+      },
+      "b2": {
+        "success": 58,
+        "inputMedian": 515,
+        "inputSum": 23151,
+        "inputMean": 392.3898305084746
+      },
+      "f0": {
+        "success": 59,
+        "inputMedian": 5523,
+        "inputSum": 271731,
+        "inputMean": 4605.610169491525
+      },
+      "pairedInputDeltaMedian": 0.03187250996015936
+    },
+    "constraint": {
+      "n": 59,
+      "b0": {
+        "success": 59,
+        "inputMedian": 477,
+        "inputSum": 26991,
+        "inputMean": 457.47457627118644
+      },
+      "b1": {
+        "success": 59,
+        "inputMedian": 7347,
+        "inputSum": 324651,
+        "inputMean": 5502.559322033899
+      },
+      "b2": {
+        "success": 57,
+        "inputMedian": 514,
+        "inputSum": 23658,
+        "inputMean": 400.9830508474576
+      },
+      "f0": {
+        "success": 59,
+        "inputMedian": 5580,
+        "inputSum": 319743,
+        "inputMean": 5419.372881355932
+      },
+      "pairedInputDeltaMedian": 0.019762845849802372
+    },
+    "overflow": {
+      "n": 60,
+      "b0": {
+        "success": 51,
+        "inputMedian": 480.0,
+        "inputSum": 40241,
+        "inputMean": 670.6833333333333
+      },
+      "b1": {
+        "success": 53,
+        "inputMedian": 7348.0,
+        "inputSum": 260604,
+        "inputMean": 4343.4
+      },
+      "b2": {
+        "success": 57,
+        "inputMedian": 371.5,
+        "inputSum": 17919,
+        "inputMean": 298.65
+      },
+      "f0": {
+        "success": 59,
+        "inputMedian": 6045.0,
+        "inputSum": 369366,
+        "inputMean": 6156.1
+      },
+      "pairedInputDeltaMedian": -0.5149200099987501
+    },
+    "temporal-update": {
+      "n": 52,
+      "b0": {
+        "success": 12,
+        "inputMedian": 242.0,
+        "inputSum": 44590,
+        "inputMean": 857.5
+      },
+      "b1": {
+        "success": 51,
+        "inputMedian": 557.5,
+        "inputSum": 171854,
+        "inputMean": 3304.8846153846152
+      },
+      "b2": {
+        "success": 51,
+        "inputMedian": 288.5,
+        "inputSum": 17319,
+        "inputMean": 333.0576923076923
+      },
+      "f0": {
+        "success": 28,
+        "inputMedian": 133.5,
+        "inputSum": 123380,
+        "inputMean": 2372.6923076923076
+      },
+      "pairedInputDeltaMedian": 0.04572694111516415
+    },
+    "tool-heavy": {
+      "n": 59,
+      "b0": {
+        "success": 58,
+        "inputMedian": 667,
+        "inputSum": 160775,
+        "inputMean": 2725
+      },
+      "b1": {
+        "success": 59,
+        "inputMedian": 7353,
+        "inputSum": 369179,
+        "inputMean": 6257.271186440678
+      },
+      "b2": {
+        "success": 58,
+        "inputMedian": 516,
+        "inputSum": 35965,
+        "inputMean": 609.5762711864406
+      },
+      "f0": {
+        "success": 58,
+        "inputMedian": 5593,
+        "inputSum": 440215,
+        "inputMean": 7461.271186440678
+      },
+      "pairedInputDeltaMedian": -0.38415366146458585
+    }
+  },
+  "disagreements": [],
+  "meanSuccessDeltaComplete4": 0.15570934256055363,
+  "discordance": {
+    "1/0": 6,
+    "1/1": 230,
+    "0/0": 2,
+    "0/1": 51
+  },
+  "pairedInputDeltaMedian": -0.09345794392523364,
+  "absoluteInputSavingMedian": 44,
+  "totalInputDeltaComplete4": -0.6207231238952273,
+  "summaryMarkerRejections": [
+    {
+      "id": "th-00#s0",
+      "arm": "b2",
+      "family": "tool-heavy"
+    },
+    {
+      "id": "br-11#s0",
+      "arm": "b1",
+      "family": "branch"
+    },
+    {
+      "id": "ov-08#s0",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-11#s0",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s0",
+      "arm": "b0",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-19#s0",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-09#s1",
+      "arm": "b2",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-13#s1",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s1",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-16#s1",
+      "arm": "b0",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-16#s1",
+      "arm": "b2",
+      "family": "overflow"
+    },
+    {
+      "id": "ct-14#s2",
+      "arm": "b2",
+      "family": "constraint"
+    },
+    {
+      "id": "ct-18#s2",
+      "arm": "b2",
+      "family": "constraint"
+    },
+    {
+      "id": "ov-01#s2",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s2",
+      "arm": "b1",
+      "family": "overflow"
+    },
+    {
+      "id": "ov-14#s2",
+      "arm": "b2",
+      "family": "overflow"
+    }
+  ],
+  "evidenceClass": "offline aggregation of existing reported scores; not rescored live outcomes"
+}

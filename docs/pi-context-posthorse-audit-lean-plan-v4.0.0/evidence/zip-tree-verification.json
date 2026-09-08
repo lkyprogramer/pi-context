@@ -1,0 +1,8 @@
+{
+  "zipSha256": "df5aa843b30892d1ace2f44ef1040cbf26bb37cc7d142d2d9f898c59b20435ae",
+  "zipComment": "bb7aea1b88f6645fb8e4f0b930a4087630e7a679",
+  "reconstructedGitTree": "19a5b264ec57ae2ab69fb16f3433067354c1f6b1",
+  "githubTree": "19a5b264ec57ae2ab69fb16f3433067354c1f6b1",
+  "treeMatches": true,
+  "method": "Git blob/tree SHA-1, archive Unix executable/symlink modes"
+}

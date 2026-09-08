@@ -1,0 +1,24 @@
+{
+  "head": "bb7aea1b88f6645fb8e4f0b930a4087630e7a679",
+  "requiredRun": 34006207051,
+  "compatibilityRun": 34006207149,
+  "requiredConclusion": "failure",
+  "compatibilityConclusion": "failure",
+  "typecheck": "success",
+  "build": "success",
+  "packedInstall": "success",
+  "unit": {
+    "job": 101413752439,
+    "passedFiles": 169,
+    "failedFiles": 1,
+    "passedTests": 805,
+    "failedTests": 1,
+    "failure": "tests/tasks/t31.test.ts: product extension test expects compaction without authenticated receipt"
+  },
+  "compatibilityCells": 10,
+  "compatibilityTypecheck": "success in all 10",
+  "compatibilityUnit": "failure in all 10; later acceptance/contract/import scan skipped",
+  "branchProtected": false,
+  "protectionCheck": "failure (governance check; not runtime correctness)",
+  "source": "GitHub API and current job logs, retrieved 2026-09-06; not local full-suite replay"
+}

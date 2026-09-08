@@ -1,0 +1,163 @@
+{
+  "kind": "isolated-original-source-execution",
+  "node": "v22.16.0",
+  "fullPi": false,
+  "networkCalls": 0,
+  "sourceEdits": false,
+  "checks": [
+    {
+      "id": "valid-cited-refusal",
+      "result": {
+        "ok": false,
+        "skipped": true,
+        "normalized": "",
+        "family": "yes-no",
+        "bucket": "summary"
+      }
+    },
+    {
+      "id": "valid-refusal-no-citation",
+      "result": {
+        "ok": true,
+        "skipped": false,
+        "normalized": "no",
+        "family": "yes-no",
+        "bucket": "ok"
+      }
+    },
+    {
+      "id": "contradictory-refusal",
+      "result": {
+        "ok": true,
+        "skipped": false,
+        "normalized": "no",
+        "family": "yes-no",
+        "bucket": "ok"
+      }
+    },
+    {
+      "id": "distinct-active-tool-events-content-dedup",
+      "inputIds": [
+        "hm_053fe58b1c9490709514266c",
+        "hm_9cdbdd07b95b2845e977cb25",
+        "hm_aed0c066cdf38c099e05bd0c",
+        "hm_c62d21e16de1ad14727172e3",
+        "hm_c5d22e9b52a1673a5d3ecac8"
+      ],
+      "keptIds": [
+        "hm_053fe58b1c9490709514266c",
+        "hm_9cdbdd07b95b2845e977cb25",
+        "hm_aed0c066cdf38c099e05bd0c"
+      ],
+      "inputCount": 5,
+      "keptCount": 3,
+      "keptToolCallIds": [
+        "call-1"
+      ]
+    },
+    {
+      "id": "inner-visible-pointer-only",
+      "storedUtf8": "FAILED: UserServiceTest; exit=1",
+      "visibleContent": [
+        {
+          "type": "text",
+          "text": "[pcr observation pointer] ctx://observation/blob_d7ddd7704b6d7a6493f8c3fb36f41e2c1132a67ba5715ea4952512a554d4459e"
+        }
+      ],
+      "containsFailure": false
+    },
+    {
+      "id": "image-erased-before-raw-store",
+      "originalTypes": [
+        "image"
+      ],
+      "ingestedContent": [
+        {
+          "type": "text",
+          "text": ""
+        }
+      ]
+    },
+    {
+      "id": "next-leaf-read-original-evidence",
+      "oldLeaf": "leaf-A",
+      "currentLeaf": "leaf-B",
+      "result": "PCR_EVIDENCE_SCOPE_MISMATCH",
+      "explanation": "Repository supplies the real prior record; production repository/FTS also impose exact cursor equality."
+    }
+  ],
+  "loaded": [
+    {
+      "path": "packages/benchmark/src/scoring/probe.ts",
+      "sha256": "39fd231a7267b2ba5447e10448c03500cf62430ce360142cd0c725d5d856d2df"
+    },
+    {
+      "path": "packages/pi-adapter/src/message-codec.ts",
+      "sha256": "126935a5bc8a6ac8f2888117c51c538ca61d2c7a4b5737247031d7e2d101e296"
+    },
+    {
+      "path": "packages/contracts/src/index.ts",
+      "sha256": "5bd0a4f2a22b6c7e15eae79b08a275145f3064c3822e68a0171407f7e3861545"
+    },
+    {
+      "path": "packages/contracts/src/canonical.ts",
+      "sha256": "35392a88ae4ddf7e6f3542db1aecf7d1f81eb56dde36c8d1ba39293cb20343ce"
+    },
+    {
+      "path": "packages/contracts/src/errors.ts",
+      "sha256": "4ab8a31e86239bfe526a9a4928f0f7f012f73613c429a38a354b885a7a5da5d9"
+    },
+    {
+      "path": "packages/contracts/src/hash.ts",
+      "sha256": "bfa30fc856a2f9da159809b4cb03914b4f7a26e6849c8936cce818ffc161a18a"
+    },
+    {
+      "path": "packages/contracts/src/ids.ts",
+      "sha256": "1baa12c83efbf20d9eee823407218f2ecac85de846bdbd08ad481ebab49356df"
+    },
+    {
+      "path": "packages/contracts/src/identity.ts",
+      "sha256": "b74127dca5d8b9cbeb942834f1321b443a2cdcfc10402bca103345f037a5af2b"
+    },
+    {
+      "path": "packages/contracts/src/package-boundary.ts",
+      "sha256": "20974af320f3170ce02ab3bfc8e1bf1a101e54b8bae27a864cf10b78d5c86a56"
+    },
+    {
+      "path": "packages/contracts/src/providers.ts",
+      "sha256": "f9f9be0a4d100012920bb009b37881669e1b7da86dce065e571ffbee7af76586"
+    },
+    {
+      "path": "packages/contracts/src/semantic.ts",
+      "sha256": "9f99552f911fffd3817277691d217cca7d878c99785479aa60ea5667e85a2677"
+    },
+    {
+      "path": "packages/contracts/src/types.ts",
+      "sha256": "61e1137a9ea880f163880627c8d45d43dd30a9c755d48a33039a49f426f4a032"
+    },
+    {
+      "path": "packages/contracts/src/v2.ts",
+      "sha256": "87d8ba622141543b4f1f64711508a64cc828b363d3282f39a48248c3333df079"
+    },
+    {
+      "path": "packages/core/src/materialization/dedup.ts",
+      "sha256": "e6ac1d14aa62da4fc0411b889842b62bfb7c45308271ba4d4478ccbb1403c3f3"
+    },
+    {
+      "path": "packages/runtime/src/observation-service.ts",
+      "sha256": "825df0fa44fcf772db86ae42add45f370faf11becfc7946f2916e0fac1f8e994"
+    },
+    {
+      "path": "packages/pi-adapter/src/tool-result-hook.ts",
+      "sha256": "bdcab1feed48a4d31661371b489db36121b7fe9a0c681256a2afa262c7c238b3"
+    },
+    {
+      "path": "packages/kernel/src/security/tool-taxonomy.ts",
+      "sha256": "e773fdd409da9c58bf51ba269e0d09fe7d82abb37a1a2e17e83c2091951bb185"
+    },
+    {
+      "path": "packages/runtime/src/evidence-service.ts",
+      "sha256": "18649593e8a6f854ad92022b9a8b63ed19c22c3f7a586e32bb64be4c3a17077d"
+    }
+  ]
+}

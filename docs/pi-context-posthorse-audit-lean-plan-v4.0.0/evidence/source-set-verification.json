@@ -1,0 +1,11 @@
+{
+  "sourceSetScope": "apps/packages/tests/scripts plus top-level JSON/YAML/TS/MJS, as declared by submitted manifest",
+  "recorded": 628,
+  "matchedSamePath": 627,
+  "mismatched": [],
+  "missing": [
+    "scripts/run-supplement-live.sh"
+  ],
+  "relocatedScript": "reported at artifacts/runs/local-supplement-20260905/run-supplement-live.sh.txt but absent from this attachment",
+  "wholeTreeReproductionClaim": false
+}

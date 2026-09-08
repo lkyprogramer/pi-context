@@ -1,0 +1,226 @@
+[
+  {
+    "id": "C00",
+    "title": "冻结 0e684e3 基线并建立增量验收台账",
+    "status": "verified-code",
+    "evidence": "旧基线与新候选报告/manifest明确分开",
+    "next": "保留来源台账，不重建流程系统"
+  },
+  {
+    "id": "C01",
+    "title": "修复当前严格 TypeScript 编译错误",
+    "status": "verified-code",
+    "evidence": "同HEAD Required typecheck成功；原implicit-any/cwd问题已修",
+    "next": "不重开旧编译修复"
+  },
+  {
+    "id": "C02",
+    "title": "让生产 Build 真正包含 strict compile 与 package compile",
+    "status": "verified-code",
+    "evidence": "当前build执行strict与编译产物校验成功",
+    "next": "保留"
+  },
+  {
+    "id": "C03",
+    "title": "恢复 packed tarball、clean install 与 SBOM",
+    "status": "verified-code",
+    "evidence": "同HEAD packed-install-hermetic成功",
+    "next": "集中验收复用"
+  },
+  {
+    "id": "C04",
+    "title": "恢复 Pi/Node/OS Compatibility Matrix",
+    "status": "partial",
+    "evidence": "十个compat cell编译成功但unit失败，后续acceptance/scan跳过",
+    "next": "T01修fixture；精简重复min/current"
+  },
+  {
+    "id": "C05",
+    "title": "把 Branch Protection 校验改为真实 fail-closed 并启用规则",
+    "status": "re-scoped",
+    "evidence": "校验已真实failclosed，main仍未保护",
+    "next": "个人开发不强制管理员治理；报告保留真实状态"
+  },
+  {
+    "id": "C06",
+    "title": "修正 session_shutdown Event/Context 契约",
+    "status": "verified-code",
+    "evidence": "Shutdown Event与Context参数已分开，类型检查绿",
+    "next": "保留"
+  },
+  {
+    "id": "C07",
+    "title": "移除 RuntimeToolCtx.cwd 假设并建立 WorkspaceResolver",
+    "status": "verified-code",
+    "evidence": "Resolver与显式工具context已修",
+    "next": "T02另修访问cursor模型，不否认本项修复"
+  },
+  {
+    "id": "C08",
+    "title": "为 Workspace/Input/Cursor 回调建立显式内部类型",
+    "status": "verified-code",
+    "evidence": "回调显式类型进入合同；strict通过",
+    "next": "保留"
+  },
+  {
+    "id": "C09",
+    "title": "新增“tsc public contract”测试，阻止 transpile-only 绿",
+    "status": "verified-code",
+    "evidence": "TSC公开合同/pack编译已成为检查",
+    "next": "保留"
+  },
+  {
+    "id": "C10",
+    "title": "重新验证 Runtime 所有权、Atomic Snapshot 和 Durable Ack",
+    "status": "partial",
+    "evidence": "入口与事务/ACK有实接线，但稳定session仍按每cursor实例化",
+    "next": "T02跨轮业务验收"
+  },
+  {
+    "id": "C11",
+    "title": "把 Recall Lease 持久化并实现 TTL/次数/撤销",
+    "status": "verified-code",
+    "evidence": "SQLite Lease与消费/TTL已实现，相关定向测试自报绿",
+    "next": "保留并在新scope验收，不重新造lease"
+  },
+  {
+    "id": "C12",
+    "title": "完成 Provider Reserve/Cache Usage 的来源分级契约",
+    "status": "partial",
+    "evidence": "来源分级类型已加；实际响应与新view绑定仍有风险",
+    "next": "T05"
+  },
+  {
+    "id": "C13",
+    "title": "拆分 logicalTokens、effectiveInput 与 monetaryCost",
+    "status": "partial",
+    "evidence": "合同区分logical/cost，Live尚未保存完整usage",
+    "next": "T05/T08"
+  },
+  {
+    "id": "C14",
+    "title": "稳定 Directory/Recall/Page 预算并加入 no-recall 负例",
+    "status": "partial",
+    "evidence": "分页/echo/预算已做；祖先访问和UTF边界仍需修",
+    "next": "T02/T06"
+  },
+  {
+    "id": "C15",
+    "title": "运行真实 Provider Cache/Metadata Ablation",
+    "status": "not-demonstrated",
+    "evidence": "无相同候选/真正cache字段的可信净费用消融",
+    "next": "T12小实验后再决定是否扩大"
+  },
+  {
+    "id": "C16",
+    "title": "拆分 Component Safety Gate 与 Product Adoption Gate",
+    "status": "partial",
+    "evidence": "B1诊断与B2主候选结构存在；恢复/覆盖/质量门仍混合",
+    "next": "T07/T08"
+  },
+  {
+    "id": "C17",
+    "title": "把 Product Adoption 主比较改为 B2 对 B0",
+    "status": "verified-code",
+    "evidence": "最新raw report primaryCandidateArm=B2，主计算使用B2",
+    "next": "修byFamily残留B1标签，不重开主比较"
+  },
+  {
+    "id": "C18",
+    "title": "分层记录 checkpoint、materialized view、request 与 provider usage",
+    "status": "partial",
+    "evidence": "usageLayers存在，summary仍标materializedView且provider总量unknown",
+    "next": "T05/T08"
+  },
+  {
+    "id": "C19",
+    "title": "制定超时、重试、缺失与 ITT 统计策略",
+    "status": "partial",
+    "evidence": "11失败组保留；主完整配对仍与可选诊断臂耦合",
+    "next": "T08"
+  },
+  {
+    "id": "C20",
+    "title": "让断点续跑强制单一 Run Epoch",
+    "status": "partial",
+    "evidence": "epoch拒绝不同run，source-set补证627项匹配",
+    "next": "T08以真实源集合替wrapper hash"
+  },
+  {
+    "id": "C21",
+    "title": "同时校验 canonical object hash 与 artifact byte hash",
+    "status": "verified-code",
+    "evidence": "实际持久JSON字节hash区分canonical hash；report byte独立匹配",
+    "next": "保留；测试不同JSON编码"
+  },
+  {
+    "id": "C22",
+    "title": "冻结真实 Trace Corpus、Source Witness 和 Train/Test Split",
+    "status": "partial",
+    "evidence": "少量真实Codex dev同cluster；当前主Gate仍synthetic-public",
+    "next": "T10清楚标来源，不伪造独立holdout"
+  },
+  {
+    "id": "C23",
+    "title": "校正 seed/replicate 语义并记录 Provider Sampling",
+    "status": "verified-code",
+    "evidence": "seedMode replicate-repeat/samplingSource unavailable明确",
+    "next": "保留；不再叫受控随机seed"
+  },
+  {
+    "id": "C24",
+    "title": "完成 current-head 100×3 四臂权威运行",
+    "status": "partial",
+    "evidence": "300已尝试289四臂完整，质量失败；不是未执行",
+    "next": "不重复大Gate，T12小而独立"
+  },
+  {
+    "id": "C25",
+    "title": "重写 Natural Pressure 为 arm-specific 状态机",
+    "status": "partial",
+    "evidence": "arm-specific检查和受控宿主补测已出现，最终目标服务证据不足",
+    "next": "集中一次测试；区分预防与触发"
+  },
+  {
+    "id": "C26",
+    "title": "拆分 Overflow Prevention 与 Forced Recovery",
+    "status": "partial",
+    "evidence": "真实Host+受控Provider overflow/retry测试自报已做；目标Provider不同层",
+    "next": "保留controlled标签；不要求现实服务必须overflow"
+  },
+  {
+    "id": "C27",
+    "title": "实现无手工 compact 的三周期 Autonomous Recursive Lane",
+    "status": "partial",
+    "evidence": "受控宿主三次自动checkpoint已有证据；不等于目标服务长程验证",
+    "next": "集中验收只测目标声明"
+  },
+  {
+    "id": "C28",
+    "title": "在长程 Lane 中验证 correction/branch/restart/side-effect oracle",
+    "status": "partial",
+    "evidence": "来源/branch/restart定向补测有进展；缺真实coding总体验收",
+    "next": "T10/T12"
+  },
+  {
+    "id": "C29",
+    "title": "同步 HANDOFF、UNRUN、Finding 与 Task 状态",
+    "status": "partial",
+    "evidence": "当前报告很诚实，但COMPATIBILITY仍有旧HEAD等残留",
+    "next": "T01/T12只留一份权威状态"
+  },
+  {
+    "id": "C30",
+    "title": "生成去敏、可复算且不污染 Git 的 RC Bundle",
+    "status": "partial",
+    "evidence": "真实密钥隔离原件、source hash、脱敏副本hash有进步；附件缺tar/完整原件",
+    "next": "T09先预防，T08小而完整离线包"
+  },
+  {
+    "id": "C31",
+    "title": "执行双主门、保护分支与发布决策",
+    "status": "not-demonstrated",
+    "evidence": "unit/compat失败且质量门未过，publication=false正确",
+    "next": "将个人canary与广泛发布分开"
+  }
+]

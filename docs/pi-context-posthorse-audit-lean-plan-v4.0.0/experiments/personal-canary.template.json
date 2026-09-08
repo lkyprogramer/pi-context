@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "purpose": "personal-canary-not-publication",
+  "liveEnabled": false,
+  "host": {
+    "piVersion": "0.84.4",
+    "patchSha256": "aafdfb29c4ce78146bd96cabb48d0e3cef032fd81cc17ee6acbc85c6bea584c5",
+    "nodeVersion": "22.19.0"
+  },
+  "arms": [
+    "B0-native-shared-ingress",
+    "B2-pcr-runtime-shared-ingress"
+  ],
+  "independentTasksRequired": 12,
+  "repeats": 2,
+  "maxPrimaryArmRuns": 48,
+  "maxRequestsPerArm": 8,
+  "maxTotalRequests": 384,
+  "singleRequestTimeoutMs": 180000,
+  "armTimeoutMs": 600000,
+  "concurrency": 1,
+  "alternateArmOrder": true,
+  "diagnosticsEnabled": false,
+  "requireToolCredentialIsolation": true,
+  "providerModel": "openclaw/Qwen3.8-27B-WORK",
+  "contextWindow": 200192,
+  "maxOutputTokens": 16384,
+  "maxMonetaryCost": null,
+  "unknownPricePolicy": "use explicitly approved request cap; never report monetary savings",
+  "decisionLevel": "canary-only",
+  "scenarioFiles": []
+}
