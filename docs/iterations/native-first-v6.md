@@ -98,7 +98,7 @@ candidates: none
 Quality L01–L06 native vs balanced all 2/2 (wrong-action never higher on balanced). H01/H02 balanced 4/4 `folds>=1`. H01 nonce correct 2/2 on all three arms without `pctx_history` read. H03 complete, context ~20%, folds 0, native compactions 0.
 
 ## Task: E04
-Commit: (filled after `docs(e04)` commit)
+Commit: d28a3685ce245d1a4d270c02b9fac4ea785d49ca
 Changed: docs/iterations/native-first-v6.md, README.md, docs/CONFIGURATION.md, docs/OPERATIONS.md, docs/release-v5.md, HANDOFF.md, package.json, test/packed/install.test.ts, test/host/stock-loader.test.ts
 RED: `pnpm exec vitest run test/packed/install.test.ts --config vitest.config.ts` — README still named v5 surfaces / iterations lacked a decision line
 GREEN: `pnpm smoke` exit 0 — 13 tests; `pnpm typecheck` exit 0; `pnpm exec vitest run --config vitest.config.ts` exit 0 — 115 tests
@@ -116,6 +116,9 @@ Evidence: run `20260908-215433`, E03 landing `6486703bc70a1e41dbe88739981774ff3e
 Limits: one model, one machine, n=2 per cell, public OpenAI-compat endpoint without prefix-cache accounting.
 
 Next round only if: (1) H01 balanced recovers the nonce with `verifiedReads>=1`, (2) post-fold `cacheRead` or engine prefill is actually observed, (3) H03 usage reaches the 60% trigger. Do not retune fold parameters to chase a `limited-balanced-trial` on this dataset.
+
+docs: record final sha — packaging commit `d28a3685ce245d1a4d270c02b9fac4ea785d49ca`
+
 
 
 
