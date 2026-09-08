@@ -31,6 +31,7 @@ export function emptyArm(arm: EvalArm["arm"], status: EvalArm["status"] = "not-r
     criticalViolation: null,
     wallMs: null,
     monetaryCost: null,
+    billedTokens: null,
   };
 }
 
@@ -71,7 +72,7 @@ export function hostManifest() {
   return freezeManifest({
     host: "official-pi",
     piVersion: "0.85.1",
-    sourceRevision: "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
+    sourceRevision: "d981de1229ef899957bbe968bc8dcda02a21f477",
     configHash: "pending",
     model: process.env.PCR_LIVE_MODEL ?? process.env.PCR_MODEL ?? "unset",
     pricingIdentity: null,

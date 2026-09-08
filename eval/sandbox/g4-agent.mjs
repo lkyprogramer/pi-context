@@ -94,6 +94,10 @@ try {
     model: resolved,
   });
   result.tools = session.getActiveToolNames?.() ?? [];
+  if (process.env.G4_SEED_NONCE && typeof session.setActiveToolsByName === "function") {
+    session.setActiveToolsByName(["pctx_history", "read", "write", "edit"]);
+    result.tools = session.getActiveToolNames?.() ?? result.tools;
+  }
   const nonce = process.env.G4_SEED_NONCE;
   if (nonce && typeof session.sessionManager.appendMessage === "function") {
     const now = Date.now();
@@ -172,6 +176,13 @@ try {
       ? content.map((b) => b.text ?? "").join("").slice(0, 500)
       : "";
   result.files = readdirSync("/work").filter((name) => name.endsWith(".java") || name === "TASK.md");
+  let billed = 0;
+  for (const entry of entries) {
+    const usage = entry.message?.usage ?? entry.usage;
+    const n = usage?.totalTokens ?? ((usage?.input ?? 0) + (usage?.output ?? 0));
+    if (typeof n === "number" && n > 0) billed += n;
+  }
+  result.billedTokens = billed > 0 ? billed : null;
   result.status = "ok";
 } catch (error) {
   result.status = "failed";

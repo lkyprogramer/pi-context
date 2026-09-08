@@ -89,26 +89,31 @@ for (const caseId of caseIds) {
     slot.taskPassed = result.status === "passed";
     slot.wallMs = Math.round(used * 1000);
     slot.monetaryCost = null;
-    caseResults[caseId][arm] = result;
+    slot.billedTokens = result.billedTokens ?? result.agentResult?.billedTokens ?? null;
+    caseResults[caseId][arm] = {
+      status: result.status,
+      oracle: result.oracle?.status ?? null,
+      oracleOutput: result.oracle?.output ?? null,
+      historyCalled: result.agentResult?.historyCalled ?? result.c2?.historyCalled ?? null,
+      c2: result.c2 ?? null,
+      wallMs: slot.wallMs,
+      billedTokens: slot.billedTokens,
+      note: result.note,
+    };
   }
   pairs.push(pair);
 }
 
-const evaluation = buildEvaluation(pairs);
+const c2Proven = caseResults.J05?.B2?.c2?.recoveryPathProven === true;
+const evaluation = buildEvaluation(pairs, { c2Proven });
 const report = {
   kind: "v5-smoke-evaluation",
-  plan: { caseIds: plan.caseIds, arms: plan.arms, seed: plan.seed },
+  plan: { caseIds: plan.caseIds, arms: plan.arms, seed: plan.seed, tarball: process.env.PCR_TARBALL || null },
   elapsedMs: Date.now() - started,
   remainingSeconds: remaining,
   manifest: hostManifest(),
   evaluation,
-  cases: Object.fromEntries(Object.entries(caseResults).map(([id, arms]) => [id, {
-    B0: arms.B0?.status,
-    B2: arms.B2?.status,
-    B0oracle: arms.B0?.oracle?.status,
-    B2oracle: arms.B2?.oracle?.status,
-    B2c2: arms.B2?.c2 ?? null,
-  }])),
+  cases: caseResults,
 };
 writeFileSync(join(outDir, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
 writeFileSync(join(outDir, "pairs.json"), `${JSON.stringify(pairs, null, 2)}\n`);

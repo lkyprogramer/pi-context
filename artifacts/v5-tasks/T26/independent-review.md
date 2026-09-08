@@ -18,6 +18,10 @@ Reviewer subagent on v5/native-first after the six-item batch. This is **not** i
 - Host identity mismatch recorded honestly; do not git-checkout `9767ba2`.
 - Recommendation remains **observe**. `twoPercentNiClaimAllowed` is false.
 
+## Follow-up freeze (unspliced 8×2)
+
+Same-tarball smoke `53dbdb0a…` wrote `report.json` with plan/elapsedMs/manifest (no python splice of wallMs). G3 `live-c2.mjs` `recoveryPathProven: true` on that tarball. Smoke J05 still `historyCalled: false`. Recommendation **observe** (both-pass 5/8). T17 ACK states split in unit tests.
+
 ## After-review code changes
 
 - `g4-agent.mjs`: real tool-call history detection; session dir under `$HOME`.

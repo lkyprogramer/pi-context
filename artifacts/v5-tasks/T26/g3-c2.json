@@ -13,7 +13,7 @@
   },
   "compact": {
     "ok": true,
-    "summaryChars": 1497
+    "summaryChars": 1489
   },
   "historyCalled": true,
   "nonceInOutput": true,
@@ -91,6 +91,6 @@
     "agent_end",
     "agent_settled"
   ],
-  "historyCallCount": 6,
-  "lastAssistantChars": 920
+  "historyCallCount": 4,
+  "lastAssistantChars": 614
 }

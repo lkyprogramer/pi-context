@@ -134,6 +134,7 @@ export interface EvalArm {
   criticalViolation: boolean | null;
   wallMs: number | null;
   monetaryCost: number | null;
+  billedTokens?: number | null;
 }
 
 export interface EvalPair {

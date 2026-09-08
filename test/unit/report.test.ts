@@ -32,6 +32,19 @@ describe("T24 report", () => {
     expect(rec.level).toBe("limited-trial");
   });
 
+  it("withholds limited-trial when C2 is not proven even if 8 both-pass", () => {
+    const pairs = plannedSmokePairs().map((p, i) => ({
+      ...p,
+      baseline: { ...p.baseline, status: "complete", taskPassed: true, wallMs: 1000, billedTokens: 100 },
+      candidate: { ...p.candidate, status: "complete", taskPassed: true, wallMs: 900, billedTokens: 80 },
+    }));
+    const noC2 = buildEvaluation(pairs, { c2Proven: false });
+    expect(noC2.recommendation.level).toBe("observe");
+    const yes = buildEvaluation(pairs, { c2Proven: true });
+    expect(yes.resourceNetEvidence).toBe(true);
+    expect(yes.recommendation.level).toBe("balanced");
+  });
+
   it("ITT denominator is the planned smoke pairs", () => {
     const plan = loadSmokePlan();
     const pairs = plannedSmokePairs();

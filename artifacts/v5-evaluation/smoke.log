@@ -1,57 +1,17 @@
 {
-  "kind": "v5-smoke-evaluation",
-  "plan": {
-    "caseIds": [
-      "J01",
-      "J02",
-      "J03",
-      "J04",
-      "J05",
-      "J06",
-      "J07",
-      "J08"
-    ],
-    "arms": [
-      "B0",
-      "B2"
-    ],
-    "seed": "freeze-before-run",
-    "tarball": "/Users/luo/Documents/github/pi-context/artifacts/release-candidate/pi-context-5.0.0-dev.0.tgz"
+  "recommendation": {
+    "level": "observe",
+    "reason": "closed-loop cases 0 < 8 or planned 8"
   },
-  "elapsedMs": 315212,
-  "remainingSeconds": 2984.7939999999994,
-  "manifest": {
-    "host": "official-pi",
-    "piVersion": "0.85.1",
-    "sourceRevision": "d981de1229ef899957bbe968bc8dcda02a21f477",
-    "configHash": "pending",
-    "model": "openclaw/Qwen3.8-27B-WORK",
-    "pricingIdentity": null,
-    "createdAt": "2026-09-08T01:32:52.103Z",
-    "immutable": true
+  "summary": {
+    "n": 8,
+    "complete": 8,
+    "blocked": 0,
+    "notRun": 0,
+    "incomplete": 0,
+    "failed": 3
   },
-  "evaluation": {
-    "ittDenominator": 8,
-    "bothPass": 5,
-    "summary": {
-      "n": 8,
-      "complete": 8,
-      "blocked": 0,
-      "notRun": 0,
-      "incomplete": 0,
-      "failed": 3
-    },
-    "honest": true,
-    "twoPercentNiClaimAllowed": false,
-    "adverseEventUpperBound": 0.31234397806636793,
-    "recommendation": {
-      "level": "observe",
-      "reason": "closed-loop cases 5 < 8 or planned 8"
-    },
-    "resourceNetEvidence": false,
-    "c2Proven": true,
-    "syntheticExcludedFromMain": true
-  },
+  "twoPercentNiClaimAllowed": false,
   "cases": {
     "J01": {
       "B0": {

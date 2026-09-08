@@ -13,7 +13,7 @@ import { planEpoch, type FrozenPlan } from "./projection/planner.js";
 import { cloneMessages, deepEqual, renderMessages, type AgentMessage } from "./projection/render.js";
 import { restorePins, type Pin } from "./checkpoint/pins.js";
 import { buildCapsule, appendCapsuleClone } from "./checkpoint/capsule.js";
-import { ack, bumpFence, emptyProposal, onCompactFailed, type Proposal } from "./checkpoint/staging.js";
+import { ack, bumpFence, commitNative, emptyProposal, onCompactFailed, restoreFromNative, type Proposal } from "./checkpoint/staging.js";
 import { shouldGenerateSemantic } from "./checkpoint/semantic.js";
 import { mapOutbound, readVisibleSnapshot } from "./pi/source-reader.js";
 
@@ -233,11 +233,29 @@ export function noteNativeCompact(state: PluginState, summary: string, entryId: 
   });
   state.lastCapsule = appendCapsuleClone(summary, capsule);
   state.plan = null;
-  state.generation += 1;
   const compactHash = hashCanonical(summary);
-  if (state.proposal.status === "proposed" && state.proposal.proposedHash === compactHash) {
-    state.proposal = ack(state.proposal, { hash: compactHash, generation: state.proposal.generation, nativeEntryId: entryId });
+  const gen = state.proposal.generation;
+  if (state.proposal.status === "proposed") {
+    state.proposal = ack(state.proposal, { hash: compactHash, generation: gen });
   }
+  if (state.proposal.status === "acked") {
+    state.proposal = commitNative(state.proposal, { generation: gen, nativeEntryId: entryId, nativeHash: compactHash });
+  } else if (state.proposal.status === "idle") {
+    state.proposal = restoreFromNative({ generation: state.generation, nativeEntryId: entryId, nativeHash: compactHash });
+  }
+  state.generation += 1;
+}
+
+export function restoreStagingFromEntries(state: PluginState, entries: NativeEntry[]): void {
+  const compact = [...entries].reverse().find((e) => e.type === "compaction" || typeof (e as { summary?: string }).summary === "string");
+  if (!compact) return;
+  const summary = String((compact as { summary?: string }).summary ?? "");
+  if (!summary) return;
+  state.proposal = restoreFromNative({
+    generation: state.generation,
+    nativeEntryId: compact.id,
+    nativeHash: hashCanonical(summary),
+  });
 }
 
 export function noteSemanticAttempt(state: PluginState, hash: string): void {

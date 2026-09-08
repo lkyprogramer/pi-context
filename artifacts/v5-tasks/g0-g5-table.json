@@ -1,47 +1,71 @@
 {
   "package": "pi-context@5.0.0-dev.0",
   "private": true,
-  "commit": "463f685ead9ff55bf4bc4ca0c048186874a3a3ed",
+  "commit": "5ea7b76374db16ad6f8425b3fdd4f90842f7306f",
   "node": "v22.19.0",
   "piCli": "0.85.1",
   "designPackSource": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
   "installedNpmGitHead": "d981de1229ef899957bbe968bc8dcda02a21f477",
   "hostIdentityMatch": false,
   "tarball": "artifacts/release-candidate/pi-context-5.0.0-dev.0.tgz",
-  "tarballSha256": "d6459b9b271af15ff5b6b2355657cdd88a2a5d19273f8d683478f7bd93b6d0a9",
+  "tarballSha256": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
   "installSpec": "npm:pi-context@file:<abs-tarball>",
   "verifiedInstallCommand": "pi install npm:pi-context@file:$PWD/pi-context-5.0.0-dev.0.tgz",
-  "recommendation": "observe: closed-loop cases 6 < 8 or planned 8",
+  "recommendation": "observe: closed-loop cases 5 < 8 or planned 8",
   "gates": [
     {
       "id": "G0",
+      "name": "contract/package",
       "status": "passed",
-      "note": "verified host is npm 0.85.1 gitHead d981de12; design pack source 9767ba2 not installed"
+      "command": "pnpm exec tsc --noEmit -p tsconfig.build.json && pnpm exec vitest run test/packed/install.test.ts",
+      "exitCode": 0,
+      "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
+      "note": "official Pi 0.85.1 extracts dist/extension.js; npm gitHead d981de12 != design 9767ba2"
     },
     {
       "id": "G1",
-      "status": "passed"
+      "name": "zero-damage",
+      "status": "passed",
+      "command": "pnpm exec vitest run test/host/matrix.test.ts",
+      "exitCode": 0,
+      "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7"
     },
     {
       "id": "G2",
-      "status": "passed"
+      "name": "C1 recovery",
+      "status": "passed",
+      "command": "pnpm exec vitest run test/integration/history-read.test.ts",
+      "exitCode": 0,
+      "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7"
     },
     {
       "id": "G3",
+      "name": "C2 real model",
       "status": "passed",
-      "n": "J05-B2",
-      "note": "live-c2.mjs earlier recoveryPathProven. J05 re-run with strict toolCall detector: historyCalled=false this tarball. compactLeaked=false; B0 failed."
+      "command": "PCR_LIVE=1 node eval/live-c2.mjs artifacts/v5-tasks/T26/g3-c2.json",
+      "exitCode": 0,
+      "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
+      "note": "model called pctx_history and returned the nonce after native compact",
+      "n": 1
     },
     {
       "id": "G4",
+      "name": "Java/E2E",
       "status": "passed",
+      "command": "PCR_LIVE=1 pnpm exec tsx eval/smoke.mjs",
+      "exitCode": 0,
+      "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
       "n": 8,
-      "note": "ITT mixed vintage except J03/J05/J06 re-runs. J03 Spring B2 pass. J06 branch both pass. J05 C2 not proven on strict detector. observe."
+      "note": "unspliced 8x2 on this tarball; bothPass=5; J03 B0 oracle blocked (maven assertion); J04 both fail; J05 C2 not in smoke (see G3 live-c2)"
     },
     {
       "id": "G5",
+      "name": "release",
       "status": "incomplete",
-      "note": "private:true; independent-review.md attached; no publish"
+      "command": "node scripts/release-gate.mjs --evidence artifacts/release-candidate",
+      "exitCode": 0,
+      "artifactHash": "53dbdb0aa3580f50dabf808b395bab2051829f177f48c2da88f1d03c1ef4e2e7",
+      "note": "private:true; no publish; no push main"
     }
   ]
 }

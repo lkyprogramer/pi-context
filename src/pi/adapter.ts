@@ -1,4 +1,4 @@
-import { applyContext, confirmAttempt, createPlugin, historyTool, noteCompactFailed, noteFence, noteNativeCompact, setProfile, type PluginState } from "../plugin.js";
+import { applyContext, confirmAttempt, createPlugin, historyTool, noteCompactFailed, noteFence, noteNativeCompact, restoreStagingFromEntries, setProfile, type PluginState } from "../plugin.js";
 import { shouldGenerateSemantic } from "../checkpoint/semantic.js";
 import { DEFAULT_CONFIG } from "../config.js";
 import type { NativeEntry } from "../contracts.js";
@@ -24,9 +24,7 @@ export function entriesFromCtx(ctx: Record<string, unknown>): { entries: NativeE
 export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(DEFAULT_CONFIG)): PluginState {
   pi.on("session_start", (_e, ctx) => {
     const { entries } = entriesFromCtx(ctx);
-    for (const _ of entries) {
-      /* rebuild cursors only */
-    }
+    restoreStagingFromEntries(state, entries);
   });
   pi.on("context", (event, ctx) => {
     const messages = (event.messages as never[]) ?? [];

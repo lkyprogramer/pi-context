@@ -344,6 +344,7 @@ export function runLiveAgent(env, caseId, options = {}) {
     out.arm = arm;
     out.plugin = plugin;
     out.monetaryCost = null;
+    out.billedTokens = out.agentResult?.billedTokens ?? null;
     return out;
   } catch (error) {
     out.status = "blocked";

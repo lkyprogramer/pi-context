@@ -56,16 +56,46 @@ export function recommend(input: {
   return { level: "balanced", reason: "closed loops plus resource evidence" };
 }
 
-export function buildEvaluation(pairs: EvalPair[]) {
+function median(values: number[]): number | null {
+  const v = values.filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+  if (v.length === 0) return null;
+  const m = Math.floor(v.length / 2);
+  return v.length % 2 === 1 ? v[m]! : (v[m - 1]! + v[m]!) / 2;
+}
+
+export function resourceNetEvidence(pairs: EvalPair[]): boolean {
+  const both = pairs.filter((p) => p.baseline.taskPassed === true && p.candidate.taskPassed === true);
+  if (both.length < 8) return false;
+  const b0Tok = both.map((p) => p.baseline.billedTokens).filter((n): n is number => n != null);
+  const b2Tok = both.map((p) => p.candidate.billedTokens).filter((n): n is number => n != null);
+  const b0Wall = both.map((p) => p.baseline.wallMs).filter((n): n is number => n != null);
+  const b2Wall = both.map((p) => p.candidate.wallMs).filter((n): n is number => n != null);
+  if (b0Tok.length === both.length && b2Tok.length === both.length) {
+    const m0 = median(b0Tok);
+    const m2 = median(b2Tok);
+    const w0 = median(b0Wall);
+    const w2 = median(b2Wall);
+    if (m0 == null || m2 == null) return false;
+    const tokenWin = m2 <= m0 * 0.9;
+    const wallOk = w0 == null || w2 == null || w2 <= w0 * 1.05;
+    return tokenWin && wallOk;
+  }
+  return false;
+}
+
+export function buildEvaluation(pairs: EvalPair[], extra?: { c2Proven?: boolean }) {
   const s = summarize(pairs);
   const bothPass = pairs.filter((p) => p.baseline.taskPassed === true && p.candidate.taskPassed === true).length;
-  const rec = recommend({
-    closedLoopCases: bothPass,
-    plannedCases: s.n,
-    b0PassB2Fail: pairs.filter((p) => p.baseline.taskPassed === true && p.candidate.taskPassed === false).length,
-    criticalViolation: pairs.some((p) => Boolean(p.baseline.criticalViolation || p.candidate.criticalViolation)),
-    resourceNetEvidence: false,
-  });
+  const net = resourceNetEvidence(pairs);
+  const rec = extra?.c2Proven === false
+    ? { level: "observe" as const, reason: "hard C2 not proven on this tarball" }
+    : recommend({
+      closedLoopCases: bothPass,
+      plannedCases: s.n,
+      b0PassB2Fail: pairs.filter((p) => p.baseline.taskPassed === true && p.candidate.taskPassed === false).length,
+      criticalViolation: pairs.some((p) => Boolean(p.baseline.criticalViolation || p.candidate.criticalViolation)),
+      resourceNetEvidence: net,
+    });
   return {
     ittDenominator: s.n,
     bothPass,
@@ -74,6 +104,8 @@ export function buildEvaluation(pairs: EvalPair[]) {
     twoPercentNiClaimAllowed: twoPercentNiClaimAllowed(s.complete, s.complete === s.n && s.n >= 8),
     adverseEventUpperBound: s.complete >= 1 ? adverseEventUpperBound(s.complete) : null,
     recommendation: rec,
+    resourceNetEvidence: net,
+    c2Proven: extra?.c2Proven ?? null,
     syntheticExcludedFromMain: true,
   };
 }

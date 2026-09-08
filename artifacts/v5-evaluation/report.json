@@ -15,57 +15,229 @@
       "B0",
       "B2"
     ],
-    "seed": "freeze-before-run"
+    "seed": "freeze-before-run",
+    "tarball": "/Users/luo/Documents/github/pi-context/artifacts/release-candidate/pi-context-5.0.0-dev.0.tgz"
   },
-  "elapsedMs": 37120,
-  "remainingSeconds": 3262.881,
+  "elapsedMs": 315212,
+  "remainingSeconds": 2984.7939999999994,
   "manifest": {
     "host": "official-pi",
     "piVersion": "0.85.1",
-    "sourceRevision": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
+    "sourceRevision": "d981de1229ef899957bbe968bc8dcda02a21f477",
     "configHash": "pending",
     "model": "openclaw/Qwen3.8-27B-WORK",
     "pricingIdentity": null,
-    "createdAt": "2026-09-07T09:33:20.941Z",
+    "createdAt": "2026-09-08T01:32:52.103Z",
     "immutable": true
   },
   "evaluation": {
-    "ittDenominator": 1,
-    "bothPass": 0,
+    "ittDenominator": 8,
+    "bothPass": 5,
     "summary": {
-      "n": 1,
-      "complete": 1,
+      "n": 8,
+      "complete": 8,
       "blocked": 0,
       "notRun": 0,
       "incomplete": 0,
-      "failed": 1
+      "failed": 3
     },
     "honest": true,
     "twoPercentNiClaimAllowed": false,
-    "adverseEventUpperBound": 0.95,
+    "adverseEventUpperBound": 0.31234397806636793,
     "recommendation": {
       "level": "observe",
-      "reason": "closed-loop cases 0 < 8 or planned 1"
+      "reason": "closed-loop cases 5 < 8 or planned 8"
     },
+    "resourceNetEvidence": false,
+    "c2Proven": true,
     "syntheticExcludedFromMain": true
   },
   "cases": {
-    "J05": {
-      "B0": "failed",
-      "B2": "failed",
-      "B0oracle": "failed",
-      "B2oracle": "failed",
-      "B2c2": {
+    "J01": {
+      "B0": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J01\n",
         "historyCalled": false,
-        "nonceMatched": false,
-        "compactLeaked": false,
-        "recoveryPathProven": false
+        "c2": null,
+        "wallMs": 13801,
+        "billedTokens": 5679,
+        "note": "J01 B0 live agent in T21 container; oracle passed; grader was not mounted"
+      },
+      "B2": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J01\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 11476,
+        "billedTokens": 5741,
+        "note": "J01 B2 live agent in T21 container; oracle passed; grader was not mounted"
+      }
+    },
+    "J02": {
+      "B2": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J02\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 9666,
+        "billedTokens": 8259,
+        "note": "J02 B2 live agent in T21 container; oracle passed; grader was not mounted"
+      },
+      "B0": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J02\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 8742,
+        "billedTokens": 5375,
+        "note": "J02 B0 live agent in T21 container; oracle passed; grader was not mounted"
+      }
+    },
+    "J03": {
+      "B0": {
+        "status": "failed",
+        "oracle": "blocked",
+        "oracleOutput": "[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.1.0:java (default-cli) on project j03: An exception occurred while executing the Java class. success must debit accounts -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException\nWARNING: A restricted method in java.lang.System has been called\nWARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/Users/luo/.sdkman/candidates/maven/current/lib/jansi-2.4.1.jar)\nWARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module\nWARNING: Restricted methods will be blocked in a future release unless native access is enabled\n\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/Users/luo/.sdkman/candidates/maven/current/lib/guava-33.2.1-jre.jar)\nWARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper\nWARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release\n9月 08, 2026 9:29:24 上午 org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory initDatabase\nINFO: Starting embedded database: url='jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false', username='sa'\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 64109,
+        "billedTokens": 66203,
+        "note": "J03 B0 live agent ran; oracle blocked"
+      },
+      "B2": {
+        "status": "failed",
+        "oracle": "failed",
+        "oracleOutput": "[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.1.0:java (default-cli) on project j03: An exception occurred while executing the Java class. failed transfer must not change accounts -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException\nWARNING: A restricted method in java.lang.System has been called\nWARNING: java.lang.System::load has been called by org.fusesource.jansi.internal.JansiLoader in an unnamed module (file:/Users/luo/.sdkman/candidates/maven/current/lib/jansi-2.4.1.jar)\nWARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module\nWARNING: Restricted methods will be blocked in a future release unless native access is enabled\n\nWARNING: A terminally deprecated method in sun.misc.Unsafe has been called\nWARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/Users/luo/.sdkman/candidates/maven/current/lib/guava-33.2.1-jre.jar)\nWARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper\nWARNING: sun.misc.Unsafe::objectFieldOffset will be remove",
+        "historyCalled": true,
+        "c2": null,
+        "wallMs": 54598,
+        "billedTokens": 39428,
+        "note": "J03 B2 live agent ran; oracle failed"
+      }
+    },
+    "J04": {
+      "B2": {
+        "status": "failed",
+        "oracle": "failed",
+        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: add must return the sum, not a - b\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:6)\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 19924,
+        "billedTokens": 2,
+        "note": "J04 B2 live agent ran; oracle failed"
+      },
+      "B0": {
+        "status": "failed",
+        "oracle": "failed",
+        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: add must return the sum, not a - b\n\tat Oracle.check(Oracle.java:3)\n\tat Oracle.main(Oracle.java:6)\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 17485,
+        "billedTokens": 2,
+        "note": "J04 B0 live agent ran; oracle failed"
+      }
+    },
+    "J05": {
+      "B0": {
+        "status": "failed",
+        "oracle": "failed",
+        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: nonce not installed\n\tat Oracle.main(Oracle.java:5)\n",
+        "historyCalled": false,
+        "c2": {
+          "historyCalled": false,
+          "nonceMatched": false,
+          "compactLeaked": false,
+          "recoveryPathProven": false
+        },
+        "wallMs": 18569,
+        "billedTokens": 2,
+        "note": "J05 B0 live agent ran; oracle failed"
+      },
+      "B2": {
+        "status": "failed",
+        "oracle": "failed",
+        "oracleOutput": "Exception in thread \"main\" java.lang.AssertionError: nonce not installed\n\tat Oracle.main(Oracle.java:5)\n",
+        "historyCalled": false,
+        "c2": {
+          "historyCalled": false,
+          "nonceMatched": false,
+          "compactLeaked": false,
+          "recoveryPathProven": false
+        },
+        "wallMs": 17867,
+        "billedTokens": 2,
+        "note": "J05 C2 unproven historyCalled=false nonceMatched=false leaked=false"
+      }
+    },
+    "J06": {
+      "B2": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J06\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 17965,
+        "billedTokens": 4,
+        "note": "J06 B2 live agent in T21 container; oracle passed; grader was not mounted"
+      },
+      "B0": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J06\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 19595,
+        "billedTokens": 2886,
+        "note": "J06 B0 live agent in T21 container; oracle passed; grader was not mounted"
+      }
+    },
+    "J07": {
+      "B0": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J07\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 16017,
+        "billedTokens": 8689,
+        "note": "J07 B0 live agent in T21 container; oracle passed; grader was not mounted"
+      },
+      "B2": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J07\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 13168,
+        "billedTokens": 6135,
+        "note": "J07 B2 live agent in T21 container; oracle passed; grader was not mounted"
+      }
+    },
+    "J08": {
+      "B2": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J08\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 6860,
+        "billedTokens": 3370,
+        "note": "J08 B2 live agent in T21 container; oracle passed; grader was not mounted"
+      },
+      "B0": {
+        "status": "passed",
+        "oracle": "passed",
+        "oracleOutput": "ORACLE_PASS:J08\n",
+        "historyCalled": false,
+        "c2": null,
+        "wallMs": 5364,
+        "billedTokens": 2977,
+        "note": "J08 B0 live agent in T21 container; oracle passed; grader was not mounted"
       }
     }
-  },
-  "notes": {
-    "J05": "After strict toolCall.name===pctx_history: B0 failed, B2 failed this run (historyCalled=false, compactLeaked=false). C2 not proven on this tarball via J05. Earlier live-c2.mjs still separate.",
-    "J03": "Spring TX + H2 self-invocation. B2 ORACLE_PASS:J03. B0 oracle was blocked in first log (maven non-exec) then failed; do not treat blocked as did-not-fix.",
-    "independentReview": "artifacts/v5-tasks/T26/independent-review.md"
   }
 }

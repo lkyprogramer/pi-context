@@ -120,7 +120,7 @@ function scanEntries(entries, nonce) {
     const role = msg.role ?? entry.role;
     const name = msg.toolName ?? msg.name;
     const content = extractText(msg.content ?? entry.content ?? entry.summary);
-    if (name === "pctx_history" || /pctx_history/.test(content) && (role === "toolResult" || entry.type === "custom" || Array.isArray(msg.content) && msg.content.some((b) => b.type === "toolCall" && b.name === "pctx_history"))) {
+    if (name === "pctx_history" && (role === "toolResult" || msg.role === "toolResult")) {
       historyCalls.push({ type: entry.type, role, name });
     }
     if (Array.isArray(msg.content)) {
@@ -250,7 +250,7 @@ export async function runLiveC2() {
       out.note = "model not resolved after registerProvider";
       return out;
     }
-    const manager = pi.SessionManager.create(cwd, join(cwd, "sessions"));
+    const manager = pi.SessionManager.create(cwd, join(armHome, "sessions"));
     const { session } = await pi.createAgentSession({
       cwd,
       agentDir,
@@ -297,7 +297,7 @@ export async function runLiveC2() {
     const scan = scanEntries(entries, nonce);
     const lastAssistant = [...entries].reverse().find((e) => e.message?.role === "assistant" || e.role === "assistant");
     const lastText = extractText(lastAssistant?.message?.content ?? lastAssistant?.content);
-    out.historyCalled = scan.historyCallCount > 0 || events.includes("tool_execution_start");
+    out.historyCalled = scan.historyCallCount > 0;
     out.nonceInOutput = lastText.includes(nonce) || lastText.includes(`C2_NONCE=${nonce}`);
     out.recoveryPathProven = out.historyCalled && out.nonceInOutput && !out.nonceInCompactSummary;
     out.brokerRequests = broker.requestCount();
