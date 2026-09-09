@@ -7,6 +7,7 @@ import { readHistory } from "./history/read.js";
 import { readBudgetFor } from "./projection/budget.js";
 import { searchHistory } from "./history/search.js";
 import { buildScope } from "./history/scope.js";
+import { buildActiveView, identityIncomplete, mappingFromView } from "./projection/active-view.js";
 import { collectBatches } from "./projection/batches.js";
 import { exposedEntryIds } from "./projection/exposed.js";
 import { planFold, planStillValid, shouldFold } from "./projection/planner.js";
@@ -224,7 +225,10 @@ export function applyContext(
   const modelId = ctx.model?.id ?? state.modelId;
   state.modelId = modelId;
   indexBranch(state, snap.entries, snap.cwd, snap.sessionId, snap.leafId);
-  const boundary = latestCompactionId(snap.entries);
+  const view = state.scope
+    ? buildActiveView({ scope: state.scope, entries: snap.entries, messages })
+    : null;
+  const boundary = view?.compactionBoundary ?? latestCompactionId(snap.entries, snap.leafId);
   if (state.plan && !planStillValid(state.plan, {
     sessionId: snap.sessionId,
     compactionBoundary: boundary,
@@ -233,13 +237,14 @@ export function applyContext(
   })) {
     state.plan = null;
   }
-  if (state.scope && shouldFold(usage, state.plan, state.config.fold) && usage) {
+  const canPlan = Boolean(state.scope && view && !identityIncomplete(view.diagnostics));
+  if (canPlan && shouldFold(usage, state.plan, state.config.fold) && usage && state.scope && view) {
     const previous = state.plan;
     const next = planFold({
       scope: state.scope,
-      entries: snap.entries,
-      batches: collectBatches(snap.entries),
-      exposed: exposedEntryIds(snap.entries),
+      view,
+      batches: collectBatches(view.branch),
+      exposed: exposedEntryIds(view.branch),
       usage,
       previous,
       modelId,
@@ -249,7 +254,7 @@ export function applyContext(
     if (next && next !== previous) {
       const added = next.replacements.size - (previous?.replacements.size ?? 0);
       if (added > 0) {
-        const mappingForIndex = mapToolResults(messages, snap.entries);
+        const mappingForIndex = mappingFromView(view);
         const first = firstChangedFromPlan(next, mappingForIndex, previous);
         recordFold(state, {
           at: new Date().toISOString(),
@@ -272,7 +277,7 @@ export function applyContext(
     state.lastApplied = 0;
     return undefined;
   }
-  const mapping = mapToolResults(messages, snap.entries);
+  const mapping = view ? mappingFromView(view) : mapToolResults(messages, snap.entries);
   const out = renderFold(messages, state.plan, mapping);
   state.lastApplied = out.applied;
   if (out.applied === 0) return undefined;

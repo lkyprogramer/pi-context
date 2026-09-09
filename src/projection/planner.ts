@@ -11,9 +11,11 @@ import {
   type SourceRef,
   type ToolBatch,
 } from "../contracts.js";
-import { encodeRef, isFieldRef, refForField, textSourceHash } from "../history/refs.js";
-import { toolCallIdOf, latestCompactionId } from "../pi/source-reader.js";
+import { encodeRef } from "../history/refs.js";
+import { toolCallIdOf } from "../pi/source-reader.js";
+import { identityIncomplete, viewFromEntries } from "./active-view.js";
 import { protectSet } from "./batches.js";
+import type { ActiveView } from "./view-contracts.js";
 
 export function shouldFold(usage: ContextUsageLike | null, plan: FoldPlan | null, cfg: PctxConfig["fold"]): boolean {
   if (!usage || usage.percent == null) return false;
@@ -53,14 +55,6 @@ function planIdOf(sessionId: string, boundary: string | null, modelId: string, k
   return sha256Hex(`${sessionId}|${boundary ?? ""}|${modelId}|${keys.slice().sort().join(",")}`).slice(0, 16);
 }
 
-function textBlocks(entry: NativeEntry): { index: number; text: string }[] {
-  const content = entry.message?.content;
-  const blocks = Array.isArray(content) ? content : typeof content === "string" ? [{ type: "text", text: content }] : [];
-  return blocks.flatMap((block, index) =>
-    block.type === "text" && typeof block.text === "string" ? [{ index, text: block.text }] : [],
-  );
-}
-
 export function planStillValid(
   plan: FoldPlan,
   input: { sessionId: string; compactionBoundary: string | null; modelId: string; configHash: string },
@@ -75,7 +69,8 @@ export function planStillValid(
 
 export function planFold(input: {
   scope: Scope;
-  entries: readonly NativeEntry[];
+  view?: ActiveView;
+  entries?: readonly NativeEntry[];
   batches: ToolBatch[];
   exposed: ReadonlySet<string>;
   usage: ContextUsageLike;
@@ -84,60 +79,60 @@ export function planFold(input: {
   cfg: PctxConfig;
   configHash: string;
 }): FoldPlan | null {
+  const view = input.view ?? viewFromEntries(input.scope, input.entries ?? []);
+  if (identityIncomplete(view.diagnostics)) return input.previous;
   const fold = input.cfg.fold;
   if (input.usage.percent == null || input.usage.percent < fold.triggerPercent) return input.previous;
   if (!(input.usage.contextWindow > 0)) return input.previous;
   const protectedIds = protectSet(input.batches, fold.protectRecentBatches);
-  const next = new Map(input.previous?.replacements ?? []);
+  const viewKeys = new Set(view.fields.map((field) => field.key));
+  const next = new Map<string, FoldReplacement>();
+  for (const [key, item] of input.previous?.replacements ?? []) {
+    if (viewKeys.has(key)) next.set(key, item);
+  }
   const target = (input.usage.contextWindow * fold.targetPercent) / 100;
   let est = input.usage.tokens ?? (input.usage.percent / 100) * input.usage.contextWindow;
   let saved = 0;
+  const byId = new Map(view.branch.map((entry) => [entry.id, entry]));
 
-  for (const entry of input.entries) {
+  for (const field of view.fields) {
     if (est <= target) break;
-    if (entry.message?.role !== "toolResult") continue;
-    if (!input.exposed.has(entry.id) || protectedIds.has(entry.id)) continue;
-    const blocks = textBlocks(entry);
-    if (!blocks.length || blocks.some((b) => utf8Bytes(b.text).length < fold.minFoldableBytes)) continue;
+    const entry = byId.get(field.ref.entryId);
+    if (!entry || !input.exposed.has(entry.id) || protectedIds.has(entry.id)) continue;
+    if (entry.message?.isError === true) continue;
+    const bytes = utf8Bytes(field.rawText).length;
+    if (bytes < fold.minFoldableBytes) continue;
+    if (next.has(field.key)) continue;
+    if (field.ref.kind !== "text") continue;
     const callId = toolCallIdOf(entry.message) ?? "";
-    const toolName = typeof entry.message.toolName === "string" ? entry.message.toolName : "tool";
-    const isError = entry.message.isError === true;
-    for (const block of blocks) {
-      if (est <= target) break;
-      const key = `${entry.id}:${block.index}`;
-      if (next.has(key)) continue;
-      const field = refForField(input.scope, entry, block.index);
-      if (!isFieldRef(field) || field.kind !== "text") continue;
-      const sourceHash = textSourceHash(block.text);
-      const bytes = utf8Bytes(block.text).length;
-      const stub = stubFor({
-        toolName,
-        callId,
-        isError,
-        bytes,
-        sourceHash,
-        head: stubHead(block.text, fold.stubHeadChars),
-        ref: encodeRef(field),
-      });
-      const s = estimateTokens(block.text) - estimateTokens(stub);
-      if (s <= 0) continue;
-      const replacement: FoldReplacement = {
-        entryId: entry.id,
-        blockIndex: block.index,
-        sourceHash,
-        stub,
-        originalBytes: bytes,
-        savedTokensEstimate: s,
-      };
-      next.set(key, replacement);
-      est -= s;
-      saved += s;
-    }
+    const toolName = typeof entry.message?.toolName === "string" ? entry.message.toolName : "tool";
+    const stub = stubFor({
+      toolName,
+      callId,
+      isError: false,
+      bytes,
+      sourceHash: field.ref.sourceHash,
+      head: stubHead(field.rawText, fold.stubHeadChars),
+      ref: encodeRef(field.ref),
+    });
+    const s = estimateTokens(field.rawText) - estimateTokens(stub);
+    if (s <= 0) continue;
+    const replacement: FoldReplacement = {
+      entryId: entry.id,
+      blockIndex: field.blockIndex,
+      sourceHash: field.ref.sourceHash,
+      stub,
+      originalBytes: bytes,
+      savedTokensEstimate: s,
+    };
+    next.set(field.key, replacement);
+    est -= s;
+    saved += s;
   }
 
   if (saved < fold.minRemovedTokens) return input.previous;
   const keys = [...next.keys()];
-  const boundary = latestCompactionId(input.entries);
+  const boundary = view.compactionBoundary;
   const totalSaved = [...next.values()].reduce((sum, item) => sum + item.savedTokensEstimate, 0);
   return {
     planId: planIdOf(input.scope.sessionId, boundary, input.modelId, keys),

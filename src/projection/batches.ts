@@ -37,29 +37,72 @@ function resultMeta(entry: NativeEntry, callId: string): ToolBatch["results"][nu
 
 export function collectBatches(entries: readonly NativeEntry[]): ToolBatch[] {
   const batches: ToolBatch[] = [];
+  type Open = {
+    assistantEntryId: string;
+    calls: { id: string; name: string }[];
+    unique: boolean;
+    results: ToolBatch["results"][number][];
+    hasNonText: boolean;
+  };
+  let open: Open | null = null;
+
+  const callIdSet = (batch: Open) => new Set(batch.calls.map((c) => c.id));
+  const satisfied = (batch: Open) =>
+    batch.unique && batch.calls.every((call) => batch.results.filter((r) => r.callId === call.id).length === 1);
+
+  function flush(complete: boolean): void {
+    if (!open) return;
+    batches.push({
+      assistantEntryId: open.assistantEntryId,
+      calls: open.calls,
+      results: open.results,
+      complete: complete && satisfied(open),
+      hasNonText: open.hasNonText,
+    });
+    open = null;
+  }
+
+  function flushOpen(): void {
+    if (!open) return;
+    flush(satisfied(open));
+  }
+
   for (const entry of entries) {
     const calls = callsOf(entry);
-    if (!calls.length) continue;
-    const callIds = new Set(calls.map((c) => c.id));
-    const results: ToolBatch["results"][number][] = [];
-    let hasNonText = false;
-    for (const other of entries) {
-      if (other.message?.role !== "toolResult") continue;
-      const callId = toolCallIdOf(other.message);
-      if (!callId || !callIds.has(callId)) continue;
-      const content = contentOf(other);
-      if (content.some((block) => block.type !== "text")) hasNonText = true;
-      results.push(resultMeta(other, callId));
+    if (calls.length) {
+      if (open) flushOpen();
+      const ids = calls.map((c) => c.id);
+      open = {
+        assistantEntryId: entry.id,
+        calls,
+        unique: new Set(ids).size === ids.length,
+        results: [],
+        hasNonText: false,
+      };
+      continue;
     }
-    const complete = calls.every((call) => results.filter((r) => r.callId === call.id).length === 1);
-    batches.push({
-      assistantEntryId: entry.id,
-      calls,
-      results,
-      complete,
-      hasNonText,
-    });
+
+    if (entry.message?.role === "toolResult") {
+      const callId = toolCallIdOf(entry.message);
+      if (!open || !callId || !callIdSet(open).has(callId)) {
+        if (open) flushOpen();
+        continue;
+      }
+      if (open.results.some((r) => r.callId === callId)) {
+        flush(false);
+        continue;
+      }
+      const content = contentOf(entry);
+      if (content.some((block) => block.type !== "text")) open.hasNonText = true;
+      open.results.push(resultMeta(entry, callId));
+      continue;
+    }
+
+    if (entry.message?.role === "user" || entry.message?.role === "assistant") {
+      if (open) flushOpen();
+    }
   }
+  if (open) flushOpen();
   return batches;
 }
 

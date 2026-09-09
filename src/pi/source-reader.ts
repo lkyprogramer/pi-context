@@ -27,9 +27,33 @@ export function branchEntries(sessionManager: SessionReader): NativeEntry[] {
   return readVisibleSnapshot(sessionManager);
 }
 
-export function latestCompactionId(entries: readonly NativeEntry[]): string | null {
-  for (let i = entries.length - 1; i >= 0; i--) {
-    const entry = entries[i]!;
+export function archiveBranch(
+  entries: readonly NativeEntry[],
+  leafId: string | null,
+): { branch: NativeEntry[]; diagnostics: string[] } {
+  if (!leafId) return { branch: [], diagnostics: ["missing-leaf"] };
+  const byId = new Map<string, NativeEntry>();
+  for (const entry of entries) {
+    if (!byId.has(entry.id)) byId.set(entry.id, entry);
+  }
+  const rev: NativeEntry[] = [];
+  const seen = new Set<string>();
+  let cursor: string | null = leafId;
+  while (cursor) {
+    if (seen.has(cursor)) return { branch: [], diagnostics: ["cycle"] };
+    seen.add(cursor);
+    const entry = byId.get(cursor);
+    if (!entry) return { branch: [], diagnostics: ["missing-parent"] };
+    rev.push(entry);
+    cursor = entry.parentId ?? null;
+  }
+  return { branch: rev.reverse(), diagnostics: [] };
+}
+
+export function latestCompactionId(entries: readonly NativeEntry[], leafId?: string | null): string | null {
+  const source = leafId === undefined ? entries : archiveBranch(entries, leafId).branch;
+  for (let i = source.length - 1; i >= 0; i--) {
+    const entry = source[i]!;
     if (entry.type === "compaction" || entry.customType === "compaction") return entry.id;
   }
   return null;

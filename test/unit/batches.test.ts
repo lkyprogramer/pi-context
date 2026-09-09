@@ -50,6 +50,27 @@ describe("T11 batches", () => {
     expect(protect.has("r1")).toBe(false);
   });
 
+  it("duplicate call IDs on the same assistant are incomplete (P08)", () => {
+    const assistant = assistantEntry("c", null, [{ type: "toolCall", id: "tc" }]);
+    assistant.message!.content = [
+      { type: "toolCall", id: "tc" },
+      { type: "toolCall", id: "tc" },
+    ];
+    const batches = collectBatches([assistant, toolResultEntry("r", "c", "tc", textBlocks("ok"))]);
+    expect(batches[0]?.complete).toBe(false);
+    expect(batches[0]?.calls).toHaveLength(2);
+    expect(batches[0]?.results).toHaveLength(1);
+  });
+
+  it("marks a batch incomplete when the result appears before the call", () => {
+    const entries = [
+      toolResultEntry("r1", null, "c1", textBlocks("early")),
+      assistantEntry("a", "r1", [{ type: "toolCall", id: "c1" }]),
+    ];
+    const batches = collectBatches(entries);
+    expect(batches[0]?.complete).toBe(false);
+  });
+
   it("protects batches that contain non-text results", () => {
     const entries = [
       assistantEntry("a1", null, [{ type: "toolCall", id: "c1" }]),

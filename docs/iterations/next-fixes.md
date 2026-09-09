@@ -19,8 +19,22 @@ vitest exclude (historical, not moved this task):
 
 `publication.yml` still references deleted PCR release scripts; out of R01 file list, left untouched.
 
-Not run: remote GitHub Actions on this HEAD (local only; last push was blocked by invalid gh token). `pnpm check` / `pnpm smoke` recorded in the R01 close command if executed.
+`pnpm check` exit 0 — typecheck + 127 tests + `compat:scan` `{ok:true,files:29}`. Remote GitHub Actions on this HEAD not run (no valid push credentials).
+
+## R02
+
+Changed: `src/projection/active-view.ts`, `src/projection/view-contracts.ts`, `src/projection/batches.ts`, `src/projection/planner.ts`, `src/pi/source-reader.ts`, `src/plugin.ts`, `src/commands.ts`, `test/helpers/context-audit-fixture.ts`, `test/unit/active-view.test.ts`, `test/unit/batches.test.ts`, `docs/iterations/next-fixes.md`
+
+`commands.ts` is outside the R02 file list: `/pctx fold` now plans from `viewFromEntries` + branch batches so it cannot republish a file-linear sibling compact as the current boundary.
+
+RED: `pnpm exec vitest run test/unit/active-view.test.ts test/unit/batches.test.ts test/unit/fold-plan.test.ts --config vitest.config.ts` exit 1 — missing `buildActiveView`; P08 duplicate call IDs reported complete; result-before-call reported complete.
+
+GREEN: same command exit 0 — 15 tests; `pnpm typecheck` exit 0. Extra: planner + fault/runtime + invariants 17/17.
+
+Implemented: ArchiveBranch walks `parentId` from leaf (cycle/missing → no new fold). ActiveView maps outbound toolResult by callId + content fingerprint; summarized-out `r` is not a field. `collectBatches` is one branch-order scan; duplicate call IDs / result-before-call / illegal result mark incomplete. `planFold` iterates `view.fields` and keeps previous keys only if they still map. `applyContext` P01: archive 80k + active tail → foldEvents=0, lastApplied=0, default 60/40/4/4096 unchanged. Sibling later compact is not the current boundary. Active `r2` FieldRef still reads original bytes. Eight active 8k results still fold `r1` (path not disabled).
+
+Not run: `pnpm check`, smoke, live, remote Actions.
 
 ## Remaining
 
-R02–R10 not started.
+R03–R10 not started.

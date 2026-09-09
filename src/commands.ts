@@ -3,6 +3,7 @@ import type { HistoryRequest, StatusView } from "./contracts.js";
 import type { PluginState } from "./plugin.js";
 import { historyTool, indexBranch, setProfile } from "./plugin.js";
 import { statusView, writeStatusFile } from "./telemetry/metrics.js";
+import { viewFromEntries } from "./projection/active-view.js";
 import { collectBatches } from "./projection/batches.js";
 import { exposedEntryIds } from "./projection/exposed.js";
 import { planFold } from "./projection/planner.js";
@@ -127,11 +128,12 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
           contextWindow: usageRaw?.contextWindow ?? ctx.model?.contextWindow ?? 0,
           percent: usageRaw?.percent ?? null,
         };
+        const view = viewFromEntries(state.scope, entries);
         const next = planFold({
           scope: state.scope,
-          entries,
-          batches: collectBatches(entries),
-          exposed: exposedEntryIds(entries),
+          view,
+          batches: collectBatches(view.branch),
+          exposed: exposedEntryIds(view.branch),
           usage,
           previous: state.plan,
           modelId: ctx.model?.id ?? state.modelId,
