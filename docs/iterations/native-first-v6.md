@@ -131,6 +131,8 @@ Limits: one model, one machine, n=2 per cell; this stack often has `cacheRead > 
 
 Do not retune fold parameters. Do not change the default profile. Next evidence worth collecting is H03 actually folding in the production window, and whether H02 can quote the seed assertion after compaction.
 
+docs: record final sha — packaging commit `f81cb6a7b5ada3851a26c0fa9b5bb1ff3c9d7f5a`
+
 
 
 
