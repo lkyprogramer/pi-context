@@ -77,6 +77,22 @@ Implemented: identity lookup before quota; process cache skips re-hash of known 
 
 Not run: `pnpm check`, smoke, live, remote Actions.
 
+## R06
+
+Changed: `eval/local/sandbox/run-agent.sh`, `eval/local/run-episode.mjs`, `eval/local/grade.sh`, `eval/local/secure-preflight.mjs`, `eval/sandbox/broker-main.mjs`, `eval/sandbox/relay.ts`, `eval/sandbox/unix-relay.mjs`, `eval/local/run-matrix.mjs`, `eval/local/cases.json`, `scripts/credential-broker.mjs`, `test/security/agent-secret-isolation.test.ts`, `docs/iterations/next-fixes.md`
+
+Outside the R06 file list: `scripts/credential-broker.mjs` now enforces `allowedToken`, denies `/metrics`, and applies body/timeout limits; `unix-relay.mjs` is the container HTTP→Unix hop; `run-matrix.mjs` no longer passes `--no-sandbox`; H03 `cases.json` `sandbox` is true so the matrix matches the runner.
+
+RED: `agent launcher does not materialize provider credentials` — comment still contained `--network bridge`.
+
+GREEN: `pnpm exec vitest run test/security/agent-secret-isolation.test.ts test/security/grader-isolation.test.ts --config vitest.config.ts` exit 0 — 9 tests; `pnpm typecheck` exit 0.
+
+Implemented: parent `startCredentialBroker` holds the upstream key; agent `models.json` only gets a per-run opaque token and `http://127.0.0.1:8080/v1`. `run-agent.sh` is `--network none`, no `.env`, no host path. `--no-sandbox` and `runOnHost` are removed. Grader stays `--network none` without the broker socket; union walk flags unauthorized extras and deletions. `secure-preflight --canary` reports booleans + canary hash only.
+
+`node eval/local/secure-preflight.mjs --canary` exit 0 — `{ok:true,env:false,models:false,proc:false,net:true}`. Docker canary passed on this machine; live provider still waits for R10.
+
+Not run: `pnpm check`, smoke, live matrix, remote Actions.
+
 ## Remaining
 
-R06–R10 not started.
+R07–R10 not started.

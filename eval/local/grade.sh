@@ -48,6 +48,11 @@ for root, _, files in os.walk(cand):
         if ignored(rel) or os.path.islink(full) or covered(rel, editable) or covered(rel, protected): continue
         t = os.path.join(trusted, rel)
         if not os.path.exists(t) or sha(t) != sha(full): found.append(rel)
+for root, _, files in os.walk(trusted):
+    for f in files:
+        full = os.path.join(root, f); rel = os.path.relpath(full, trusted)
+        if ignored(rel) or covered(rel, editable) or covered(rel, protected): continue
+        if not os.path.exists(os.path.join(cand, rel)): found.append(rel)
 json.dump({"count": len(found), "files": found[:40]}, open(report, "w"), indent=2)
 print(len(found))
 PY

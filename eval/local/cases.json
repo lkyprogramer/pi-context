@@ -253,7 +253,7 @@
         "balanced"
       ],
       "reps": 1,
-      "sandbox": false,
+      "sandbox": true,
       "fixture": "eval/local/fixtures",
       "taskFile": "eval/local/cases/H03/TASK.md",
       "seed": null,

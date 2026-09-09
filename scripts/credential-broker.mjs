@@ -68,12 +68,13 @@ export function writeArmProviderConfig(armHome, input) {
   if (typeof input.provider !== "string" || input.provider.length === 0) failInput("provider");
   if (typeof input.model !== "string" || input.model.length === 0) failInput("model");
   if (typeof input.brokerUrl !== "string" || !input.brokerUrl.startsWith("http://127.0.0.1")) failInput("brokerUrl");
+  if (input.token != null && (typeof input.token !== "string" || input.token.length === 0)) failInput("token");
   const models = {
     providers: {
       [input.provider]: {
         baseUrl: input.brokerUrl,
         api: "openai-completions",
-        apiKey: "pcr-broker",
+        apiKey: input.token ?? "pcr-broker",
         authHeader: true,
         compat: {
           supportsDeveloperRole: false,
@@ -263,6 +264,7 @@ function allowBrokerHttp(method, reqUrl) {
   try {
     const u = new URL(reqUrl ?? "/", "http://127.0.0.1");
     if (u.protocol === "file:" || u.protocol === "unix:") return false;
+    if (u.pathname === "/metrics" || u.pathname.endsWith("/metrics")) return false;
     return u.pathname === "/chat/completions" || u.pathname === "/v1/chat/completions";
   } catch {
     return false;
@@ -276,13 +278,39 @@ export function startCredentialBroker(input) {
   if (typeof input.allowedModel !== "string" || input.allowedModel.length === 0) failInput("allowedModel");
   const allowedHost = input.allowedHost ?? "127.0.0.1";
   const maxRequests = input.maxRequests ?? 384;
+  const maxBodyBytes = input.maxBodyBytes ?? 2_000_000;
+  const requestTimeoutMs = input.requestTimeoutMs ?? 120_000;
   if (!Number.isSafeInteger(maxRequests) || maxRequests < 1) failInput("maxRequests");
   let requestCount = 0;
+  let revoked = false;
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {
       void (async () => {
+        if (revoked) {
+          res.statusCode = 403;
+          res.end(JSON.stringify({ error: { type: "PCR_BROKER_REVOKED" } }));
+          return;
+        }
+        if (typeof input.allowedToken === "string") {
+          const auth = String(req.headers.authorization ?? "");
+          if (auth !== `Bearer ${input.allowedToken}`) {
+            res.statusCode = 403;
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify({ error: { type: "PCR_BROKER_TOKEN_DENIED" } }));
+            return;
+          }
+        }
         const chunks = [];
-        for await (const chunk of req) chunks.push(chunk);
+        let size = 0;
+        for await (const chunk of req) {
+          size += chunk.length;
+          if (size > maxBodyBytes) {
+            res.statusCode = 413;
+            res.end(JSON.stringify({ error: { type: "PCR_BROKER_BUDGET" } }));
+            return;
+          }
+          chunks.push(chunk);
+        }
         const body = Buffer.concat(chunks);
         try {
           if (!allowBrokerHttp(req.method ?? "GET", req.url ?? "/")) {
@@ -322,6 +350,7 @@ export function startCredentialBroker(input) {
             method: req.method ?? "GET",
             headers,
             body: req.method === "GET" || req.method === "HEAD" ? undefined : forwardBody,
+            signal: AbortSignal.timeout(requestTimeoutMs),
           });
           res.statusCode = upstream.status;
           const contentType = upstream.headers.get("content-type");
@@ -343,6 +372,7 @@ export function startCredentialBroker(input) {
       })();
     });
     const closeServers = () => new Promise((closeResolve, closeReject) => {
+      revoked = true;
       server.close((err) => (err ? closeReject(err) : closeResolve()));
     });
     server.once("error", reject);

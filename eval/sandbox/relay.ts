@@ -19,6 +19,7 @@ export function allowBrokerRequest(method: string, url: string): boolean {
   try {
     const u = new URL(url, "http://127.0.0.1");
     if (u.protocol === "file:" || u.protocol === "unix:") return false;
+    if (u.pathname === "/metrics" || u.pathname.endsWith("/metrics")) return false;
     return CHAT_PATHS.has(u.pathname);
   } catch {
     return false;

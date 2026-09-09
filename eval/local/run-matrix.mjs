@@ -84,7 +84,6 @@ for (const ep of manifest.order) {
     continue;
   }
   const cmd = ["run-episode.mjs", "--case", ep.caseId, "--arm", ep.arm, "--window", ep.windowProfile, "--rep", String(ep.rep), "--out", epDir, "--run", manifest.runId];
-  if (!ep.sandbox) cmd.push("--no-sandbox");
   const r = spawnSync("node", cmd.map((x, i) => (i === 0 ? join(here, x) : x)), { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] });
   const resultPath = join(epDir, "result.json");
   if (!existsSync(resultPath)) { appendFileSync(join(runDir, "episodes.jsonl"), `${JSON.stringify({ manifest: ep, status: "error", error: `runner exit ${r.status}` })}\n`); continue; }
