@@ -111,7 +111,7 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     fenceIdentity(state);
     const agentDir = (ctx as { agentDir?: string }).agentDir;
     if (typeof agentDir === "string") state.agentDir = agentDir;
-    openSessionIndex(state);
+    openSessionIndex(state, ctx.cwd);
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
     state.sessionId = sessionId;
     indexBranch(state, entries, cwd, sessionId, leafId);

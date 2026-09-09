@@ -7,7 +7,7 @@ import { SearchSnapshotStore, SEARCH_SNAPSHOT_LIMITS } from "./history/page-snap
 import { readHistory } from "./history/read.js";
 import { readBudgetFor } from "./projection/budget.js";
 import { searchHistory } from "./history/search.js";
-import { buildScope } from "./history/scope.js";
+import { buildScope, normalizeWorkspace } from "./history/scope.js";
 import { buildActiveView, identityIncomplete, mappingFromView } from "./projection/active-view.js";
 import { collectBatches } from "./projection/batches.js";
 import { exposedEntryIds } from "./projection/exposed.js";
@@ -133,16 +133,17 @@ export function setProfile(state: PluginState, profile: Profile): void {
   fenceIdentity(state);
 }
 
-export function openSessionIndex(state: PluginState): void {
+export function openSessionIndex(state: PluginState, cwd?: string): void {
   try {
     state.index.closeSync();
   } catch {
     /* first open */
   }
   try {
+    const persist = cwd ? normalizeWorkspace(cwd).persist : true;
     state.index = HistoryIndex.open({
-      mode: state.config.storage.mode,
-      dbPath: state.config.storage.dbPath,
+      mode: persist ? state.config.storage.mode : "memory-only",
+      dbPath: persist ? state.config.storage.dbPath : null,
       maxIndexBytes: state.config.storage.maxIndexBytes,
     });
   } catch (err) {

@@ -63,6 +63,20 @@ Implemented: `SearchSnapshotStore({maxSnapshots:16,maxHits:128,ttlMs:600000})`. 
 
 Not run: `pnpm check`, smoke, live, remote Actions.
 
+## R05
+
+Changed: `src/history/index.ts`, `src/plugin.ts`, `src/pi/adapter.ts`, `src/history/scope.ts` (import only via plugin), `test/unit/index-capacity.test.ts`, `docs/iterations/next-fixes.md`
+
+`adapter.ts` is outside the R05 file list: `session_start` now passes `cwd` into `openSessionIndex` so HOME/root `persist=false` forces memory-only.
+
+RED: `duplicate rows do not consume insertion headroom` — rescan of `a` charged 100 bytes again (`used+byteLen > 150`) and never inserted `b`.
+
+GREEN: `pnpm exec vitest run test/unit/index-capacity.test.ts test/integration/index.test.ts test/host/index-restart.test.ts --config vitest.config.ts` exit 0 with history-index-scope 12/12; `pnpm typecheck` exit 0.
+
+Implemented: identity lookup before quota; process cache skips re-hash of known entry ids; leaf-unchanged upsert is 0 hashedFields; hash conflict is `source-changed` and does not overwrite. `status()` reports `newRows/newBytes/scannedIds/hashedFields` and logical `bytes` vs diagnostic `physicalBytes`. Search SQL failure throws `INDEX_UNAVAILABLE` (degraded), not empty ok. Persistent reopen still inserts 0 for the same leaf.
+
+Not run: `pnpm check`, smoke, live, remote Actions.
+
 ## Remaining
 
-R05–R10 not started.
+R06–R10 not started.

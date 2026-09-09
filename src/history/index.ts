@@ -1,4 +1,4 @@
-import { accessSync, constants, mkdirSync } from "node:fs";
+import { accessSync, constants, mkdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -29,6 +29,11 @@ export interface HistoryIndexStatus {
   bytes: number;
   lastIndexedLeaf: string | null;
   warnings: string[];
+  newRows: number;
+  newBytes: number;
+  scannedIds: number;
+  hashedFields: number;
+  physicalBytes: number;
 }
 
 export const HISTORY_SEARCH_SQL = `
@@ -141,6 +146,12 @@ export class HistoryIndex {
   private db: DatabaseSync | null;
   private indexFull = false;
   private closed = false;
+  private readonly knownEntries = new Set<string>();
+  private lastNewRows = 0;
+  private lastNewBytes = 0;
+  private lastScannedIds = 0;
+  private lastHashedFields = 0;
+  private sourceChanged = false;
 
   private constructor(
     mode: "persistent" | "memory-only" | "unavailable",
@@ -179,7 +190,9 @@ export class HistoryIndex {
       }
       indexUnavailable(err instanceof Error ? err.message : String(err));
     }
-    return new HistoryIndex(opts.mode, opts.mode === "memory-only" ? ":memory:" : dbPath, opts.maxIndexBytes, db);
+    const index = new HistoryIndex(opts.mode, opts.mode === "memory-only" ? ":memory:" : dbPath, opts.maxIndexBytes, db);
+    index.rememberExisting();
+    return index;
   }
 
   static unavailable(message = "INDEX_UNAVAILABLE"): HistoryIndex {
@@ -195,6 +208,10 @@ export class HistoryIndex {
 
   upsertBranchSync(scope: Scope, entries: readonly NativeEntry[]): number {
     const db = this.requireDb();
+    this.lastNewRows = 0;
+    this.lastNewBytes = 0;
+    this.lastScannedIds = 0;
+    this.lastHashedFields = 0;
     if (scope.leafId) {
       const prior = db.prepare(
         "SELECT last_indexed_leaf AS leaf FROM session_leaf WHERE workspace_id = ? AND session_id = ?",
@@ -206,6 +223,10 @@ export class HistoryIndex {
        VALUES(?,?,?,?,?,?,?,?)`,
     );
     const insertText = db.prepare("INSERT INTO blocks_text(id, text) VALUES(?, ?)");
+    const existing = db.prepare(
+      `SELECT source_hash AS sourceHash FROM blocks
+       WHERE workspace_id = ? AND session_id = ? AND entry_id = ? AND block_index = ?`,
+    );
     let inserted = 0;
     const now = Date.now();
     let used = this.bytes();
@@ -213,23 +234,34 @@ export class HistoryIndex {
     try {
       for (const entry of entries) {
         if (!shouldIndexEntry(entry)) continue;
+        this.lastScannedIds += 1;
+        const knownKey = `${scope.workspaceId}|${scope.sessionId}|${entry.id}`;
+        if (this.knownEntries.has(knownKey)) continue;
         const blocks = blocksOf(entry);
         const toolName = entry.message?.toolName ?? null;
+        let indexed = true;
         for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
           const block = blocks[blockIndex]!;
           if (block.type !== "text" || typeof block.text !== "string") continue;
           const byteLen = Buffer.byteLength(block.text, "utf8");
+          const hash = textSourceHash(block.text);
+          this.lastHashedFields += 1;
+          const prior = existing.get(scope.workspaceId, scope.sessionId, entry.id, blockIndex) as { sourceHash: string } | undefined;
+          if (prior) {
+            if (prior.sourceHash !== hash) this.noteSourceChanged();
+            continue;
+          }
           if (used + byteLen > this.maxIndexBytes) {
             this.indexFull = true;
-            db.exec("COMMIT");
-            return inserted;
+            indexed = false;
+            break;
           }
           const result = insertBlock.run(
             scope.workspaceId,
             scope.sessionId,
             entry.id,
             blockIndex,
-            textSourceHash(block.text),
+            hash,
             toolName,
             byteLen,
             now,
@@ -238,7 +270,10 @@ export class HistoryIndex {
           insertText.run(Number(result.lastInsertRowid), block.text);
           used += byteLen;
           inserted += 1;
+          this.lastNewRows += 1;
+          this.lastNewBytes += byteLen;
         }
+        if (indexed) this.knownEntries.add(knownKey);
       }
       if (!this.indexFull) {
         db.prepare(
@@ -284,8 +319,8 @@ export class HistoryIndex {
         Math.max(0, limit),
         Math.max(0, offset),
       ) as typeof rows;
-    } catch {
-      return [];
+    } catch (err) {
+      indexUnavailable(err instanceof Error ? err.message : String(err));
     }
     return rows.map((row) => ({
       workspaceId: String(row.workspaceId),
@@ -326,10 +361,12 @@ export class HistoryIndex {
     this.db = null;
   }
 
+  /** `bytes` is the logical text budget (sum of indexed UTF-8 lengths). `physicalBytes` is the SQLite file size, diagnostic only. Quota never deletes canonical session history. */
   status(): HistoryIndexStatus {
     const warnings: string[] = [];
     if (this.mode === "unavailable") warnings.push("history: unavailable");
     if (this.indexFull) warnings.push("index-full");
+    if (this.sourceChanged) warnings.push("source-changed");
     if (this.closed && this.mode !== "unavailable") warnings.push("history: unavailable");
     let lastIndexedLeaf: string | null = null;
     if (this.db) {
@@ -345,7 +382,35 @@ export class HistoryIndex {
       bytes: this.bytes(),
       lastIndexedLeaf,
       warnings,
+      newRows: this.lastNewRows,
+      newBytes: this.lastNewBytes,
+      scannedIds: this.lastScannedIds,
+      hashedFields: this.lastHashedFields,
+      physicalBytes: this.physicalBytes(),
     };
+  }
+
+  private rememberExisting(): void {
+    if (!this.db) return;
+    const rows = this.db.prepare(
+      "SELECT DISTINCT workspace_id AS workspaceId, session_id AS sessionId, entry_id AS entryId FROM blocks",
+    ).all() as Array<{ workspaceId: string; sessionId: string; entryId: string }>;
+    for (const row of rows) {
+      this.knownEntries.add(`${row.workspaceId}|${row.sessionId}|${row.entryId}`);
+    }
+  }
+
+  private noteSourceChanged(): void {
+    this.sourceChanged = true;
+  }
+
+  private physicalBytes(): number {
+    if (!this.dbPath || this.dbPath === ":memory:") return 0;
+    try {
+      return statSync(this.dbPath).size;
+    } catch {
+      return 0;
+    }
   }
 
   private rows(): number {
