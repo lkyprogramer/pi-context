@@ -63,8 +63,8 @@ H01 的 nonce 只存在于种子历史的一条 `bash` toolResult 里（录制�
 设质量集 `Q = L01–L06`，每 case×arm 通过数 `p`。
 
 1. **质量门**：对每个 case，`p_balanced ≥ p_native − 1`（允许一次模型随机波动）；若任何 case 出现 `p_balanced ≤ p_native − 2` → `observe-only`。同一 case 内 balanced 的 wrong-action 数不得大于 native，否则 → `observe-only`。
-2. **机制门**：H01/H02 的 balanced 4 个 episode 中 ≥ 3 个满足 `folds ≥ 1`；H01 balanced 答对且 `verifiedReads ≥ 1` 的 episode ≥ 1；H02 balanced 无一个 episode 折叠了 isError 结果。任一不满足 → `observe-only`。
-3. **成本门**：H01/H02/H03 中折叠后的第一条请求 `cacheRead` 应显著下降（前缀作废，预期行为），其后 ≥ 2 条请求 `cacheRead/input ≥ 0.5`；且 H03 中原生 compaction 次数为 0 或晚于 native 同用量下的预期。engine 的 `prefillTokensDelta` 在 balanced 不得高于 native 同 case 的 1.5×（否则折叠代价超过收益）。不满足 → `observe-only`。
+2. **机制门**：H01/H02 的 balanced 4 个 episode 中 ≥ 3 个满足 `folds ≥ 1`；H01 balanced 答对、nonce 所在 toolResult 已折叠、且 `nonceVerifiedReads ≥ 1`（非空页含 nonce 且 `sourceHash` 与原文块匹配）的 episode ≥ 1；H02 balanced 无一个 episode 折叠了 isError 结果。折叠证据或回读计数缺失记 unknown，不得过门。任一不满足 → `observe-only`。
+3. **成本门**：H01/H02/H03 中折叠后的第一条请求 `cacheRead` 应显著下降（前缀作废，预期行为），其后 ≥ 2 条请求 `cacheRead/input ≥ 0.5`；且 H03 中原生 compaction 次数为 0 或晚于 native 同用量下的预期。engine 的 `prefillTokensDelta` 在 balanced 不得高于 native 同 case 的 1.5×（否则折叠代价超过收益）。`cacheRead` 通道全 0 / 缺失，或 capability 格 engine 指标 unknown，记 unknown 且不得出 `limited-balanced-trial`。不满足 → `observe-only`。
 4. 三门都过 → `limited-balanced-trial`：README 标 "default-off, trial in this environment"，仍不改默认 profile。
 6. **6.2 立项信号（不影响上面四条，可同时触发多个）**，报告决策段 `candidates:` 列出命中的项，均无则 `none`（[00-target §6.2](../design/00-target.md)）：
    - `post-compaction-evidence-delta`：H02 任一臂 `lost evidence ≥ 1`。

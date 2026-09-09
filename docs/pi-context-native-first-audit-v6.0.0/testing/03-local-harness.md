@@ -1,6 +1,6 @@
 # 本地 4090 评测 harness（E01–E03 的落地模板）
 
-[harness/](harness/README.md) 目录里是可以直接复制到仓库 `eval/local/` 的脚本与题目。它们是**模板**：E01 把它们落到仓库、跑通第一个 native episode，并按官方 SDK 实际导出名修正；E02 加容器；E03 加矩阵与报告。本包自己不运行它们。
+可执行 harness 的唯一来源是仓库 `eval/local/`。本包 [harness/](harness/README.md) 只保留题目、cases.json、pi-config 与隧道/判题脚本，**不再附带** `report.mjs` / `run-episode.mjs` / `parse-session.mjs` / `run-matrix.mjs`，以免旧 `decide()` 覆盖仓库实现。E01 把夹具与配置落到仓库；E02 加容器；E03 用仓库脚本跑矩阵。本包自己不运行评测。
 
 ## 与 CodexGame 已验证做法的关系
 
@@ -15,13 +15,13 @@ CodexGame 的 `run_pi_java.sh` 用 `pi --print --mode json --no-session -e ...` 
 | [pi-config/](harness/pi-config/settings.json) | `w262k`/`w64k` 的 `models.json` 与 `settings.json` | E01 |
 | [cases.json](harness/cases.json) | 12 场景的本地执行参数（与 scenarios.json 一致） | E01 |
 | [cases/H01](harness/cases/H01/TASK.md) / [H02](harness/cases/H02/TASK.md) / [H03](harness/cases/H03/TASK.md) | 能力与观察题的 prompt 段 | E01 |
-| [run-episode.mjs](harness/run-episode.mjs) | 单 episode：准备工作区/agentDir、可选种子、串行 prompt、事件记账、status | E01（E02 加容器） |
-| [record-seed.mjs](harness/record-seed.mjs) | 录制含 nonce 的真实种子历史 | E01 |
-| [parse-session.mjs](harness/parse-session.mjs) | 从 Pi JSONL 复算 requests/tool/compaction/history 计数 | E01 |
+| `eval/local/run-episode.mjs`（仓库 SSOT） | 单 episode：准备工作区/agentDir、可选种子、串行 prompt、事件记账、status | E01（E02 加容器） |
+| [record-seed.mjs](harness/record-seed.mjs) | 录制含 nonce 的真实种子历史；仓库实现在 `eval/local/record-seed.mjs` | E01 |
+| `eval/local/parse-session.mjs`（仓库 SSOT） | 从 Pi JSONL 复算 requests/tool/compaction/history 计数 | E01 |
 | [grade.sh](harness/grade.sh) | `--network none` 判题容器 | E02 |
 | [arm-contract.mjs](harness/arm-contract.mjs) | arm 身份断言 | E03 |
-| [run-matrix.mjs](harness/run-matrix.mjs) | 冻结 manifest、串行矩阵、预算 | E03 |
-| [report.mjs](harness/report.mjs) | 配对汇总、engine 差值、机械决策 | E03 |
+| `eval/local/run-matrix.mjs`（仓库 SSOT） | 冻结 manifest、串行矩阵、预算 | E03 |
+| `eval/local/report.mjs`（仓库 SSOT） | 配对汇总、engine 差值、机械决策 | E03 |
 
 ## 关键实现约定
 

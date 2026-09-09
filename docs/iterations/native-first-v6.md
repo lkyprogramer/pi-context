@@ -130,6 +130,10 @@ Independent review of `a1e82819` found the mechanism gate was not executable: `v
 - `planFold` stops at `targetPercent` and abandons the plan when `saved < minRemovedTokens`.
 - INSTALL.md and packed `/pctx status` now describe 6.1.0 / observe / hostVersion 0.85.1.
 
+Follow-up (gates 1+2+3): `eval/local/` is the only executable harness; the audit pack no longer ships `report/run-episode/parse-session/run-matrix.mjs`. H01 requires `nonceVerifiedReads` (non-empty page + matching `sourceHash`) and `nonceFolded`. Missing fold/cache/engine evidence is unknown and cannot yield `limited-balanced-trial`. v5 `EvalArm`/`BudgetDecision` and the B0–B3 runner were removed from the default surface.
+
+Live `20260909-103813`: 37/37 complete, `observe-only` on the quality gate (`L06` balanced wrong-actions 2 > native 1). H01 balanced recovered the nonce through a folded verified read on both reps. `/metrics` still unavailable.
+
 
 
 
