@@ -1,20 +1,36 @@
-# Security
+# Security (6.1)
 
-- Critical and High findings cannot be waived.
-- Packed artifacts must not contain test fixture secrets (`sk-t43-*`, `sk-t47-*`, `sk-live`, walkthrough keys).
-- Backup archives are encrypted. `keys/*.key` are excluded from backup plaintext.
-- Restore never overwrites a live workspace directory.
-- GC is dry-run by default and requires a confirmation token that matches the inventory hash.
-- Doctor output must not include raw secrets or absolute home paths.
+pi-context is a private plugin for official Pi 0.85.1. It does not publish, does not patch the host, and does not ship credentials.
+
+## Secrets
+
+- Put model keys only in the gitignored repo `.env` (`PCR_LIVE_API_KEY` / `PCTX_MODEL_API_KEY`) or the user's own Pi config.
+- Do not write tokens into source, tests, manifests, commits, telemetry jsonl, or chat replies.
+- `eval/local/seeds/*.secret` and `artifacts/local-eval/` stay local. Rotate a key that has entered a session JSONL or a log.
+
+## Packed install
+
+- Unique entry is `dist/extension.js`. Packed artifacts must not contain test fixtures, `.env`, or live session dumps.
+- `/pctx` load failures force `observe` and surface the error in `warnings`. They do not fall open into `balanced`.
+
+## History scope
+
+- `pctx_history` search and read are limited to the current session's visible ancestors.
+- Read is hash-checked (`sourceHash`). Stale refs fail closed.
+- Search fail-closes when the index is unavailable. Read still uses native session entries.
+
+## Fold
+
+- `balanced` never folds `isError` tool results, non-text blocks, or the most recent complete batches.
+- Fold is off unless a trusted `pctx.json` sets `profile: "balanced"`. `/pctx profile` is in-memory only.
 
 ## Eval isolation
 
-- Parent processes may read local Provider config. Agent/tool subprocesses receive `buildAgentEnvironment()` only: `HOME` is the arm directory, plus PATH/temp/locale and an explicit loopback broker URL. `TOKEN`/`KEY`/`AUTH`/`COOKIE` values are not inherited.
-- Do not copy `~/.pi/agent/auth.json` or `models.json` with secrets into an arm. Arm `models.json` may only point at `http://127.0.0.1` broker URLs.
-- Environment stripping is not a sandbox. If the agent process can still read the host auth path, tools-enabled live is blocked (`isolation-unproven`). A key present in the parent does not prove isolation. Reader-only live may still use the loopback broker with `--no-tools` and an isolated `PI_CODING_AGENT_DIR`; coding/tools-enabled arms stay not-run until isolation is proven.
-- Controlled no-key / `PCR_LIVE` unset runs do not need the broker.
-- Keys that already entered session, SQLite, or raw live logs should be rotated and those files kept local/read-restricted. Do not delete user logs from this repo and do not commit replacements that contain secrets.
+- Grader containers use `--network none`. Candidate sources are read-only. `verify.sh` / Oracle come from the trusted fixture copy.
+- Agent containers should only need the model endpoint. Isolation is not proven for arbitrary host egress on Docker Desktop / OrbStack.
+- H03 may run on the host with a temporary `HOME`. Restore `HOME` before `grade.sh` so Docker still finds `~/.docker`.
+- Do not copy host `auth.json` or secret-bearing `models.json` into an episode arm.
 
-## Report
+## Doctor and reports
 
-If a release gate sees `securityCritical > 0` or `securityHigh > 0`, packaging stops (`PCR_SECURITY_BLOCKED`).
+`/pctx doctor` and eval reports must not print raw secrets. Missing usage or engine metrics stay unknown / n/a, never zeroed.
