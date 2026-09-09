@@ -16,7 +16,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, 
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { foldedErrorCount, nonceEntryIds, parseSession, verbatimQuote } from "./parse-session.mjs";
+import { foldedErrorCount, nonceEntryIds, nonceVerifiedReads, parseSession, verbatimQuote } from "./parse-session.mjs";
 import { applyEndpointToModelsJson, engineOk, fetchModels, loadRepoEnv, modelEndpoint, servedIdentity } from "./model-endpoint.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -192,22 +192,38 @@ const foldedEntryIds = [
 const secretFile = nonceSecret(spec);
 const nonce = secretFile && existsSync(secretFile) ? readFileSync(secretFile, "utf8").trim() : "";
 const nonceIds = parsed && nonce ? nonceEntryIds(parsed, nonce) : [];
+const telemetryPresent = existsSync(join(out, "telemetry")) || existsSync(join(agentDir, "pctx", "telemetry"));
+const foldEvidenceKnown = Boolean(
+  parsed
+  && (
+    foldEvents.length > 0
+    || telemetryPresent
+    || (statusJson != null && (statusJson.folds ?? 0) === 0)
+    || (statusJson?.activePlan?.entryIds?.length)
+  ),
+);
+if (oracle.missingGrade && status === "complete") {
+  status = "blocked";
+  error = oracle.detail ?? "grade.sh wrote no grade.json";
+  oracle.passed = null;
+}
 const result = {
   manifest, status, error,
   oracle,
   requests,
   foldEvents,
   mechanism: {
-    folds: statusJson?.folds ?? foldEvents.length,
-    replacements: statusJson?.activePlan?.replacements ?? 0,
-    nativeCompactions: statusJson?.nativeCompactions ?? countEvents(out, "compaction_end"),
-    historyReads: parsed?.historyReads ?? 0,
-    historySearches: parsed?.historySearches ?? 0,
-    verifiedReads: parsed?.verifiedReads ?? 0,
-    foldedErrorResults: foldedErrorCount(parsed?.errorResultIds ?? [], foldedEntryIds),
-    nonceFolded: nonceIds.length ? nonceIds.some((id) => foldedEntryIds.includes(id)) : null,
-    savedTokensEstimate: foldEvents.reduce((s, f) => s + (f.savedTokensEstimate ?? 0), 0),
-    invalidatedTokensEstimate: foldEvents.reduce((s, f) => s + (f.invalidatedTokensEstimate ?? 0), 0),
+    folds: statusJson != null ? (statusJson.folds ?? 0) : (foldEvents.length > 0 ? foldEvents.length : null),
+    replacements: statusJson?.activePlan?.replacements ?? null,
+    nativeCompactions: statusJson?.nativeCompactions ?? (existsSync(join(out, "events.jsonl")) ? countEvents(out, "compaction_end") : null),
+    historyReads: parsed ? parsed.historyReads : null,
+    historySearches: parsed ? parsed.historySearches : null,
+    verifiedReads: parsed ? parsed.verifiedReads : null,
+    nonceVerifiedReads: parsed && nonce ? nonceVerifiedReads(parsed, nonce) : (parsed ? 0 : null),
+    foldedErrorResults: parsed && foldEvidenceKnown ? foldedErrorCount(parsed.errorResultIds ?? [], foldedEntryIds) : null,
+    nonceFolded: parsed && nonce ? (nonceIds.length ? nonceIds.some((id) => foldedEntryIds.includes(id)) : false) : null,
+    savedTokensEstimate: foldEvents.length ? foldEvents.reduce((s, f) => s + (f.savedTokensEstimate ?? 0), 0) : null,
+    invalidatedTokensEstimate: foldEvents.length ? foldEvents.reduce((s, f) => s + (f.invalidatedTokensEstimate ?? 0), 0) : null,
   },
   engine: { requestsDelta: delta("requests"), prefixHitTokensDelta: delta("prefixHitTokens"), prefillTokensDelta: delta("prefillTokens"), stableRestoresDelta: delta("stableRestores"), engineRestarted: before.available && after.available && after.requests < before.requests },
   wallMs, workdir: cwd,
@@ -369,7 +385,7 @@ function gradeCandidate(id, candidate, spec) {
   if (r.stderr) process.stderr.write(r.stderr);
   const gradePath = join(gradeOut, "grade.json");
   if (!existsSync(gradePath)) {
-    return { passed: false, exitCode: r.status, protectedIntact: false, detail: "grade.sh wrote no grade.json" };
+    return { passed: null, exitCode: r.status, protectedIntact: null, detail: "grade.sh wrote no grade.json", missingGrade: true };
   }
   const g = JSON.parse(readFileSync(gradePath, "utf8"));
   return {

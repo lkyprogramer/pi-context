@@ -6,6 +6,7 @@
  *
  *   node parse-session.mjs <session.jsonl>
  */
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 export function parseHistoryMetadata(text) {
@@ -19,12 +20,24 @@ export function parseHistoryMetadata(text) {
   return null;
 }
 
+export function sha256Utf8(text) {
+  return createHash("sha256").update(Buffer.from(String(text), "utf8")).digest("hex");
+}
+
+export function pageOfHistoryResult(texts) {
+  if (!texts.length) return "";
+  if (parseHistoryMetadata(texts[0])) return texts.slice(1).join("\n");
+  return texts.join("\n");
+}
+
 export function parseSession(path) {
   const lines = readFileSync(path, "utf8").split("\n").filter((l) => l.trim().startsWith("{"));
   const requests = [], toolCalls = [];
   let compactions = 0, historyReads = 0, historySearches = 0, verifiedReads = 0;
   const callNames = new Map();
   const errorResultIds = [];
+  const historyReadResults = [];
+  const sourceBlocks = [];
   for (const line of lines) {
     let e; try { e = JSON.parse(line); } catch { continue; }
     if (e.type === "compaction") { compactions++; continue; }
@@ -36,7 +49,7 @@ export function parseSession(path) {
       for (const b of Array.isArray(m.content) ? m.content : []) {
         if (b.type === "toolCall") {
           callNames.set(b.id, b.name);
-          toolCalls.push({ id: b.id, name: b.name });
+          toolCalls.push({ id: b.id, name: b.name, arguments: b.arguments ?? {} });
           if (b.name === "pctx_history") {
             const a = b.arguments ?? {};
             if (a.action === "read") historyReads++;
@@ -48,10 +61,25 @@ export function parseSession(path) {
       const t = toolCalls.find((c) => c.id === m.toolCallId);
       if (t) { t.isError = Boolean(m.isError); t.resultBytes = Buffer.byteLength(JSON.stringify(m.content ?? "")); }
       if (m.isError) errorResultIds.push(e.id);
-      if (t?.name === "pctx_history" && callNames.get(m.toolCallId) === "pctx_history") {
-        const texts = textBlocks(m.content);
+      const texts = textBlocks(m.content);
+      if (t?.name === "pctx_history") {
         const meta = texts.map(parseHistoryMetadata).find(Boolean);
-        if (meta?.verified === true) verifiedReads++;
+        const page = pageOfHistoryResult(texts);
+        const empty = page.length === 0;
+        const verified = meta?.verified === true;
+        if (verified && !empty) verifiedReads++;
+        historyReadResults.push({
+          toolCallId: m.toolCallId,
+          entryId: e.id,
+          verified,
+          empty,
+          page,
+          sourceHash: typeof meta?.sourceHash === "string" ? meta.sourceHash : null,
+        });
+      } else {
+        for (const text of texts) {
+          sourceBlocks.push({ entryId: e.id, text, hash: sha256Utf8(text) });
+        }
       }
     }
   }
@@ -59,6 +87,7 @@ export function parseSession(path) {
   return {
     entries: lines.map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean),
     requests, toolCalls, compactions, historyReads, historySearches, verifiedReads, errorResultIds,
+    historyReadResults, sourceBlocks,
     sums: { input: known.reduce((s, r) => s + r.input, 0), cacheRead: known.reduce((s, r) => s + (r.cacheRead ?? 0), 0), output: known.reduce((s, r) => s + (r.output ?? 0), 0), unknownUsage: requests.length - known.length },
   };
 }
@@ -73,6 +102,39 @@ export function nonceEntryIds(parsed, nonce) {
     if (textOf(e.message.content).includes(needle)) ids.push(e.id);
   }
   return ids;
+}
+
+export function nonceSourceHashes(parsed, nonce) {
+  const needle = String(nonce ?? "").trim();
+  if (!needle) return [];
+  return (parsed.sourceBlocks ?? []).filter((b) => b.text.includes(needle)).map((b) => b.hash);
+}
+
+/** Verified, non-empty page containing the nonce, whose sourceHash matches a nonce-bearing original block. */
+export function nonceVerifiedReads(parsed, nonce) {
+  const needle = String(nonce ?? "").trim();
+  if (!needle || !parsed) return 0;
+  const hashes = new Set(nonceSourceHashes(parsed, needle));
+  if (!hashes.size) return 0;
+  let n = 0;
+  for (const r of parsed.historyReadResults ?? []) {
+    if (!r.verified || r.empty) continue;
+    if (!String(r.page).includes(needle)) continue;
+    if (!r.sourceHash || !hashes.has(r.sourceHash)) continue;
+    n++;
+  }
+  return n;
+}
+
+export function nonceToolResultBytes(parsed, nonce) {
+  const needle = String(nonce ?? "").trim();
+  if (!needle) return 0;
+  let max = 0;
+  for (const b of parsed.sourceBlocks ?? []) {
+    if (!b.text.includes(needle)) continue;
+    max = Math.max(max, Buffer.byteLength(b.text, "utf8"));
+  }
+  return max;
 }
 
 export function foldedErrorCount(errorResultIds, foldedEntryIds) {

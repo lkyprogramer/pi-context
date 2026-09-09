@@ -95,11 +95,27 @@ export function summarize(episodes, priorAttempts = []) {
       cell.engine.prefixHitRatio = cell.engine.unknown === 0 && denom > 0 ? cell.engine.prefixHit / denom : null;
       cell.wallP50 = median(cell.walls);
       cell.ttftP50 = cell.ttfts.length ? median(cell.ttfts) : null;
-      cell.cacheReadRatio = cell.inputSum > 0 && cell.unknownUsage === 0 ? cell.cacheReadSum / cell.inputSum : (cell.inputSum > 0 && cell.cacheReadSum > 0 ? cell.cacheReadSum / cell.inputSum : null);
+      cell.cacheReadRatio = cell.inputSum > 0 && cell.unknownUsage === 0 ? cell.cacheReadSum / cell.inputSum : null;
       cell.uncachedInputSum = cell.unknownUsage === 0 ? cell.inputSum - cell.cacheReadSum : null;
     }
   }
-  return { byCaseArm, blocked, blockedCount: blocked.length, total: episodes.length, flags, priorAttempts };
+  return {
+    byCaseArm, blocked, blockedCount: blocked.length, total: episodes.length, flags, priorAttempts,
+    cacheReadChannelAvailable: cacheChannelAvailable(episodes),
+  };
+}
+
+export function cacheChannelAvailable(episodes) {
+  let seen = false;
+  for (const e of episodes ?? []) {
+    for (const r of e.requests ?? []) {
+      const cr = usageOf(r).cacheRead;
+      if (cr == null) continue;
+      seen = true;
+      if (cr > 0) return true;
+    }
+  }
+  return false;
 }
 
 export function candidates(summary, episodes = []) {
@@ -138,18 +154,29 @@ function decideGates(summary, scenarios, episodes = []) {
   const foldEpisodes = hEps.filter((e) => (e.mechanism?.folds ?? 0) >= 1).length;
   const totalH = hEps.length;
   if (totalH === 0 || foldEpisodes < Math.ceil(totalH * 0.75)) reasons.push(`folds observed in ${foldEpisodes}/${totalH} balanced H episodes (< 75%)`);
-  const h01ok = hEps.filter((e) => e.manifest.caseId === "H01" && e.oracle?.passed === true && (e.mechanism?.verifiedReads ?? 0) >= 1);
-  if (h01ok.length < 1) {
-    const folded = hEps.some((e) => e.manifest.caseId === "H01" && e.mechanism?.nonceFolded);
-    reasons.push(folded
-      ? "H01 balanced never recovered the nonce through a verified read"
-      : "H01 balanced never recovered the nonce through a verified read (nonce toolResult was not folded)");
+  const h01 = hEps.filter((e) => e.manifest.caseId === "H01");
+  if (h01.some((e) => e.mechanism?.nonceVerifiedReads == null || e.mechanism?.nonceFolded == null)) {
+    reasons.push("H01 nonce recovery evidence unknown");
+  } else {
+    const h01ok = h01.filter((e) => e.oracle?.passed === true && (e.mechanism?.nonceVerifiedReads ?? 0) >= 1 && e.mechanism?.nonceFolded === true);
+    if (h01ok.length < 1) {
+      const folded = h01.some((e) => e.mechanism?.nonceFolded === true);
+      reasons.push(folded
+        ? "H01 balanced never recovered the nonce through a verified read"
+        : "H01 balanced never recovered the nonce through a verified read (nonce toolResult was not folded)");
+    }
   }
-  if (hEps.some((e) => e.manifest.caseId === "H02" && (e.mechanism?.foldedErrorResults ?? 0) > 0)) {
+  const h02 = hEps.filter((e) => e.manifest.caseId === "H02");
+  if (h02.some((e) => e.mechanism?.foldedErrorResults == null)) {
+    reasons.push("H02 foldedErrorResults unknown");
+  } else if (h02.some((e) => (e.mechanism?.foldedErrorResults ?? 0) > 0)) {
     reasons.push("H02 balanced folded an isError tool result");
   }
   if (reasons.length) return { decision: "observe-only", gate: "mechanism", reasons };
 
+  if (!(summary.cacheReadChannelAvailable ?? cacheChannelAvailable(episodes))) {
+    reasons.push("cacheRead channel unavailable (all observed values 0 or missing)");
+  }
   for (const id of cap) {
     const bEps = episodes.filter((e) => e.manifest?.caseId === id && e.manifest?.arm === "balanced" && e.status !== "blocked" && (e.mechanism?.folds ?? 0) > 0);
     const n = summary.byCaseArm[id]?.native, b = summary.byCaseArm[id]?.balanced;
@@ -158,6 +185,12 @@ function decideGates(summary, scenarios, episodes = []) {
         if (c.unknown) reasons.push(`${id}: cacheRead unknown after fold`);
         else if (c.recovered < 2) reasons.push(`${id}: cacheRead did not recover (>=0.5) within 2 requests after fold`);
       }
+    }
+    if (b && (b.engine.unknown > 0 || b.engine.prefixHitRatio == null)) {
+      reasons.push(`${id}: engine metrics unknown`);
+    }
+    if (n && (n.engine.unknown > 0 || n.engine.prefixHitRatio == null)) {
+      reasons.push(`${id}: native engine metrics unknown`);
     }
     if (n && b?.engine.prefixHitRatio != null && n.engine.prefill > 0 && b.engine.prefill > n.engine.prefill * 1.5) {
       reasons.push(`${id}: balanced prefill ${b.engine.prefill} > 1.5× native ${n.engine.prefill}`);
@@ -185,8 +218,9 @@ export function renderMarkdown(summary, decision, manifest) {
     L.push("## prior blocked/error attempts (later overwritten by resume)", "", ...summary.priorAttempts.map((b) => `- ${b.caseId}/${b.arm}/r${b.rep}: ${b.status} ${b.reason ?? ""}`), "");
   }
   if (summary.flags?.length) { L.push("## flags", "", ...summary.flags.map((f) => `- ${f.flag}${f.caseId ? ` ${f.caseId}/${f.arm ?? ""}` : ""}`), ""); }
+  const cacheOk = summary.cacheReadChannelAvailable !== false;
   L.push("## oracle & usage (paired)", "", "| case | arm | pass/total | wrong-action | timeout | Σinput | ΣcacheRead | Σuncached | cacheRead/input | unknown usage | TTFT p50 ms | wall p50 s |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
-  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.passed}/${c.episodes} | ${c.wrongActions} | ${c.timeout} | ${c.inputSum} | ${c.unknownUsage ? "n/a" : c.cacheReadSum} | ${c.uncachedInputSum == null ? "n/a" : c.uncachedInputSum} | ${fmt(c.cacheReadRatio)} | ${c.unknownUsage} | ${c.ttftP50 == null ? "n/a" : Math.round(c.ttftP50)} | ${c.wallP50 == null ? "n/a" : Math.round(c.wallP50 / 1000)} |`);
+  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.passed}/${c.episodes} | ${c.wrongActions} | ${c.timeout} | ${c.inputSum} | ${!cacheOk || c.unknownUsage ? "n/a" : c.cacheReadSum} | ${!cacheOk || c.uncachedInputSum == null ? "n/a" : c.uncachedInputSum} | ${!cacheOk ? "n/a" : fmt(c.cacheReadRatio)} | ${c.unknownUsage} | ${c.ttftP50 == null ? "n/a" : Math.round(c.ttftP50)} | ${c.wallP50 == null ? "n/a" : Math.round(c.wallP50 / 1000)} |`);
   L.push("", "## mechanism & evidence", "", "| case | arm | folds | replacements | native compactions | history reads | verified reads | nonce correct | honest | lost evidence / known | removed/invalidated |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
   for (const [caseId, arms] of Object.entries(summary.byCaseArm)) {
     for (const [arm, c] of Object.entries(arms)) {
