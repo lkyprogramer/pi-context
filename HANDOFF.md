@@ -14,7 +14,7 @@
 
 不要为了让 balanced 过门而改 fold 参数或改题。下一轮只在同时出现时才重新打开 balanced 试验：
 
-1. H01 balanced 至少 1 个 episode `oracle.passed` 且 `verifiedReads >= 1`（nonce 经 `pctx_history read` 取得，而不是仍留在 stub/原文里）。
+1. H01 balanced 至少 1 个 episode **同时** `oracle.passed`、`verifiedReads >= 1`（由 session JSONL 离线计数，不是插件自报）、且 nonce 所在 toolResult 已被折叠。现有 seed 下 nonce 往往未进 stub，该门会明确报 `nonce toolResult was not folded`。
 2. 折叠后请求的 `cacheRead`（或可用的 engine `/metrics` prefill）能证明前缀作废后恢复，而不是全程 `cacheRead=0` / `metrics available:false`。
 3. H03 在生产窗口下用量真正接近 trigger（本次只到约 20% context，未折叠）。
 

@@ -119,6 +119,17 @@ Next round only if: (1) H01 balanced recovers the nonce with `verifiedReads>=1`,
 
 docs: record final sha — packaging commit `d28a3685ce245d1a4d270c02b9fac4ea785d49ca`
 
+## Review repair (post E04)
+
+Commits: `ee6c79f5` (product invariants), `2aca608b` (eval gates).
+Independent review of `a1e82819` found the mechanism gate was not executable: `verifiedReads` was never produced, `decide()` counted folds per cell, H02 isError was unchecked, and `pctx_history read` failed closed on an unavailable index. Repair keeps the observe-only product decision; it makes the three gates honest.
+
+- Offline `verifiedReads` from session JSONL (`parse-session.mjs`); plugin still increments a status counter for `/pctx status`.
+- `decide()` is episode-level; cost recovery requires 2 post-fold requests; H02 folded-error is a mechanism fail.
+- Read no longer depends on the search index.
+- `planFold` stops at `targetPercent` and abandons the plan when `saved < minRemovedTokens`.
+- INSTALL.md and packed `/pctx status` now describe 6.1.0 / observe / hostVersion 0.85.1.
+
 
 
 

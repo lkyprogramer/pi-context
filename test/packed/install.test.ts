@@ -95,6 +95,8 @@ describe("T19 packed install", () => {
     const env = { ...process.env, HOME: home, PI_OFFLINE: "0" };
     const agentDir = join(home, ".pi", "agent");
     let sessionFile = "";
+    const prevHome = process.env.HOME;
+    process.env.HOME = home;
     try {
       const installOut = execFileSync("pi", ["install", spec, "--no-approve"], { env, encoding: "utf8" });
       expect(installOut).toMatch(/Installed npm:pi-context@file:/);
@@ -188,6 +190,7 @@ describe("T19 packed install", () => {
       expect(sessionPaths.some((p) => p.endsWith("dist/extension.js"))).toBe(true);
 
       await session.prompt("ping");
+      try { await session.prompt("/pctx status"); } catch { /* command may settle via status file */ }
       sessionFile = manager.getSessionFile() ?? "";
       expect(sessionFile.length).toBeGreaterThan(0);
       expect(manager.getEntries().length).toBeGreaterThan(0);
@@ -197,6 +200,11 @@ describe("T19 packed install", () => {
         expect(String(error)).toMatch(/Nothing to compact/);
       }
       await session.dispose?.();
+      const statusPath = join(agentDir, "pctx-status.json");
+      expect(existsSync(statusPath)).toBe(true);
+      const status = JSON.parse(readFileSync(statusPath, "utf8")) as { hostVersion?: string; resolvedProfile?: string };
+      expect(status.hostVersion).toBe("0.85.1");
+      expect(status.resolvedProfile).toBe("observe");
 
       const resumed = pi.SessionManager.open(sessionFile, join(cwd, "sessions"), cwd);
       expect(resumed.getEntries().length).toBeGreaterThan(0);
@@ -207,6 +215,8 @@ describe("T19 packed install", () => {
       const afterUninstall = pi.SessionManager.open(sessionFile, join(cwd, "sessions"), cwd);
       expect(afterUninstall.getEntries().length).toBeGreaterThan(0);
     } finally {
+      if (prevHome === undefined) delete process.env.HOME;
+      else process.env.HOME = prevHome;
       rmSync(home, { recursive: true, force: true });
       rmSync(cwd, { recursive: true, force: true });
     }
