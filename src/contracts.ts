@@ -228,30 +228,6 @@ export interface HistoryResult {
   details?: unknown;
 }
 
-export type BudgetDecision =
-  | { kind: "within"; optionalTokens: number; remainingOptionalTokens: number }
-  | { kind: "bypass"; reason: "budget-unachievable-without-loss" | "unknown-content-cost" };
-
-export interface EvalArm {
-  arm: "B0" | "B1" | "B2" | "B3";
-  status: "complete" | "timeout" | "blocked" | "failed" | "not-run";
-  taskPassed: boolean | null;
-  criticalViolation: boolean | null;
-  wallMs: number | null;
-  monetaryCost: number | null;
-  billedTokens?: number | null;
-}
-
-export interface EvalPair {
-  kind: "real-run" | "synthetic-example";
-  taskId: string;
-  clusterId: string;
-  repetition: number;
-  provenance: "real-independent" | "adapted-real" | "synthetic";
-  baseline: EvalArm;
-  candidate: EvalArm;
-}
-
 export interface UsageRecord {
   provider: string;
   model: string;
