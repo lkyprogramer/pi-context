@@ -1,15 +1,15 @@
 {
-  "recordedAt": "2026-09-08T13:53:56.782Z",
-  "nonceSha256": "a1039d0b8180e51e641c4dd46a9558d4884f6ae1604a0b2e5a010dace028d70f",
-  "seedSha256": "efbed4af8fd3c0c64bfcd9957a29e60f8e3e63575c8b8f4868b13e444c7136c5",
-  "entries": 57,
+  "recordedAt": "2026-09-09T02:37:37.010Z",
+  "nonceSha256": "1af3ea3a23e6a80df2adb22ff8084c02d1f9c78b9e8636fd38c28e5abfd5b173",
+  "seedSha256": "d60b3d8596e53cb1fc93503930eb4649d2d6e6a1e3249de0378d18fd1a5ee0ac",
+  "entries": 49,
   "lastUsage": {
-    "input": 38671,
-    "output": 19,
-    "cacheRead": 0,
+    "input": 11907,
+    "output": 88,
+    "cacheRead": 34008,
     "cacheWrite": 0,
     "reasoning": 0,
-    "totalTokens": 38690,
+    "totalTokens": 46003,
     "cost": {
       "input": 0,
       "output": 0,
@@ -18,8 +18,10 @@
       "total": 0
     }
   },
+  "peakInput": 46003,
   "window": "w64k",
-  "padFiles": 4,
+  "padFiles": 3,
+  "nonceBytes": 6371,
   "prompts": [
     "a8378c0868a12d153e9012a6ca570c0115c9a0cc70e4220f32bc57bde61e7bf5",
     "22701a58343e0fdc1bb18a56a6f05f037a9097ef9693275b5508b2da1c6b1d11",
