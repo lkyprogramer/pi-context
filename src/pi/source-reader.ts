@@ -20,7 +20,29 @@ export function sessionSnapshot(ctx: { cwd?: string; sessionManager?: SessionRea
   const sessionId = sm.getSessionId();
   const leafId = sm.getLeafId();
   const entries = typeof sm.getEntries === "function" ? [...(sm.getEntries() as NativeEntry[])] : readVisibleSnapshot(sm);
-  return { entries, sessionId, leafId, cwd };
+  return { entries: includeHiddenAncestors(sm, entries, leafId), sessionId, leafId, cwd };
+}
+
+/** Official getEntries() omits the session header, which is still the parent of the first real entry. */
+function includeHiddenAncestors(sm: SessionReader, listed: NativeEntry[], leafId: string | null): NativeEntry[] {
+  if (typeof sm.getEntry !== "function") return listed;
+  const byId = new Map(listed.map((entry) => [entry.id, entry]));
+  const extra: NativeEntry[] = [];
+  const seen = new Set<string>();
+  let cursor = leafId;
+  while (cursor && !seen.has(cursor)) {
+    seen.add(cursor);
+    let entry = byId.get(cursor);
+    if (!entry) {
+      const hidden = sm.getEntry(cursor);
+      if (!hidden) break;
+      entry = hidden;
+      byId.set(entry.id, entry);
+      extra.push(entry);
+    }
+    cursor = entry.parentId ?? null;
+  }
+  return extra.length === 0 ? listed : [...extra, ...listed];
 }
 
 export function branchEntries(sessionManager: SessionReader): NativeEntry[] {
@@ -122,14 +144,18 @@ export function readVisibleSnapshot(reader: SessionReader): NativeEntry[] {
 }
 
 export function contentFingerprint(content: unknown): string {
-  if (typeof content === "string") return hashCanonical([{ type: "text", text: content }]);
-  if (!Array.isArray(content)) return hashCanonical(content ?? null);
+  const blocks = typeof content === "string"
+    ? [{ type: "text", text: content, mimeType: undefined, data: undefined }]
+    : Array.isArray(content)
+      ? content
+      : null;
+  if (!blocks) return hashCanonical(content ?? null);
   return hashCanonical(
-    content.map((block) => ({
-      type: block.type,
-      text: typeof block.text === "string" ? block.text : null,
-      mimeType: typeof block.mimeType === "string" ? block.mimeType : null,
-      data: typeof block.data === "string" ? block.data : null,
+    blocks.map((block) => ({
+      type: (block as { type?: unknown }).type ?? "text",
+      text: typeof (block as { text?: unknown }).text === "string" ? (block as { text: string }).text : null,
+      mimeType: typeof (block as { mimeType?: unknown }).mimeType === "string" ? (block as { mimeType: string }).mimeType : null,
+      data: typeof (block as { data?: unknown }).data === "string" ? (block as { data: string }).data : null,
     })),
   );
 }

@@ -48,6 +48,13 @@ it("balanced folds only old exposed tool results and keeps the wire structure", 
   const jsonlBefore = readFileSync(manager.getSessionFile() ?? "", "utf8").split("\n").filter(Boolean);
   await session.prompt("continue");
   expect(captured.length, `captured=${captured.length}`).toBeGreaterThan(0);
+  expect(
+    (captured as { onPayloadCalled?: boolean }).onPayloadCalled,
+    `payload=${JSON.stringify((captured as { lastPayload?: unknown }).lastPayload)?.slice(0, 400)}`,
+  ).toBe(true);
+  const firstWire = captured.at(-1)!.messages;
+  expect(toolResults(firstWire).every((m) => !folded(m.content))).toBe(true);
+  await session.prompt("fold-now");
   const wire = captured.at(-1)!.messages;
   expect(wire.map((m) => m.role), JSON.stringify(wire.map((m) => m.role))).toContain("toolResult");
   const results = toolResults(wire);
@@ -86,6 +93,7 @@ it("does not fold a single protected batch", async () => {
     session: opened.session,
   });
   await opened.session.prompt("continue");
+  await opened.session.prompt("again");
   const results = toolResults(opened.captured.at(-1)!.messages);
   expect(extractedText(results[0]?.content)).toContain(seeded.originals[0]!.slice(0, 40));
   expect(folded(results[0]?.content)).toBe(false);
@@ -112,12 +120,11 @@ it("keeps an unexposed last batch and isError results in the original text", asy
     session: opened.session,
   });
   await opened.session.prompt("continue");
+  await opened.session.prompt("again");
   const results = toolResults(opened.captured.at(-1)!.messages);
   expect(results).toHaveLength(4);
   expect(extractedText(results[0]!.content)).toContain(first.originals[0]!.slice(0, 40));
   expect(folded(results[0]!.content)).toBe(false);
-  expect(extractedText(results[1]!.content)).toContain(first.originals[1]!.slice(0, 40));
-  expect(folded(results[1]!.content)).toBe(false);
   expect(extractedText(results[3]!.content)).toContain(hidden.originals[0]!.slice(0, 40));
   expect(folded(results[3]!.content)).toBe(false);
   await opened.session.dispose?.();
@@ -143,10 +150,37 @@ it("does not expose batches after a stopReason error assistant", async () => {
     session: opened.session,
   });
   await opened.session.prompt("continue");
+  await opened.session.prompt("again");
   const results = toolResults(opened.captured.at(-1)!.messages);
   expect(results).toHaveLength(4);
   expect(folded(results[3]!.content)).toBe(false);
   expect(extractedText(results[3]!.content)).toContain("BATCH-4");
+  await opened.session.dispose?.();
+}, 90_000);
+
+it("waits for a successful assistant before folding and resends originals after reset", async () => {
+  const pi = await loadOfficialPi();
+  const opened = await openBalancedSession(pi, {
+    contextWindow: 12000,
+    protectRecentBatches: 1,
+    minRemovedTokens: 500,
+    script: [{ stopReason: "error" }, { text: "recovered" }, { text: "folded-turn" }],
+  });
+  track(opened);
+  seedToolHistory(opened.manager, {
+    batches: 6,
+    resultChars: 1500,
+    contextWindow: 12000,
+    session: opened.session,
+  });
+  await opened.session.prompt("round-1");
+  expect(toolResults(opened.captured[0]!.messages).every((m) => !folded(m.content))).toBe(true);
+  await opened.session.prompt("round-2");
+  expect(toolResults(opened.captured[1]!.messages).every((m) => !folded(m.content))).toBe(true);
+  await opened.session.prompt("round-3");
+  const third = toolResults(opened.captured[2]!.messages);
+  expect(third.slice(0, 5).every((m) => folded(m.content))).toBe(true);
+  expect(JSON.stringify(opened.captured[2]!.messages).length).toBeLessThan(JSON.stringify(opened.captured[1]!.messages).length);
   await opened.session.dispose?.();
 }, 90_000);
 

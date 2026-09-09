@@ -9,14 +9,17 @@ import type {
   SessionCompactEvent,
 } from "@earendil-works/pi-coding-agent";
 import {
+  acceptAssistantWitness,
   applyContext,
   applyConfigFailure,
   applyLoadedConfig,
   closeSessionIndex,
   createPlugin,
+  fenceIdentity,
   historyTool,
   indexBranch,
   noteNativeCompact,
+  observeProviderRequest,
   openSessionIndex,
   setProfile,
   type PluginState,
@@ -102,8 +105,10 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
       ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
     }
     state.hostVersion = hostVersion;
-    state.plan = null;
     state.modelId = ctx.model?.id ?? "unknown";
+    const provider = (ctx.model as { provider?: string } | undefined)?.provider;
+    if (typeof provider === "string") state.provider = provider;
+    fenceIdentity(state);
     const agentDir = (ctx as { agentDir?: string }).agentDir;
     if (typeof agentDir === "string") state.agentDir = agentDir;
     openSessionIndex(state);
@@ -120,7 +125,10 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
-  pi.on("before_provider_request", () => undefined);
+  pi.on("before_provider_request", ((event: { payload?: unknown }) => {
+    observeProviderRequest(state, event.payload);
+    return undefined;
+  }) as never);
   pi.on("message_start", () => {
     state.ttftStartedAt = Date.now();
     state.ttftMs = null;
@@ -132,8 +140,17 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     state.sawMessageUpdate = true;
   });
   pi.on("message_end", (event: MessageEndEvent, ctx) => {
-    const msg = event.message as { stopReason?: string; errorMessage?: string; usage?: AssistantUsageLike };
+    const msg = event.message as {
+      role?: string;
+      stopReason?: string;
+      errorMessage?: string;
+      usage?: AssistantUsageLike;
+      responseId?: unknown;
+      id?: unknown;
+    };
+    if (msg.role !== "assistant") return;
     state.lastAssistant = recordAssistant(msg);
+    acceptAssistantWitness(state, msg);
     const { sessionId } = entriesFromCtx(ctx);
     recordRequest(state, {
       at: new Date().toISOString(),
@@ -154,15 +171,15 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     });
   });
   pi.on("session_compact", (event: SessionCompactEvent) => {
-    if (event.willRetry) return;
-    noteNativeCompact(state);
+    noteNativeCompact(state, event.willRetry !== true);
   });
   pi.on("session_tree", () => {
-    state.plan = null;
+    fenceIdentity(state);
   });
-  pi.on("model_select", (event: { model?: { id?: string } }) => {
-    state.plan = null;
+  pi.on("model_select", (event: { model?: { id?: string; provider?: string } }) => {
+    fenceIdentity(state);
     if (event?.model?.id) state.modelId = event.model.id;
+    if (event?.model?.provider) state.provider = event.model.provider;
   });
   pi.on("session_shutdown", (_e, ctx) => {
     writeStatusFile(state, ctx);

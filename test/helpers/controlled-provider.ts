@@ -43,6 +43,34 @@ function estimateTokens(messages: unknown): number {
   return Math.max(1, Math.ceil(Buffer.byteLength(JSON.stringify(messages), "utf8") / 4));
 }
 
+function payloadText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(payloadText).join("\n");
+  if (value && typeof value === "object") {
+    const rec = value as { text?: unknown };
+    if (typeof rec.text === "string") return rec.text;
+    return Object.values(rec).map(payloadText).join("");
+  }
+  return "";
+}
+
+function openaiCompletionsPayload(messages: CapturedTurn["messages"], model: string): {
+  model: string;
+  messages: Array<{ role: string; content: string; tool_call_id?: string }>;
+} {
+  return {
+    model,
+    messages: messages.map((msg) => {
+      const role = String(msg.role ?? "");
+      const callId = typeof msg.toolCallId === "string" ? msg.toolCallId : undefined;
+      if (role === "toolResult" || role === "tool") {
+        return { role: "tool", content: payloadText(msg.content), tool_call_id: callId };
+      }
+      return { role, content: payloadText(msg.content) };
+    }),
+  };
+}
+
 function usageOf(totalTokens: number) {
   return {
     input: totalTokens,
@@ -89,7 +117,7 @@ export function registerControlledProvider(
   runtime: { registerProvider: (id: string, config: Record<string, unknown>) => void; getModel: (provider: string, id: string) => unknown },
   opts: { contextWindow: number; script?: ControlledScript; modelId?: string },
 ): { captured: CapturedTurn[]; model: unknown } {
-  const captured: CapturedTurn[] = [];
+  const captured: CapturedTurn[] & { onPayloadCalled?: boolean; lastPayload?: unknown } = [];
   const modelId = opts.modelId ?? "wire";
   const script = opts.script ?? [];
   runtime.registerProvider("controlled", {
@@ -105,19 +133,29 @@ export function registerControlledProvider(
       contextWindow: opts.contextWindow,
       maxTokens: 256,
     }],
-    streamSimple(model: unknown, context?: { messages?: CapturedTurn["messages"] }) {
+    async streamSimple(
+      model: unknown,
+      context?: { messages?: CapturedTurn["messages"] },
+      options?: { onPayload?: (payload: unknown, model: unknown) => unknown },
+    ) {
       const messages = structuredClone(context?.messages ?? []);
       captured.push({
         messages,
         roles: messages.map((m) => String(m.role ?? "")),
         json: JSON.stringify(messages),
       });
+      captured.onPayloadCalled = typeof options?.onPayload === "function";
+      if (typeof options?.onPayload === "function") {
+        const payload = openaiCompletionsPayload(messages, modelId);
+        captured.lastPayload = payload;
+        await options.onPayload(payload, model);
+      }
       const step = script[captured.length - 1] ?? {};
       const message = assistantMessage({
         text: step.text,
         toolCall: step.toolCall,
         stopReason: step.stopReason,
-        usageInput: estimateTokens(messages),
+        usageInput: Math.max(estimateTokens(messages), Math.ceil(opts.contextWindow * 0.65)),
         model: modelId,
       });
       return {
@@ -382,7 +420,13 @@ export async function openPluginSession(
 
 export async function openBalancedSession(
   pi: Parameters<typeof openPluginSession>[0],
-  opts: { contextWindow: number; protectRecentBatches?: number; minRemovedTokens?: number; extensionRoot?: string },
+  opts: {
+    contextWindow: number;
+    protectRecentBatches?: number;
+    minRemovedTokens?: number;
+    extensionRoot?: string;
+    script?: ControlledScript;
+  },
 ) {
   return openPluginSession(pi, {
     profile: "balanced",
@@ -390,6 +434,7 @@ export async function openBalancedSession(
     protectRecentBatches: opts.protectRecentBatches ?? 1,
     minRemovedTokens: opts.minRemovedTokens ?? 500,
     extensionRoot: opts.extensionRoot,
+    script: opts.script,
   });
 }
 

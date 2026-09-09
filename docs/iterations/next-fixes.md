@@ -35,6 +35,20 @@ Implemented: ArchiveBranch walks `parentId` from leaf (cycle/missing → no new 
 
 Not run: `pnpm check`, smoke, live, remote Actions.
 
+## R03
+
+Changed: `src/projection/witness.ts`, `src/projection/render.ts`, `src/plugin.ts`, `src/pi/adapter.ts`, `src/pi/source-reader.ts`, `test/unit/request-witness.test.ts`, `test/host/balanced-wire.test.ts`, `test/helpers/controlled-provider.ts`, `docs/iterations/next-fixes.md`
+
+`source-reader.ts` and `controlled-provider.ts` are outside the R03 file list. Official `getEntries()` omits the session header that is still `parentId` of the first real entry; without `includeHiddenAncestors` via `getEntry`, ArchiveBranch reported `missing-parent` and host never planned. Controlled `streamSimple` now reports usage at least 65% of the window so the first successful assistant does not drop `getContextUsage` below trigger. `onPayload` is invoked so `before_provider_request` actually observes the wire.
+
+RED: `pnpm exec vitest run test/unit/request-witness.test.ts test/host/balanced-wire.test.ts test/host/observe-identity.test.ts --config vitest.config.ts` — missing tracker; host second turn still raw (no witness / session header / usage drop / failed pending treated as concurrent).
+
+GREEN: same command exit 0 — 16 tests; `pnpm typecheck` exit 0.
+
+Implemented: in-memory `RequestWitnessTracker`; context prepares still-visible original hashes; `before_provider_request` observe-only OpenAI tool messages; ACK only on assistant `stop`/`toolUse` with a response id or usage. `prepare` supersedes same-session unaccepted pendings so an `error` turn does not block the next serial `markSent`. `setProfile` recomputes `configHash` and fences. `session_compact` fences even when `willRetry`; count increments only when not retrying. Candidate plans trial-render first; `applied=0` does not `recordFold`. Host: first successful wire keeps originals; later successful turn folds old exposed results; error then success then fold; isError and unexposed last batch stay original.
+
+Not run: `pnpm check`, smoke, live, remote Actions.
+
 ## Remaining
 
-R03–R10 not started.
+R04–R10 not started.

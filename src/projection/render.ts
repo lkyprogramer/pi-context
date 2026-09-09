@@ -1,4 +1,4 @@
-import { sha256Hex, utf8Bytes, type FoldPlan } from "../contracts.js";
+import { hashCanonical, sha256Hex, utf8Bytes, type FoldPlan } from "../contracts.js";
 
 export interface AgentMessage {
   role: string;
@@ -11,9 +11,18 @@ export function renderFold(
   messages: AgentMessage[],
   plan: FoldPlan,
   mapping: ReadonlyMap<number, { entryId: string }>,
-): { messages: AgentMessage[]; applied: number; firstChangedIndex: number | null } {
+): {
+  messages: AgentMessage[];
+  applied: number;
+  firstChangedIndex: number | null;
+  appliedKeys: string[];
+  beforeHash: string;
+  afterHash: string;
+} {
+  const beforeHash = hashCanonical(messages.map((msg) => msg.content ?? null));
   let applied = 0;
   let firstChangedIndex: number | null = null;
+  const appliedKeys: string[] = [];
   messages.forEach((msg, idx) => {
     if (msg.role !== "toolResult") return;
     const id = mapping.get(idx)?.entryId;
@@ -21,15 +30,18 @@ export function renderFold(
     msg.content.forEach((block, i) => {
       if (!block || typeof block !== "object") return;
       const rec = block as { type?: string; text?: string };
-      const replacement = plan.replacements.get(`${id}:${i}`);
+      const key = `${id}:${i}`;
+      const replacement = plan.replacements.get(key);
       if (!replacement || rec.type !== "text" || typeof rec.text !== "string") return;
       if (sha256Hex(utf8Bytes(rec.text)) !== replacement.sourceHash) return;
       rec.text = replacement.stub;
       applied += 1;
+      appliedKeys.push(key);
       if (firstChangedIndex == null) firstChangedIndex = idx;
     });
   });
-  return { messages, applied, firstChangedIndex };
+  const afterHash = hashCanonical(messages.map((msg) => msg.content ?? null));
+  return { messages, applied, firstChangedIndex, appliedKeys, beforeHash, afterHash };
 }
 
 export function deepEqual(a: unknown, b: unknown): boolean {
