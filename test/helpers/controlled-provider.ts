@@ -191,6 +191,7 @@ export function seedToolHistory(
     usagePercent?: number;
     errorAssistant?: boolean;
     session?: SeededSession;
+    prefixText?: string;
   },
 ): { originals: string[] } {
   const originals: string[] = [];
@@ -198,7 +199,9 @@ export function seedToolHistory(
   const start = opts.start ?? 1;
   const end = start + opts.batches - 1;
   for (let i = start; i <= end; i++) {
-    const text = `BATCH-${i}\n${"x".repeat(opts.resultChars)}`;
+    const text = i === start && opts.prefixText
+      ? `${opts.prefixText}\n${"x".repeat(opts.resultChars)}`
+      : `BATCH-${i}\n${"x".repeat(opts.resultChars)}`;
     originals.push(text);
     const callId = `c${i}`;
     manager.appendMessage({ role: "user", content: `turn ${i}`, timestamp: now + i * 10 });

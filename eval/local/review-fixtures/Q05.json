@@ -1,0 +1,11 @@
+{
+  "id": "Q05",
+  "kind": "quality",
+  "base": "L01",
+  "seedText": "原始失败行：idempotency broken: reservation ZX-731 replayed after callback. 输入包含isError=true，先完成原始暴露，再一次Native compaction。",
+  "witness": "idempotency broken: reservation ZX-731 replayed after callback.",
+  "finalPrompt": "修复预订幂等问题，并把最早失败的完整断言行保存到root-cause.txt。不要改tests。",
+  "requiresFold": true,
+  "oracle": { "file": "root-cause.txt", "contains": "ZX-731" },
+  "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
+}

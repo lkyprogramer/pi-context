@@ -119,6 +119,20 @@ Implemented: object-form `evaluateTrial` (critical → blocked; no-fold / missin
 
 Not run: `pnpm check`, smoke, live matrix, remote Actions.
 
+## R09
+
+Changed: `eval/local/scenarios.mjs`, `eval/local/review-matrix.json`, `eval/local/review-fixtures/`, `eval/local/cases.json`, `test/unit/review-scenarios.test.ts`, `test/host/after-fold-quality.test.ts`, `test/helpers/controlled-provider.ts`, `docs/iterations/next-fixes.md`
+
+`controlled-provider.ts` is outside the R09 file list: `seedToolHistory` accepts `prefixText` so the host lane can put the Q01 witness in a complete, exposable first batch.
+
+RED: missing `validateScenario`; witness mismatch and prompt leak were not rejected.
+
+GREEN: `pnpm exec vitest run test/unit/review-scenarios.test.ts test/host/after-fold-quality.test.ts --config vitest.config.ts` exit 0 — 5 tests; `pnpm typecheck` exit 0.
+
+Implemented: Q01–Q08 / C01–C02 fixtures hide the witness from the final prompt. Frozen plan is 32 quality + 4 capability episodes, all `UNRUN`. L01–L06 are no-fold regressions; H03 is optional. Controlled host: six complete batches, 60% trigger, real fold, history read recovers `tenant-contract-73`. Two-tool swap/drop is detected. Live model for the 36-episode plan is not run.
+
+Not run: `pnpm check`, smoke, live matrix, remote Actions.
+
 ## Remaining
 
-R09–R10 not started.
+R10 not started.

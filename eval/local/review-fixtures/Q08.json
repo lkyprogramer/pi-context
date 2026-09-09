@@ -1,0 +1,11 @@
+{
+  "id": "Q08",
+  "kind": "quality",
+  "base": "L01",
+  "seedText": "一次成功暴露并折叠后restart，历史rollback marker=rollback-619；改文件前需遵守曾确认的public API禁止项。",
+  "witness": "rollback-619",
+  "finalPrompt": "从当前工作区继续修复，保留已确认的禁止项，并把历史回滚标识写入rollback-marker.txt。",
+  "requiresFold": true,
+  "oracle": { "file": "rollback-marker.txt", "equals": "rollback-619" },
+  "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
+}

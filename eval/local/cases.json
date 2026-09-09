@@ -30,6 +30,7 @@
     },
     {
       "id": "L01",
+      "role": "no-fold-regression",
       "runner": "episode",
       "windowProfile": "w262k",
       "arms": [
@@ -57,6 +58,7 @@
     },
     {
       "id": "L02",
+      "role": "no-fold-regression",
       "runner": "episode",
       "windowProfile": "w262k",
       "arms": [
@@ -84,6 +86,7 @@
     },
     {
       "id": "L03",
+      "role": "no-fold-regression",
       "runner": "episode",
       "windowProfile": "w262k",
       "arms": [
@@ -111,6 +114,7 @@
     },
     {
       "id": "L04",
+      "role": "no-fold-regression",
       "runner": "episode",
       "windowProfile": "w262k",
       "arms": [
@@ -136,6 +140,7 @@
     },
     {
       "id": "L05",
+      "role": "no-fold-regression",
       "runner": "episode",
       "windowProfile": "w262k",
       "arms": [
@@ -161,6 +166,7 @@
     },
     {
       "id": "L06",
+      "role": "no-fold-regression",
       "runner": "episode",
       "windowProfile": "w262k",
       "arms": [
@@ -247,6 +253,7 @@
     },
     {
       "id": "H03",
+      "optional": true,
       "runner": "episode",
       "windowProfile": "w262k",
       "arms": [
@@ -270,6 +277,104 @@
         ]
       },
       "protectedPaths": []
+    },
+    {
+      "id": "Q01",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L04",
+      "reviewFixture": "eval/local/review-fixtures/Q01.json"
+    },
+    {
+      "id": "Q02",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L02",
+      "reviewFixture": "eval/local/review-fixtures/Q02.json"
+    },
+    {
+      "id": "Q03",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L03",
+      "reviewFixture": "eval/local/review-fixtures/Q03.json"
+    },
+    {
+      "id": "Q04",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L06",
+      "reviewFixture": "eval/local/review-fixtures/Q04.json"
+    },
+    {
+      "id": "Q05",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L01",
+      "reviewFixture": "eval/local/review-fixtures/Q05.json"
+    },
+    {
+      "id": "Q06",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L05",
+      "reviewFixture": "eval/local/review-fixtures/Q06.json"
+    },
+    {
+      "id": "Q07",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L06",
+      "reviewFixture": "eval/local/review-fixtures/Q07.json"
+    },
+    {
+      "id": "Q08",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["native", "balanced"],
+      "reps": 2,
+      "fixture": "eval/local/fixtures/L01",
+      "reviewFixture": "eval/local/review-fixtures/Q08.json"
+    },
+    {
+      "id": "C01",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["balanced"],
+      "reps": 2,
+      "reviewFixture": "eval/local/review-fixtures/C01.json"
+    },
+    {
+      "id": "C02",
+      "runner": "review",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": ["balanced"],
+      "reps": 2,
+      "reviewFixture": "eval/local/review-fixtures/C02.json"
     }
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "id": "Q02",
+  "kind": "quality",
+  "base": "L02",
+  "seedText": "旧重试上限3已废弃；生效契约 maxAttempts=7，terminal failure不得重试。",
+  "witness": "maxAttempts=7",
+  "finalPrompt": "依据已经读取的生效契约修复重试行为；报告所用契约来源。",
+  "requiresFold": true,
+  "oracle": { "maxAttempts": 7 },
+  "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
+}

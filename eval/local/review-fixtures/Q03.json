@@ -1,0 +1,11 @@
+{
+  "id": "Q03",
+  "kind": "quality",
+  "base": "L03",
+  "seedText": "协议规定expiresAt使用epoch毫秒；reconnect grace为1730毫秒，不能使用进程单调计数替代epoch。",
+  "witness": "1730",
+  "finalPrompt": "继续之前的重连修复，采用历史中最后有效的时间协议。",
+  "requiresFold": true,
+  "oracle": { "graceMs": 1730 },
+  "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "C01",
+  "kind": "capability",
+  "base": null,
+  "seedText": "长样本仅出现在生产toolResult：中文段落「折叠后仍须按UTF-8还原」emoji🧩🌳 nonce=nce-8f3a21c4 超过一页。Hash由父进程保存。",
+  "witness": "nce-8f3a21c4",
+  "finalPrompt": "使用history读取完整历史样本，并按原始UTF-8顺序恢复到restored.txt。",
+  "requiresFold": true,
+  "oracle": { "file": "restored.txt", "contains": "nce-8f3a21c4" },
+  "candidateOnly": true
+}

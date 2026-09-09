@@ -1,0 +1,11 @@
+{
+  "id": "Q01",
+  "kind": "quality",
+  "base": "L04",
+  "seedText": "旧接口契约 revision=tenant-contract-73：tenant/eventId是二元键，禁止分隔符字符串拼接。",
+  "witness": "tenant-contract-73",
+  "finalPrompt": "完成之前记录的去重契约修复，并把所遵循的历史契约revision写入contract-revision.txt。不要更改public API。",
+  "requiresFold": true,
+  "oracle": { "file": "contract-revision.txt", "equals": "tenant-contract-73" },
+  "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
+}

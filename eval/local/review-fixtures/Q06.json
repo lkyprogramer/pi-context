@@ -1,0 +1,11 @@
+{
+  "id": "Q06",
+  "kind": "quality",
+  "base": "L05",
+  "seedText": "共同祖先tenant policy=A，可变列表副本；兄弟分支更改policy=B但当前选中A，trace ticket=TK-442。",
+  "witness": "TK-442",
+  "finalPrompt": "按当前分支有效约定修复仓库查询，并保存其trace ticket。",
+  "requiresFold": true,
+  "oracle": { "file": "ticket.txt", "equals": "TK-442" },
+  "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
+}
