@@ -32,7 +32,7 @@ Project files are never trusted by default.
 }
 ```
 
-`persistent` indexing needs an explicit `storage.dbPath` (recommended `~/.pi/agent/pctx/index.sqlite`); otherwise the index stays memory-only. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`.
+`persistent` indexing needs an explicit `storage.dbPath` (recommended `~/.pi/agent/pctx/index.sqlite`); otherwise the index stays memory-only. Search fail-closes when the index is down; `pctx_history` read still walks native session entries. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`.
 
 ## Profiles
 

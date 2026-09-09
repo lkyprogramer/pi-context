@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Snapshot NInfer prefix/prefill counters from the compat layer's /metrics into JSON.
 # usage: metrics-snap.sh <out.json>
-# Missing /metrics (typical for the public nginx front) → {"available":false}, never invented zeros.
+# Missing or unauthenticated /metrics (public GET is 401 without the API key) → {"available":false}, never invented zeros.
 set -euo pipefail
 OUT="${1:?out.json}"
 HERE="$(cd "$(dirname "$0")" && pwd)"

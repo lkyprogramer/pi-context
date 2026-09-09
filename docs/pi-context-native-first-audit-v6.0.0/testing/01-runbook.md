@@ -19,7 +19,7 @@ git -C . status --short | head   # 有 dirty 就先记录，不伪称 HEAD
 bash eval/local/ensure-tunnel.sh   # E01 之前用 testing/harness/ensure-tunnel.sh
 curl -fsS http://127.0.0.1:18343/v1/models | python3 -c 'import json,sys; d=json.load(sys.stdin); m=d["data"][0]; print(m["id"], m["meta"]["n_ctx"])'
 # 期望：openclaw/Qwen3.8-27B-WORK 262144
-curl -fsS http://127.0.0.1:18343/metrics | grep -E '^(ninfer:prefix_cache_hit_tokens_total|llamacpp:prompt_tokens_total|ninfer:requests_total) '
+bash eval/local/metrics-snap.sh /tmp/m.json   # 带 .env API key；无 key 的公开 GET 是 401
 ```
 
 `n_ctx` 不是 262144 → 现网被切回 llama.cpp WORK（200192），E 阶段停止，等用户切回 NInfer。
