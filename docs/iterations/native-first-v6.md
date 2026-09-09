@@ -102,27 +102,12 @@ Commit: d28a3685ce245d1a4d270c02b9fac4ea785d49ca
 Changed: docs/iterations/native-first-v6.md, README.md, docs/CONFIGURATION.md, docs/OPERATIONS.md, docs/release-v5.md, HANDOFF.md, package.json, test/packed/install.test.ts, test/host/stock-loader.test.ts
 RED: `pnpm exec vitest run test/packed/install.test.ts --config vitest.config.ts` — README still named v5 surfaces / iterations lacked a decision line
 GREEN: `pnpm smoke` exit 0 — 13 tests; `pnpm typecheck` exit 0; `pnpm exec vitest run --config vitest.config.ts` exit 0 — 115 tests
-Host/model: same as E03; `pnpm build && node scripts/packed-host.mjs` → `pi-context-6.1.0.tgz` sha256 `a0cbf8b082a1e6d03e2bf779ef905ed60efd5d2753579a53bb6c894ef2f0c12b`
+Host/model: same as E03; first packaging `pnpm build && node scripts/packed-host.mjs` → `pi-context-6.1.0.tgz` sha256 `a0cbf8b082a1e6d03e2bf779ef905ed60efd5d2753579a53bb6c894ef2f0c12b`
 
-
-
-
-## Round decision
-
-decision: observe-only
-
-Evidence: run `20260908-215433`, E03 landing `6486703bc70a1e41dbe88739981774ff3ea44b33`, live harness `68ce1f6689e905d27a5c264e0a3f7abf064155ac`, Pi 0.85.1, plugin `34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19`, model `openclaw/Qwen3.8-27B-WORK` thinking medium. Quality cells all passed. Balanced fold triggered on H01/H02 but never produced a verified history read; cacheRead and NInfer `/metrics` are unavailable here so the cost gate cannot pass either.
-
-Limits: one model, one machine, n=2 per cell, public OpenAI-compat endpoint without prefix-cache accounting.
-
-Next round only if: (1) H01 balanced recovers the nonce with `verifiedReads>=1`, (2) post-fold `cacheRead` or engine prefill is actually observed, (3) H03 usage reaches the 60% trigger. Do not retune fold parameters to chase a `limited-balanced-trial` on this dataset.
-
-docs: record final sha — packaging commit `d28a3685ce245d1a4d270c02b9fac4ea785d49ca`
-
-## Review repair (post E04)
+## Review repair (post first E04)
 
 Commits: `ee6c79f5` (product invariants), `2aca608b` (eval gates).
-Independent review of `a1e82819` found the mechanism gate was not executable: `verifiedReads` was never produced, `decide()` counted folds per cell, H02 isError was unchecked, and `pctx_history read` failed closed on an unavailable index. Repair keeps the observe-only product decision; it makes the three gates honest.
+Independent review of `a1e82819` found the mechanism gate was not executable: `verifiedReads` was never produced, `decide()` counted folds per cell, H02 isError was unchecked, and `pctx_history read` failed closed on an unavailable index. The first product decision stayed observe-only until a later metrics-backed run.
 
 - Offline `verifiedReads` from session JSONL (`parse-session.mjs`); plugin still increments a status counter for `/pctx status`.
 - `decide()` is episode-level; cost recovery requires 2 post-fold requests; H02 folded-error is a mechanism fail.
@@ -132,9 +117,19 @@ Independent review of `a1e82819` found the mechanism gate was not executable: `v
 
 Follow-up (gates 1+2+3): `eval/local/` is the only executable harness; the audit pack no longer ships `report/run-episode/parse-session/run-matrix.mjs`. H01 requires `nonceVerifiedReads` (non-empty page + matching `sourceHash`) and `nonceFolded`. Missing fold/cache/engine evidence is unknown and cannot yield `limited-balanced-trial`. v5 `EvalArm`/`BudgetDecision` and the B0–B3 runner were removed from the default surface.
 
-Live `20260909-103813`: 37/37 complete, `observe-only` on the quality gate (`L06` balanced wrong-actions 2 > native 1). H01 balanced recovered the nonce through a folded verified read on both reps. `/metrics` still unavailable.
+Prior live runs (not the current decision): `20260908-215433` observe-only on mechanism (no verified read, `/metrics` unavailable); `20260909-103813` observe-only on quality (`L06` balanced wrong-actions 2 > native 1).
 
-Live `20260909-112407` (HEAD `19080243`, `/metrics` authenticated): 37/37 complete, `limited-balanced-trial`. L06 class files no longer count as wrong-actions. H01 balanced both reps `nonceVerifiedReads=1` and `nonceFolded`. H01/H02 balanced prefill / native = 1.04 / 1.08. Default profile stays observe. Candidate: `post-compaction-evidence-delta` (H02 balanced lost evidence 2/2).
+## Round decision
+
+decision: limited-balanced-trial
+
+Evidence: live `20260909-112407` (run HEAD `19080243`; that run recorded dirty=true from a leftover T21 `image.json`, later restored), Pi 0.85.1, plugin entry `34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19`, model `openclaw/Qwen3.8-27B-WORK` thinking medium, `/metrics` authenticated. 37/37 complete. Quality L01–L06 all 2/2, L06 wrong-actions 0/0 after ignoring javac `*.class`. H01 balanced both reps `passed` + `nonceVerifiedReads=1` + `nonceFolded`. H02 balanced folds 2/2, `foldedErrorResults=0`. H01/H02 balanced prefill / native = 1.04 / 1.08. Default profile stays observe. Candidate: `post-compaction-evidence-delta` (H02 observe 1/2, balanced 2/2 lost evidence).
+
+Packaging: `pnpm build && node scripts/packed-host.mjs` → `pi-context-6.1.0.tgz` sha256 `36c1019d7e46864c5fc3cb5bff426ea178b4da6eba3f7563b5cf1d5ca372b1cd`. README / CONFIGURATION / OPERATIONS / HANDOFF label balanced as default-off, trial in this environment.
+
+Limits: one model, one machine, n=2 per cell; this stack often has `cacheRead > input` so Σuncached is n/a; cost uses engine `prefillTokensDelta`. H03 did not reach the 60% trigger (folds=0). Node on the host is v22.17.0 vs engines >=22.19.0; the grader image is 22.19.0.
+
+Do not retune fold parameters. Do not change the default profile. Next evidence worth collecting is H03 actually folding in the production window, and whether H02 can quote the seed assertion after compaction.
 
 
 
