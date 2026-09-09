@@ -44,7 +44,7 @@ Project files are never trusted by default.
 
 `/pctx profile <p>` changes the in-memory profile only. It does not write `pctx.json`.
 
-Local-eval run `20260908-215433` on `openclaw/Qwen3.8-27B-WORK` decided **`observe-only`**. Keep the default profile `observe`. `balanced` / `fold` remain in the schema so a later environment can opt in, but they are **not recommended in this environment**.
+Local-eval run `20260909-112407` on `openclaw/Qwen3.8-27B-WORK` decided **`limited-balanced-trial`**. Keep the default profile `observe`. `balanced` / `fold` remain default-off; they are a trial in this environment, not a new default.
 
 ## Status
 

@@ -2,7 +2,7 @@
   "name": "pi-context",
   "version": "6.1.0",
   "private": true,
-  "description": "Native-first observe+history plugin for official Pi 0.85.1; balanced fold default-off and not recommended in this environment",
+  "description": "Native-first observe+history plugin for official Pi 0.85.1; balanced fold default-off, trial in this environment",
   "license": "UNLICENSED",
   "packageManager": "pnpm@10.15.0",
   "type": "module",

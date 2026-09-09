@@ -4,7 +4,7 @@ Native-first history plugin for official Pi **0.85.1**. Package `pi-context@6.1.
 
 Default profile is **observe**: index native history and expose `pctx_history` search/read. Provider bytes stay unchanged except for that extra tool schema.
 
-`balanced` threshold fold is **default-off, not recommended** in this environment (local-eval `20260908-215433` → `decision: observe-only`). Fold code remains; do not set `"profile": "balanced"` unless a later eval run says otherwise.
+`balanced` threshold fold is **default-off, trial in this environment** (local-eval `20260909-112407` → `decision: limited-balanced-trial`). Default profile stays `observe`. Enable balanced only with an explicit trusted `pctx.json`.
 
 Config is `pctx.json` with `schemaVersion: 6`. Unique packed entry: `src/extension.ts` → `dist/extension.js`.
 
@@ -44,7 +44,7 @@ Enable history from `pctx.json`:
 { "schemaVersion": 6, "profile": "observe" }
 ```
 
-To try balanced (not recommended here): set `"profile": "balanced"` in a trusted `pctx.json`, then confirm `/pctx status` shows `resolvedProfile=balanced`.
+To try balanced (trial here, still default-off): set `"profile": "balanced"` in a trusted `pctx.json`, then confirm `/pctx status` shows `resolvedProfile=balanced`.
 
 ## Tests
 

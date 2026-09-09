@@ -134,6 +134,8 @@ Follow-up (gates 1+2+3): `eval/local/` is the only executable harness; the audit
 
 Live `20260909-103813`: 37/37 complete, `observe-only` on the quality gate (`L06` balanced wrong-actions 2 > native 1). H01 balanced recovered the nonce through a folded verified read on both reps. `/metrics` still unavailable.
 
+Live `20260909-112407` (HEAD `19080243`, `/metrics` authenticated): 37/37 complete, `limited-balanced-trial`. L06 class files no longer count as wrong-actions. H01 balanced both reps `nonceVerifiedReads=1` and `nonceFolded`. H01/H02 balanced prefill / native = 1.04 / 1.08. Default profile stays observe. Candidate: `post-compaction-evidence-delta` (H02 balanced lost evidence 2/2).
+
 
 
 

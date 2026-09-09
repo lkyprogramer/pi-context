@@ -1,6 +1,6 @@
 # Operations (6.1)
 
-This plugin talks to official Pi 0.85.1 only. Default profile is observe. Balanced fold is default-off and **not recommended in this environment** (`decision: observe-only`, run `20260908-215433`).
+This plugin talks to official Pi 0.85.1 only. Default profile is observe. Balanced fold is default-off, **trial in this environment** (`decision: limited-balanced-trial`, run `20260909-112407`).
 
 ## Model endpoint
 
