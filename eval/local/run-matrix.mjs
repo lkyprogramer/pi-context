@@ -15,6 +15,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { assertArm } from "./arm-contract.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint } from "./model-endpoint.mjs";
 import { plannedEpisodeId } from "./accounting.mjs";
+import { hashTree, sha256Bytes } from "./bundle.mjs";
 import { parseSession, verbatimQuote } from "./parse-session.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -49,11 +50,27 @@ if (args.resume && existsSync(manifestPath)) {
   const dist = join(repo, "dist/extension.js");
   const tarball = findTarball();
   const endpoint = modelEndpoint();
+  const qualityIds = selected.filter((c) => String(c.id).startsWith("L")).map((c) => c.id);
+  const capabilityIds = selected.filter((c) => String(c.id).startsWith("H")).map((c) => c.id);
+  const expectedPairs = qualityIds.reduce((n, id) => {
+    const c = selected.find((x) => x.id === id);
+    return n + (c ? c.reps : 0);
+  }, 0);
+  const expectedCapabilities = capabilityIds.reduce((n, id) => {
+    const c = selected.find((x) => x.id === id);
+    return n + (c ? c.reps * (c.arms.includes("balanced") ? 1 : 0) : 0);
+  }, 0);
+  const porcelain = sh("git", ["status", "--porcelain"]);
   manifest = {
     runId: runDir.split("/").pop(), createdAt: new Date().toISOString(), seed,
-    git: { head: sh("git", ["rev-parse", "HEAD"]), tree: sh("git", ["rev-parse", "HEAD^{tree}"]), dirty: sh("git", ["status", "--porcelain"]).length > 0 },
+    git: { head: sh("git", ["rev-parse", "HEAD"]), tree: sh("git", ["rev-parse", "HEAD^{tree}"]), dirty: porcelain.length > 0 },
+    dirtyDigest: porcelain ? sha256Bytes(porcelain) : null,
     hostVersion: piVersion(),
     pluginSha256: existsSync(dist) ? sha256File(dist) : null,
+    distFiles: hashTree(join(repo, "dist")),
+    piPackageHash: existsSync(join(repo, "node_modules/@earendil-works/pi-coding-agent/package.json"))
+      ? sha256File(join(repo, "node_modules/@earendil-works/pi-coding-agent/package.json"))
+      : null,
     tarballSha256: tarball.sha256,
     tarball: tarball.path,
     sandboxImage: process.env.PCTX_SANDBOX_IMAGE ?? "pctx-t21-sandbox:0.85.1",
@@ -65,6 +82,16 @@ if (args.resume && existsSync(manifestPath)) {
     configHashByArm: await expectedArmHashes(),
     metricsAvailable: metricsAvailable(),
     order,
+    plan: {
+      qualityIds,
+      capabilityIds,
+      requiresFold: Object.fromEntries(capabilityIds.map((id) => [id, true])),
+      objective: { metric: "logical-input", known: false, relativeChange: null, minImprovement: 0.1 },
+      expectedPairs,
+      expectedCapabilities,
+      scenarioHash: sha256File(join(here, "cases.json")),
+      order,
+    },
   };
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 }

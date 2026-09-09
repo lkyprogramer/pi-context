@@ -5,8 +5,9 @@
  * Pure functions `summarize` and `decide` are exported for tests. Unknown usage is counted, never zeroed.
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { median } from "./accounting.mjs";
+import { capabilitiesFromItt, evaluateTrial, materializeItt, pairsFromItt } from "./gate.mjs";
 
 function usageOf(r) {
   return r.usage ?? r;
@@ -274,20 +275,27 @@ export function loadEpisodes(runDir) {
   return { episodes, priorAttempts };
 }
 
-function median(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; }
 function fmt(x) { return x == null ? "n/a" : x.toFixed(3); }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const runDir = process.argv[2]; if (!runDir) { console.error("runDir required"); process.exit(2); }
-  const here = dirname(fileURLToPath(import.meta.url));
-  const repo = resolve(here, "../..");
   const { episodes, priorAttempts } = loadEpisodes(runDir);
   const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
-  const scenPath = join(repo, "docs/pi-context-native-first-audit-v6.0.0/testing/scenarios.json");
-  const scenarios = JSON.parse(readFileSync(existsSync(scenPath) ? scenPath : new URL("../scenarios.json", import.meta.url), "utf8"));
-  const summary = summarize(episodes, priorAttempts);
-  const decision = decide(summary, scenarios, episodes);
-  writeFileSync(join(runDir, "report.json"), JSON.stringify({ manifest: { runId: manifest.runId, git: manifest.git, hostVersion: manifest.hostVersion, pluginSha256: manifest.pluginSha256, configHash: manifest.configHash, baseUrl: manifest.baseUrl }, summary, decision }, null, 2));
-  writeFileSync(join(runDir, "report.md"), renderMarkdown(summary, decision, manifest));
+  if (!manifest.plan) { console.error("frozen plan missing from run manifest"); process.exit(2); }
+  const itt = materializeItt(manifest.plan, episodes);
+  const summary = summarize(itt, priorAttempts);
+  const decision = evaluateTrial({
+    pairs: pairsFromItt(manifest.plan, itt),
+    capabilities: capabilitiesFromItt(manifest.plan, itt),
+    objective: manifest.plan.objective,
+    expectedPairs: manifest.plan.expectedPairs,
+    expectedCapabilities: manifest.plan.expectedCapabilities,
+  });
+  writeFileSync(join(runDir, "report.json"), JSON.stringify({
+    manifest: { runId: manifest.runId, git: manifest.git, hostVersion: manifest.hostVersion, pluginSha256: manifest.pluginSha256, configHash: manifest.configHash, scenarioHash: manifest.plan.scenarioHash },
+    summary,
+    decision,
+  }, null, 2));
+  writeFileSync(join(runDir, "report.md"), renderMarkdown(summary, { ...decision, reasons: [decision.reason], candidates: [] }, manifest));
   console.log(readFileSync(join(runDir, "report.md"), "utf8"));
 }

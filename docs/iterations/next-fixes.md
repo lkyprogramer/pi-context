@@ -107,6 +107,18 @@ Implemented: Pi-disjoint does not subtract cacheRead; logical = input+cacheRead+
 
 Not run: `pnpm check`, smoke, live matrix, remote Actions.
 
+## R08
+
+Changed: `eval/local/gate.mjs`, `eval/local/bundle.mjs`, `eval/local/report.mjs`, `eval/local/run-matrix.mjs`, `test/unit/trial-gate.test.ts`, `test/integration/run-bundle.test.ts`, `docs/iterations/next-fixes.md`
+
+RED: missing `evaluateTrial` from `eval/local/gate.mjs`.
+
+GREEN: `pnpm exec vitest run test/unit/trial-gate.test.ts test/integration/run-bundle.test.ts --config vitest.config.ts` exit 0 — 11 tests; `pnpm typecheck` exit 0.
+
+Implemented: object-form `evaluateTrial` (critical → blocked; no-fold / missing pair / empty capability → inconclusive; unknown cost stays `quality-qualified-cost-unknown`). One loss per two quality reps cannot reach `limited-balanced-trial`. Report CLI reads only the frozen run `plan`, not repo cases. Manifest freezes dist file hashes, tarball, Pi package hash, dirty digest, scenario hash, and planned order. Bundle is sanitized numbers/ids/hashes and recomputes the same decision offline. First-attempt and final success rates are separate.
+
+Not run: `pnpm check`, smoke, live matrix, remote Actions.
+
 ## Remaining
 
-R08–R10 not started.
+R09–R10 not started.
