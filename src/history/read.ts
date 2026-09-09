@@ -79,14 +79,15 @@ export function readHistory(input: {
     try {
       cur = decodeCursor(input.cursor);
     } catch {
-      return fail("stale-cursor", "CURSOR_MISMATCH");
+      return fail("stale-cursor", "stale-cursor");
     }
+    if (!readCursorMatches(cur, locator)) return fail("stale-cursor", "stale-cursor");
     start = Number(cur.byteOffset ?? cur.endByte ?? 0);
     if (!Number.isInteger(start) || start < 0 || start > buf.length) {
-      return fail("stale-cursor", "CURSOR_MISMATCH");
+      return fail("stale-cursor", "stale-cursor");
     }
     if (start < buf.length && (buf[start]! & 0xc0) === 0x80) {
-      return fail("stale-cursor", "CURSOR_MISMATCH");
+      return fail("stale-cursor", "stale-cursor");
     }
   }
   if (start === buf.length) {
@@ -119,7 +120,20 @@ export function readHistory(input: {
   if (!text) return fail("insufficient-context", "INSUFFICIENT_CONTEXT");
   const end = start + Buffer.byteLength(text, "utf8");
   const nextOffset = end < buf.length ? end : null;
-  const nextCursor = nextOffset == null ? null : encodeCursor({ ref: input.ref, byteOffset: nextOffset });
+  const nextCursor =
+    nextOffset == null
+      ? null
+      : encodeCursor({
+          v: 6,
+          kind: "read",
+          workspaceId: locator.workspaceId,
+          sessionId: locator.sessionId,
+          entryId: locator.entryId,
+          blockIndex: locator.blockIndex,
+          fieldKind: locator.kind,
+          sourceHash: locator.sourceHash,
+          byteOffset: nextOffset,
+        });
   return {
     ok: true,
     code: "ok",
@@ -140,14 +154,17 @@ export function reassemblePages(pages: Array<string | { text: string }>): string
 }
 
 export function formatHistoryResult(r: HistoryResult): { content: ContentBlock[]; details: unknown } {
+  const nextCursor = r.nextCursor ?? r.cursor ?? null;
   const metadataLine = JSON.stringify({
     code: r.code,
     diagnostic: r.diagnostic ?? null,
+    nextCursor,
     byteOffset: r.byteOffset ?? null,
     nextByteOffset: r.nextByteOffset ?? null,
     totalBytes: r.totalBytes ?? null,
     sourceHash: r.sourceHash ?? null,
     verified: r.verified ?? false,
+    hits: r.hits ?? null,
     details: r.details ?? null,
   });
   if (r.image) {
@@ -169,7 +186,37 @@ export function formatHistoryResult(r: HistoryResult): { content: ContentBlock[]
     };
   }
   return {
-    content: [{ type: "text", text: JSON.stringify({ code: r.code, hits: r.hits, diagnostic: r.diagnostic }) }],
+    content: [{ type: "text", text: metadataLine }],
     details: r.details ?? r,
   };
+}
+
+function readCursorMatches(cur: Record<string, unknown>, locator: { workspaceId: string; sessionId: string; entryId: string; blockIndex: number; kind: string; sourceHash: string }): boolean {
+  if (cur.kind != null && cur.kind !== "read") return false;
+  const workspaceId = typeof cur.workspaceId === "string" ? cur.workspaceId : null;
+  const sessionId = typeof cur.sessionId === "string" ? cur.sessionId : null;
+  const entryId = typeof cur.entryId === "string" ? cur.entryId : null;
+  const blockIndex = typeof cur.blockIndex === "number" ? cur.blockIndex : null;
+  const fieldKind = typeof cur.fieldKind === "string" ? cur.fieldKind : typeof cur.refKind === "string" ? cur.refKind : null;
+  const sourceHash = typeof cur.sourceHash === "string" ? cur.sourceHash : null;
+  if (workspaceId != null && workspaceId !== locator.workspaceId) return false;
+  if (sessionId != null && sessionId !== locator.sessionId) return false;
+  if (entryId != null && entryId !== locator.entryId) return false;
+  if (blockIndex != null && blockIndex !== locator.blockIndex) return false;
+  if (fieldKind != null && fieldKind !== locator.kind) return false;
+  if (sourceHash != null && sourceHash !== locator.sourceHash) return false;
+  if (typeof cur.ref === "string") {
+    const decoded = decodeRef(cur.ref);
+    if (isFieldRef(decoded)) {
+      return (
+        decoded.workspaceId === locator.workspaceId &&
+        decoded.sessionId === locator.sessionId &&
+        decoded.entryId === locator.entryId &&
+        decoded.blockIndex === locator.blockIndex &&
+        decoded.kind === locator.kind &&
+        decoded.sourceHash === locator.sourceHash
+      );
+    }
+  }
+  return workspaceId != null && sessionId != null && entryId != null && blockIndex != null && sourceHash != null;
 }

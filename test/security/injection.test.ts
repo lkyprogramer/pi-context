@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { decodeRef } from "../../src/history/refs.js";
-import { DEFAULT_CONFIG } from "../../src/config.js";
+import { DEFAULT_CONFIG, configHashOf } from "../../src/config.js";
 import { searchHistory } from "../../src/history/search.js";
 import { createHistoryIndex } from "../../src/history/index.js";
+import { SearchSnapshotStore, SEARCH_SNAPSHOT_LIMITS } from "../../src/history/page-snapshots.js";
 
 describe("T20 injection", () => {
   it("rejects path-like refs and FTS operator abuse", async () => {
@@ -14,6 +15,8 @@ describe("T20 injection", () => {
       index: idx,
       config: DEFAULT_CONFIG,
       getEntry: () => undefined,
+      snapshots: new SearchSnapshotStore(SEARCH_SNAPSHOT_LIMITS),
+      configHash: configHashOf(DEFAULT_CONFIG),
     });
     expect(["denied", "ok"]).toContain(result.code);
     await idx.close();

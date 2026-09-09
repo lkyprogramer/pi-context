@@ -49,6 +49,20 @@ Implemented: in-memory `RequestWitnessTracker`; context prepares still-visible o
 
 Not run: `pnpm check`, smoke, live, remote Actions.
 
+## R04
+
+Changed: `src/history/page-snapshots.ts`, `src/history/search.ts`, `src/history/read.ts`, `src/plugin.ts`, `test/unit/history-pagination.test.ts`, `test/host/history-pagination.test.ts`, `test/integration/search.test.ts`, `test/security/injection.test.ts`, `test/unit/history-budget.test.ts`, `docs/iterations/next-fixes.md`
+
+`plugin.ts` is in the R04 file list (snapshot store on the extension instance; fence clears snapshots). Callers of `searchHistory` now pass `snapshots` + `configHash`. Query/branch mismatch is `stale-cursor` instead of auto-reset to page 1.
+
+RED: required `read cursor is bound to a specific field` — formatted content omitted `nextCursor`; a cursor from field `a` applied to field `b` by byteOffset only.
+
+GREEN: `pnpm exec vitest run test/unit/history-pagination.test.ts test/host/history-pagination.test.ts test/host/history-image.test.ts --config vitest.config.ts` exit 0 — plus budget/search/injection/history-read 12/12; `pnpm typecheck` exit 0.
+
+Implemented: `SearchSnapshotStore({maxSnapshots:16,maxHits:128,ttlMs:600000})`. Search freezes ≤128 authorized refs; cursor is snapshotId+nextOffset+scope. Leaf advance keeps a live ancestor; sibling/query/config/TTL/restart → `stale-cursor`. Read cursor binds full FieldRef+hash+kind+byteOffset. `formatHistoryResult` writes `nextCursor` into model-visible JSON. Host observe session: search p1 → search p2 → read p1 → read p2 using only tool `content`. Image read still returns a native image block.
+
+Not run: `pnpm check`, smoke, live, remote Actions.
+
 ## Remaining
 
-R04–R10 not started.
+R05–R10 not started.

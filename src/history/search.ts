@@ -1,28 +1,116 @@
-import type { HistoryResult, NativeEntry, Scope, SearchCursor } from "../contracts.js";
-import { estimateTokens, hashCanonical, sha256Hex } from "../contracts.js";
+import type { HistoryResult, NativeEntry, Scope, SearchHit } from "../contracts.js";
+import { estimateTokens, sha256Hex } from "../contracts.js";
 import { encodeCursor, decodeCursor, encodeRef, isFieldRef, refForField } from "./refs.js";
 import type { HistoryIndex } from "./index.js";
 import type { PctxConfig } from "../config.js";
+import { SearchSnapshotStore, type SnapshotHit } from "./page-snapshots.js";
 
-function branchHash(scope: Scope): string {
-  return hashCanonical({ leafId: scope.leafId, ids: [...scope.visibleEntryIds].sort() });
+function fail(code: HistoryResult["code"], diagnostic: string): HistoryResult {
+  return { ok: false, code, cursor: null, nextCursor: null, diagnostic };
 }
 
-function isSearchCursor(value: Record<string, unknown>): boolean {
-  return (
-    value.v === 6 &&
-    typeof value.sessionId === "string" &&
-    typeof value.branchHash === "string" &&
-    typeof value.queryHash === "string" &&
-    typeof value.indexRevision === "string" &&
-    typeof value.offset === "number" &&
-    Number.isInteger(value.offset) &&
-    value.offset >= 0
-  );
+function encodeSearchCursor(input: {
+  snapshotId: string;
+  nextOffset: number;
+  workspaceId: string;
+  sessionId: string;
+}): string {
+  return encodeCursor({
+    v: 6,
+    kind: "search",
+    snapshotId: input.snapshotId,
+    nextOffset: input.nextOffset,
+    workspaceId: input.workspaceId,
+    sessionId: input.sessionId,
+  });
 }
 
-function encodeSearchCursor(cursor: SearchCursor): string {
-  return encodeCursor({ ...cursor } as Record<string, unknown>);
+function parseSearchCursor(raw: string): {
+  snapshotId: string;
+  nextOffset: number;
+  workspaceId: string;
+  sessionId: string;
+} | null {
+  try {
+    const parsed = decodeCursor(raw);
+    if (
+      parsed.v !== 6 ||
+      parsed.kind !== "search" ||
+      typeof parsed.snapshotId !== "string" ||
+      typeof parsed.workspaceId !== "string" ||
+      typeof parsed.sessionId !== "string" ||
+      typeof parsed.nextOffset !== "number" ||
+      !Number.isInteger(parsed.nextOffset) ||
+      parsed.nextOffset < 0
+    ) {
+      return null;
+    }
+    return {
+      snapshotId: parsed.snapshotId,
+      nextOffset: parsed.nextOffset,
+      workspaceId: parsed.workspaceId,
+      sessionId: parsed.sessionId,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function pageFromSnapshot(input: {
+  snapshot: { snapshotId: string; workspaceId: string; sessionId: string; hits: SnapshotHit[]; truncated: boolean };
+  offset: number;
+  limit: number;
+  scope: Scope;
+  config: PctxConfig;
+  getEntry: (entryId: string) => NativeEntry | undefined;
+}): HistoryResult {
+  const hits: SearchHit[] = [];
+  let used = 0;
+  let scanned = input.offset;
+  for (; scanned < input.snapshot.hits.length && hits.length < input.limit; scanned++) {
+    const stored = input.snapshot.hits[scanned]!;
+    const entry = input.getEntry(stored.entryId);
+    if (!entry || !input.scope.visibleEntryIds.has(stored.entryId)) continue;
+    const field = refForField(input.scope, entry, stored.blockIndex);
+    if (!isFieldRef(field) || field.sourceHash !== stored.sourceHash) continue;
+    const excerpt = stored.excerpt;
+    const cost = estimateTokens(excerpt) + estimateTokens(stored.ref);
+    if (hits.length === 0 && cost > input.config.history.searchMaxTokens) {
+      return fail("insufficient-context", "INSUFFICIENT_CONTEXT");
+    }
+    if (used + cost > input.config.history.searchMaxTokens) break;
+    used += cost;
+    hits.push({
+      ref: stored.ref,
+      entryId: stored.entryId,
+      excerpt,
+      fidelity: "normalized-search-excerpt",
+      observedAt: new Date().toISOString(),
+      currentStateVerified: false,
+    });
+  }
+  const more = scanned < input.snapshot.hits.length;
+  const nextCursor = more
+    ? encodeSearchCursor({
+        snapshotId: input.snapshot.snapshotId,
+        nextOffset: scanned,
+        workspaceId: input.snapshot.workspaceId,
+        sessionId: input.snapshot.sessionId,
+      })
+    : null;
+  return {
+    ok: true,
+    code: "ok",
+    hits,
+    cursor: nextCursor,
+    nextCursor,
+    diagnostic: input.snapshot.truncated ? "truncated" : undefined,
+    details: {
+      truncated: input.snapshot.truncated,
+      fidelity: "normalized-search-excerpt",
+      scope: `${input.scope.workspaceId}/${input.scope.sessionId}`,
+    },
+  };
 }
 
 export async function searchHistory(input: {
@@ -33,80 +121,66 @@ export async function searchHistory(input: {
   index: HistoryIndex;
   config: PctxConfig;
   getEntry: (entryId: string) => NativeEntry | undefined;
+  snapshots: SearchSnapshotStore;
+  nowMs?: number;
+  configHash: string;
 }): Promise<HistoryResult> {
   if (!input.query || (/[-+^~:]/.test(input.query) && input.query.length > 400)) {
-    return { code: "denied", cursor: null, diagnostic: "query rejected" };
+    return fail("denied", "query rejected");
   }
+  const nowMs = input.nowMs ?? Date.now();
   const limit = Math.min(input.limit ?? input.config.history.searchLimit, input.config.history.searchLimit);
   const queryHash = sha256Hex(input.query);
-  const indexRevision = await input.index.revision(input.scope);
-  const expected: SearchCursor = {
-    v: 6,
-    sessionId: input.scope.sessionId,
-    branchHash: branchHash(input.scope),
-    queryHash,
-    indexRevision,
-    offset: 0,
-  };
-  let offset = 0;
-  let mismatch = false;
   if (input.cursor) {
-    try {
-      const parsed = decodeCursor(input.cursor);
-      if (
-        !isSearchCursor(parsed) ||
-        parsed.sessionId !== expected.sessionId ||
-        parsed.branchHash !== expected.branchHash ||
-        parsed.queryHash !== expected.queryHash ||
-        parsed.indexRevision !== expected.indexRevision
-      ) {
-        mismatch = true;
-        offset = 0;
-      } else {
-        offset = Number(parsed.offset);
-      }
-    } catch {
-      mismatch = true;
-      offset = 0;
+    const parsed = parseSearchCursor(input.cursor);
+    if (!parsed) return fail("stale-cursor", "stale-cursor");
+    if (parsed.workspaceId !== input.scope.workspaceId || parsed.sessionId !== input.scope.sessionId) {
+      return fail("stale-cursor", "stale-cursor");
     }
+    const snapshot = input.snapshots.get(parsed.snapshotId, nowMs);
+    if (!snapshot) return fail("stale-cursor", "stale-cursor");
+    if (snapshot.queryHash !== queryHash || snapshot.configHash !== input.configHash) {
+      return fail("stale-cursor", "stale-cursor");
+    }
+    if (snapshot.anchorEntryId && !input.scope.visibleEntryIds.has(snapshot.anchorEntryId)) {
+      return fail("stale-cursor", "stale-cursor");
+    }
+    if (parsed.nextOffset > snapshot.hits.length) return fail("stale-cursor", "stale-cursor");
+    return pageFromSnapshot({ snapshot, offset: parsed.nextOffset, limit, scope: input.scope, config: input.config, getEntry: input.getEntry });
   }
+
   let raw;
   try {
-    raw = await input.index.search(input.scope, input.query, limit, offset);
+    raw = await input.index.search(input.scope, input.query, input.snapshots.maxHits + 1, 0);
   } catch (err) {
     const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
-    if (code === "INDEX_UNAVAILABLE") {
-      return { code: "degraded", cursor: null, diagnostic: "history: unavailable" };
-    }
+    if (code === "INDEX_UNAVAILABLE") return fail("degraded", "history: unavailable");
     throw err;
   }
-  let used = 0;
-  const hits = [];
+  const stored: SnapshotHit[] = [];
   for (const hit of raw) {
+    if (stored.length >= input.snapshots.maxHits) break;
     const entry = input.getEntry(hit.entryId);
     if (!entry) continue;
     const field = refForField(input.scope, entry, hit.blockIndex);
     if (!isFieldRef(field)) continue;
-    const excerpt = hit.excerpt.slice(0, 240);
-    used += estimateTokens(excerpt);
-    if (used > input.config.history.searchMaxTokens) break;
-    hits.push({
+    stored.push({
       ref: encodeRef(field),
       entryId: hit.entryId,
-      excerpt,
-      fidelity: "normalized-search-excerpt" as const,
-      observedAt: new Date().toISOString(),
-      currentStateVerified: false as const,
+      blockIndex: hit.blockIndex,
+      sourceHash: field.sourceHash,
+      excerpt: hit.excerpt.slice(0, 240),
     });
   }
-  const next: SearchCursor | null =
-    hits.length === limit
-      ? { ...expected, offset: offset + hits.length }
-      : null;
-  return {
-    code: "ok",
-    hits,
-    cursor: next ? encodeSearchCursor(next) : null,
-    diagnostic: mismatch ? "CURSOR_MISMATCH: restarted from offset 0" : undefined,
-  };
+  const snapshot = input.snapshots.create({
+    workspaceId: input.scope.workspaceId,
+    sessionId: input.scope.sessionId,
+    queryHash,
+    configHash: input.configHash,
+    anchorEntryId: input.scope.leafId ?? "",
+    createdAt: nowMs,
+    hits: stored,
+    truncated: raw.length > input.snapshots.maxHits,
+  });
+  return pageFromSnapshot({ snapshot, offset: 0, limit, scope: input.scope, config: input.config, getEntry: input.getEntry });
 }

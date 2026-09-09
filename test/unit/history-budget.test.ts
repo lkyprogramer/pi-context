@@ -69,7 +69,7 @@ it("rejects stale hashes, oversized images, overflow cursors, and tight remainin
     budget: { maxTokens: 100, maxBytes: 100, estimateKind: "character-estimate" },
     getEntry: () => entry,
   });
-  expect(overflow.diagnostic).toMatch(/CURSOR_MISMATCH/);
+  expect(overflow.code).toBe("stale-cursor");
   const tight = readBudgetFor(DEFAULT_CONFIG, 4000, { tokens: 262000, contextWindow: 262144, percent: 99 });
   expect("insufficient" in tight).toBe(true);
   const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";

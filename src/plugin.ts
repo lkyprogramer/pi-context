@@ -3,6 +3,7 @@ import { DEFAULT_CONFIG, configHashOf, parseConfig } from "./config.js";
 import type { ContextUsageLike, FoldEvent, FoldPlan, HistoryRequest, HistoryResult, NativeEntry, Profile, RequestRecord, Scope } from "./contracts.js";
 import type { AssistantRecord } from "./telemetry/metrics.js";
 import { HistoryIndex } from "./history/index.js";
+import { SearchSnapshotStore, SEARCH_SNAPSHOT_LIMITS } from "./history/page-snapshots.js";
 import { readHistory } from "./history/read.js";
 import { readBudgetFor } from "./projection/budget.js";
 import { searchHistory } from "./history/search.js";
@@ -62,6 +63,7 @@ export interface PluginState {
   lastFieldHashes: Map<string, string> | null;
   lastCallIds: Map<string, string> | null;
   lastReceipt: AppliedReceipt | null;
+  snapshots: SearchSnapshotStore;
 }
 
 export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
@@ -100,6 +102,7 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     lastFieldHashes: null,
     lastCallIds: null,
     lastReceipt: null,
+    snapshots: new SearchSnapshotStore(SEARCH_SNAPSHOT_LIMITS),
   };
 }
 
@@ -202,6 +205,8 @@ export async function historyTool(
       index: state.index,
       config: state.config,
       getEntry,
+      snapshots: state.snapshots,
+      configHash: state.configHash,
     });
   }
   try {
@@ -411,6 +416,7 @@ export function fenceIdentity(state: PluginState): void {
   state.lastCallIds = null;
   state.lastReceipt = null;
   state.witness.reset();
+  state.snapshots.clear();
 }
 
 export function noteNativeCompact(state: PluginState, counted = true): void {
