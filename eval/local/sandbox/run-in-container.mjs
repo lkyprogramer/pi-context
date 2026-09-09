@@ -57,13 +57,18 @@ const unsubscribe = session.subscribe((e) => {
       if (m.role === "assistant") {
         modelCalls++;
         const usage = m.usage ?? {};
-        const ttftMs = reqStartedAt !== null && firstTokenAt !== null ? firstTokenAt - reqStartedAt : null;
+        const hookToFirstDeltaMs = reqStartedAt !== null && firstTokenAt !== null ? firstTokenAt - reqStartedAt : null;
         const rec = {
           at: new Date().toISOString(),
+          requestId: m.responseId ?? m.id ?? `asst-${modelCalls}`,
+          purpose: "agent",
+          source: "pi-disjoint",
+          mappingVersion: "pi-openai-completions-0.85.1-disjoint",
           usage: { input: usage.input ?? null, output: usage.output ?? null, cacheRead: usage.cacheRead ?? null, cacheWrite: usage.cacheWrite ?? null, totalTokens: usage.totalTokens ?? null },
           stopReason: m.stopReason ?? null,
           contextPercentBefore: session.getContextUsage?.()?.percent ?? null,
-          ttftMs,
+          ttftMs: null,
+          hookToFirstDeltaMs,
           totalMs: reqStartedAt !== null ? Date.now() - reqStartedAt : null,
         };
         reqStartedAt = null; firstTokenAt = null;
@@ -82,7 +87,24 @@ const unsubscribe = session.subscribe((e) => {
       break;
     }
     case "compaction_start": ev({ type: "compaction_start", reason: e.reason }); break;
-    case "compaction_end": ev({ type: "compaction_end", reason: e.reason, aborted: e.aborted, willRetry: e.willRetry, tokensBefore: e.result?.tokensBefore ?? null }); break;
+    case "compaction_end": {
+      ev({ type: "compaction_end", reason: e.reason, aborted: e.aborted, willRetry: e.willRetry, tokensBefore: e.result?.tokensBefore ?? null });
+      if (e.willRetry === true) break;
+      const usage = e.result?.usage;
+      if (!usage) break;
+      appendFileSync(join(out, "requests.jsonl"), `${JSON.stringify({
+        at: new Date().toISOString(),
+        requestId: `compact-${modelCalls}`,
+        purpose: "compaction",
+        source: "pi-disjoint",
+        mappingVersion: "pi-openai-completions-0.85.1-disjoint",
+        usage: { input: usage.input ?? null, output: usage.output ?? null, cacheRead: usage.cacheRead ?? null, cacheWrite: usage.cacheWrite ?? null, totalTokens: usage.totalTokens ?? null },
+        stopReason: "compaction",
+        ttftMs: null,
+        hookToFirstDeltaMs: null,
+      })}\n`);
+      break;
+    }
     default: break;
   }
 });

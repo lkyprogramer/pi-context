@@ -40,12 +40,33 @@ export function parseSession(path) {
   const sourceBlocks = [];
   for (const line of lines) {
     let e; try { e = JSON.parse(line); } catch { continue; }
-    if (e.type === "compaction") { compactions++; continue; }
+    if (e.type === "compaction") {
+      compactions++;
+      const u = e.usage ?? e.message?.usage;
+      if (u && typeof u === "object") {
+        requests.push({
+          entryId: e.id ?? `compaction-${compactions}`,
+          requestId: e.id ?? `compaction-${compactions}`,
+          purpose: "compaction",
+          source: "pi-disjoint",
+          input: u.input ?? null, output: u.output ?? null, cacheRead: u.cacheRead ?? null,
+          cacheWrite: u.cacheWrite ?? null, totalTokens: u.totalTokens ?? null, stopReason: "compaction",
+        });
+      }
+      continue;
+    }
     if (e.type !== "message" || !e.message) continue;
     const m = e.message;
     if (m.role === "assistant") {
       const u = m.usage ?? {};
-      requests.push({ entryId: e.id, input: u.input ?? null, output: u.output ?? null, cacheRead: u.cacheRead ?? null, cacheWrite: u.cacheWrite ?? null, totalTokens: u.totalTokens ?? null, stopReason: m.stopReason ?? null });
+      requests.push({
+        entryId: e.id,
+        requestId: e.id,
+        purpose: "agent",
+        source: "pi-disjoint",
+        input: u.input ?? null, output: u.output ?? null, cacheRead: u.cacheRead ?? null,
+        cacheWrite: u.cacheWrite ?? null, totalTokens: u.totalTokens ?? null, stopReason: m.stopReason ?? null,
+      });
       for (const b of Array.isArray(m.content) ? m.content : []) {
         if (b.type === "toolCall") {
           callNames.set(b.id, b.name);
@@ -84,11 +105,20 @@ export function parseSession(path) {
     }
   }
   const known = requests.filter((r) => r.input != null);
+  const logicals = requests.map((r) => (r.input != null && r.cacheRead != null && r.cacheWrite != null ? r.input + r.cacheRead + r.cacheWrite : null));
+  const unknownLogical = logicals.filter((n) => n == null).length;
   return {
     entries: lines.map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean),
     requests, toolCalls, compactions, historyReads, historySearches, verifiedReads, errorResultIds,
     historyReadResults, sourceBlocks,
-    sums: { input: known.reduce((s, r) => s + r.input, 0), cacheRead: known.reduce((s, r) => s + (r.cacheRead ?? 0), 0), output: known.reduce((s, r) => s + (r.output ?? 0), 0), unknownUsage: requests.length - known.length },
+    sums: {
+      input: known.reduce((s, r) => s + r.input, 0),
+      cacheRead: requests.filter((r) => r.cacheRead != null).reduce((s, r) => s + r.cacheRead, 0),
+      output: requests.filter((r) => r.output != null).reduce((s, r) => s + r.output, 0),
+      unknownUsage: requests.length - known.length,
+      knownLogicalSubtotal: logicals.filter((n) => n != null).reduce((s, n) => s + n, 0),
+      logicalInput: unknownLogical ? null : logicals.reduce((s, n) => s + n, 0),
+    },
   };
 }
 

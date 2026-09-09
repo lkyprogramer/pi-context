@@ -4,6 +4,30 @@ import { join } from "node:path";
 import { unknownCostStaysEmpty } from "../projection/budget.js";
 import type { FoldEvent, RequestRecord, UsageRecord } from "../contracts.js";
 
+export const PI_USAGE_MAPPING = "pi-openai-completions-0.85.1-disjoint";
+
+function intOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+}
+
+/** Pi.input is already fresh. Never subtract cacheRead again. */
+export function mapPiDisjoint(raw: Record<string, unknown>): {
+  freshInput: number | null;
+  cachedRead: number | null;
+  cachedWrite: number | null;
+  output: number | null;
+  logicalInput: number | null;
+} {
+  const freshInput = intOrNull(raw.input);
+  const cachedRead = intOrNull(raw.cacheRead);
+  const cachedWrite = intOrNull(raw.cacheWrite);
+  const output = intOrNull(raw.output);
+  const logicalInput = freshInput != null && cachedRead != null && cachedWrite != null
+    ? freshInput + cachedRead + cachedWrite
+    : null;
+  return { freshInput, cachedRead, cachedWrite, output, logicalInput };
+}
+
 export function normalizeUsage(raw: Record<string, unknown>, identity: { provider: string; model: string; purpose: UsageRecord["purpose"] }): UsageRecord {
   const num = (keys: string[]): number | null => {
     for (const key of keys) {
@@ -12,15 +36,16 @@ export function normalizeUsage(raw: Record<string, unknown>, identity: { provide
     }
     return null;
   };
+  const pi = "input" in raw ? mapPiDisjoint(raw) : null;
   return {
     provider: identity.provider,
     model: identity.model,
     purpose: identity.purpose,
     raw,
-    uncachedInputTokens: num(["uncachedInputTokens", "input_tokens", "inputTokens", "prompt_tokens"]),
-    cachedReadTokens: num(["cachedReadTokens", "cache_read_input_tokens", "cacheReadTokens"]),
-    cachedWriteTokens: num(["cachedWriteTokens", "cache_creation_input_tokens", "cacheWriteTokens"]),
-    outputTokens: num(["outputTokens", "output_tokens", "completion_tokens"]),
+    uncachedInputTokens: pi ? pi.freshInput : num(["uncachedInputTokens", "input_tokens", "inputTokens", "prompt_tokens"]),
+    cachedReadTokens: pi ? pi.cachedRead : num(["cachedReadTokens", "cache_read_input_tokens", "cacheReadTokens"]),
+    cachedWriteTokens: pi ? pi.cachedWrite : num(["cachedWriteTokens", "cache_creation_input_tokens", "cacheWriteTokens"]),
+    outputTokens: pi ? pi.output : num(["outputTokens", "output_tokens", "completion_tokens"]),
     monetaryCost: unknownCostStaysEmpty(num(["total_cost", "cost", "monetaryCost"])),
     currency: typeof raw.currency === "string" ? raw.currency : null,
     pricingIdentity: typeof raw.pricingIdentity === "string" ? raw.pricingIdentity : null,
@@ -60,6 +85,10 @@ export function recordRequest(state: TelemetrySink, record: RequestRecord): void
     contextPercentBefore: record.contextPercentBefore,
     stopReason: record.stopReason,
     ttftMs: record.ttftMs,
+    hookToFirstDeltaMs: record.hookToFirstDeltaMs ?? null,
+    requestId: record.requestId ?? null,
+    purpose: record.purpose ?? "agent",
+    mappingVersion: record.mappingVersion ?? PI_USAGE_MAPPING,
     input: record.usage.input,
     output: record.usage.output,
     cacheRead: record.usage.cacheRead,

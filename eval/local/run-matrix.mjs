@@ -14,6 +14,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { assertArm } from "./arm-contract.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint } from "./model-endpoint.mjs";
+import { plannedEpisodeId } from "./accounting.mjs";
 import { parseSession, verbatimQuote } from "./parse-session.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -38,7 +39,10 @@ if (args.resume && existsSync(manifestPath)) {
   for (const c of selected) {
     for (let rep = 1; rep <= c.reps; rep++) {
       const arms = rep % 2 === 1 ? c.arms : [...c.arms].reverse();
-      for (const arm of arms) order.push({ caseId: c.id, arm, rep, windowProfile: c.windowProfile, sandbox: c.sandbox !== false });
+      for (const arm of arms) {
+        const episodeId = plannedEpisodeId(runDir.split("/").pop(), c.id, arm, rep);
+        order.push({ episodeId, caseId: c.id, arm, rep, windowProfile: c.windowProfile, sandbox: true });
+      }
     }
   }
   shuffleGroups(order, seed);
@@ -77,9 +81,10 @@ for (const ep of manifest.order) {
   mkdirSync(epDir, { recursive: true });
   const live = modelsSnapshot();
   if (!engineOk(live)) {
-    const result = { manifest: ep, status: "blocked", error: `engine-changed ${JSON.stringify(live?.data?.[0] ?? live)}` };
+    const result = { manifest: ep, episodeId: ep.episodeId, status: "blocked", error: `engine-changed ${JSON.stringify(live?.data?.[0] ?? live)}` };
     writeFileSync(join(epDir, "result.json"), JSON.stringify(result, null, 2));
     appendFileSync(join(runDir, "episodes.jsonl"), `${JSON.stringify(result)}\n`);
+    appendFileSync(join(runDir, "attempts.jsonl"), `${JSON.stringify({ episodeId: ep.episodeId, attemptId: `${ep.episodeId}:a1`, status: "blocked", requests: [] })}\n`);
     blockedCount++; done++;
     continue;
   }
@@ -118,7 +123,10 @@ for (const ep of manifest.order) {
   if (result.status === "blocked") blockedCount++;
   writeFileSync(resultPath, JSON.stringify(result, null, 2));
   appendFileSync(join(runDir, "episodes.jsonl"), `${JSON.stringify(result)}\n`);
-  for (const q of result.requests ?? []) appendFileSync(join(runDir, "requests.jsonl"), `${JSON.stringify({ caseId: ep.caseId, arm: ep.arm, rep: ep.rep, ...q })}\n`);
+  if (existsSync(join(epDir, "attempts.jsonl"))) {
+    appendFileSync(join(runDir, "attempts.jsonl"), readFileSync(join(epDir, "attempts.jsonl"), "utf8"));
+  }
+  for (const q of result.requests ?? []) appendFileSync(join(runDir, "requests.jsonl"), `${JSON.stringify({ caseId: ep.caseId, arm: ep.arm, rep: ep.rep, requestId: q.requestId, source: q.source, usage: q.usage, purpose: q.purpose })}\n`);
   done++;
   console.log(`[${done}/${manifest.order.length}] ${ep.caseId}/${ep.arm}/r${ep.rep} → ${result.status} oracle=${result.oracle?.passed} folds=${result.mechanism?.folds} wall=${Math.round((result.wallMs ?? 0) / 1000)}s`);
 }

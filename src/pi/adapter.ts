@@ -28,7 +28,7 @@ import { loadConfig } from "../config.js";
 import { DEFAULT_CONFIG } from "../config.js";
 import type { NativeEntry } from "../contracts.js";
 import { recordAssistant, writeStatusFile } from "../telemetry/metrics.js";
-import { recordRequest } from "../telemetry/usage.js";
+import { PI_USAGE_MAPPING, recordRequest } from "../telemetry/usage.js";
 import type { AgentMessage } from "../projection/render.js";
 import { sessionSnapshot, type SessionReader } from "./source-reader.js";
 
@@ -152,6 +152,7 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     state.lastAssistant = recordAssistant(msg);
     acceptAssistantWitness(state, msg);
     const { sessionId } = entriesFromCtx(ctx);
+    const responseId = typeof msg.responseId === "string" ? msg.responseId : typeof msg.id === "string" ? msg.id : null;
     recordRequest(state, {
       at: new Date().toISOString(),
       sessionId,
@@ -167,11 +168,42 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
         totalTokens: numOrNull(msg.usage?.totalTokens),
       },
       stopReason: typeof msg.stopReason === "string" ? msg.stopReason : null,
-      ttftMs: state.sawMessageUpdate ? state.ttftMs : null,
+      ttftMs: null,
+      requestId: state.lastWitnessRequestId ?? responseId,
+      purpose: "agent",
+      hookToFirstDeltaMs: state.sawMessageUpdate ? state.ttftMs : null,
+      mappingVersion: PI_USAGE_MAPPING,
     });
   });
   pi.on("session_compact", (event: SessionCompactEvent) => {
     noteNativeCompact(state, event.willRetry !== true);
+    const compact = event as SessionCompactEvent & {
+      result?: { usage?: AssistantUsageLike };
+      usage?: AssistantUsageLike;
+    };
+    const usage = compact.result?.usage ?? compact.usage;
+    if (!usage || event.willRetry === true) return;
+    recordRequest(state, {
+      at: new Date().toISOString(),
+      sessionId: state.sessionId,
+      profile: state.profile,
+      planId: state.plan?.planId ?? null,
+      replacementsApplied: state.lastApplied,
+      contextPercentBefore: state.lastContextPercent,
+      usage: {
+        input: numOrNull(usage.input),
+        output: numOrNull(usage.output),
+        cacheRead: numOrNull(usage.cacheRead),
+        cacheWrite: numOrNull(usage.cacheWrite),
+        totalTokens: numOrNull(usage.totalTokens),
+      },
+      stopReason: "compaction",
+      ttftMs: null,
+      requestId: state.lastWitnessRequestId ? `${state.lastWitnessRequestId}:compact` : `compact-${state.nativeCompactions}`,
+      purpose: "compaction",
+      hookToFirstDeltaMs: null,
+      mappingVersion: PI_USAGE_MAPPING,
+    });
   });
   pi.on("session_tree", () => {
     fenceIdentity(state);

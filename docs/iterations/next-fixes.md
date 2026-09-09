@@ -93,6 +93,20 @@ Implemented: parent `startCredentialBroker` holds the upstream key; agent `model
 
 Not run: `pnpm check`, smoke, live matrix, remote Actions.
 
+## R07
+
+Changed: `eval/local/accounting.mjs`, `eval/local/parse-session.mjs`, `eval/local/run-episode.mjs`, `eval/local/run-matrix.mjs`, `src/telemetry/usage.ts`, `src/pi/adapter.ts`, `src/contracts.ts`, `eval/local/sandbox/run-in-container.mjs`, `test/unit/request-accounting.test.ts`, `docs/iterations/next-fixes.md`
+
+`contracts.ts` and `run-in-container.mjs` are outside the R07 file list: RequestRecord gained requestId/purpose/hookToFirstDeltaMs; the container runner is the only live `requests.jsonl` writer after R06 removed host execution.
+
+RED: missing `normalizeUsage` / `median` / `aggregateAttempts` from `eval/local/accounting.mjs`.
+
+GREEN: `pnpm exec vitest run test/unit/request-accounting.test.ts --config vitest.config.ts` exit 0 — 16 tests; extra economics+eval-accounting 33/33; `pnpm typecheck` exit 0.
+
+Implemented: Pi-disjoint does not subtract cacheRead; logical = input+cacheRead+cacheWrite; raw inclusive rejects prompt 10 / cache 20. Failed attempts stay in the ledger; missing retry usage makes `logicalInput` null and keeps `knownLogicalSubtotal`. Same requestId dedups; distinct ids with identical content each count. `message_end` records assistants only; native compact usage is `purpose=compaction`. Adapter writes `hookToFirstDeltaMs` and leaves `ttftMs` null (no send timestamp). Engine deltas stay separate from Pi logical. `attempts.jsonl` is append-only; `result.json` is the final summary.
+
+Not run: `pnpm check`, smoke, live matrix, remote Actions.
+
 ## Remaining
 
-R07–R10 not started.
+R08–R10 not started.

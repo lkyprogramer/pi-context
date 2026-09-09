@@ -17,6 +17,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { startCredentialBroker } from "../../scripts/credential-broker.mjs";
+import { aggregateAttempts, nextAttemptId, normalizeUsage, plannedEpisodeId } from "./accounting.mjs";
 import { foldedErrorCount, nonceEntryIds, nonceVerifiedReads, parseSession, verbatimQuote } from "./parse-session.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint, servedIdentity } from "./model-endpoint.mjs";
 
@@ -101,8 +102,9 @@ if (spec.seed) {
   if (sha256File(seedAbs) !== seedSourceSha) blocked("seed source mutated while copying");
 }
 
+const episodeId = plannedEpisodeId(args.run, caseId, arm, rep);
 const manifest = {
-  runId: args.run ?? null, caseId, arm, rep, windowProfile: window, sandbox,
+  runId: args.run ?? null, episodeId, caseId, arm, rep, windowProfile: window, sandbox,
   hostVersion: piVersion(),
   pluginEntry: arm === "native" ? null : pluginEntry,
   pluginSha256: arm === "native" ? null : sha256File(pluginEntry),
@@ -163,7 +165,28 @@ const wallMs = Date.now() - t0;
 snap("after");
 
 // ---- 4. collect ------------------------------------------------------------------------------
-const requests = existsSync(join(out, "requests.jsonl")) ? readFileSync(join(out, "requests.jsonl"), "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [];
+const rawRequests = existsSync(join(out, "requests.jsonl")) ? readFileSync(join(out, "requests.jsonl"), "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [];
+const seenRequest = new Set();
+const requests = [];
+for (const rec of rawRequests) {
+  const requestId = rec.requestId ?? `anon-${requests.length + 1}`;
+  if (seenRequest.has(requestId)) continue;
+  seenRequest.add(requestId);
+  const source = rec.source ?? "pi-disjoint";
+  requests.push({
+    requestId,
+    purpose: rec.purpose ?? "agent",
+    source,
+    mappingVersion: rec.mappingVersion ?? "pi-openai-completions-0.85.1-disjoint",
+    usage: rec.usage ?? null,
+    normalized: normalizeUsage(rec.usage ?? null, source),
+    stopReason: rec.stopReason ?? null,
+    hookToFirstDeltaMs: rec.hookToFirstDeltaMs ?? null,
+    ttftMs: rec.sentAt != null && rec.ttftMs != null ? rec.ttftMs : null,
+    at: rec.at ?? null,
+    contextPercentBefore: rec.contextPercentBefore ?? null,
+  });
+}
 const statusJson = existsSync(join(agentDir, "pctx-status.json")) ? JSON.parse(readFileSync(join(agentDir, "pctx-status.json"), "utf8")) : null;
 if (statusJson) writeFileSync(join(out, "status.json"), JSON.stringify(statusJson, null, 2));
 if (arm !== "native") {
@@ -217,10 +240,25 @@ if (oracle.missingGrade && status === "complete") {
   error = oracle.detail ?? "grade.sh wrote no grade.json";
   oracle.passed = null;
 }
+const attemptsPath = join(out, "attempts.jsonl");
+const priorAttempts = existsSync(attemptsPath)
+  ? readFileSync(attemptsPath, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l))
+  : [];
+const attemptId = nextAttemptId(episodeId, priorAttempts.length);
+const attempt = {
+  episodeId,
+  attemptId,
+  status,
+  requests: requests.map((r) => ({ requestId: r.requestId, source: r.source, usage: r.usage, purpose: r.purpose })),
+};
+appendFileSync(attemptsPath, `${JSON.stringify(attempt)}\n`);
+const accounting = aggregateAttempts([...priorAttempts, attempt]).episodes[episodeId] ?? null;
+const engineRestarted = Boolean(before.available && after.available && after.requests < before.requests);
 const result = {
-  manifest, status, error,
+  manifest, episodeId, attemptId, status, error,
   oracle,
   requests,
+  accounting,
   foldEvents,
   mechanism: {
     folds: statusJson != null ? (statusJson.folds ?? 0) : (foldEvents.length > 0 ? foldEvents.length : null),
@@ -235,7 +273,14 @@ const result = {
     savedTokensEstimate: foldEvents.length ? foldEvents.reduce((s, f) => s + (f.savedTokensEstimate ?? 0), 0) : null,
     invalidatedTokensEstimate: foldEvents.length ? foldEvents.reduce((s, f) => s + (f.invalidatedTokensEstimate ?? 0), 0) : null,
   },
-  engine: { requestsDelta: delta("requests"), prefixHitTokensDelta: delta("prefixHitTokens"), prefillTokensDelta: delta("prefillTokens"), stableRestoresDelta: delta("stableRestores"), engineRestarted: before.available && after.available && after.requests < before.requests },
+  engine: {
+    requestsDelta: delta("requests"),
+    prefixHitTokensDelta: delta("prefixHitTokens"),
+    prefillTokensDelta: delta("prefillTokens"),
+    stableRestoresDelta: delta("stableRestores"),
+    engineRestarted,
+    engineAttributable: Boolean(before.available && after.available && !engineRestarted),
+  },
   wallMs, workdir: cwd,
 };
 writeFileSync(join(out, "result.json"), JSON.stringify(result, null, 2));
@@ -370,4 +415,12 @@ function sha256File(p) { return createHash("sha256").update(readFileSync(p)).dig
 function parseArgs(argv) { const o = {}; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (!a.startsWith("--")) continue; const k = a.slice(2); const v = argv[i + 1]; if (v && !v.startsWith("--")) { o[k] = v; i++; } else o[k] = true; } return o; }
 function need(k) { if (!args[k]) die(`--${k} required`); return String(args[k]); }
 function die(m) { console.error(m); process.exit(2); }
-function blocked(reason) { const r = { manifest: { caseId, arm, rep, windowProfile: window }, status: "blocked", error: reason }; writeFileSync(join(out, "result.json"), JSON.stringify(r, null, 2)); console.log(JSON.stringify({ caseId, arm, rep, status: "blocked", reason })); process.exit(0); }
+function blocked(reason) {
+  const id = plannedEpisodeId(args.run, caseId, arm, rep);
+  const attempt = { episodeId: id, attemptId: nextAttemptId(id, 0), status: "blocked", requests: [] };
+  appendFileSync(join(out, "attempts.jsonl"), `${JSON.stringify(attempt)}\n`);
+  const r = { manifest: { caseId, arm, rep, windowProfile: window, episodeId: id }, episodeId: id, status: "blocked", error: reason };
+  writeFileSync(join(out, "result.json"), JSON.stringify(r, null, 2));
+  console.log(JSON.stringify({ caseId, arm, rep, status: "blocked", reason }));
+  process.exit(0);
+}

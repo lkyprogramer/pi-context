@@ -88,6 +88,10 @@ export interface RequestRecord {
   };
   stopReason: string | null;
   ttftMs: number | null;
+  requestId?: string | null;
+  purpose?: UsageRecord["purpose"];
+  hookToFirstDeltaMs?: number | null;
+  mappingVersion?: string;
 }
 
 export interface StatusView {
