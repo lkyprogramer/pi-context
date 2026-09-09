@@ -36,6 +36,20 @@ describe("T11 batches", () => {
     expect(toolResultIndex(entries).get("c1")).toBe("ambiguous");
   });
 
+  it("protects batches that contain isError results", () => {
+    const err = toolResultEntry("r2", "a2", "c2", textBlocks("boom"));
+    err.message!.isError = true;
+    const entries = [
+      assistantEntry("a1", null, [{ type: "toolCall", id: "c1" }]),
+      toolResultEntry("r1", "a1", "c1", textBlocks("ok")),
+      assistantEntry("a2", "r1", [{ type: "toolCall", id: "c2" }]),
+      err,
+    ];
+    const protect = protectSet(collectBatches(entries), 0);
+    expect(protect.has("r2")).toBe(true);
+    expect(protect.has("r1")).toBe(false);
+  });
+
   it("protects batches that contain non-text results", () => {
     const entries = [
       assistantEntry("a1", null, [{ type: "toolCall", id: "c1" }]),

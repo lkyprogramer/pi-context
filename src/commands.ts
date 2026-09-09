@@ -44,6 +44,7 @@ export function formatStatus(view: StatusView): string {
     `nativeCompactions=${view.nativeCompactions}`,
     `historyReads=${view.historyReads}`,
     `historySearches=${view.historySearches}`,
+    `verifiedReads=${view.verifiedReads}`,
     `indexMode=${view.indexMode}`,
     `dbPath=${view.dbPath ?? "null"}`,
     `indexRows=${view.indexRows}`,
@@ -86,12 +87,9 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
       const notify = (m: string) => ctx.ui.notify(m, "info");
       if (!cmd || cmd === "status") {
         const view = buildStatusView(state, ctx);
-        if (rest[0] === "--json") {
-          writeStatusFile(state, ctx);
-          notify(JSON.stringify(view));
-        } else {
-          notify(formatStatus(view));
-        }
+        writeStatusFile(state, ctx);
+        if (rest[0] === "--json") notify(JSON.stringify(view));
+        else notify(formatStatus(view));
         return;
       }
       if (cmd === "doctor") {

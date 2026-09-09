@@ -17,9 +17,9 @@ import { protectSet } from "./batches.js";
 
 export function shouldFold(usage: ContextUsageLike | null, plan: FoldPlan | null, cfg: PctxConfig["fold"]): boolean {
   if (!usage || usage.percent == null) return false;
+  if (!(usage.contextWindow > 0)) return false;
   if (usage.percent < cfg.triggerPercent) return false;
   if (!plan) return true;
-  if (!(usage.contextWindow > 0)) return false;
   const need = (cfg.minRemovedTokens / usage.contextWindow) * 100;
   return usage.percent - plan.usagePercentAtPlan >= need;
 }
@@ -86,6 +86,7 @@ export function planFold(input: {
 }): FoldPlan | null {
   const fold = input.cfg.fold;
   if (input.usage.percent == null || input.usage.percent < fold.triggerPercent) return input.previous;
+  if (!(input.usage.contextWindow > 0)) return input.previous;
   const protectedIds = protectSet(input.batches, fold.protectRecentBatches);
   const next = new Map(input.previous?.replacements ?? []);
   const target = (input.usage.contextWindow * fold.targetPercent) / 100;
@@ -93,7 +94,7 @@ export function planFold(input: {
   let saved = 0;
 
   for (const entry of input.entries) {
-    if (est <= target && saved >= fold.minRemovedTokens) break;
+    if (est <= target) break;
     if (entry.message?.role !== "toolResult") continue;
     if (!input.exposed.has(entry.id) || protectedIds.has(entry.id)) continue;
     const blocks = textBlocks(entry);
@@ -102,7 +103,7 @@ export function planFold(input: {
     const toolName = typeof entry.message.toolName === "string" ? entry.message.toolName : "tool";
     const isError = entry.message.isError === true;
     for (const block of blocks) {
-      if (est <= target && saved >= fold.minRemovedTokens) break;
+      if (est <= target) break;
       const key = `${entry.id}:${block.index}`;
       if (next.has(key)) continue;
       const field = refForField(input.scope, entry, block.index);

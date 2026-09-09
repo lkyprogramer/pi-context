@@ -58,6 +58,15 @@ describe("A01 effective config", () => {
     );
   });
 
+  it("warns ignored-legacy-config when pctx-v5.json remains beside pctx.json", () => {
+    const home = isolatedHome();
+    writeFileSync(join(home, ".pi", "agent", "pctx.json"), JSON.stringify({ schemaVersion: 6, profile: "observe" }));
+    writeFileSync(join(home, ".pi", "agent", "pctx-v5.json"), JSON.stringify({ schemaVersion: 5, profile: "balanced" }));
+    const loaded = loadConfig(mkdtempSync(join(tmpdir(), "pctx-both-")), false);
+    expect(loaded.warnings).toContain("ignored-legacy-config");
+    expect(loaded.config.profile).toBe("observe");
+  });
+
   it("warns ignored-legacy-config when only pctx-v5.json exists", () => {
     const home = isolatedHome();
     writeFileSync(

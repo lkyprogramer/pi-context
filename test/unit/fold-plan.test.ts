@@ -18,7 +18,7 @@ const scope: Scope = { workspaceId: "w", sessionId: "s", leafId: "a9", visibleEn
 const cfg = { ...DEFAULT_CONFIG, profile: "balanced" as const };
 
 it("folds oldest exposed results above trigger, freezes them, and leaves the protected tail raw", () => {
-  const usage = { tokens: 6500, contextWindow: 10000, percent: 65 };
+  const usage = { tokens: 8000, contextWindow: 10000, percent: 80 };
   expect(shouldFold(usage, null, cfg.fold)).toBe(true);
   const batches = collectBatches(entries);
   const plan = planFold({ scope, entries, batches, exposed: exposedEntryIds(entries), usage, previous: null, modelId: "m", cfg, configHash: "h" });
@@ -39,7 +39,7 @@ it("folds oldest exposed results above trigger, freezes them, and leaves the pro
 });
 
 it("appends replacements without rewriting previous stub objects", () => {
-  const usage = { tokens: 6500, contextWindow: 10000, percent: 65 };
+  const usage = { tokens: 8000, contextWindow: 10000, percent: 80 };
   const batches = collectBatches(entries);
   const first = planFold({ scope, entries, batches, exposed: exposedEntryIds(entries), usage, previous: null, modelId: "m", cfg, configHash: "h" });
   expect(first).not.toBeNull();

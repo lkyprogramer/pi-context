@@ -208,39 +208,49 @@ export class HistoryIndex {
     const insertText = db.prepare("INSERT INTO blocks_text(id, text) VALUES(?, ?)");
     let inserted = 0;
     const now = Date.now();
-    for (const entry of entries) {
-      if (!shouldIndexEntry(entry)) continue;
-      const blocks = blocksOf(entry);
-      const toolName = entry.message?.toolName ?? null;
-      for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
-        const block = blocks[blockIndex]!;
-        if (block.type !== "text" || typeof block.text !== "string") continue;
-        const byteLen = Buffer.byteLength(block.text, "utf8");
-        if (this.bytes() + byteLen > this.maxIndexBytes) {
-          this.indexFull = true;
-          return inserted;
+    let used = this.bytes();
+    db.exec("BEGIN");
+    try {
+      for (const entry of entries) {
+        if (!shouldIndexEntry(entry)) continue;
+        const blocks = blocksOf(entry);
+        const toolName = entry.message?.toolName ?? null;
+        for (let blockIndex = 0; blockIndex < blocks.length; blockIndex += 1) {
+          const block = blocks[blockIndex]!;
+          if (block.type !== "text" || typeof block.text !== "string") continue;
+          const byteLen = Buffer.byteLength(block.text, "utf8");
+          if (used + byteLen > this.maxIndexBytes) {
+            this.indexFull = true;
+            db.exec("COMMIT");
+            return inserted;
+          }
+          const result = insertBlock.run(
+            scope.workspaceId,
+            scope.sessionId,
+            entry.id,
+            blockIndex,
+            textSourceHash(block.text),
+            toolName,
+            byteLen,
+            now,
+          );
+          if (result.changes === 0) continue;
+          insertText.run(Number(result.lastInsertRowid), block.text);
+          used += byteLen;
+          inserted += 1;
         }
-        const result = insertBlock.run(
-          scope.workspaceId,
-          scope.sessionId,
-          entry.id,
-          blockIndex,
-          textSourceHash(block.text),
-          toolName,
-          byteLen,
-          now,
-        );
-        if (result.changes === 0) continue;
-        insertText.run(Number(result.lastInsertRowid), block.text);
-        inserted += 1;
       }
-    }
-    if (!this.indexFull) {
-      db.prepare(
-        `INSERT INTO session_leaf(workspace_id, session_id, last_indexed_leaf)
-         VALUES(?,?,?)
-         ON CONFLICT(workspace_id, session_id) DO UPDATE SET last_indexed_leaf = excluded.last_indexed_leaf`,
-      ).run(scope.workspaceId, scope.sessionId, scope.leafId);
+      if (!this.indexFull) {
+        db.prepare(
+          `INSERT INTO session_leaf(workspace_id, session_id, last_indexed_leaf)
+           VALUES(?,?,?)
+           ON CONFLICT(workspace_id, session_id) DO UPDATE SET last_indexed_leaf = excluded.last_indexed_leaf`,
+        ).run(scope.workspaceId, scope.sessionId, scope.leafId);
+      }
+      db.exec("COMMIT");
+    } catch (err) {
+      try { db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw err;
     }
     return inserted;
   }

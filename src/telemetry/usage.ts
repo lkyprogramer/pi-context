@@ -30,13 +30,15 @@ export function normalizeUsage(raw: Record<string, unknown>, identity: { provide
 
 export interface TelemetrySink {
   sessionId: string;
+  agentDir?: string | null;
   config: { telemetry: { jsonl: boolean; maxLogBytes: number } };
   telemetry: { lastRequests: RequestRecord[]; folds: number; foldEvents: FoldEvent[] };
 }
 
 function appendJsonl(state: TelemetrySink, payload: Record<string, unknown>): void {
   if (!state.config.telemetry.jsonl) return;
-  const dir = join(homedir(), ".pi", "agent", "pctx", "telemetry");
+  const root = state.agentDir || join(homedir(), ".pi", "agent");
+  const dir = join(root, "pctx", "telemetry");
   mkdirSync(dir, { recursive: true });
   const file = join(dir, `${state.sessionId}.jsonl`);
   const line = `${JSON.stringify(payload)}\n`;
@@ -76,6 +78,7 @@ export function recordFold(state: TelemetrySink, event: FoldEvent): void {
     planId: event.planId,
     reason: event.reason,
     added: event.added,
+    addedEntryIds: event.addedEntryIds,
     savedTokensEstimate: event.savedTokensEstimate,
     firstChangedIndex: event.firstChangedIndex,
     invalidatedTokensEstimate: event.invalidatedTokensEstimate,

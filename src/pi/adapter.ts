@@ -31,14 +31,25 @@ import { sessionSnapshot, type SessionReader } from "./source-reader.js";
 
 export type PiExtensionAPI = ExtensionAPI;
 
-export function readHostVersion(): string {
-  const fromEnv = process.env.PCTX_HOST_VERSION?.trim();
-  if (fromEnv) return fromEnv;
+function hostVersionFromRequire(from: string): string | null {
   try {
-    const req = createRequire(import.meta.url);
-    return String(req("@earendil-works/pi-coding-agent/package.json").version);
+    const req = createRequire(from);
+    const version = String(req("@earendil-works/pi-coding-agent/package.json").version ?? "");
+    return version || null;
   } catch {
-    /* packed extension may not depend on the host package */
+    return null;
+  }
+}
+
+export function readHostVersion(): string {
+  const fromPlugin = hostVersionFromRequire(import.meta.url);
+  if (fromPlugin) return fromPlugin;
+  const fromCwd = hostVersionFromRequire(join(process.cwd(), "package.json"));
+  if (fromCwd) return fromCwd;
+  const initCwd = process.env.INIT_CWD?.trim();
+  if (initCwd) {
+    const fromInit = hostVersionFromRequire(join(initCwd, "package.json"));
+    if (fromInit) return fromInit;
   }
   const starts = [process.argv[1], fileURLToPath(import.meta.url)].filter((p): p is string => Boolean(p));
   for (const start of starts) {
@@ -59,6 +70,8 @@ export function readHostVersion(): string {
       dir = parent;
     }
   }
+  const fromEnv = process.env.PCTX_HOST_VERSION?.trim();
+  if (fromEnv) return fromEnv;
   return "unknown";
 }
 
@@ -79,6 +92,8 @@ export function entriesFromCtx(ctx: ExtensionContext): {
 }
 
 export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(DEFAULT_CONFIG)): PluginState {
+  const hostVersion = readHostVersion();
+  state.hostVersion = hostVersion;
   pi.on("session_start", (_e, ctx) => {
     try {
       applyLoadedConfig(state, loadConfig(ctx.cwd, projectTrustedOf(ctx)));
@@ -86,7 +101,7 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
       applyConfigFailure(state, err);
       ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
     }
-    state.hostVersion = readHostVersion();
+    state.hostVersion = hostVersion;
     state.plan = null;
     state.modelId = ctx.model?.id ?? "unknown";
     const agentDir = (ctx as { agentDir?: string }).agentDir;

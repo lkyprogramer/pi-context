@@ -116,6 +116,8 @@ it("keeps an unexposed last batch and isError results in the original text", asy
   expect(results).toHaveLength(4);
   expect(extractedText(results[0]!.content)).toContain(first.originals[0]!.slice(0, 40));
   expect(folded(results[0]!.content)).toBe(false);
+  expect(extractedText(results[1]!.content)).toContain(first.originals[1]!.slice(0, 40));
+  expect(folded(results[1]!.content)).toBe(false);
   expect(extractedText(results[3]!.content)).toContain(hidden.originals[0]!.slice(0, 40));
   expect(folded(results[3]!.content)).toBe(false);
   await opened.session.dispose?.();

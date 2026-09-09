@@ -65,8 +65,9 @@ export interface FoldEvent {
   planId: string;
   reason: "threshold";
   added: number;
+  addedEntryIds: string[];
   savedTokensEstimate: number;
-  firstChangedIndex: number;
+  firstChangedIndex: number | null;
   invalidatedTokensEstimate: number;
   percentBefore: number;
 }
@@ -97,11 +98,12 @@ export interface StatusView {
   hostVersion: string;
   contextWindow: number | null;
   contextPercent: number | null;
-  activePlan: { planId: string; replacements: number; savedTokensEstimate: number } | null;
+  activePlan: { planId: string; replacements: number; savedTokensEstimate: number; entryIds: string[] } | null;
   folds: number;
   nativeCompactions: number;
   historyReads: number;
   historySearches: number;
+  verifiedReads: number;
   lastRequests: RequestRecord[];
   indexMode: string;
   dbPath: string | null;

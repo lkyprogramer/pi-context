@@ -37,6 +37,7 @@ export interface PluginState {
   lastAssistant: AssistantRecord | null;
   historyReads: number;
   historySearches: number;
+  verifiedReads: number;
   sessionId: string;
   agentDir: string | null;
   modelId: string;
@@ -67,6 +68,7 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     lastAssistant: null,
     historyReads: 0,
     historySearches: 0,
+    verifiedReads: 0,
     sessionId: "unknown",
     agentDir: null,
     modelId: "unknown",
@@ -156,14 +158,14 @@ export async function historyTool(
   const getEntry = (id: string) => entries.find((e) => e.id === id);
   const scope = buildScope({ cwd, sessionId, leafId, getEntry });
   state.scope = scope;
-  try {
-    state.index.upsertBranchSync(scope, entries);
-  } catch (err) {
-    const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
-    if (code === "INDEX_UNAVAILABLE") return { code: "degraded", cursor: null, diagnostic: "history: unavailable" };
-    throw err;
-  }
   if (req.action === "search") {
+    try {
+      state.index.upsertBranchSync(scope, entries);
+    } catch (err) {
+      const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
+      if (code === "INDEX_UNAVAILABLE") return { code: "degraded", cursor: null, diagnostic: "history: unavailable" };
+      throw err;
+    }
     state.historySearches += 1;
     return searchHistory({
       scope,
@@ -175,12 +177,18 @@ export async function historyTool(
       getEntry,
     });
   }
+  try {
+    state.index.upsertBranchSync(scope, entries);
+  } catch (err) {
+    const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
+    if (code !== "INDEX_UNAVAILABLE") throw err;
+  }
   state.historyReads += 1;
   const budget = readBudgetFor(state.config, req.maxTokens, usage ?? null);
   if ("insufficient" in budget) {
     return { ok: false, code: "insufficient-context", cursor: null, diagnostic: "INSUFFICIENT_CONTEXT" };
   }
-  return readHistory({
+  const result = readHistory({
     scope,
     ref: req.ref,
     cursor: req.cursor,
@@ -188,6 +196,8 @@ export async function historyTool(
     config: state.config,
     getEntry,
   });
+  if (result.verified === true) state.verifiedReads += 1;
+  return result;
 }
 
 export function applyContext(
@@ -240,15 +250,16 @@ export function applyContext(
       const added = next.replacements.size - (previous?.replacements.size ?? 0);
       if (added > 0) {
         const mappingForIndex = mapToolResults(messages, snap.entries);
-        const first = firstChangedFromPlan(next, mappingForIndex);
+        const first = firstChangedFromPlan(next, mappingForIndex, previous);
         recordFold(state, {
           at: new Date().toISOString(),
           sessionId: snap.sessionId,
           planId: next.planId,
           reason: "threshold",
           added,
+          addedEntryIds: addedEntryIds(next, previous),
           savedTokensEstimate: addedSaved(next, previous),
-          firstChangedIndex: first ?? 0,
+          firstChangedIndex: first,
           invalidatedTokensEstimate: invalidateEstimate(messages, first),
           percentBefore: usage.percent ?? 0,
         });
@@ -277,10 +288,26 @@ function addedSaved(next: FoldPlan, previous: FoldPlan | null): number {
   return saved;
 }
 
-function firstChangedFromPlan(plan: FoldPlan, mapping: ReadonlyMap<number, { entryId: string }>): number | null {
+function addedEntryIds(next: FoldPlan, previous: FoldPlan | null): string[] {
+  const prevKeys = new Set(previous?.replacements.keys() ?? []);
+  const ids = new Set<string>();
+  for (const key of next.replacements.keys()) {
+    if (prevKeys.has(key)) continue;
+    ids.add(key.slice(0, key.lastIndexOf(":")));
+  }
+  return [...ids];
+}
+
+function firstChangedFromPlan(
+  plan: FoldPlan,
+  mapping: ReadonlyMap<number, { entryId: string }>,
+  previous: FoldPlan | null,
+): number | null {
+  const prevKeys = new Set(previous?.replacements.keys() ?? []);
   let first: number | null = null;
   for (const [idx, mapped] of mapping) {
     for (const key of plan.replacements.keys()) {
+      if (prevKeys.has(key)) continue;
       if (!key.startsWith(`${mapped.entryId}:`)) continue;
       first = first == null ? idx : Math.min(first, idx);
     }
@@ -288,11 +315,20 @@ function firstChangedFromPlan(plan: FoldPlan, mapping: ReadonlyMap<number, { ent
   return first;
 }
 
+function messageText(message: AgentMessage): string {
+  const content = message.content;
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((block) => (block && typeof block === "object" && typeof (block as { text?: unknown }).text === "string" ? (block as { text: string }).text : ""))
+    .join("");
+}
+
 function invalidateEstimate(messages: AgentMessage[], first: number | null): number {
   if (first == null) return 0;
   let tokens = 0;
   for (let i = first; i < messages.length; i++) {
-    tokens += estimateTokens(JSON.stringify(messages[i] ?? {}));
+    tokens += estimateTokens(messageText(messages[i] ?? { role: "", content: "" }));
   }
   return tokens;
 }

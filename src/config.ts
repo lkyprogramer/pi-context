@@ -82,7 +82,7 @@ export function parseConfig(input: unknown): PctxConfig {
     if (legacy in input) fail(`schemaVersion 6; remove ${legacy}`);
   }
   rejectUnknown(input, TOP_KEYS, "");
-  if (input.schemaVersion === 5) fail("schemaVersion 6; remove semantic");
+  if (input.schemaVersion === 5) fail("schemaVersion must be 6; v5 configs are not migrated");
   if (input.schemaVersion !== 6) fail("schemaVersion must be 6");
 
   const profile = (input.profile ?? DEFAULT_CONFIG.profile) as Profile | string;
@@ -156,7 +156,7 @@ export function loadConfig(cwd: string, projectTrusted: boolean): LoadedConfig {
   const projectPath = join(cwd, ".pi", "pctx.json");
   const projectLegacy = join(cwd, ".pi", "pctx-v5.json");
 
-  if ((existsSync(globalLegacy) && !existsSync(globalPath)) || (existsSync(projectLegacy) && !existsSync(projectPath))) {
+  if (existsSync(globalLegacy) || existsSync(projectLegacy)) {
     warnings.push("ignored-legacy-config");
   }
 
