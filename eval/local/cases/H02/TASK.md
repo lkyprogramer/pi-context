@@ -1,6 +1,6 @@
 # H02 · 早期失败断言在大量读文件后仍可用
 
-工作区：`fixtures/L01/initial`（java-agent-1-idempotency）。种子：`seeds/java-three-nonce.jsonl`（同 H01；种子录制时在 L04 之前故意对 L01 跑过一次 `./verify.sh`，得到 `isError=true` 的真实失败输出，断言文本形如 `expected 1 reservation for duplicate key but got 2`）。窗口 profile：`w64k`。允许修改：`src/main/**`。保护：`src/test/**`、`verify.sh`。
+工作区：`fixtures/L01/initial`（java-agent-1-idempotency）。种子：`seeds/java-three-nonce.jsonl`（同 H01；种子录制时在 L04 之前故意对 L01 跑过一次 `./verify.sh`，得到 `isError=true` 的真实失败输出，断言文本形如 `idempotency broken: seq=[...] size=1`）。窗口 profile：`w64k`。允许修改：`src/main/**`。保护：`src/test/**`、`verify.sh`。
 
 ---
 

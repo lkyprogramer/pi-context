@@ -17,6 +17,7 @@ it("cases.json mirrors the frozen scenario matrix", () => {
       taskFile?: string;
       protectedPaths?: string[];
       grader?: { kind?: string };
+      evidence?: { linePattern?: string };
     }>;
   };
   const scen = JSON.parse(
@@ -46,6 +47,8 @@ it("cases.json mirrors the frozen scenario matrix", () => {
     if (c.taskFile) expect(existsSync(join(repo, c.taskFile))).toBe(true);
     expect((c.protectedPaths ?? []).length, `${c.id} protectedPaths`).toBeGreaterThan(0);
   }
+  const h02 = cases.cases.find((c) => c.id === "H02");
+  expect(h02?.evidence?.linePattern).toBe("idempotency broken");
 });
 
 it("parse-session counts requests, cacheRead and history reads from a Pi JSONL", () => {

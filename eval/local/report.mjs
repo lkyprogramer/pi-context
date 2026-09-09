@@ -95,8 +95,12 @@ export function summarize(episodes, priorAttempts = []) {
       cell.engine.prefixHitRatio = cell.engine.unknown === 0 && denom > 0 ? cell.engine.prefixHit / denom : null;
       cell.wallP50 = median(cell.walls);
       cell.ttftP50 = cell.ttfts.length ? median(cell.ttfts) : null;
-      cell.cacheReadRatio = cell.inputSum > 0 && cell.unknownUsage === 0 ? cell.cacheReadSum / cell.inputSum : null;
-      cell.uncachedInputSum = cell.unknownUsage === 0 ? cell.inputSum - cell.cacheReadSum : null;
+      cell.cacheReadRatio = cell.inputSum > 0 && cell.unknownUsage === 0 && cell.cacheReadSum <= cell.inputSum
+        ? cell.cacheReadSum / cell.inputSum
+        : null;
+      cell.uncachedInputSum = cell.unknownUsage === 0 && cell.cacheReadSum <= cell.inputSum
+        ? cell.inputSum - cell.cacheReadSum
+        : null;
     }
   }
   return {

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import { decide, summarize } from "../../eval/local/report.mjs";
 import { assertArm } from "../../eval/local/arm-contract.mjs";
-import { nonceVerifiedReads, parseSession, sha256Utf8 } from "../../eval/local/parse-session.mjs";
+import { nonceVerifiedReads, parseSession, sha256Utf8, verbatimQuote } from "../../eval/local/parse-session.mjs";
 import { fileURLToPath } from "node:url";
 
 const req = (input: number | null, cacheRead: number | null) => ({ usage: { input, cacheRead, output: 10, cacheWrite: 0, totalTokens: (input ?? 0) + 10 }, stopReason: "stop", planId: null, replacementsApplied: 0, contextPercentBefore: null, at: "t", sessionId: "s", profile: "balanced" });
@@ -261,6 +261,28 @@ it("all-zero cacheRead is n/a and cannot yield limited-balanced-trial", () => {
   expect(decision.decision).not.toBe("limited-balanced-trial");
   expect(decision.gate).toBe("cost");
   expect(decision.reasons.join(" ")).toMatch(/cacheRead channel unavailable/);
+});
+
+it("uncached is n/a when cacheRead exceeds input instead of going negative", () => {
+  const episodes = [
+    { manifest: { caseId: "L01", arm: "native", rep: 1 }, status: "complete", oracle: { passed: true }, requests: [req(1000, 5000)], mechanism: { folds: 0, replacements: 0, nativeCompactions: 0, historyReads: 0, historySearches: 0, verifiedReads: 0 }, engine: { prefixHitTokensDelta: 1, prefillTokensDelta: 1 }, wallMs: 1 },
+  ];
+  const s = summarize(episodes as never);
+  const cell = s.byCaseArm["L01"]["native"];
+  expect(cell.cacheReadSum).toBe(5000);
+  expect(cell.uncachedInputSum).toBeNull();
+  expect(cell.cacheReadRatio).toBeNull();
+});
+
+it("verbatimQuote matches the seed AssertionError, not the obsolete expected/got pattern", () => {
+  const p = writeSession([
+    { type: "session", version: 3, id: "s" },
+    { type: "message", id: "err", timestamp: "2026-09-09T00:00:00.000Z", message: { role: "toolResult", isError: true, content: [{ type: "text", text: "Exception in thread \"main\" java.lang.AssertionError: idempotency broken: seq=[1, 2] size=1" }] } },
+    { type: "message", id: "a", timestamp: "2026-09-09T00:01:00.000Z", message: { role: "assistant", content: [{ type: "text", text: "The earlier failure was: Exception in thread \"main\" java.lang.AssertionError: idempotency broken: seq=[1, 2] size=1" }] } },
+  ]);
+  const parsed = parseSession(p);
+  expect(verbatimQuote(parsed, { linePattern: "expected .* but got .*" })).toBeNull();
+  expect(verbatimQuote(parsed, { linePattern: "idempotency broken" })).toBe(true);
 });
 
 it("quality + nonce-verified H01 + cost evidence can reach limited-balanced-trial", () => {

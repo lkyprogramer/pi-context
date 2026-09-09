@@ -162,9 +162,11 @@ function modelsSnapshot() {
 }
 function metricsAvailable() {
   try {
-    const { baseUrl } = modelEndpoint();
-    const r = execFileSync("curl", ["-fsS", "--max-time", "3", `${baseUrl.replace(/\/v1\/?$/, "")}/metrics`], { encoding: "utf8" });
-    return /prefix_hit|prefill|n_ctx/.test(r);
+    const { metricsUrl, apiKey } = modelEndpoint();
+    const args = ["-fsS", "--max-time", "8", metricsUrl];
+    if (apiKey) args.splice(1, 0, "-H", `Authorization: Bearer ${apiKey}`);
+    const r = execFileSync("curl", args, { encoding: "utf8" });
+    return /prefix_cache_hit_tokens_total|prompt_tokens_total|ninfer:requests_total/.test(r);
   } catch {
     return false;
   }

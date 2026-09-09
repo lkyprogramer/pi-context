@@ -242,7 +242,7 @@
       "evidence": {
         "kind": "verbatim-quote",
         "source": "earliest isError=true toolResult in the episode session (seed verify.sh failure)",
-        "linePattern": "expected .* but got .*"
+        "linePattern": "idempotency broken"
       }
     },
     {
