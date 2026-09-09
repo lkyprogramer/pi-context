@@ -278,7 +278,9 @@ export function loadEpisodes(runDir) {
 function fmt(x) { return x == null ? "n/a" : x.toFixed(3); }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const runDir = process.argv[2]; if (!runDir) { console.error("runDir required"); process.exit(2); }
+  const runFlag = process.argv.indexOf("--run");
+  const runDir = runFlag >= 0 ? process.argv[runFlag + 1] : process.argv[2];
+  if (!runDir) { console.error("runDir required"); process.exit(2); }
   const { episodes, priorAttempts } = loadEpisodes(runDir);
   const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
   if (!manifest.plan) { console.error("frozen plan missing from run manifest"); process.exit(2); }

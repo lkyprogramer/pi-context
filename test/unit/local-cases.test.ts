@@ -25,7 +25,10 @@ it("cases.json mirrors the frozen scenario matrix", () => {
   ) as {
     cases: Array<{ id: string; arms: string[]; reps: number; windowProfile: string | null }>;
   };
-  expect(cases.cases.map((c) => c.id).sort()).toEqual(scen.cases.map((c) => c.id).sort());
+  expect(scen.cases.every((c) => cases.cases.some((x) => x.id === c.id))).toBe(true);
+  expect(cases.cases.filter((c) => c.runner === "review").map((c) => c.id).sort()).toEqual(
+    ["C01", "C02", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08"],
+  );
   for (const c of scen.cases) {
     const local = cases.cases.find((x) => x.id === c.id);
     expect(local, c.id).toBeTruthy();

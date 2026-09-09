@@ -1,0 +1,16 @@
+{
+  "runId": "review-final",
+  "createdAt": "2026-09-09T09:54:29.915Z",
+  "head": "5a23e6a0",
+  "liveStatus": "UNRUN",
+  "defaultProfile": "observe",
+  "host": "pi-0.85.1",
+  "decision": "inconclusive",
+  "superseded": [
+    {
+      "runId": "20260909-112407",
+      "decision": "limited-balanced-trial",
+      "note": "pre-R10 trial; not the 8+2 review matrix"
+    }
+  ]
+}

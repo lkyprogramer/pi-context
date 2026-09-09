@@ -1,6 +1,6 @@
 # Operations (6.1)
 
-This plugin talks to official Pi 0.85.1 only. Default profile is observe. Balanced fold is default-off, **trial in this environment** (`decision: limited-balanced-trial`, run `20260909-112407`).
+This plugin talks to official Pi 0.85.1 only. Default profile is observe. Balanced fold is default-off. The 6.1-next-steps delivery decision is **`inconclusive`** (`artifacts/local-eval/review-final/`, live review matrix **UNRUN**). Dated trial `20260909-112407` (`limited-balanced-trial`) is superseded as a delivery claim and kept on disk.
 
 ## Model endpoint
 

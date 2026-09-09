@@ -2,7 +2,8 @@
 /**
  * Run the frozen scenario matrix serially against the 4090 production model.
  *
- *   node run-matrix.mjs --out artifacts/local-eval/<runId> [--only L01,H01] [--dry] [--resume <runDir>] [--seed 42]
+ *   node run-matrix.mjs --out artifacts/local-eval/<runId> [--mode controlled|live] [--config review-matrix.json]
+ *                        [--only L01,H01] [--dry] [--resume <runDir>] [--seed 42]
  *
  * Writes manifest.json (frozen identity + order + budget), episodes.jsonl (one EpisodeResult per line),
  * requests.jsonl (flattened), and per-episode directories. Never overwrites an existing episode directory.
@@ -22,10 +23,31 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");
 loadRepoEnv(repo);
 const args = parseArgs(process.argv.slice(2));
+const mode = String(args.mode ?? "live");
+if (mode !== "live" && mode !== "controlled") die("--mode must be controlled|live");
+if (mode === "live" && process.env.PCTX_LIVE !== "1") {
+  die("live mode requires PCTX_LIVE=1 and the user-provided endpoint; refusing to search other providers");
+}
 const runDir = resolve(args.resume ?? args.out ?? die("--out required"));
 const dry = "dry" in args;
 mkdirSync(runDir, { recursive: true });
 
+if (args.config) {
+  const reviewCfg = JSON.parse(readFileSync(resolve(String(args.config)), "utf8"));
+  writeFileSync(join(runDir, "plan.json"), JSON.stringify(reviewCfg, null, 2));
+}
+if (mode === "controlled") {
+  const r = spawnSync("pnpm", ["exec", "vitest", "run", "test/host/after-fold-quality.test.ts", "test/host/balanced-wire.test.ts", "--config", "vitest.config.ts"], {
+    cwd: repo, encoding: "utf8", stdio: "inherit",
+  });
+  writeFileSync(join(runDir, "controlled.json"), JSON.stringify({
+    mode: "controlled",
+    exit: r.status,
+    liveStatus: "UNRUN",
+    note: "host-controlled fold lane; live 36-episode matrix is a separate --mode live run",
+  }, null, 2));
+  process.exit(r.status ?? 1);
+}
 const cases = JSON.parse(readFileSync(join(here, "cases.json"), "utf8")).cases.filter((c) => c.runner === "episode");
 const only = args.only ? String(args.only).split(",") : null;
 const selected = cases.filter((c) => !only || only.includes(c.id));

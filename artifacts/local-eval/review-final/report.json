@@ -1,0 +1,359 @@
+{
+  "manifest": {
+    "runId": "review-final",
+    "createdAt": "2026-09-09T09:54:29.915Z",
+    "head": "5a23e6a0",
+    "liveStatus": "UNRUN",
+    "defaultProfile": "observe",
+    "host": "pi-0.85.1",
+    "decision": "inconclusive",
+    "superseded": [
+      {
+        "runId": "20260909-112407",
+        "decision": "limited-balanced-trial",
+        "note": "pre-R10 trial; not the 8+2 review matrix"
+      }
+    ]
+  },
+  "plan": {
+    "schemaVersion": 1,
+    "plannedMain": 32,
+    "plannedCapability": 4,
+    "plannedEpisodes": 36,
+    "liveStatus": "UNRUN",
+    "qualityIds": [
+      "Q01",
+      "Q02",
+      "Q03",
+      "Q04",
+      "Q05",
+      "Q06",
+      "Q07",
+      "Q08"
+    ],
+    "capabilityIds": [
+      "C01",
+      "C02"
+    ],
+    "guardIds": [
+      "G01",
+      "G02"
+    ],
+    "noFoldRegression": [
+      "L01",
+      "L02",
+      "L03",
+      "L04",
+      "L05",
+      "L06"
+    ],
+    "optional": [
+      "H03"
+    ],
+    "window": {
+      "triggerPercent": 60,
+      "protectRecentBatches": 4,
+      "minRemovedTokens": 4096
+    },
+    "order": [
+      {
+        "episodeId": "review:Q01:native:r1",
+        "caseId": "Q01",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q01:balanced:r1",
+        "caseId": "Q01",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q01:native:r2",
+        "caseId": "Q01",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q01:balanced:r2",
+        "caseId": "Q01",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q02:native:r1",
+        "caseId": "Q02",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q02:balanced:r1",
+        "caseId": "Q02",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q02:native:r2",
+        "caseId": "Q02",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q02:balanced:r2",
+        "caseId": "Q02",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q03:native:r1",
+        "caseId": "Q03",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q03:balanced:r1",
+        "caseId": "Q03",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q03:native:r2",
+        "caseId": "Q03",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q03:balanced:r2",
+        "caseId": "Q03",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q04:native:r1",
+        "caseId": "Q04",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q04:balanced:r1",
+        "caseId": "Q04",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q04:native:r2",
+        "caseId": "Q04",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q04:balanced:r2",
+        "caseId": "Q04",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q05:native:r1",
+        "caseId": "Q05",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q05:balanced:r1",
+        "caseId": "Q05",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q05:native:r2",
+        "caseId": "Q05",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q05:balanced:r2",
+        "caseId": "Q05",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q06:native:r1",
+        "caseId": "Q06",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q06:balanced:r1",
+        "caseId": "Q06",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q06:native:r2",
+        "caseId": "Q06",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q06:balanced:r2",
+        "caseId": "Q06",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q07:native:r1",
+        "caseId": "Q07",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q07:balanced:r1",
+        "caseId": "Q07",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q07:native:r2",
+        "caseId": "Q07",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q07:balanced:r2",
+        "caseId": "Q07",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q08:native:r1",
+        "caseId": "Q08",
+        "arm": "native",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q08:balanced:r1",
+        "caseId": "Q08",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q08:native:r2",
+        "caseId": "Q08",
+        "arm": "native",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:Q08:balanced:r2",
+        "caseId": "Q08",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "quality",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:C01:balanced:r1",
+        "caseId": "C01",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "capability",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:C01:balanced:r2",
+        "caseId": "C01",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "capability",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:C02:balanced:r1",
+        "caseId": "C02",
+        "arm": "balanced",
+        "rep": 1,
+        "kind": "capability",
+        "status": "UNRUN"
+      },
+      {
+        "episodeId": "review:C02:balanced:r2",
+        "caseId": "C02",
+        "arm": "balanced",
+        "rep": 2,
+        "kind": "capability",
+        "status": "UNRUN"
+      }
+    ]
+  },
+  "decision": {
+    "decision": "inconclusive",
+    "reason": "missing quality outcome",
+    "firstAttemptSuccess": null,
+    "finalAttemptSuccess": null,
+    "pairedSuccessDelta": null
+  },
+  "pairs": 16,
+  "capabilities": 4,
+  "itt": 36
+}

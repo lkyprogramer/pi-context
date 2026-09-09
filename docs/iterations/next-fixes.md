@@ -133,6 +133,16 @@ Implemented: Q01–Q08 / C01–C02 fixtures hide the witness from the final prom
 
 Not run: `pnpm check`, smoke, live matrix, remote Actions.
 
-## Remaining
+## R10
 
-R10 not started.
+Changed: `docs/iterations/next-fixes.md`, `README.md`, `docs/CONFIGURATION.md`, `docs/OPERATIONS.md`, `HANDOFF.md`, `artifacts/local-eval/review-final/`, `eval/local/run-matrix.mjs`, `eval/local/report.mjs`, `test/unit/trial-gate.test.ts`, `test/unit/local-cases.test.ts`
+
+`local-cases.test.ts` is outside the R10 file list: `cases.json` now also lists Q/C review ids; the frozen v6.0 scenario ids must still be present.
+
+RED: `unexercised optimization cannot authorize a default change` — already covered by gate; added the exact R10 case (`relativeChange: -0.5` → `inconclusive`).
+
+GREEN: `pnpm check` exit 0 — 186 tests, compat `{ok:true,files:33}`. `pnpm build && pnpm smoke` exit 0 — 14 tests. `node eval/local/secure-preflight.mjs --canary` exit 0. Controlled matrix exit 0.
+
+Live 36-episode review matrix: **UNRUN** (`PCTX_LIVE` unset; runner requires it). Delivery decision is **`inconclusive`**. Default profile stays observe. Dated trial `20260909-112407` is superseded as a delivery claim and kept on disk. No 2% non-inferiority or global-best claim.
+
+Not run: `PCTX_LIVE=1` 36-episode live matrix, remote Actions.

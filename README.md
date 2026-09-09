@@ -4,7 +4,7 @@ Native-first history plugin for official Pi **0.85.1**. Package `pi-context@6.1.
 
 Default profile is **observe**: index native history and expose the `pctx_history` search/read tool. Bytes sent to the provider stay unchanged except for that extra tool schema.
 
-`balanced` is a threshold fold of old exposed tool results. It is **default-off, trial in this environment** (local-eval `20260909-112407` → `decision: limited-balanced-trial`). The default profile stays `observe`. Enable balanced only with an explicit trusted `pctx.json`.
+`balanced` is a threshold fold of old exposed tool results and stays **default-off**. The 6.1-next-steps delivery (`artifacts/local-eval/review-final/`) is **`inconclusive`**: the frozen 32+4 review matrix is **UNRUN** on the live model. The earlier personal run `20260909-112407` (`limited-balanced-trial`) is superseded as a delivery claim and kept as a dated artifact. The default profile stays `observe`. Enable balanced only with an explicit trusted `pctx.json`.
 
 Unique packed entry: `src/extension.ts` → `dist/extension.js`. Config is `pctx.json` with `schemaVersion: 6`.
 
@@ -69,18 +69,23 @@ Load failures force `observe`, keep the error in `warnings`, and notify once. Hi
 Contract and official-host smoke (no live model):
 
 ```bash
+pnpm check
+pnpm build
 pnpm smoke
-pnpm typecheck
-pnpm exec vitest run --config vitest.config.ts
 ```
 
-Live matrix (37 episodes, existing model, Docker grader) lives in `eval/local/`. Do not commit `.env`, `eval/local/seeds/*.secret`, or `artifacts/local-eval/`.
+`pnpm check` is typecheck + default vitest + `compat:scan`. Live eval is not in CI.
+
+The frozen review plan is `eval/local/review-matrix.json` (32 quality + 4 capability, live **UNRUN**). Do not commit `.env`, `eval/local/seeds/*.secret`, or raw live sessions. The sanitized delivery pack is `artifacts/local-eval/review-final/`.
 
 ```bash
-pnpm eval:report artifacts/local-eval/20260909-112407
+node eval/local/secure-preflight.mjs --canary
+node eval/local/run-matrix.mjs --mode controlled --config eval/local/review-matrix.json --out artifacts/local-eval/review-controlled
+PCTX_LIVE=1 node eval/local/run-matrix.mjs --mode live --config eval/local/review-matrix.json --out artifacts/local-eval/review-live
+node eval/local/report.mjs --run artifacts/local-eval/review-final
 ```
 
-Quality / mechanism / cost all passed on that run. H02 lost evidence after fold is a 6.2 candidate (`post-compaction-evidence-delta`). H03 did not reach the 60% trigger. This stack often reports `cacheRead > input`; cost uses engine `prefillTokensDelta` from authenticated `/metrics`, not `usage.cacheRead`.
+Live mode requires `PCTX_LIVE=1` and the user-provided endpoint. Missing planned episodes stay NOT_RUN. This stack often reports `cacheRead > input`; cost uses engine `prefillTokensDelta` from authenticated `/metrics`, not `usage.cacheRead`.
 
 ## Docs
 

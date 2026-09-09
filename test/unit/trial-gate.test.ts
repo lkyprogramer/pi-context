@@ -38,6 +38,24 @@ test("H02 quote failure is review-needed", () => {
   expect(d.decision).toBe("review-needed");
 });
 
+test("unexercised optimization cannot authorize a default change", () => {
+  const d = evaluateTrial({
+    pairs: [{
+      caseId: "q",
+      rep: 0,
+      nativePassed: true,
+      candidatePassed: true,
+      foldRequired: true,
+      foldApplied: false,
+      criticalViolation: false,
+      evidencePassed: true,
+    }],
+    capabilities: [],
+    objective: { metric: "logical-input", known: true, relativeChange: -0.5, minImprovement: 0.1 },
+  });
+  expect(d.decision).toBe("inconclusive");
+});
+
 test("no fold cannot enter the passing capability denominator", () => {
   const d = evaluateTrial({
     pairs: [{
