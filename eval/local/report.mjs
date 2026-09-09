@@ -8,39 +8,80 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export function summarize(episodes) {
+function usageOf(r) {
+  return r.usage ?? r;
+}
+
+function cacheRatio(r) {
+  const u = usageOf(r);
+  if (u.input == null || u.cacheRead == null || u.input === 0) return null;
+  return u.cacheRead / u.input;
+}
+
+/** Fold-aligned recovery: first post-fold request is the expected cache bust; the next 2 must be ≥ 0.5. */
+export function cacheAfterFold(episode) {
+  const reqs = (episode.requests ?? []).filter((r) => usageOf(r).input != null);
+  const folds = episode.foldEvents ?? [];
+  const points = [];
+  if (folds.length) {
+    for (const fold of folds) {
+      const after = fold.at ? reqs.filter((r) => r.at && r.at >= fold.at) : [];
+      points.push(recoveryFrom(after.length ? after : reqs));
+    }
+    return points;
+  }
+  const appliedAt = reqs.findIndex((r) => (r.replacementsApplied ?? 0) > 0);
+  if (appliedAt >= 0) return [recoveryFrom(reqs.slice(appliedAt))];
+  if ((episode.mechanism?.folds ?? 0) > 0) return [{ dipRatio: null, recovered: 0, unknown: true }];
+  return [];
+}
+
+function recoveryFrom(seq) {
+  if (!seq.length) return { dipRatio: null, recovered: 0, unknown: true };
+  const dip = cacheRatio(seq[0]);
+  const next = seq.slice(1, 3);
+  if (next.length < 2) return { dipRatio: dip, recovered: next.filter((r) => (cacheRatio(r) ?? -1) >= 0.5).length, unknown: true };
+  if (next.some((r) => cacheRatio(r) == null) || dip == null) return { dipRatio: dip, recovered: 0, unknown: true };
+  return { dipRatio: dip, recovered: next.filter((r) => cacheRatio(r) >= 0.5).length, unknown: false };
+}
+
+export function summarize(episodes, priorAttempts = []) {
   const byCaseArm = {};
   const blocked = [];
   const flags = [];
   for (const e of episodes) {
-    const { caseId, arm, rep } = e.manifest;
+    const { caseId, arm, rep } = e.manifest ?? {};
     if (e.status === "blocked") { blocked.push({ caseId, arm, rep, reason: e.error }); continue; }
-    const cell = ((byCaseArm[caseId] ??= {})[arm] ??= { episodes: 0, passed: 0, failed: 0, timeout: 0, inputSum: 0, cacheReadSum: 0, outputSum: 0, unknownUsage: 0, requests: 0, walls: [], mech: { folds: 0, replacements: 0, nativeCompactions: 0, historyReads: 0, historySearches: 0, verifiedReads: 0 }, engine: { prefixHit: 0, prefill: 0, unknown: 0, prefixHitRatio: null }, cacheAfterFold: [], nonce: { correct: 0, honest: 0 }, ttfts: [], wrongActions: 0, lostEvidence: 0, quotedVerbatimKnown: 0, requestCounts: [] });
+    const cell = ((byCaseArm[caseId] ??= {})[arm] ??= {
+      episodes: 0, passed: 0, failed: 0, timeout: 0, inputSum: 0, cacheReadSum: 0, outputSum: 0, unknownUsage: 0, requests: 0,
+      walls: [],
+      mech: { folds: 0, replacements: 0, nativeCompactions: 0, historyReads: 0, historySearches: 0, verifiedReads: 0, foldedErrorResults: 0, savedTokensEstimate: 0, invalidatedTokensEstimate: 0 },
+      engine: { prefixHit: 0, prefill: 0, unknown: 0, prefixHitRatio: null },
+      cacheAfterFold: [], nonce: { correct: 0, honest: 0 }, ttfts: [], wrongActions: 0, lostEvidence: 0, quotedVerbatimKnown: 0, requestCounts: [],
+    });
     cell.episodes++;
     if (e.status === "timeout") cell.timeout++;
     if (e.oracle?.passed === true) cell.passed++; else if (e.oracle?.passed === false) cell.failed++;
     if (e.oracle?.nonceCorrect) cell.nonce.correct++; if (e.oracle?.honest) cell.nonce.honest++;
     if (e.oracle?.protectedIntact === false || (e.oracle?.outsideEditable ?? 0) > 0) cell.wrongActions++;
     if (typeof e.oracle?.quotedVerbatim === "boolean") { cell.quotedVerbatimKnown++; if (e.oracle.quotedVerbatim === false) cell.lostEvidence++; }
-    cell.walls.push(e.wallMs ?? 0);
+    if (typeof e.wallMs === "number") cell.walls.push(e.wallMs);
     cell.requestCounts.push((e.requests ?? []).length);
     for (const r of e.requests ?? []) {
       cell.requests++;
       if (typeof r.ttftMs === "number") cell.ttfts.push(r.ttftMs);
-      const u = r.usage ?? r;
+      const u = usageOf(r);
       if (u.input == null) { cell.unknownUsage++; continue; }
-      cell.inputSum += u.input; cell.cacheReadSum += u.cacheRead ?? 0; cell.outputSum += u.output ?? 0;
+      cell.inputSum += u.input;
+      if (u.cacheRead == null) cell.unknownUsage++;
+      else cell.cacheReadSum += u.cacheRead;
+      if (u.output != null) cell.outputSum += u.output;
     }
     for (const k of Object.keys(cell.mech)) cell.mech[k] += e.mechanism?.[k] ?? 0;
     if (e.engine?.prefixHitTokensDelta == null || e.engine?.prefillTokensDelta == null) cell.engine.unknown++;
     else { cell.engine.prefixHit += e.engine.prefixHitTokensDelta; cell.engine.prefill += e.engine.prefillTokensDelta; }
     if (e.engine?.engineRestarted) flags.push({ flag: "engine-restarted", caseId, arm, rep });
-    if ((e.mechanism?.folds ?? 0) > 0) {
-      const seq = (e.requests ?? []).map((r) => r.usage ?? r).filter((u) => u.input);
-      const ratios = seq.map((u) => (u.cacheRead ?? 0) / u.input);
-      const dip = ratios.indexOf(Math.min(...ratios));
-      cell.cacheAfterFold.push({ dipRatio: ratios[dip] ?? null, recovered: ratios.slice(dip + 1, dip + 3).filter((x) => x >= 0.5).length });
-    }
+    cell.cacheAfterFold.push(...cacheAfterFold(e));
   }
   for (const [caseId, arms] of Object.entries(byCaseArm)) {
     const lengths = Object.values(arms).map((c) => c.requests);
@@ -54,11 +95,11 @@ export function summarize(episodes) {
       cell.engine.prefixHitRatio = cell.engine.unknown === 0 && denom > 0 ? cell.engine.prefixHit / denom : null;
       cell.wallP50 = median(cell.walls);
       cell.ttftP50 = cell.ttfts.length ? median(cell.ttfts) : null;
-      cell.cacheReadRatio = cell.inputSum > 0 ? cell.cacheReadSum / cell.inputSum : null;
-      cell.uncachedInputSum = cell.inputSum - cell.cacheReadSum;
+      cell.cacheReadRatio = cell.inputSum > 0 && cell.unknownUsage === 0 ? cell.cacheReadSum / cell.inputSum : (cell.inputSum > 0 && cell.cacheReadSum > 0 ? cell.cacheReadSum / cell.inputSum : null);
+      cell.uncachedInputSum = cell.unknownUsage === 0 ? cell.inputSum - cell.cacheReadSum : null;
     }
   }
-  return { byCaseArm, blocked, blockedCount: blocked.length, total: episodes.length, flags };
+  return { byCaseArm, blocked, blockedCount: blocked.length, total: episodes.length, flags, priorAttempts };
 }
 
 export function candidates(summary, episodes = []) {
@@ -92,18 +133,41 @@ function decideGates(summary, scenarios, episodes = []) {
     if (b.wrongActions > n.wrongActions) reasons.push(`${id}: balanced wrong-actions ${b.wrongActions} > native ${n.wrongActions}`);
   }
   if (reasons.length) return { decision: "observe-only", gate: "quality", reasons };
-  const h = cap.filter((id) => id !== "H03").map((id) => summary.byCaseArm[id]?.balanced).filter(Boolean);
-  const foldEpisodes = h.reduce((s, c) => s + Math.min(c.episodes, c.mech.folds > 0 ? c.episodes : 0), 0);
-  const totalH = h.reduce((s, c) => s + c.episodes, 0);
+
+  const hEps = episodes.filter((e) => ["H01", "H02"].includes(e.manifest?.caseId) && e.manifest?.arm === "balanced" && e.status !== "blocked");
+  const foldEpisodes = hEps.filter((e) => (e.mechanism?.folds ?? 0) >= 1).length;
+  const totalH = hEps.length;
   if (totalH === 0 || foldEpisodes < Math.ceil(totalH * 0.75)) reasons.push(`folds observed in ${foldEpisodes}/${totalH} balanced H episodes (< 75%)`);
-  const h01 = summary.byCaseArm.H01?.balanced;
-  if (!h01 || h01.nonce.correct < 1 || h01.mech.verifiedReads < 1) reasons.push("H01 balanced never recovered the nonce through a verified read");
+  const h01ok = hEps.filter((e) => e.manifest.caseId === "H01" && e.oracle?.passed === true && (e.mechanism?.verifiedReads ?? 0) >= 1);
+  if (h01ok.length < 1) {
+    const folded = hEps.some((e) => e.manifest.caseId === "H01" && e.mechanism?.nonceFolded);
+    reasons.push(folded
+      ? "H01 balanced never recovered the nonce through a verified read"
+      : "H01 balanced never recovered the nonce through a verified read (nonce toolResult was not folded)");
+  }
+  if (hEps.some((e) => e.manifest.caseId === "H02" && (e.mechanism?.foldedErrorResults ?? 0) > 0)) {
+    reasons.push("H02 balanced folded an isError tool result");
+  }
   if (reasons.length) return { decision: "observe-only", gate: "mechanism", reasons };
+
   for (const id of cap) {
-    const b = summary.byCaseArm[id]?.balanced, n = summary.byCaseArm[id]?.native;
-    if (!b) continue;
-    for (const c of b.cacheAfterFold) if (c.recovered < 1) reasons.push(`${id}: cacheRead did not recover (>=0.5) within 2 requests after fold`);
-    if (n && b.engine.prefixHitRatio != null && n.engine.prefill > 0 && b.engine.prefill > n.engine.prefill * 1.5) reasons.push(`${id}: balanced prefill ${b.engine.prefill} > 1.5× native ${n.engine.prefill}`);
+    const bEps = episodes.filter((e) => e.manifest?.caseId === id && e.manifest?.arm === "balanced" && e.status !== "blocked" && (e.mechanism?.folds ?? 0) > 0);
+    const n = summary.byCaseArm[id]?.native, b = summary.byCaseArm[id]?.balanced;
+    for (const e of bEps) {
+      for (const c of cacheAfterFold(e)) {
+        if (c.unknown) reasons.push(`${id}: cacheRead unknown after fold`);
+        else if (c.recovered < 2) reasons.push(`${id}: cacheRead did not recover (>=0.5) within 2 requests after fold`);
+      }
+    }
+    if (n && b?.engine.prefixHitRatio != null && n.engine.prefill > 0 && b.engine.prefill > n.engine.prefill * 1.5) {
+      reasons.push(`${id}: balanced prefill ${b.engine.prefill} > 1.5× native ${n.engine.prefill}`);
+    }
+  }
+  const h03 = episodes.filter((e) => e.manifest?.caseId === "H03" && e.manifest?.arm === "balanced" && e.status !== "blocked");
+  for (const e of h03) {
+    if ((e.mechanism?.folds ?? 0) >= 1 && (e.mechanism?.nativeCompactions ?? 0) > 0) {
+      reasons.push("H03: native compaction occurred on a folded episode");
+    }
   }
   if (reasons.length) return { decision: "observe-only", gate: "cost", reasons };
   return { decision: "limited-balanced-trial", gate: null, reasons: ["quality, mechanism and cost gates passed on this environment; default profile stays observe"] };
@@ -111,47 +175,81 @@ function decideGates(summary, scenarios, episodes = []) {
 
 export function renderMarkdown(summary, decision, manifest) {
   const L = [];
-  L.push(`# local-eval ${manifest.runId}`, "", `HEAD ${manifest.git?.head} (dirty=${manifest.git?.dirty}) · pi ${manifest.hostVersion} · plugin ${manifest.pluginSha256?.slice(0, 12) ?? "none"} · model ${manifest.model} · thinking ${manifest.thinking}`, "");
+  const metrics = manifest.metricsAvailable === false || manifest.baseUrl
+    ? ` · baseUrl ${manifest.baseUrl ?? "n/a"} · /metrics ${manifest.metricsAvailable === false ? "unavailable" : (manifest.metricsAvailable ? "available" : "unspecified")}`
+    : "";
+  L.push(`# local-eval ${manifest.runId}`, "", `HEAD ${manifest.git?.head} (dirty=${manifest.git?.dirty}) · pi ${manifest.hostVersion} · plugin ${manifest.pluginSha256?.slice(0, 12) ?? "none"} · model ${manifest.model} · thinking ${manifest.thinking}${metrics}`, "");
   L.push(`## decision: ${decision.decision}${decision.gate ? ` (failed gate: ${decision.gate})` : ""}`, "", ...decision.reasons.map((r) => `- ${r}`), "", `candidates: ${decision.candidates?.length ? decision.candidates.map((c) => `${c.candidate} [${c.evidence.join(", ")}]`).join("; ") : "none"}`, "");
   if (summary.blocked.length) { L.push("## blocked episodes", "", ...summary.blocked.map((b) => `- ${b.caseId}/${b.arm}/r${b.rep}: ${b.reason}`), ""); }
+  if (summary.priorAttempts?.length) {
+    L.push("## prior blocked/error attempts (later overwritten by resume)", "", ...summary.priorAttempts.map((b) => `- ${b.caseId}/${b.arm}/r${b.rep}: ${b.status} ${b.reason ?? ""}`), "");
+  }
   if (summary.flags?.length) { L.push("## flags", "", ...summary.flags.map((f) => `- ${f.flag}${f.caseId ? ` ${f.caseId}/${f.arm ?? ""}` : ""}`), ""); }
   L.push("## oracle & usage (paired)", "", "| case | arm | pass/total | wrong-action | timeout | Σinput | ΣcacheRead | Σuncached | cacheRead/input | unknown usage | TTFT p50 ms | wall p50 s |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
-  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.passed}/${c.episodes} | ${c.wrongActions} | ${c.timeout} | ${c.inputSum} | ${c.cacheReadSum} | ${c.uncachedInputSum} | ${fmt(c.cacheReadRatio)} | ${c.unknownUsage} | ${c.ttftP50 == null ? "n/a" : Math.round(c.ttftP50)} | ${Math.round(c.wallP50 / 1000)} |`);
-  L.push("", "## mechanism & evidence", "", "| case | arm | folds | replacements | native compactions | history reads | verified reads | nonce correct | honest | lost evidence / known |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|");
-  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.mech.folds} | ${c.mech.replacements} | ${c.mech.nativeCompactions} | ${c.mech.historyReads} | ${c.mech.verifiedReads} | ${c.nonce.correct} | ${c.nonce.honest} | ${c.lostEvidence}/${c.quotedVerbatimKnown} |`);
+  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.passed}/${c.episodes} | ${c.wrongActions} | ${c.timeout} | ${c.inputSum} | ${c.unknownUsage ? "n/a" : c.cacheReadSum} | ${c.uncachedInputSum == null ? "n/a" : c.uncachedInputSum} | ${fmt(c.cacheReadRatio)} | ${c.unknownUsage} | ${c.ttftP50 == null ? "n/a" : Math.round(c.ttftP50)} | ${c.wallP50 == null ? "n/a" : Math.round(c.wallP50 / 1000)} |`);
+  L.push("", "## mechanism & evidence", "", "| case | arm | folds | replacements | native compactions | history reads | verified reads | nonce correct | honest | lost evidence / known | removed/invalidated |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
+  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) {
+    for (const [arm, c] of Object.entries(arms)) {
+      const lost = c.quotedVerbatimKnown === 0 ? "n/a" : `${c.lostEvidence}/${c.quotedVerbatimKnown}`;
+      const econ = `${c.mech.savedTokensEstimate}/${c.mech.invalidatedTokensEstimate}`;
+      L.push(`| ${caseId} | ${arm} | ${c.mech.folds} | ${c.mech.replacements} | ${c.mech.nativeCompactions} | ${c.mech.historyReads} | ${c.mech.verifiedReads} | ${c.nonce.correct} | ${c.nonce.honest} | ${lost} | ${econ} |`);
+    }
+  }
   L.push("", "## engine (NInfer /metrics deltas)", "", "| case | arm | prefix hit tokens | prefill tokens | hit ratio | unknown |", "|---|---|---:|---:|---:|---:|");
-  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.engine.prefixHit} | ${c.engine.prefill} | ${fmt(c.engine.prefixHitRatio)} | ${c.engine.unknown} |`);
+  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.engine.unknown ? "n/a" : c.engine.prefixHit} | ${c.engine.unknown ? "n/a" : c.engine.prefill} | ${fmt(c.engine.prefixHitRatio)} | ${c.engine.unknown} |`);
   L.push("", "Small samples (2 reps per cell). Counts only; no percentages extrapolated. Quality cases at w262k do not trigger folds by design.", "");
   return L.join("\n");
 }
 
-function loadEpisodes(runDir) {
+function episodeKey(e) {
+  return `${e.manifest?.caseId}/${e.manifest?.arm}/r${e.manifest?.rep}`;
+}
+
+export function loadEpisodes(runDir) {
+  const jsonl = [];
+  const jsonlPath = join(runDir, "episodes.jsonl");
+  if (existsSync(jsonlPath)) {
+    for (const line of readFileSync(jsonlPath, "utf8").trim().split("\n").filter(Boolean)) {
+      try { jsonl.push(JSON.parse(line)); } catch { /* skip */ }
+    }
+  }
+  const latest = new Map();
+  for (const e of jsonl) latest.set(episodeKey(e), e);
   const dir = join(runDir, "episodes");
   if (existsSync(dir)) {
-    const rows = readdirSync(dir)
-      .map((name) => join(dir, name, "result.json"))
-      .filter((p) => existsSync(p))
-      .map((p) => JSON.parse(readFileSync(p, "utf8")));
-    if (rows.length) return rows;
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name, "result.json");
+      if (!existsSync(p)) continue;
+      const row = JSON.parse(readFileSync(p, "utf8"));
+      latest.set(episodeKey(row), row);
+    }
   }
-  const jsonl = join(runDir, "episodes.jsonl");
-  if (!existsSync(jsonl)) return [];
-  return readFileSync(jsonl, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const episodes = [...latest.values()];
+  const priorAttempts = [];
+  for (const e of jsonl) {
+    const cur = latest.get(episodeKey(e));
+    if (!cur || cur.status === e.status) continue;
+    if (e.status === "blocked" || e.status === "error") {
+      priorAttempts.push({ caseId: e.manifest?.caseId, arm: e.manifest?.arm, rep: e.manifest?.rep, status: e.status, reason: e.error });
+    }
+  }
+  return { episodes, priorAttempts };
 }
-function median(a) { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; }
+
+function median(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; }
 function fmt(x) { return x == null ? "n/a" : x.toFixed(3); }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const runDir = process.argv[2]; if (!runDir) { console.error("runDir required"); process.exit(2); }
   const here = dirname(fileURLToPath(import.meta.url));
   const repo = resolve(here, "../..");
-  const episodes = loadEpisodes(runDir);
+  const { episodes, priorAttempts } = loadEpisodes(runDir);
   const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
   const scenPath = join(repo, "docs/pi-context-native-first-audit-v6.0.0/testing/scenarios.json");
   const scenarios = JSON.parse(readFileSync(existsSync(scenPath) ? scenPath : new URL("../scenarios.json", import.meta.url), "utf8"));
-  const summary = summarize(episodes);
+  const summary = summarize(episodes, priorAttempts);
   const decision = decide(summary, scenarios, episodes);
-  writeFileSync(join(runDir, "report.json"), JSON.stringify({ manifest: { runId: manifest.runId, git: manifest.git, hostVersion: manifest.hostVersion, pluginSha256: manifest.pluginSha256, configHash: manifest.configHash }, summary, decision }, null, 2));
+  writeFileSync(join(runDir, "report.json"), JSON.stringify({ manifest: { runId: manifest.runId, git: manifest.git, hostVersion: manifest.hostVersion, pluginSha256: manifest.pluginSha256, configHash: manifest.configHash, baseUrl: manifest.baseUrl }, summary, decision }, null, 2));
   writeFileSync(join(runDir, "report.md"), renderMarkdown(summary, decision, manifest));
   console.log(readFileSync(join(runDir, "report.md"), "utf8"));
 }

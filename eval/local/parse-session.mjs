@@ -1,17 +1,30 @@
 #!/usr/bin/env node
 /**
  * Recompute request/tool/compaction/history counters from a Pi 0.85.1 session JSONL (offline, no model).
- * Used by tests (test/unit/local-cases.test.ts) and by report.mjs as an independent check of the plugin's telemetry.
+ * Used by tests (test/unit/local-cases.test.ts) and by run-episode.mjs as the source of truth for
+ * historyReads / historySearches / verifiedReads (not the plugin's self-reported status).
  *
  *   node parse-session.mjs <session.jsonl>
  */
 import { readFileSync } from "node:fs";
 
+export function parseHistoryMetadata(text) {
+  if (typeof text !== "string" || !text.startsWith("{")) return null;
+  try {
+    const o = JSON.parse(text);
+    if (o && typeof o === "object" && ("verified" in o || "code" in o || "sourceHash" in o)) return o;
+  } catch {
+    /* not metadata */
+  }
+  return null;
+}
+
 export function parseSession(path) {
   const lines = readFileSync(path, "utf8").split("\n").filter((l) => l.trim().startsWith("{"));
   const requests = [], toolCalls = [];
-  let compactions = 0, historyReads = 0, historySearches = 0;
+  let compactions = 0, historyReads = 0, historySearches = 0, verifiedReads = 0;
   const callNames = new Map();
+  const errorResultIds = [];
   for (const line of lines) {
     let e; try { e = JSON.parse(line); } catch { continue; }
     if (e.type === "compaction") { compactions++; continue; }
@@ -24,29 +37,60 @@ export function parseSession(path) {
         if (b.type === "toolCall") {
           callNames.set(b.id, b.name);
           toolCalls.push({ id: b.id, name: b.name });
-          if (b.name === "pctx_history") { const a = b.arguments ?? {}; if (a.action === "read") historyReads++; else if (a.action === "search") historySearches++; }
+          if (b.name === "pctx_history") {
+            const a = b.arguments ?? {};
+            if (a.action === "read") historyReads++;
+            else if (a.action === "search") historySearches++;
+          }
         }
       }
     } else if (m.role === "toolResult") {
       const t = toolCalls.find((c) => c.id === m.toolCallId);
       if (t) { t.isError = Boolean(m.isError); t.resultBytes = Buffer.byteLength(JSON.stringify(m.content ?? "")); }
+      if (m.isError) errorResultIds.push(e.id);
+      if (t?.name === "pctx_history" && callNames.get(m.toolCallId) === "pctx_history") {
+        const texts = textBlocks(m.content);
+        const meta = texts.map(parseHistoryMetadata).find(Boolean);
+        if (meta?.verified === true) verifiedReads++;
+      }
     }
   }
   const known = requests.filter((r) => r.input != null);
   return {
     entries: lines.map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean),
-    requests, toolCalls, compactions, historyReads, historySearches,
+    requests, toolCalls, compactions, historyReads, historySearches, verifiedReads, errorResultIds,
     sums: { input: known.reduce((s, r) => s + r.input, 0), cacheRead: known.reduce((s, r) => s + (r.cacheRead ?? 0), 0), output: known.reduce((s, r) => s + (r.output ?? 0), 0), unknownUsage: requests.length - known.length },
   };
+}
+
+export function nonceEntryIds(parsed, nonce) {
+  if (!nonce) return [];
+  const needle = String(nonce).trim();
+  if (!needle) return [];
+  const ids = [];
+  for (const e of parsed.entries) {
+    if (e.type !== "message" || e.message?.role !== "toolResult") continue;
+    if (textOf(e.message.content).includes(needle)) ids.push(e.id);
+  }
+  return ids;
+}
+
+export function foldedErrorCount(errorResultIds, foldedEntryIds) {
+  const folded = new Set(foldedEntryIds ?? []);
+  return (errorResultIds ?? []).filter((id) => folded.has(id)).length;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   console.log(JSON.stringify(parseSession(process.argv[2]), null, 2));
 }
 
+function textBlocks(content) {
+  if (typeof content === "string") return [content];
+  return (Array.isArray(content) ? content : []).filter((b) => b && b.type === "text" && typeof b.text === "string").map((b) => b.text);
+}
+
 function textOf(content) {
-  if (typeof content === "string") return content;
-  return (Array.isArray(content) ? content : []).filter((b) => b && b.type === "text" && typeof b.text === "string").map((b) => b.text).join("\n");
+  return textBlocks(content).join("\n");
 }
 
 /**

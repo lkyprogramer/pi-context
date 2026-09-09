@@ -53,5 +53,6 @@ it("parse-session counts requests, cacheRead and history reads from a Pi JSONL",
   expect(parsed.requests.length).toBe(3);
   expect(parsed.requests[1]!.cacheRead).toBe(86);
   expect(parsed.historyReads).toBe(1);
+  expect(parsed.verifiedReads).toBe(1);
   expect(parsed.compactions).toBe(0);
 });

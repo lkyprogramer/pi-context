@@ -11,7 +11,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, appendFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { assertArm } from "./arm-contract.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint } from "./model-endpoint.mjs";
 import { parseSession, verbatimQuote } from "./parse-session.mjs";
@@ -58,7 +58,8 @@ if (args.resume && existsSync(manifestPath)) {
     models: modelsSnapshot(),
     budget: { totalEpisodes: order.length, totalWallMs: 3.5 * 3600 * 1000, episode: { wallMs: 900000, modelCalls: 40, toolCalls: 80 }, h03: { wallMs: 3600000, modelCalls: 200, toolCalls: 400 } },
     configHash: null,
-    configHashByArm: {},
+    configHashByArm: await expectedArmHashes(),
+    metricsAvailable: metricsAvailable(),
     order,
   };
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
@@ -105,13 +106,13 @@ for (const ep of manifest.order) {
   if (result.status !== "blocked") {
     const status = existsSync(join(epDir, "status.json")) ? JSON.parse(readFileSync(join(epDir, "status.json"), "utf8")) : null;
     const agentDir = result.workdir ? join(dirname(result.workdir), ".pi", "agent") : join(epDir, "missing-agent");
-    if (ep.arm !== "native" && status?.configHash) {
+    let frozenHash = ep.arm === "native" ? null : (manifest.configHashByArm?.[ep.arm] ?? null);
+    if (ep.arm !== "native" && !frozenHash && status?.configHash) {
       manifest.configHashByArm ??= {};
-      if (!manifest.configHashByArm[ep.arm]) manifest.configHashByArm[ep.arm] = status.configHash;
-      if (!manifest.configHash) manifest.configHash = status.configHash;
+      manifest.configHashByArm[ep.arm] = status.configHash;
+      frozenHash = status.configHash;
       writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     }
-    const frozenHash = ep.arm === "native" ? null : (manifest.configHashByArm?.[ep.arm] ?? manifest.configHash);
     const verdict = assertArm({ ...ep, configHash: frozenHash, hostVersion: manifest.hostVersion }, status, agentDir);
     if (!verdict.ok) { result.status = "blocked"; result.error = `arm contract: ${verdict.reason}`; }
   }
@@ -158,4 +159,23 @@ function findTarball() {
 function modelsSnapshot() {
   try { return fetchModels(); }
   catch { return null; }
+}
+function metricsAvailable() {
+  try {
+    const { baseUrl } = modelEndpoint();
+    const r = execFileSync("curl", ["-fsS", "--max-time", "3", `${baseUrl.replace(/\/v1\/?$/, "")}/metrics`], { encoding: "utf8" });
+    return /prefix_hit|prefill|n_ctx/.test(r);
+  } catch {
+    return false;
+  }
+}
+async function expectedArmHashes() {
+  const dist = join(repo, "dist/config.js");
+  if (!existsSync(dist)) return {};
+  const { parseConfig, configHashOf } = await import(pathToFileURL(dist).href);
+  const telemetry = { includeContent: false, jsonl: true, maxLogBytes: 5_242_880 };
+  return {
+    observe: configHashOf(parseConfig({ schemaVersion: 6, profile: "observe", telemetry })),
+    balanced: configHashOf(parseConfig({ schemaVersion: 6, profile: "balanced", telemetry })),
+  };
 }

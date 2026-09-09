@@ -12,17 +12,16 @@
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, appendFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { parseSession, verbatimQuote } from "./parse-session.mjs";
+import { foldedErrorCount, nonceEntryIds, parseSession, verbatimQuote } from "./parse-session.mjs";
 import { applyEndpointToModelsJson, engineOk, fetchModels, loadRepoEnv, modelEndpoint, servedIdentity } from "./model-endpoint.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");            // eval/local → repo root
 loadRepoEnv(repo);
-process.env.PCTX_HOST_VERSION = process.env.PCTX_HOST_VERSION || "0.85.1";
 const args = parseArgs(process.argv.slice(2));
 const caseId = need("case"), arm = need("arm"), window = need("window"), out = resolve(need("out"));
 const rep = Number(args.rep ?? 0);
@@ -172,22 +171,44 @@ const delta = (k) => (before.available && after.available && before[k] != null &
 const oracle = gradeCandidate(caseId, cwd, spec);
 if (spec.evidence?.kind === "verbatim-quote") {
   const sessionFile = join(out, "session", "session.jsonl");
-  if (existsSync(sessionFile)) {
-    oracle.quotedVerbatim = verbatimQuote(parseSession(sessionFile), {
+  let parsed = existsSync(sessionFile) ? parseSession(sessionFile) : null;
+  if (parsed) {
+    oracle.quotedVerbatim = verbatimQuote(parsed, {
       linePattern: spec.evidence.linePattern,
       sinceMs: new Date(manifest.startedAt).getTime(),
     });
   }
 }
+copyTelemetry(agentDir, out);
+const sessionFile = join(out, "session", "session.jsonl");
+const parsed = existsSync(sessionFile) ? parseSession(sessionFile) : null;
+const foldEvents = loadFoldEvents(out, agentDir);
+const foldedEntryIds = [
+  ...new Set([
+    ...(statusJson?.activePlan?.entryIds ?? []),
+    ...foldEvents.flatMap((f) => f.addedEntryIds ?? []),
+  ]),
+];
+const secretFile = nonceSecret(spec);
+const nonce = secretFile && existsSync(secretFile) ? readFileSync(secretFile, "utf8").trim() : "";
+const nonceIds = parsed && nonce ? nonceEntryIds(parsed, nonce) : [];
 const result = {
   manifest, status, error,
   oracle,
   requests,
-  mechanism: statusJson ? {
-    folds: statusJson.folds ?? 0, replacements: statusJson.activePlan?.replacements ?? 0,
-    nativeCompactions: statusJson.nativeCompactions ?? 0, historyReads: statusJson.historyReads ?? 0,
-    historySearches: statusJson.historySearches ?? 0, verifiedReads: statusJson.verifiedReads ?? 0,
-  } : { folds: 0, replacements: 0, nativeCompactions: countEvents(out, "compaction_end"), historyReads: 0, historySearches: 0, verifiedReads: 0 },
+  foldEvents,
+  mechanism: {
+    folds: statusJson?.folds ?? foldEvents.length,
+    replacements: statusJson?.activePlan?.replacements ?? 0,
+    nativeCompactions: statusJson?.nativeCompactions ?? countEvents(out, "compaction_end"),
+    historyReads: parsed?.historyReads ?? 0,
+    historySearches: parsed?.historySearches ?? 0,
+    verifiedReads: parsed?.verifiedReads ?? 0,
+    foldedErrorResults: foldedErrorCount(parsed?.errorResultIds ?? [], foldedEntryIds),
+    nonceFolded: nonceIds.length ? nonceIds.some((id) => foldedEntryIds.includes(id)) : null,
+    savedTokensEstimate: foldEvents.reduce((s, f) => s + (f.savedTokensEstimate ?? 0), 0),
+    invalidatedTokensEstimate: foldEvents.reduce((s, f) => s + (f.invalidatedTokensEstimate ?? 0), 0),
+  },
   engine: { requestsDelta: delta("requests"), prefixHitTokensDelta: delta("prefixHitTokens"), prefillTokensDelta: delta("prefillTokens"), stableRestoresDelta: delta("stableRestores"), engineRestarted: before.available && after.available && after.requests < before.requests },
   wallMs, workdir: cwd,
 };
@@ -370,6 +391,31 @@ function nonceSecret(spec) {
   }
   candidates.push(join(here, "seeds", `${caseId}.secret`));
   return candidates.find((p) => existsSync(p)) ?? "";
+}
+function copyTelemetry(fromAgentDir, dest) {
+  const src = join(fromAgentDir, "pctx", "telemetry");
+  if (!existsSync(src)) return;
+  const target = join(dest, "telemetry");
+  mkdirSync(target, { recursive: true });
+  cpSync(src, target, { recursive: true });
+}
+function loadFoldEvents(dest, fromAgentDir) {
+  const dirs = [join(dest, "telemetry"), join(fromAgentDir, "pctx", "telemetry")];
+  const events = [];
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith(".jsonl")) continue;
+      for (const line of readFileSync(join(dir, name), "utf8").trim().split("\n").filter(Boolean)) {
+        try {
+          const row = JSON.parse(line);
+          if (row.type === "fold") events.push(row);
+        } catch { /* skip */ }
+      }
+    }
+    if (events.length) break;
+  }
+  return events;
 }
 function countEvents(dir, type) { const f = join(dir, "events.jsonl"); if (!existsSync(f)) return 0; return readFileSync(f, "utf8").split("\n").filter((l) => l.includes(`"type":"${type}"`) && !l.includes('"willRetry":true')).length; }
 function protectedSha(root, paths) { const h = createHash("sha256"); for (const p of paths ?? []) { const abs = join(root, p); if (!existsSync(abs)) { h.update(`missing:${p}`); continue; } const files = execFileSync("find", [abs, "-type", "f"], { encoding: "utf8" }).trim().split("\n").filter(Boolean).sort(); for (const f of files) { h.update(f.slice(root.length)); h.update(readFileSync(f)); } } return h.digest("hex"); }
