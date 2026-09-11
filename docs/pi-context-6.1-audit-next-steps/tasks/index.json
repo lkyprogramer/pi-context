@@ -1,0 +1,194 @@
+[
+  {
+    "id": "R01",
+    "title": "用当前单插件命令替换失效CI",
+    "dependsOn": [],
+    "files": [
+      "package.json",
+      ".github/workflows/required.yml",
+      ".github/workflows/compatibility.yml",
+      "test/unit/ci-contract.test.ts",
+      "docs/iterations/next-fixes.md"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/ci-contract.test.ts --config vitest.config.ts",
+    "done": "check成功、clean pack smoke成功；在可用环境运行远端同HEAD check，若未push仅声称本地通过。分支保护不是本任务必需。"
+  },
+  {
+    "id": "R02",
+    "title": "只对当前ActiveView规划折叠，修复批次结构",
+    "dependsOn": [
+      "R01"
+    ],
+    "files": [
+      "src/projection/active-view.ts",
+      "src/projection/view-contracts.ts",
+      "src/projection/batches.ts",
+      "src/projection/planner.ts",
+      "src/pi/source-reader.ts",
+      "src/plugin.ts",
+      "test/helpers/context-audit-fixture.ts",
+      "test/unit/active-view.test.ts",
+      "test/unit/batches.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/active-view.test.ts test/unit/batches.test.ts test/unit/fold-plan.test.ts --config vitest.config.ts",
+    "done": "P01/P08反例消失，当前active原文仍可按同FieldRef读取。没有通过清空全部fields禁用真正可折叠路径刷绿。"
+  },
+  {
+    "id": "R03",
+    "title": "请求级原文见证和render后真实折叠回执",
+    "dependsOn": [
+      "R02"
+    ],
+    "files": [
+      "src/projection/witness.ts",
+      "src/projection/render.ts",
+      "src/plugin.ts",
+      "src/pi/adapter.ts",
+      "src/telemetry/usage.ts",
+      "test/unit/request-witness.test.ts",
+      "test/host/balanced-wire.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/request-witness.test.ts test/host/balanced-wire.test.ts test/host/observe-identity.test.ts --config vitest.config.ts",
+    "done": "balanced真实payload出现可回读stub；no-op不计saving；scope错误不确认；全部消息结构和原用户字节不变。"
+  },
+  {
+    "id": "R04",
+    "title": "把history分页修成真实多轮协议",
+    "dependsOn": [
+      "R02"
+    ],
+    "files": [
+      "src/history/page-snapshots.ts",
+      "src/history/search.ts",
+      "src/history/read.ts",
+      "src/contracts.ts",
+      "src/plugin.ts",
+      "src/commands.ts",
+      "test/unit/history-pagination.test.ts",
+      "test/host/history-pagination.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/history-pagination.test.ts test/host/history-pagination.test.ts test/host/history-image.test.ts --config vitest.config.ts",
+    "done": "P04/P05/P06消失，多次真实工具调用能顺序完成，第一页不循环。"
+  },
+  {
+    "id": "R05",
+    "title": "索引先去重再计配额，减少热路径扫描",
+    "dependsOn": [
+      "R02",
+      "R04"
+    ],
+    "files": [
+      "src/history/index.ts",
+      "src/history/scope.ts",
+      "src/plugin.ts",
+      "test/integration/index.test.ts",
+      "test/unit/index-capacity.test.ts",
+      "test/host/index-restart.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/index-capacity.test.ts test/integration/index.test.ts test/host/index-restart.test.ts --config vitest.config.ts",
+    "done": "P07消失；旧Hash和权限正控制仍通过，热路径无全文反复哈希。"
+  },
+  {
+    "id": "R06",
+    "title": "真实Key留在父Broker，全部Agent与判题隔离",
+    "dependsOn": [
+      "R01"
+    ],
+    "files": [
+      "eval/local/sandbox/run-agent.sh",
+      "eval/local/run-episode.mjs",
+      "eval/local/grade.sh",
+      "eval/local/secure-preflight.mjs",
+      "eval/sandbox/broker-main.mjs",
+      "eval/sandbox/relay.ts",
+      "test/security/agent-secret-isolation.test.ts",
+      "test/security/grader-isolation.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/security/agent-secret-isolation.test.ts test/security/grader-isolation.test.ts --config vitest.config.ts",
+    "done": "静态红测修复只是第一步；真实Docker canary通过才能开Live。未执行Docker则如实BLOCKED。"
+  },
+  {
+    "id": "R07",
+    "title": "统一usage语义、保存所有请求和尝试",
+    "dependsOn": [
+      "R03"
+    ],
+    "files": [
+      "eval/local/accounting.mjs",
+      "eval/local/parse-session.mjs",
+      "eval/local/run-episode.mjs",
+      "eval/local/run-matrix.mjs",
+      "src/telemetry/usage.ts",
+      "src/pi/adapter.ts",
+      "test/unit/request-accounting.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/request-accounting.test.ts --config vitest.config.ts",
+    "done": "P09的事件错误、P10/P12/P13的计量错误消失；完整请求日志不包含模型正文、密钥或思考。"
+  },
+  {
+    "id": "R08",
+    "title": "重建轻量试用判定和不可变run包",
+    "dependsOn": [
+      "R07",
+      "R06"
+    ],
+    "files": [
+      "eval/local/gate.mjs",
+      "eval/local/report.mjs",
+      "eval/local/run-matrix.mjs",
+      "eval/local/bundle.mjs",
+      "test/unit/trial-gate.test.ts",
+      "test/integration/run-bundle.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/trial-gate.test.ts test/integration/run-bundle.test.ts --config vitest.config.ts",
+    "done": "P11反例不再进入limited；新bundle可脱离源码目录复算同样decision。"
+  },
+  {
+    "id": "R09",
+    "title": "建立真正历史必要且发生折叠的8+2场景",
+    "dependsOn": [
+      "R02",
+      "R03",
+      "R04",
+      "R06",
+      "R08"
+    ],
+    "files": [
+      "eval/local/review-matrix.json",
+      "eval/local/scenarios.mjs",
+      "eval/local/review-fixtures/",
+      "eval/local/cases.json",
+      "test/host/after-fold-quality.test.ts",
+      "test/unit/review-scenarios.test.ts"
+    ],
+    "narrow": "pnpm exec vitest run test/unit/review-scenarios.test.ts test/host/after-fold-quality.test.ts --config vitest.config.ts",
+    "done": "受控lane所有after-fold场景真实出现机制；32主episode+4能力episode计划冻结，未执行真模型明确标UNRUN。"
+  },
+  {
+    "id": "R10",
+    "title": "集中验证、交付试用结论与清理旧结论",
+    "dependsOn": [
+      "R01",
+      "R02",
+      "R03",
+      "R04",
+      "R05",
+      "R06",
+      "R07",
+      "R08",
+      "R09"
+    ],
+    "files": [
+      "docs/iterations/next-fixes.md",
+      "README.md",
+      "docs/CONFIGURATION.md",
+      "docs/OPERATIONS.md",
+      "HANDOFF.md",
+      "artifacts/local-eval/review-final/",
+      "scripts/packed-host.mjs",
+      "test/unit/trial-gate.test.ts"
+    ],
+    "narrow": "pnpm check && pnpm build && pnpm smoke",
+    "done": "有完整新证据则给限定结论；没有则交付修复代码+UNRUN/INCONCLUSIVE。不得声称已达到全局最佳或2%非劣。"
+  }
+]

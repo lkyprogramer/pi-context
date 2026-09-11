@@ -1,0 +1,74 @@
+[
+  {
+    "id": "N01",
+    "status": "大体落实，局部修正",
+    "assessment": "配置实际加载，官方类型和compactionEntry路径已改；命令切profile没有刷新hash，overflow事件被略过",
+    "next": "R03,R07"
+  },
+  {
+    "id": "N02",
+    "status": "已落实核心目标",
+    "assessment": "统一refForField与UTF8正文hash；本次中文emoji精确回读成功；返回类型为FieldRef再encode而非旧签名属于合理接口重组",
+    "next": "R04只修cursor生命周期，不重写Hash"
+  },
+  {
+    "id": "N03",
+    "status": "部分落实",
+    "assessment": "SQL先过滤workspace/session/ancestor，持久索引存在；worker删除可接受，但全量重扫/配额去重顺序和跨工具cursor仍未闭环",
+    "next": "R04,R05"
+  },
+  {
+    "id": "N04",
+    "status": "核心完成，分页未闭环",
+    "assessment": "真图片block、UTF8边界与容量失败已实现；nextCursor未送模型、游标不验ref",
+    "next": "R04"
+  },
+  {
+    "id": "N05",
+    "status": "关键语义未满足",
+    "assessment": "删持久ExposureLedger可降低复杂度；全文件成功assistant推断并不等于原文字段成功进入当次请求",
+    "next": "R02,R03"
+  },
+  {
+    "id": "N06",
+    "status": "部分落实",
+    "assessment": "冻结替换、错误/近期保护存在；规划可处理已经被compact移出当前请求的祖先，重复ID批次不拒绝",
+    "next": "R02,R03"
+  },
+  {
+    "id": "N07",
+    "status": "有意移除，可接受",
+    "assessment": "Pin/capsule/semantic均从首发删除；既然不接管Native摘要，旧胶囊位置问题不应重新开工",
+    "next": "保持删除"
+  },
+  {
+    "id": "N08",
+    "status": "部分落实",
+    "assessment": "新增request/fold及engine记录；Pi分桶语义、终态过滤、摘要/失败成本、重试和偶数中位数有误",
+    "next": "R07,R08"
+  },
+  {
+    "id": "N09",
+    "status": "判题改善，Agent边界退化",
+    "assessment": "候选不再宿主判题；但Agent自己的models.json再次写真实Key，H03直接宿主执行",
+    "next": "R06"
+  },
+  {
+    "id": "N10",
+    "status": "部分落实",
+    "assessment": "真实native/observe/balanced模式有post-run校验；run依赖可修改仓库场景，入口hash不能替代完整模块和配置绑定，原始run未在附件",
+    "next": "R08,R09"
+  },
+  {
+    "id": "N11",
+    "status": "未满足折叠后质量主目标",
+    "assessment": "L01-L06明确无折叠用于干扰回归，H01/H02为特定能力；这和旧8个历史必要质量任务不同，不能静默当作等价",
+    "next": "R09"
+  },
+  {
+    "id": "N12",
+    "status": "完成受控接线阶段，试用证据不足",
+    "assessment": "有官方宿主+fake Provider+pack测试；37次自报完成非本次复跑；H03无fold、H02引用丢失、cost门非净收益",
+    "next": "R01,R08,R10"
+  }
+]

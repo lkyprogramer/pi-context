@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "profile": "balanced",
+  "baseline": "native",
+  "primaryObjective": {
+    "metric": "logical-input",
+    "minImprovement": 0.1
+  },
+  "model": "inherit-user-approved-live-route",
+  "thinking": "inherit",
+  "providerMaxTokens": "inherit-and-freeze",
+  "windowProfile": "w64k-diagnostic",
+  "qualityCases": [
+    "Q01",
+    "Q02",
+    "Q03",
+    "Q04",
+    "Q05",
+    "Q06",
+    "Q07",
+    "Q08"
+  ],
+  "qualityRepetitions": 2,
+  "capabilityCases": [
+    "C01",
+    "C02"
+  ],
+  "capabilityRepetitions": 2,
+  "controlledGuards": [
+    "G01",
+    "G02"
+  ],
+  "budget": {
+    "maxEpisodes": 36,
+    "episode": {
+      "modelRequests": 24,
+      "toolCalls": 48,
+      "wallSeconds": 600
+    },
+    "run": {
+      "modelRequests": 600,
+      "toolCalls": 720,
+      "wallSeconds": 3600
+    }
+  },
+  "transportRetries": 0,
+  "autoPromoteDefault": false
+}

@@ -1,0 +1,146 @@
+[
+  {
+    "path": "src/plugin.ts",
+    "sha256": "82cc3fc93cf72238c381e4c215c9c8a3209a9fc0f28095df61cc275625e871d4",
+    "lines": 339,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/plugin.ts"
+  },
+  {
+    "path": "src/pi/adapter.ts",
+    "sha256": "4b05a30f7b64da4851088100d3ea65b898ef9f5dabf401dd235f84fee2b7633f",
+    "lines": 194,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/pi/adapter.ts"
+  },
+  {
+    "path": "src/pi/source-reader.ts",
+    "sha256": "326a0f34ae9d70c0aae94ea8e04280ed0f45888b12a5d45a962043c5797fafc7",
+    "lines": 149,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/pi/source-reader.ts"
+  },
+  {
+    "path": "src/history/refs.ts",
+    "sha256": "509da6eb3acbd69fa50345199a025625b21ff649919a673a2e5dacef5cb26f0e",
+    "lines": 116,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/history/refs.ts"
+  },
+  {
+    "path": "src/history/read.ts",
+    "sha256": "48cbf27ca6e3ec80c7cad239dad500ff5bbf8e7fa4b588d3edf9555330d28bf7",
+    "lines": 175,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/history/read.ts"
+  },
+  {
+    "path": "src/history/search.ts",
+    "sha256": "bbf827d2e06666205162d4d15cb84ad80898e208d32c37c8b8432dcc6324dffc",
+    "lines": 112,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/history/search.ts"
+  },
+  {
+    "path": "src/history/index.ts",
+    "sha256": "e6c7b84cd458af7f8866df5d3466318c8de14cb6dbed4d31eda267346b78e674",
+    "lines": 371,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/history/index.ts"
+  },
+  {
+    "path": "src/history/scope.ts",
+    "sha256": "22b2bfe49b26144d3d86d14547fe24328f1830f60a1966f961a29b10d7c90f87",
+    "lines": 97,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/history/scope.ts"
+  },
+  {
+    "path": "src/projection/planner.ts",
+    "sha256": "0164dbb02cf415fd9aabb3fbf7fb6395ab5c465c695d5f79076eb63911a8ea7d",
+    "lines": 153,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/projection/planner.ts"
+  },
+  {
+    "path": "src/projection/render.ts",
+    "sha256": "cba64839433ca4d8976f062006d5d65fcef689cf4a1b4b45e9aa7923ce095b77",
+    "lines": 37,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/projection/render.ts"
+  },
+  {
+    "path": "src/projection/exposed.ts",
+    "sha256": "5a6ceedd94eed16becfe352b063646ff2b7e1862519d002d46064b5919ce97eb",
+    "lines": 26,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/projection/exposed.ts"
+  },
+  {
+    "path": "src/projection/batches.ts",
+    "sha256": "086f399a9097b3944681c2d9238211e7ff127de82d55833b70903905dae69b1b",
+    "lines": 80,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/projection/batches.ts"
+  },
+  {
+    "path": "src/telemetry/usage.ts",
+    "sha256": "3bbd00ec37c35251a478e417709295243eceb9253daeb2eea84c80b9b95c736f",
+    "lines": 87,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/src/telemetry/usage.ts"
+  },
+  {
+    "path": "eval/local/report.mjs",
+    "sha256": "f58c42568354b5718fd43be2d07fa86baa98bb218353c211de8331a597f74884",
+    "lines": 293,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/eval/local/report.mjs"
+  },
+  {
+    "path": "eval/local/run-episode.mjs",
+    "sha256": "9b6f99bc1eb47e5cf1ad9ed8701c7b64e3b73b88426f13818346de70fee37334",
+    "lines": 444,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/eval/local/run-episode.mjs"
+  },
+  {
+    "path": "eval/local/run-matrix.mjs",
+    "sha256": "9c2debc08042f2a49f0ffbb519847a54d22043b31079a20dd4c38bdb4ff9dcc2",
+    "lines": 183,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/eval/local/run-matrix.mjs"
+  },
+  {
+    "path": "eval/local/sandbox/run-agent.sh",
+    "sha256": "ca95be4d01a272bbfaf5836836adc610937afd85617025b6ae85105e8705f362",
+    "lines": 77,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/eval/local/sandbox/run-agent.sh"
+  },
+  {
+    "path": "eval/local/grade.sh",
+    "sha256": "0a4d722028bd654abc681ae50aacd3d62a9c7123cf704053d6195f7b956a35ec",
+    "lines": 122,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/eval/local/grade.sh"
+  },
+  {
+    "path": "eval/local/parse-session.mjs",
+    "sha256": "8853e791a63e4ff4fc354e47c555962a38110e1a73e58043590112b77f448584",
+    "lines": 179,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/eval/local/parse-session.mjs"
+  },
+  {
+    "path": "eval/local/cases.json",
+    "sha256": "38b7baa29d727258fe7425f3619703f67323f7a2685946aad7df005e6d993ca8",
+    "lines": 275,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/eval/local/cases.json"
+  },
+  {
+    "path": "docs/iterations/native-first-v6.md",
+    "sha256": "11d0d3c94bc47eb80e1d1e192b3a26f3305419ac24ba7767c66b2dbceea70eab",
+    "lines": 138,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/docs/iterations/native-first-v6.md"
+  },
+  {
+    "path": "package.json",
+    "sha256": "6e09e978e12e39fb7892c03b8381075c5e5315470008794befc3a5631c300cd5",
+    "lines": 51,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/package.json"
+  },
+  {
+    "path": ".github/workflows/required.yml",
+    "sha256": "a0ba544d4f8c067859360c00ebaba9e091662a5bc27702410d76821388a692a1",
+    "lines": 255,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/.github/workflows/required.yml"
+  },
+  {
+    "path": ".github/workflows/compatibility.yml",
+    "sha256": "59b7974a957e71afca50dd891954bdc8e38b9d40a9ed5c51cb8f3befb3733f30",
+    "lines": 68,
+    "url": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/.github/workflows/compatibility.yml"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "scope": "项目自报；当前附件和Git tracked tree不含该run原始episode/request/fold数据，未独立重跑",
+  "runId": "20260909-112407",
+  "recordedRunHead": "19080243",
+  "dirty": true,
+  "dirtyReasonReported": "leftover T21 image.json; later restored",
+  "host": "Pi0.85.1; host Node22.17.0 below declared >=22.19",
+  "pluginEntrySha256": "34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19",
+  "releaseTarballSha256Reported": "36c1019d7e46864c5fc3cb5bff426ea178b4da6eba3f7563b5cf1d5ca372b1cd",
+  "completeReported": 37,
+  "plannedReported": 37,
+  "quality": "L01-L06 each 2/2, intentionally no fold",
+  "H01": "candidate2/2 passed + nonceVerifiedReads=1 + nonceFolded",
+  "H02": "candidate folds2/2; foldedErrorResults=0; quoted evidence lost2/2; observe lost1/2",
+  "H03": "folds=0, production pressure not reached",
+  "candidatePrefillRatioReported": {
+    "H01": 1.04,
+    "H02": 1.08
+  },
+  "recommendationReported": "limited-balanced-trial",
+  "auditDecision": "observe-default; balanced-debug-only pending correctness/security and after-fold quality validation",
+  "source": "https://github.com/lkyprogramer/pi-context/blob/7478307ead72e849e9c619a913858afe8a06d38b/docs/iterations/native-first-v6.md#L121-L139"
+}

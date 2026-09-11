@@ -1,0 +1,157 @@
+{
+  "source": "7478307ead72e849e9c619a913858afe8a06d38b",
+  "node": "v22.16.0",
+  "method": "actual source transpile-only + isolated core functions; not full Pi/Vitest",
+  "probes": [
+    {
+      "id": "P01-archived-plan",
+      "executed": true,
+      "defect": true,
+      "foldEvents": 1,
+      "replacementsApplied": 0,
+      "plannedFields": [
+        "r:0"
+      ],
+      "savedTokensEstimate": 19865,
+      "returnedChangedView": false,
+      "defaultFoldParameters": true,
+      "validRetainedBoundaryPrecedesCompaction": true
+    },
+    {
+      "id": "P02-sibling-exposure",
+      "executed": true,
+      "defect": true,
+      "crossBranchAcknowledged": [
+        "r"
+      ],
+      "currentLeaf": "r",
+      "successfulAssistantParent": "u"
+    },
+    {
+      "id": "P03-compaction-exposure",
+      "executed": true,
+      "defect": true,
+      "rawAcknowledgedAfterOnlySummaryWasConsumed": true
+    },
+    {
+      "id": "P04-search-cursor-append",
+      "executed": true,
+      "defect": true,
+      "first": "a",
+      "second": "a",
+      "diagnostic": "CURSOR_MISMATCH: restarted from offset 0"
+    },
+    {
+      "id": "P05-read-cursor-target",
+      "executed": true,
+      "defect": true,
+      "firstPage": "abcd",
+      "crossTargetPage": "4567",
+      "expected": "CURSOR_MISMATCH",
+      "actual": "ok"
+    },
+    {
+      "id": "P06-search-cursor-visible",
+      "executed": true,
+      "defect": true,
+      "cursorProduced": true,
+      "cursorInModelVisibleContent": false
+    },
+    {
+      "id": "P07-index-cap-duplicates",
+      "executed": true,
+      "defect": true,
+      "rows": 1,
+      "bytes": 100,
+      "warnings": [
+        "index-full"
+      ],
+      "availableCapacity": 50,
+      "newTextBytes": 6,
+      "found": 0
+    },
+    {
+      "id": "P08-duplicate-call-batch",
+      "executed": true,
+      "defect": true,
+      "calls": 2,
+      "results": 1,
+      "complete": true
+    },
+    {
+      "id": "P09-profile-config-hash",
+      "executed": true,
+      "defect": true,
+      "hashUnchanged": true,
+      "expectedRecomputedHashMatches": false
+    },
+    {
+      "id": "P10-cache-denominator",
+      "executed": true,
+      "defect": true,
+      "correctPiDisjointCacheRatio": 0.375,
+      "observed": [
+        {
+          "dipRatio": 0.6,
+          "recovered": 2,
+          "unknown": false
+        }
+      ]
+    },
+    {
+      "id": "P11-false-trial-gate",
+      "executed": true,
+      "defect": true,
+      "decision": {
+        "decision": "limited-balanced-trial",
+        "gate": null,
+        "reasons": [
+          "quality, mechanism and cost gates passed on this environment; default profile stays observe"
+        ],
+        "candidates": [
+          {
+            "candidate": "post-compaction-evidence-delta",
+            "evidence": [
+              "native 2/2",
+              "balanced 2/2"
+            ]
+          }
+        ]
+      },
+      "qualityNative": 12,
+      "qualityCandidate": 6,
+      "prefillIncrease": 0.4,
+      "evidenceQuoteLost": true,
+      "syntheticDiagnosticOnly": true
+    },
+    {
+      "id": "P12-request-median",
+      "executed": true,
+      "defect": true,
+      "actual": 100,
+      "expected": 55
+    },
+    {
+      "id": "P13-failed-attempt-accounting",
+      "executed": true,
+      "defect": true,
+      "attemptsOnDisk": 2,
+      "loadedAttempts": 1,
+      "prior": [],
+      "reportedInput": 10
+    },
+    {
+      "id": "P14-ref-roundtrip-fixed",
+      "executed": true,
+      "regressionFixed": true,
+      "code": "ok",
+      "verified": true
+    },
+    {
+      "id": "P15-search-scope-fixed",
+      "executed": true,
+      "regressionFixed": true,
+      "crossSessionHits": 0
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "head": "7478307ead72e849e9c619a913858afe8a06d38b",
+  "scope": "remote GitHub read; no local supported full-suite rerun",
+  "required": {
+    "id": 34322042128,
+    "conclusion": "failure",
+    "passed": [
+      "install-frozen",
+      "typecheck",
+      "packed-install-hermetic"
+    ],
+    "exampleFailure": {
+      "jobId": 102370655945,
+      "command": "pnpm test:unit",
+      "error": "ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL Command \"test:unit\" not found",
+      "exit": 254
+    },
+    "build": "pnpm compile passed; subsequent node scripts/ci/compile-runtime.mjs failed; archived script path",
+    "otherStaleNames": [
+      "check:boundaries",
+      "format:check",
+      "test:acceptance",
+      "security:suite",
+      "test:contract",
+      "test:integration"
+    ]
+  },
+  "compatibility": {
+    "id": 34322042110,
+    "conclusion": "failure",
+    "rootCauseScope": "workflow retained legacy host/test references; no claim every cell was independently diagnosed"
+  },
+  "recommendation": "replace legacy matrix with check and official Pi0.85.1 packed smoke; no old runtime restoration; no mandatory branch governance for personal project"
+}

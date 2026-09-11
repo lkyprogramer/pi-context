@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "classification": "designed synthetic/adapted cases; not natural holdout or executed results",
+  "scenarios": [
+    {
+      "id": "Q01",
+      "kind": "quality",
+      "cluster": "tenant-key",
+      "base": "L04",
+      "history": "旧接口契约 revision=tenant-contract-73：tenant/eventId是二元键，禁止分隔符字符串拼接。",
+      "finalPrompt": "完成之前记录的去重契约修复，并把所遵循的历史契约revision写入contract-revision.txt。不要更改public API。",
+      "oracle": "隐藏Oracle测试(a:b,c)/(a,b:c)不碰撞；contract-revision.txt精确为tenant-contract-73。",
+      "editable": [
+        "Deduplicator.java",
+        "contract-revision.txt"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "Q02",
+      "kind": "quality",
+      "cluster": "retry-temporal",
+      "base": "L02",
+      "history": "旧重试上限3已废弃；生效契约 maxAttempts=7，terminal failure不得重试。",
+      "finalPrompt": "依据已经读取的生效契约修复重试行为；报告所用契约来源。",
+      "oracle": "隔离Oracle检查最多7次调用、terminal只1次、不修改public API；不能从mounted测试读取7。",
+      "editable": [
+        "src/main"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "Q03",
+      "kind": "quality",
+      "cluster": "time-domain",
+      "base": "L03",
+      "history": "协议规定expiresAt使用epoch毫秒；reconnect grace为1730毫秒，不能使用进程单调计数替代epoch。",
+      "finalPrompt": "继续之前的重连修复，采用历史中最后有效的时间协议。",
+      "oracle": "隐藏测试模拟clock、expiry与1730边界；epoch/monotonic混用失败。",
+      "editable": [
+        "src/main"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "Q04",
+      "kind": "quality",
+      "cluster": "evidence-status",
+      "base": "L06",
+      "history": "rev-a的运行#101通过，#109失败；rev-b通过不覆盖rev-a。需复核的build tag为build-r9q7。",
+      "finalPrompt": "修复当前修订的验证状态计算，并写出历史指定的build tag到build-tag.txt。",
+      "oracle": "乱序/unknown/revision隔离正确，build-tag.txt=build-r9q7，不凭assistant自述算测试通过。",
+      "editable": [
+        "VerificationStatus.java",
+        "build-tag.txt"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "Q05",
+      "kind": "quality",
+      "cluster": "quote-after-native",
+      "base": "L01",
+      "history": "原始失败行：idempotency broken: reservation ZX-731 replayed after callback. 输入包含isError=true，先完成原始暴露，再一次Native compaction。",
+      "finalPrompt": "修复预订幂等问题，并把最早失败的完整断言行保存到root-cause.txt。不要改tests。",
+      "oracle": "verify.sh过且root-cause.txt逐字等于历史断言；本题Native compact与fold分别记录，不把foldError=0当quote成功。",
+      "editable": [
+        "src/main",
+        "root-cause.txt"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "Q06",
+      "kind": "quality",
+      "cluster": "branch-contract",
+      "base": "L05",
+      "history": "共同祖先tenant policy=A，可变列表副本；兄弟分支更改policy=B但当前选中A，trace ticket=TK-442。",
+      "finalPrompt": "按当前分支有效约定修复仓库查询，并保存其trace ticket。",
+      "oracle": "tenant隔离和可变副本，ticket=TK-442；兄弟分支中的诱饵ticket不能出现。",
+      "editable": [
+        "TenantRepository.java",
+        "ticket.txt"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "Q07",
+      "kind": "quality",
+      "cluster": "two-tool-batch",
+      "base": "L06",
+      "history": "同一assistant批次readA/readB两份结果，分别 keyA=alpha-931/keyB=beta-527；后续内容不能靠同样OK字符串合并。",
+      "finalPrompt": "核对之前两份检查记录，将两项key按各自标签写入recovered.json，再完成验证状态修复。",
+      "oracle": "JSON {\"keyA\":\"alpha-931\",\"keyB\":\"beta-527\"}且Java状态测试过；两原始工具完整映射。",
+      "editable": [
+        "VerificationStatus.java",
+        "recovered.json"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "Q08",
+      "kind": "quality",
+      "cluster": "restart-delayed",
+      "base": "L01",
+      "history": "一次成功暴露并折叠后restart，历史rollback marker=rollback-619；改文件前需遵守曾确认的public API禁止项。",
+      "finalPrompt": "从当前工作区继续修复，保留已确认的禁止项，并把历史回滚标识写入rollback-marker.txt。",
+      "oracle": "重启后合法祖先可读，文件值rollback-619，public API不变；restart后的新fold须重新满足witness。",
+      "editable": [
+        "src/main",
+        "rollback-marker.txt"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "C01",
+      "kind": "capability",
+      "cluster": "utf8-multipage",
+      "base": null,
+      "history": "随机生成只在生产toolResult出现的中文emoji长文与nonce，超过一页，Hash在Agent外保存。",
+      "finalPrompt": "使用history读取完整历史样本，并按原始UTF-8顺序恢复到restored.txt。",
+      "oracle": "所有页面拼接bytes/hash一致；模型只能从tool content取得nextCursor，不由runner注入；candidate-only，不给Native记失败。",
+      "editable": [
+        "restored.txt"
+      ],
+      "requiresFold": true
+    },
+    {
+      "id": "C02",
+      "kind": "capability",
+      "cluster": "search-navigation",
+      "base": null,
+      "history": "两个session同entryId不同内容；当前branch两条needle，两次search需要分页，兄弟branch有诱饵。",
+      "finalPrompt": "在当前会话分支找到所有合法needle并读回原文。",
+      "oracle": "search跨正常工具追加继续page2、不重复、不泄漏；越界ref/cursor明确拒绝。",
+      "editable": [],
+      "requiresFold": false
+    },
+    {
+      "id": "G01",
+      "kind": "controlled-guard",
+      "cluster": "observe-noop",
+      "base": "L04",
+      "history": "短普通工具会话，无压力。",
+      "finalPrompt": "继续工作。",
+      "oracle": "observe最终messages字节不变；balanced无压力不fold。fake Provider只验证流程。",
+      "editable": [],
+      "requiresFold": false
+    },
+    {
+      "id": "G02",
+      "kind": "controlled-guard",
+      "cluster": "media-errors",
+      "base": null,
+      "history": "图片+文本、错误、未完成两工具批次、重复ID。",
+      "finalPrompt": "继续处理尚未消费的工具批次。",
+      "oracle": "原block保持、错误/未消费不折叠、重复ID不当作complete；不执行真实模型。",
+      "editable": [],
+      "requiresFold": false
+    }
+  ]
+}
