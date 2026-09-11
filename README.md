@@ -4,7 +4,17 @@ Native-first history plugin for official Pi **0.85.1**. Package `pi-context@6.1.
 
 Default profile is **observe**: index native history and expose the `pctx_history` search/read tool. Bytes sent to the provider stay unchanged except for that extra tool schema.
 
-`balanced` is a threshold fold of old exposed tool results and stays **default-off**. The 6.1-next-steps delivery (`artifacts/local-eval/review-final/`) is **`inconclusive`**: the frozen 32+4 review matrix is **UNRUN** on the live model. Current delivery decision: `inconclusive` (run `review-final`, HEAD `5a23e6a05a77`). The earlier personal run `20260909-112407` (`limited-balanced-trial`) is superseded as a delivery claim and kept as a dated artifact. The default profile stays `observe`. Enable balanced only with an explicit trusted `pctx.json`.
+`balanced` is a threshold fold of old exposed tool results and stays **default-off**. Current delivery decision: `limited-balanced-trial` (run `review-r8-20260911b`, HEAD `878e92f292a7`). This is a personal explicit trial; the default profile stays `observe`; there is no non-inferiority claim. Enable balanced only with an explicit trusted `pctx.json`.
+
+Round-7 delivery at that time was `inconclusive` (live review matrix UNRUN; run `review-final`, HEAD `5a23e6a05a77`). The earlier personal run `20260909-112407` is superseded as a delivery claim and kept as a dated artifact.
+
+regimes (fresh-input relativeChange · nativeCompactions native/candidate):
+
+- Q (24 pairs): −0.645 · 5/0
+- warm (12 pairs): −0.017 · 12/2
+- long (3 pairs): +0.195 · 4/1
+
+candidates: `fold-time-model-hint` below-gate; `inline-ref-marker` below-gate; `cold-aligned-fold` met (diagnostic registration only, not implemented).
 
 Unique packed entry: `src/extension.ts` → `dist/extension.js`. Config is `pctx.json` with `schemaVersion: 6`.
 
@@ -76,7 +86,7 @@ pnpm smoke
 
 `pnpm check` is typecheck + default vitest + `compat:scan`. Live eval is not in CI.
 
-The frozen review plan is `eval/local/review-matrix.json` (32 quality + 4 capability, live **UNRUN**). Do not commit `.env`, `eval/local/seeds/*.secret`, or raw live sessions. The sanitized delivery pack is `artifacts/local-eval/review-final/`.
+The frozen review plan is `eval/local/review-matrix.json` (84 episodes: Q quality + C capability + W/X regimes). Live run `review-r8-20260911b` completed 84/84. Do not commit `.env`, `eval/local/seeds/*.secret`, or raw live sessions. The sanitized delivery pack is `artifacts/local-eval/review-final/`.
 
 ```bash
 node eval/local/secure-preflight.mjs --canary

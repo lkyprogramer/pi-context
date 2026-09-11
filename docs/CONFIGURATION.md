@@ -32,7 +32,7 @@ Project files are never trusted by default.
 }
 ```
 
-`persistent` indexing needs an explicit `storage.dbPath` (recommended `~/.pi/agent/pctx/index.sqlite`); otherwise the index stays memory-only. Search fail-closes when the index is down; `pctx_history` read still walks native session entries. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`. The 6.1-next-steps work does not change these defaults. Current delivery decision: `inconclusive` (run `review-final`, HEAD `5a23e6a05a77`).
+`persistent` indexing needs an explicit `storage.dbPath` (recommended `~/.pi/agent/pctx/index.sqlite`); otherwise the index stays memory-only. Search fail-closes when the index is down; `pctx_history` read still walks native session entries. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`. The 6.1-next-steps work does not change these defaults. Current delivery decision: `limited-balanced-trial` (run `review-r8-20260911b`, HEAD `878e92f292a7`).
 
 ## Profiles
 
@@ -44,7 +44,7 @@ Project files are never trusted by default.
 
 `/pctx profile <p>` changes the in-memory profile only. It does not write `pctx.json`.
 
-Local-eval run `20260909-112407` on `openclaw/Qwen3.8-27B-WORK` decided **`limited-balanced-trial`**. Keep the default profile `observe`. `balanced` / `fold` remain default-off; they are a trial in this environment, not a new default.
+Round-8 live `review-r8-20260911b` on `openclaw/Qwen3.8-27B-WORK` decided **`limited-balanced-trial`** (personal explicit trial). Keep the default profile `observe`. `balanced` / `fold` remain default-off; they are a trial in this environment, not a new default. The earlier run `20260909-112407` is superseded as a delivery claim.
 
 ## Status
 

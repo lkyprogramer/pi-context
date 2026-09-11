@@ -1,8 +1,9 @@
 {
-  "schemaVersion": 1,
-  "plannedMain": 32,
-  "plannedCapability": 4,
-  "plannedEpisodes": 36,
+  "schemaVersion": 2,
+  "repsPerCase": 3,
+  "plannedMain": 48,
+  "plannedCapability": 6,
+  "plannedEpisodes": 84,
   "liveStatus": "UNRUN",
   "qualityIds": [
     "Q01",
@@ -18,6 +19,29 @@
     "C01",
     "C02"
   ],
+  "regimeLanes": {
+    "warm": {
+      "ids": [
+        "W-Q01",
+        "W-Q03",
+        "W-Q05",
+        "W-Q07"
+      ],
+      "arms": [
+        "native",
+        "balanced"
+      ]
+    },
+    "long": {
+      "ids": [
+        "X01"
+      ],
+      "arms": [
+        "native",
+        "balanced"
+      ]
+    }
+  },
   "guardIds": [
     "G01",
     "G02"
@@ -30,13 +54,68 @@
     "L05",
     "L06"
   ],
-  "optional": [
-    "H03"
+  "exactQuoteIds": [
+    "Q05",
+    "X01"
   ],
+  "requiresFold": {
+    "Q01": true,
+    "Q02": true,
+    "Q03": true,
+    "Q04": true,
+    "Q05": true,
+    "Q06": true,
+    "Q07": true,
+    "Q08": true,
+    "C01": true,
+    "C02": false,
+    "W-Q01": true,
+    "W-Q03": true,
+    "W-Q05": true,
+    "W-Q07": true,
+    "X01": true
+  },
+  "expectedPairs": 24,
+  "expectedCapabilities": 6,
+  "expectedRegimePairs": {
+    "warm": 12,
+    "long": 3
+  },
+  "objective": {
+    "primary": {
+      "metric": "fresh-input",
+      "minImprovement": 0.1
+    },
+    "secondary": [
+      "logical-input",
+      "wall-time",
+      "cacheRead",
+      "engine-prefill",
+      "native-compactions",
+      "requests"
+    ]
+  },
   "window": {
     "triggerPercent": 60,
     "protectRecentBatches": 4,
     "minRemovedTokens": 4096
+  },
+  "budget": {
+    "episode": {
+      "wallMs": 600000,
+      "modelCalls": 24,
+      "toolCalls": 48
+    },
+    "episodeLong": {
+      "wallMs": 900000,
+      "modelCalls": 40,
+      "toolCalls": 80
+    },
+    "run": {
+      "totalWallMs": 7200000,
+      "totalModelCalls": 1500,
+      "totalToolCalls": 2400
+    }
   },
   "order": [
     {
@@ -45,6 +124,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -53,6 +133,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -61,6 +142,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -69,6 +151,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q01:native:r3",
+      "caseId": "Q01",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q01:balanced:r3",
+      "caseId": "Q01",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -77,6 +178,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -85,6 +187,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -93,6 +196,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -101,6 +205,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q02:native:r3",
+      "caseId": "Q02",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q02:balanced:r3",
+      "caseId": "Q02",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -109,6 +232,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -117,6 +241,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -125,6 +250,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -133,6 +259,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q03:native:r3",
+      "caseId": "Q03",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q03:balanced:r3",
+      "caseId": "Q03",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -141,6 +286,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -149,6 +295,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -157,6 +304,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -165,6 +313,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q04:native:r3",
+      "caseId": "Q04",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q04:balanced:r3",
+      "caseId": "Q04",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -173,6 +340,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -181,6 +349,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -189,6 +358,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -197,6 +367,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q05:native:r3",
+      "caseId": "Q05",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q05:balanced:r3",
+      "caseId": "Q05",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -205,6 +394,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -213,6 +403,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -221,6 +412,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -229,6 +421,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q06:native:r3",
+      "caseId": "Q06",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q06:balanced:r3",
+      "caseId": "Q06",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -237,6 +448,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -245,6 +457,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -253,6 +466,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -261,6 +475,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q07:native:r3",
+      "caseId": "Q07",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q07:balanced:r3",
+      "caseId": "Q07",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -269,6 +502,7 @@
       "arm": "native",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -277,6 +511,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -285,6 +520,7 @@
       "arm": "native",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -293,6 +529,25 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q08:native:r3",
+      "caseId": "Q08",
+      "arm": "native",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:Q08:balanced:r3",
+      "caseId": "Q08",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "quality",
+      "lane": "Q",
       "status": "UNRUN"
     },
     {
@@ -301,6 +556,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "capability",
+      "lane": "C",
       "status": "UNRUN"
     },
     {
@@ -309,6 +565,16 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "capability",
+      "lane": "C",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:C01:balanced:r3",
+      "caseId": "C01",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "capability",
+      "lane": "C",
       "status": "UNRUN"
     },
     {
@@ -317,6 +583,7 @@
       "arm": "balanced",
       "rep": 1,
       "kind": "capability",
+      "lane": "C",
       "status": "UNRUN"
     },
     {
@@ -325,6 +592,286 @@
       "arm": "balanced",
       "rep": 2,
       "kind": "capability",
+      "lane": "C",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:C02:balanced:r3",
+      "caseId": "C02",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "capability",
+      "lane": "C",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q01:native:r1",
+      "caseId": "W-Q01",
+      "arm": "native",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q01:balanced:r1",
+      "caseId": "W-Q01",
+      "arm": "balanced",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q01:native:r2",
+      "caseId": "W-Q01",
+      "arm": "native",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q01:balanced:r2",
+      "caseId": "W-Q01",
+      "arm": "balanced",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q01:native:r3",
+      "caseId": "W-Q01",
+      "arm": "native",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q01:balanced:r3",
+      "caseId": "W-Q01",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q03:native:r1",
+      "caseId": "W-Q03",
+      "arm": "native",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q03:balanced:r1",
+      "caseId": "W-Q03",
+      "arm": "balanced",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q03:native:r2",
+      "caseId": "W-Q03",
+      "arm": "native",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q03:balanced:r2",
+      "caseId": "W-Q03",
+      "arm": "balanced",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q03:native:r3",
+      "caseId": "W-Q03",
+      "arm": "native",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q03:balanced:r3",
+      "caseId": "W-Q03",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q05:native:r1",
+      "caseId": "W-Q05",
+      "arm": "native",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q05:balanced:r1",
+      "caseId": "W-Q05",
+      "arm": "balanced",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q05:native:r2",
+      "caseId": "W-Q05",
+      "arm": "native",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q05:balanced:r2",
+      "caseId": "W-Q05",
+      "arm": "balanced",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q05:native:r3",
+      "caseId": "W-Q05",
+      "arm": "native",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q05:balanced:r3",
+      "caseId": "W-Q05",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q07:native:r1",
+      "caseId": "W-Q07",
+      "arm": "native",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q07:balanced:r1",
+      "caseId": "W-Q07",
+      "arm": "balanced",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q07:native:r2",
+      "caseId": "W-Q07",
+      "arm": "native",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q07:balanced:r2",
+      "caseId": "W-Q07",
+      "arm": "balanced",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q07:native:r3",
+      "caseId": "W-Q07",
+      "arm": "native",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:W-Q07:balanced:r3",
+      "caseId": "W-Q07",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "W",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:X01:native:r1",
+      "caseId": "X01",
+      "arm": "native",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "X",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:X01:balanced:r1",
+      "caseId": "X01",
+      "arm": "balanced",
+      "rep": 1,
+      "kind": "regime",
+      "lane": "X",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:X01:native:r2",
+      "caseId": "X01",
+      "arm": "native",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "X",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:X01:balanced:r2",
+      "caseId": "X01",
+      "arm": "balanced",
+      "rep": 2,
+      "kind": "regime",
+      "lane": "X",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:X01:native:r3",
+      "caseId": "X01",
+      "arm": "native",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "X",
+      "status": "UNRUN"
+    },
+    {
+      "episodeId": "review:X01:balanced:r3",
+      "caseId": "X01",
+      "arm": "balanced",
+      "rep": 3,
+      "kind": "regime",
+      "lane": "X",
       "status": "UNRUN"
     }
   ]

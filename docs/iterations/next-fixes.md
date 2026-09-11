@@ -247,13 +247,49 @@ Not run: Docker-backed controlled sandbox episodes; live model.
 
 ## S07
 
-Changed: `test/unit/docs-decision-consistency.test.ts`, `README.md`, `HANDOFF.md`, `docs/OPERATIONS.md`, `docs/CONFIGURATION.md`, `docs/iterations/next-fixes.md`
+Changed: `artifacts/local-eval/review-final/` (force-added sanitized pack), `README.md`, `HANDOFF.md`, `docs/OPERATIONS.md`, `docs/CONFIGURATION.md`, `docs/iterations/next-fixes.md`
 
-RED: README sentence used `` delivery (`path`) is **`inconclusive`** `` so `[^\n\`]*` stopped at the path backtick.
+RED: round-7 `review-final` was `inconclusive` / `review-final` while live was still UNRUN.
 
-GREEN: `pnpm exec vitest run test/unit/docs-decision-consistency.test.ts --config vitest.config.ts` exit 0. Regex keeps the contract form and adds a `[\s\S]{0,160}` fallback. Four docs now include `当前交付决策` / `Current delivery decision: \`inconclusive\` (run \`review-final\`, HEAD \`5a23e6a05a77\`)`.
+GREEN: `pnpm exec vitest run test/unit/docs-decision-consistency.test.ts --config vitest.config.ts` (run after this section); four docs quote `limited-balanced-trial` and `review-r8-20260911b`.
 
-84-episode live: **BLOCKED**. Delivery remains round-7 `inconclusive` (`artifacts/local-eval/review-final/`, `diagnosticOnly` absent/`false`). `review-qc-*` three dirty diagnostic runs are not in this workspace. Dirty/UNRUN results are not a round-8 delivery. Default profile stays observe.
+### Preflight on HEAD `878e92f292a7` (dirty=false)
 
-`pnpm check` / `pnpm build && pnpm smoke` / `secure-preflight --canary` / `PCTX_LIVE=1` 84-episode matrix: not run at this writing (Docker image missing; live waits for a clean HEAD after this commit plus canary `agentEgress:false`).
+- `pnpm check` exit 0 — 217 tests + `compat:scan` `{ok:true,files:25}`
+- `pnpm typecheck` exit 0
+- `pnpm build && pnpm smoke` exit 0 — 14 tests
+- `node eval/local/secure-preflight.mjs --canary` exit 0 `{ok:true, env:false, models:false, proc:false, agentEgress:false}`
+- `node eval/local/run-matrix.mjs --mode controlled --config eval/local/review-matrix.json` — 11 host tests, exit 0
+- Docker: image `pctx-t21-sandbox:0.85.1` (`sha256:f36c813de266…`)
+
+### Live
+
+- Hung non-delivery: `artifacts/local-eval/review-r8-20260911/` (Linux `spawnSync` froze the in-process unix broker; Q01/native stuck). Kept on disk.
+- Delivery: `PCTX_LIVE=1 node eval/local/run-matrix.mjs --mode live --config eval/local/review-matrix.json --seed 42 --out artifacts/local-eval/review-r8-20260911b`
+- runId `review-r8-20260911b`, HEAD `878e92f292a7`, `diagnosticOnly:false`, dirty=false
+- 84/84 complete, `blockedCount=0`, `NOT_RUN=0`, elapsedMs `6503987` (~108 min; run wall budget 7_200_000)
+- requests.jsonl 902 lines (model-call budget 1500); attempts 84/84 first=1.000 final=1.000
+- X01 native r1 first request input=1539 (cat); next input=6999 ≥ 4000 — not calibration-aborted
+- `/metrics` available; engine-prefill relativeChange −0.641, same direction as fresh-input
+
+### Machine decision
+
+- `report.json.decision.decision` = `limited-balanced-trial`
+- reason: `small canary only; no default change and no noninferiority claim`
+- `recomputeDecision(bundle)` = same
+- discordant: Q02/r1 candidate-fail-native-pass; Q02/r2 candidate-pass-native-fail; b=1 c=1 shared=0
+- objective.primary: fresh-input relativeChange=−0.645 known=true (nativeSum 1203169 / candidateSum 427032, 24 pairs)
+- regimes.warm: 12 pairs, b=0 c=3 shared=3, fresh-input −0.017, nativeCompactions 12/2
+- regimes.long: 3 pairs, b=0 c=1 shared=0, fresh-input +0.195, nativeCompactions 4/1, quoteFailures 0/0
+- candidates: fold-time-model-hint below-gate; inline-ref-marker below-gate; cold-aligned-fold met (diagnostic, not implemented)
+- W spot-check: Q01/balanced/r1 first request already folded (foldEvent before first wire; input 11426 vs native ~44k). W-Q01/balanced/r1 first two requests unfolder (23036, 29961).
+- Q05: file oracle pass both arms; quotedVerbatim false both arms (lost evidence 3/3); not quote-discordant
+- Default profile stays observe. No 2% non-inferiority or global-best claim.
+
+### Unverified
+
+- Darwin live sidecar not run (this host is Linux)
+- `review-qc-*` three dirty diagnostic runs absent; not recomputed
+- GitHub Actions on this HEAD not claimed here
+- 300 gate / publish / production not run
 
