@@ -240,13 +240,6 @@ export function applyContext(
 ): { messages: AgentMessage[] } | undefined {
   if (state.profile !== "balanced") return undefined;
   const usageRaw = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
-  const usage: ContextUsageLike | null = usageRaw || ctx.model?.contextWindow
-    ? {
-        tokens: usageRaw?.tokens ?? null,
-        contextWindow: usageRaw?.contextWindow ?? ctx.model?.contextWindow ?? 0,
-        percent: usageRaw?.percent ?? null,
-      }
-    : null;
   const snap = sessionSnapshot({
     cwd: ctx.cwd,
     sessionManager: ctx.sessionManager as unknown as SessionReader | undefined,
@@ -258,12 +251,14 @@ export function applyContext(
   const modelId = model?.id ?? state.modelId;
   state.modelId = modelId;
   if (typeof model?.provider === "string") state.provider = model.provider;
+  const usage = resolveContextUsage(usageRaw, model?.contextWindow, snap.entries);
   indexBranch(state, snap.entries, snap.cwd, snap.sessionId, snap.leafId);
   const view = state.scope
     ? buildActiveView({ scope: state.scope, entries: snap.entries, messages })
     : null;
   const boundary = view?.compactionBoundary ?? latestCompactionId(snap.entries, snap.leafId);
   const identity = identityOf(state, boundary);
+  if (view && identity) confirmPersistedFields(state, view, identity);
   if (state.plan && !planStillValid(state.plan, {
     sessionId: snap.sessionId,
     compactionBoundary: boundary,
@@ -483,6 +478,49 @@ function witnessedView(view: ActiveView, state: PluginState, identity: RequestId
     ...view,
     fields: view.fields.filter((field) => state.witness.has(identity, field.key, field.ref.sourceHash)),
   };
+}
+
+export function resolveContextUsage(
+  usageRaw: { tokens?: number | null; contextWindow?: number; percent?: number | null } | undefined,
+  modelWindow: number | undefined,
+  entries: NativeEntry[],
+): ContextUsageLike | null {
+  const contextWindow = usageRaw?.contextWindow ?? modelWindow ?? 0;
+  let tokens = usageRaw?.tokens ?? null;
+  let percent = usageRaw?.percent ?? null;
+  if (percent == null && contextWindow > 0) {
+    const last = lastSuccessfulAssistantUsage(entries);
+    const total = last?.totalTokens ?? last?.input ?? null;
+    if (typeof total === "number" && total > 0) {
+      tokens = tokens ?? total;
+      percent = (total / contextWindow) * 100;
+    }
+  }
+  if (!usageRaw && !(contextWindow > 0) && percent == null && tokens == null) return null;
+  return { tokens, contextWindow, percent };
+}
+
+export function lastSuccessfulAssistantUsage(entries: NativeEntry[]): {
+  input?: number;
+  totalTokens?: number;
+} | null {
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const message = entries[i]?.message;
+    if (message?.role !== "assistant") continue;
+    const stop = message.stopReason;
+    if (stop === "error" || stop === "aborted") continue;
+    const usage = message.usage;
+    if (!usage) continue;
+    if (typeof usage.totalTokens === "number" || typeof usage.input === "number") return usage;
+  }
+  return null;
+}
+
+function confirmPersistedFields(state: PluginState, view: ActiveView, identity: RequestIdentity): void {
+  for (const field of view.fields) {
+    if (field.ref.kind !== "text" || !field.ref.sourceHash) continue;
+    state.witness.confirmPersisted(identity, field.key, field.ref.sourceHash);
+  }
 }
 
 function originalFieldHashes(view: ActiveView, messages: AgentMessage[]): { hashes: Map<string, string>; callIds: Map<string, string> } {

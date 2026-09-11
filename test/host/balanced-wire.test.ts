@@ -53,7 +53,7 @@ it("balanced folds only old exposed tool results and keeps the wire structure", 
     `payload=${JSON.stringify((captured as { lastPayload?: unknown }).lastPayload)?.slice(0, 400)}`,
   ).toBe(true);
   const firstWire = captured.at(-1)!.messages;
-  expect(toolResults(firstWire).every((m) => !folded(m.content))).toBe(true);
+  expect(toolResults(firstWire).some((m) => folded(m.content)), "first request after a persisted seed must already fold").toBe(true);
   await session.prompt("fold-now");
   const wire = captured.at(-1)!.messages;
   expect(wire.map((m) => m.role), JSON.stringify(wire.map((m) => m.role))).toContain("toolResult");
@@ -158,7 +158,7 @@ it("does not expose batches after a stopReason error assistant", async () => {
   await opened.session.dispose?.();
 }, 90_000);
 
-it("waits for a successful assistant before folding and resends originals after reset", async () => {
+it("folds persisted seed on the first request even if that assistant later errors", async () => {
   const pi = await loadOfficialPi();
   const opened = await openBalancedSession(pi, {
     contextWindow: 12000,
@@ -174,13 +174,12 @@ it("waits for a successful assistant before folding and resends originals after 
     session: opened.session,
   });
   await opened.session.prompt("round-1");
-  expect(toolResults(opened.captured[0]!.messages).every((m) => !folded(m.content))).toBe(true);
+  expect(toolResults(opened.captured[0]!.messages).some((m) => folded(m.content))).toBe(true);
   await opened.session.prompt("round-2");
-  expect(toolResults(opened.captured[1]!.messages).every((m) => !folded(m.content))).toBe(true);
+  expect(toolResults(opened.captured[1]!.messages).some((m) => folded(m.content))).toBe(true);
   await opened.session.prompt("round-3");
   const third = toolResults(opened.captured[2]!.messages);
   expect(third.slice(0, 5).every((m) => folded(m.content))).toBe(true);
-  expect(JSON.stringify(opened.captured[2]!.messages).length).toBeLessThan(JSON.stringify(opened.captured[1]!.messages).length);
   await opened.session.dispose?.();
 }, 90_000);
 

@@ -1,11 +1,32 @@
 import { expect, test } from "vitest";
-import { configHashOf, DEFAULT_CONFIG, parseConfig } from "../../src/config.js";
-import { acceptAssistantWitness, applyContext, createPlugin, observeProviderRequest, setProfile } from "../../src/plugin.js";
+import { configHashOf, parseConfig } from "../../src/config.js";
+import { applyContext, createPlugin, lastSuccessfulAssistantUsage, resolveContextUsage, setProfile } from "../../src/plugin.js";
 import { bindHooks, type PiExtensionAPI } from "../../src/pi/adapter.js";
 import { RequestWitnessTracker } from "../../src/projection/witness.js";
 import { archivedFixture, call, done, result, user } from "../helpers/context-audit-fixture.js";
 import type { AgentMessage } from "../../src/projection/render.js";
 import type { NativeEntry } from "../../src/contracts.js";
+
+test("session-log fields confirm without a provider round-trip", () => {
+  const id = { workspaceId: "w", sessionId: "s", provider: "p", model: "m", configHash: "c", compactionBoundary: null, epoch: 0 };
+  const tracker = new RequestWitnessTracker();
+  tracker.confirmPersisted(id, "r:0", "hash");
+  expect(tracker.has(id, "r:0", "hash")).toBe(true);
+  expect(tracker.has({ ...id, epoch: 1 }, "r:0", "hash")).toBe(false);
+});
+
+test("null host usage falls back to the last successful session assistant", () => {
+  const entries: NativeEntry[] = [
+    user("u", null),
+    { id: "a", parentId: "u", type: "message", message: { role: "assistant", stopReason: "stop", usage: { input: 6500, totalTokens: 6500 } } },
+  ];
+  expect(lastSuccessfulAssistantUsage(entries)?.totalTokens).toBe(6500);
+  const usage = resolveContextUsage(undefined, 10_000, entries);
+  expect(usage?.percent).toBe(65);
+  expect(usage?.tokens).toBe(6500);
+  expect(resolveContextUsage({ tokens: 100, contextWindow: 10_000, percent: 1 }, 10_000, entries)?.percent).toBe(1);
+  expect(resolveContextUsage(undefined, 10_000, [user("u", null)])?.percent).toBeNull();
+});
 
 test("another session cannot confirm an original", () => {
   const id = { workspaceId:"w",sessionId:"s",provider:"p",model:"m",
@@ -134,21 +155,14 @@ test("official session header omitted from getEntries is not missing-parent", ()
       getEntry: (id: string) => all.find((e) => e.id === id),
     },
   };
-  expect(applyContext(state, structuredClone(messages), ctx as never)).toBeUndefined();
-  expect(state.lastFieldHashes?.size, "session header must not empty the active view").toBeGreaterThan(0);
-  observeProviderRequest(state, {
-    messages: messages
-      .filter((m) => m.role === "toolResult")
-      .map((m) => ({ role: "tool", content: "z".repeat(8000), tool_call_id: m.toolCallId })),
-  });
-  expect(acceptAssistantWitness(state, { role: "assistant", stopReason: "stop", usage: { input: 10, totalTokens: 12 } })).toBe(true);
   const out = applyContext(state, structuredClone(messages), ctx as never);
+  expect(state.lastFieldHashes?.size, "session header must not empty the active view").toBeGreaterThan(0);
   expect(out).toBeDefined();
   expect(state.lastApplied).toBeGreaterThan(0);
   state.index.closeSync();
 });
 
-test("confirmed originals fold on the next applyContext", () => {
+test("persisted session originals fold on the first applyContext", () => {
   const entries: NativeEntry[] = [user("u", null)];
   let parent = "u";
   const messages: AgentMessage[] = [{ role: "user", content: [{ type: "text", text: "question" }] }];
@@ -180,18 +194,7 @@ test("confirmed originals fold on the next applyContext", () => {
     },
   };
   const first = structuredClone(messages);
-  expect(applyContext(state, first, ctx as never)).toBeUndefined();
-  expect(JSON.stringify(first)).not.toContain("pctx folded tool result");
-  expect(state.lastWitnessRequestId, `fields=${state.lastFieldHashes?.size}`).toBeTruthy();
-  expect(state.lastFieldHashes?.size).toBeGreaterThan(0);
-  observeProviderRequest(state, {
-    messages: first
-      .filter((m) => m.role === "toolResult")
-      .map((m) => ({ role: "tool", content: "z".repeat(8000), tool_call_id: m.toolCallId })),
-  });
-  expect(acceptAssistantWitness(state, { role: "assistant", stopReason: "stop", usage: { input: 10, totalTokens: 12 } })).toBe(true);
-  const second = structuredClone(messages);
-  const out = applyContext(state, second, ctx as never);
+  const out = applyContext(state, first, ctx as never);
   expect(out).toBeDefined();
   expect(state.lastApplied).toBeGreaterThan(0);
   expect(JSON.stringify(out?.messages)).toContain("pctx folded tool result");

@@ -113,13 +113,24 @@ function assistantMessage(input: {
   };
 }
 
+export const G02_PNG =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+export const G02_MARKERS = {
+  imageText: "g02-image-keep",
+  errorText: "G02-ERROR-KEEP",
+  incompleteText: "G02-INCOMPLETE-KEEP",
+  duplicateText: "G02-DUP-KEEP",
+};
+
 export function registerControlledProvider(
   runtime: { registerProvider: (id: string, config: Record<string, unknown>) => void; getModel: (provider: string, id: string) => unknown },
-  opts: { contextWindow: number; script?: ControlledScript; modelId?: string },
+  opts: { contextWindow: number; script?: ControlledScript; modelId?: string; scriptUsagePercent?: number },
 ): { captured: CapturedTurn[]; model: unknown } {
   const captured: CapturedTurn[] & { onPayloadCalled?: boolean; lastPayload?: unknown } = [];
   const modelId = opts.modelId ?? "wire";
   const script = opts.script ?? [];
+  const scriptUsagePercent = opts.scriptUsagePercent ?? 0.65;
   runtime.registerProvider("controlled", {
     api: "openai-completions",
     baseUrl: "http://127.0.0.1:9",
@@ -155,7 +166,7 @@ export function registerControlledProvider(
         text: step.text,
         toolCall: step.toolCall,
         stopReason: step.stopReason,
-        usageInput: Math.max(estimateTokens(messages), Math.ceil(opts.contextWindow * 0.65)),
+        usageInput: Math.max(estimateTokens(messages), Math.ceil(opts.contextWindow * scriptUsagePercent)),
         model: modelId,
       });
       return {
@@ -261,7 +272,10 @@ export async function openPluginSession(
     SettingsManager: { create: (cwd: string, agentDir?: string, options?: Record<string, unknown>) => {
       applyOverrides?: (overrides: Record<string, unknown>) => void;
     } };
-    SessionManager: { create: (cwd: string, sessionDir?: string) => SessionManagerLike };
+    SessionManager: {
+      create: (cwd: string, sessionDir?: string) => SessionManagerLike;
+      open: (path: string, sessionDir?: string, cwd?: string) => SessionManagerLike;
+    };
     ModelRuntime: { create: (opts: Record<string, unknown>) => Promise<{
       registerProvider: (id: string, config: Record<string, unknown>) => void;
       getModel: (provider: string, id: string) => unknown;
@@ -289,7 +303,9 @@ export async function openPluginSession(
     targetPercent?: number;
     loadPlugin?: boolean;
     script?: ControlledScript;
+    scriptUsagePercent?: number;
     extensionRoot?: string;
+    resumeFile?: string;
   },
 ): Promise<{
   session: {
@@ -376,8 +392,11 @@ export async function openPluginSession(
   const { captured, model } = registerControlledProvider(runtime, {
     contextWindow: opts.contextWindow,
     script: opts.script,
+    scriptUsagePercent: opts.scriptUsagePercent,
   });
-  const manager = pi.SessionManager.create(cwd, sessionDir);
+  const manager = opts.resumeFile
+    ? pi.SessionManager.open(opts.resumeFile, sessionDir, cwd)
+    : pi.SessionManager.create(cwd, sessionDir);
   const { session } = await pi.createAgentSession({
     cwd,
     agentDir,
@@ -429,6 +448,8 @@ export async function openBalancedSession(
     minRemovedTokens?: number;
     extensionRoot?: string;
     script?: ControlledScript;
+    scriptUsagePercent?: number;
+    resumeFile?: string;
   },
 ) {
   return openPluginSession(pi, {
@@ -438,7 +459,126 @@ export async function openBalancedSession(
     minRemovedTokens: opts.minRemovedTokens ?? 500,
     extensionRoot: opts.extensionRoot,
     script: opts.script,
+    scriptUsagePercent: opts.scriptUsagePercent,
+    resumeFile: opts.resumeFile,
   });
+}
+
+export function seedMediaErrorHistory(
+  manager: SessionManagerLike,
+  opts: {
+    contextWindow?: number;
+    session?: SeededSession;
+  } = {},
+): { old: string[]; png: string; markers: typeof G02_MARKERS } {
+  const window = opts.contextWindow ?? 12_000;
+  const now = Date.now();
+  const old = seedToolHistory(manager, {
+    batches: 5,
+    resultChars: 1500,
+    start: 1,
+    skipFinalAssistant: true,
+    contextWindow: window,
+  });
+
+  manager.appendMessage({ role: "user", content: "inspect screenshot", timestamp: now + 600 });
+  manager.appendMessage({
+    role: "assistant",
+    content: [{ type: "toolCall", id: "c-img", name: "read", arguments: { path: "shot.png" } }],
+    api: "openai-completions",
+    provider: "controlled",
+    model: "wire",
+    usage: usageOf(15),
+    stopReason: "toolUse",
+    timestamp: now + 601,
+  });
+  manager.appendMessage({
+    role: "toolResult",
+    toolCallId: "c-img",
+    toolName: "read",
+    content: [
+      { type: "text", text: `caption ${G02_MARKERS.imageText}` },
+      { type: "image", mimeType: "image/png", data: G02_PNG },
+    ],
+    isError: false,
+    timestamp: now + 602,
+  });
+
+  manager.appendMessage({ role: "user", content: "retry failed probe", timestamp: now + 610 });
+  manager.appendMessage({
+    role: "assistant",
+    content: [{ type: "toolCall", id: "c-err", name: "read", arguments: { path: "boom.txt" } }],
+    api: "openai-completions",
+    provider: "controlled",
+    model: "wire",
+    usage: usageOf(15),
+    stopReason: "toolUse",
+    timestamp: now + 611,
+  });
+  manager.appendMessage({
+    role: "toolResult",
+    toolCallId: "c-err",
+    toolName: "read",
+    content: [{ type: "text", text: G02_MARKERS.errorText }],
+    isError: true,
+    timestamp: now + 612,
+  });
+
+  manager.appendMessage({ role: "user", content: "read both pending files", timestamp: now + 620 });
+  manager.appendMessage({
+    role: "assistant",
+    content: [
+      { type: "toolCall", id: "c-inc-a", name: "read", arguments: { path: "left.txt" } },
+      { type: "toolCall", id: "c-inc-b", name: "read", arguments: { path: "right.txt" } },
+    ],
+    api: "openai-completions",
+    provider: "controlled",
+    model: "wire",
+    usage: usageOf(18),
+    stopReason: "toolUse",
+    timestamp: now + 621,
+  });
+  manager.appendMessage({
+    role: "toolResult",
+    toolCallId: "c-inc-a",
+    toolName: "read",
+    content: [{ type: "text", text: G02_MARKERS.incompleteText }],
+    isError: false,
+    timestamp: now + 622,
+  });
+
+  manager.appendMessage({ role: "user", content: "duplicate call ids", timestamp: now + 630 });
+  manager.appendMessage({
+    role: "assistant",
+    content: [
+      { type: "toolCall", id: "c-dup", name: "read", arguments: { path: "dup-a.txt" } },
+      { type: "toolCall", id: "c-dup", name: "read", arguments: { path: "dup-b.txt" } },
+    ],
+    api: "openai-completions",
+    provider: "controlled",
+    model: "wire",
+    usage: usageOf(18),
+    stopReason: "toolUse",
+    timestamp: now + 631,
+  });
+  manager.appendMessage({
+    role: "toolResult",
+    toolCallId: "c-dup",
+    toolName: "read",
+    content: [{ type: "text", text: G02_MARKERS.duplicateText }],
+    isError: false,
+    timestamp: now + 632,
+  });
+
+  seedToolHistory(manager, {
+    batches: 1,
+    start: 30,
+    resultChars: 80,
+    contextWindow: window,
+    usagePercent: 65,
+    session: opts.session,
+  });
+  return { old: old.originals, png: G02_PNG, markers: G02_MARKERS };
 }
 
 export function stripTimestamps(value: unknown): unknown {

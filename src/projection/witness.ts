@@ -118,6 +118,12 @@ export class RequestWitnessTracker {
     return this.confirmed.get(confirmKey(identity, key)) === hash;
   }
 
+  /** Session-log fields are recoverable without a same-process provider round-trip. */
+  confirmPersisted(identity: RequestIdentity, key: string, hash: string): void {
+    if (!key || !hash) return;
+    this.confirmed.set(confirmKey(identity, key), hash);
+  }
+
   reset(): void {
     this.epoch += 1;
     this.pending.clear();
