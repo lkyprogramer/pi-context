@@ -1,0 +1,65 @@
+[
+  {
+    "id": "S01",
+    "title": "登记见证偏离，持久化确认只对 derived-exposed 字段",
+    "dependsOn": [],
+    "closes": ["G09"],
+    "files": ["src/plugin.ts", "test/unit/request-witness.test.ts", "test/host/balanced-wire.test.ts", "docs/iterations/next-fixes.md"],
+    "narrow": "pnpm exec vitest run test/unit/request-witness.test.ts test/host/balanced-wire.test.ts --config vitest.config.ts",
+    "done": "尚无后续成功 assistant 的持久化字段不被 confirmPersisted；resume 首请求折叠行为保持；偏离及理由写入 next-fixes.md。"
+  },
+  {
+    "id": "S02",
+    "title": "从配对 usage 计算主/次目标，接入 attempt 成功率",
+    "dependsOn": ["S01"],
+    "closes": ["G01", "G04"],
+    "files": ["eval/local/gate.mjs", "eval/local/accounting.mjs", "eval/local/report.mjs", "eval/local/run-matrix.mjs", "eval/local/bundle.mjs", "test/unit/trial-gate.test.ts", "test/unit/objective.test.ts"],
+    "narrow": "pnpm exec vitest run test/unit/trial-gate.test.ts test/unit/objective.test.ts test/integration/run-bundle.test.ts --config vitest.config.ts",
+    "done": "对 review-qc-20260911-fold1 离线 report 得到 objective.primary.relativeChange ≈ −0.642 known=true；attemptRates 非 null；bundle 复算同值。"
+  },
+  {
+    "id": "S03",
+    "title": "配对不一致门、3 rep、结构化 reason",
+    "dependsOn": ["S02"],
+    "closes": ["G02"],
+    "files": ["eval/local/gate.mjs", "eval/local/accounting.mjs", "eval/local/report.mjs", "eval/local/scenarios.mjs", "eval/local/review-spec.mjs", "eval/local/review-matrix.json", "test/unit/trial-gate.test.ts", "test/unit/review-scenarios.test.ts", "test/unit/review-live-wiring.test.ts"],
+    "narrow": "pnpm exec vitest run test/unit/trial-gate.test.ts test/unit/review-scenarios.test.ts test/unit/review-live-wiring.test.ts --config vitest.config.ts",
+    "done": "单个不一致 pair 不再独自否决；case 级 b≥2 或 b−c≥2 否决；discordant 列表进入 decision；plan repsPerCase=3、expectedPairs=24。"
+  },
+  {
+    "id": "S04",
+    "title": "Q05 精确引用、候选信号接线、provenance、dirty 拒绝",
+    "dependsOn": ["S03"],
+    "closes": ["G03", "G05", "G07"],
+    "files": ["eval/local/parse-session.mjs", "eval/local/cases.json", "eval/local/review-fixtures/Q05.json", "eval/local/gate.mjs", "eval/local/report.mjs", "eval/local/run-matrix.mjs", "eval/local/bundle.mjs", "test/unit/trial-gate.test.ts", "test/unit/local-cases.test.ts", "test/unit/report-provenance.test.ts"],
+    "narrow": "pnpm exec vitest run test/unit/trial-gate.test.ts test/unit/local-cases.test.ts test/unit/report-provenance.test.ts --config vitest.config.ts",
+    "done": "Q05 quotedVerbatim 进入 gate；candidates 按 plan id 判定并输出 below-gate；报告头显示 distDigest；live 模式 dirty tree 无 --allow-dirty 即拒绝，带标志则 decision 强制 inconclusive。"
+  },
+  {
+    "id": "S05",
+    "title": "Darwin 沙箱经 named volume 回到 network none，Key 不落盘",
+    "dependsOn": ["S01"],
+    "closes": ["G06"],
+    "files": ["eval/local/sandbox/run-agent.sh", "eval/local/sandbox/broker-unix.mjs", "eval/local/run-episode.mjs", "eval/local/secure-preflight.mjs", "scripts/credential-broker.mjs", "test/security/agent-secret-isolation.test.ts", "test/security/grader-isolation.test.ts"],
+    "narrow": "pnpm exec vitest run test/security/agent-secret-isolation.test.ts test/security/grader-isolation.test.ts --config vitest.config.ts",
+    "done": "launcher 不含 container:$BROKER_CID；Darwin agent --network none；Key 只经 stdin 进 sidecar；secure-preflight --canary 报告 agentEgress:false；删除 broker-tcp.mjs。"
+  },
+  {
+    "id": "S06",
+    "title": "W lane（warm）与 X lane（long）场景、seed、oracle",
+    "dependsOn": ["S03", "S04"],
+    "closes": ["G10", "G11", "G12"],
+    "files": ["eval/local/cases.json", "eval/local/cases/W-Q01/TASK.md", "eval/local/cases/W-Q03/TASK.md", "eval/local/cases/W-Q05/TASK.md", "eval/local/cases/W-Q07/TASK.md", "eval/local/cases/X01/TASK.md", "eval/local/review-fixtures/W-Q01.json", "eval/local/review-fixtures/W-Q03.json", "eval/local/review-fixtures/W-Q05.json", "eval/local/review-fixtures/W-Q07.json", "eval/local/review-seed.mjs", "eval/local/review-spec.mjs", "eval/local/scenarios.mjs", "eval/local/review-matrix.json", "eval/local/run-episode.mjs", "eval/local/run-matrix.mjs", "eval/local/gate.mjs", "eval/local/report.mjs", "test/unit/review-scenarios.test.ts", "test/unit/review-live-wiring.test.ts", "test/unit/local-cases.test.ts", "test/host/warm-fold-regime.test.ts"],
+    "narrow": "pnpm exec vitest run test/unit/review-scenarios.test.ts test/unit/review-live-wiring.test.ts test/unit/local-cases.test.ts test/host/warm-fold-regime.test.ts --config vitest.config.ts",
+    "done": "受控 Provider 下 W-Q01 在第 ≥2 次请求越过 60% 并真实折叠；X01 工作区 12×600 行日志生成且 marker 位置正确；plan 84 episode 全 UNRUN；regimes 汇总进入 decision。"
+  },
+  {
+    "id": "S07",
+    "title": "干净 HEAD 84-episode live、bundle、文档同步",
+    "dependsOn": ["S01", "S02", "S03", "S04", "S05", "S06"],
+    "closes": ["G07", "G08"],
+    "files": ["artifacts/local-eval/review-final/", "artifacts/local-eval/CURRENT_RUNID", "README.md", "HANDOFF.md", "docs/OPERATIONS.md", "docs/CONFIGURATION.md", "docs/iterations/next-fixes.md", "test/unit/docs-decision-consistency.test.ts"],
+    "narrow": "pnpm exec vitest run test/unit/docs-decision-consistency.test.ts --config vitest.config.ts",
+    "done": "干净 HEAD、PCTX_LIVE=1、84 episode 全在 ITT；report.json.decision 与四份文档一致；未跑完则 NOT_RUN 留分母且决策 inconclusive。"
+  }
+]

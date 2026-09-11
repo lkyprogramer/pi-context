@@ -1,0 +1,66 @@
+{
+  "baseline": "0e7fb400309612b106a28dcc89fe7f15d37b1b00",
+  "inspectedAt": "2026-09-11",
+  "source": [
+    "src/plugin.ts",
+    "src/projection/exposed.ts",
+    "src/projection/planner.ts",
+    "src/projection/witness.ts",
+    "eval/local/accounting.mjs",
+    "eval/local/gate.mjs",
+    "eval/local/report.mjs",
+    "eval/local/run-matrix.mjs",
+    "eval/local/run-episode.mjs",
+    "eval/local/review-seed.mjs",
+    "eval/local/review-spec.mjs",
+    "eval/local/scenarios.mjs",
+    "eval/local/parse-session.mjs",
+    "eval/local/bundle.mjs",
+    "eval/local/cases.json",
+    "eval/local/review-matrix.json",
+    "eval/local/review-fixtures/Q03.json",
+    "eval/local/review-fixtures/Q05.json",
+    "eval/local/cases/Q01/TASK.md",
+    "eval/local/sandbox/run-agent.sh",
+    "eval/local/pi-config/w64k/models.json",
+    "test/unit/trial-gate.test.ts",
+    "test/unit/request-witness.test.ts",
+    "test/unit/review-live-wiring.test.ts",
+    "test/unit/local-cases.test.ts",
+    "test/security/agent-secret-isolation.test.ts",
+    "test/helpers/context-audit-fixture.ts",
+    "test/helpers/controlled-provider.ts"
+  ],
+  "commits": ["7616f54e", "be58b16a", "44e8333b", "0e7fb400"],
+  "docs": [
+    "docs/pi-context-6.1-audit-next-steps/README.md",
+    "docs/pi-context-6.1-audit-next-steps/AI-START-HERE.md",
+    "docs/pi-context-6.1-audit-next-steps/audit/00-verdict.md",
+    "docs/pi-context-6.1-audit-next-steps/design/00-target.md",
+    "docs/pi-context-6.1-audit-next-steps/testing/00-protocol.md",
+    "docs/pi-context-6.1-audit-next-steps/tasks/R08.md",
+    "docs/pi-context-6.1-audit-next-steps/tasks/index.json",
+    "docs/pi-context-6.1-audit-next-steps/scripts/validate_bundle.py",
+    "docs/iterations/next-fixes.md",
+    "README.md",
+    "HANDOFF.md",
+    "docs/OPERATIONS.md",
+    "docs/CONFIGURATION.md"
+  ],
+  "artifacts": [
+    "artifacts/local-eval/review-qc-20260910/{manifest.json,episodes.jsonl,requests.jsonl,report.json,report.md}",
+    "artifacts/local-eval/review-qc-20260911/{manifest.json,episodes.jsonl,requests.jsonl,report.json,report.md}",
+    "artifacts/local-eval/review-qc-20260911-fold1/{manifest.json,episodes.jsonl,requests.jsonl,report.json,report.md}",
+    "artifacts/local-eval/review-final/",
+    "artifacts/local-eval/CURRENT_RUNID"
+  ],
+  "commandsRun": [
+    { "cmd": "pnpm check", "exit": 0, "note": "typecheck + 200 vitest tests + compat scan; EBADENGINE warning (host Node 22.17 < 22.19)" },
+    { "cmd": "python3 scripts/aggregate_runs.py ...", "exit": 0, "note": "produced evidence/run-aggregates.json" }
+  ],
+  "notRun": [
+    "any live model call",
+    "docker controlled matrix",
+    "secure-preflight --canary"
+  ]
+}

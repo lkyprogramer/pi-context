@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "baseline": "0e7fb400309612b106a28dcc89fe7f15d37b1b00",
+  "window": { "profile": "w64k", "contextWindow": 65536, "triggerPercent": 60, "targetPercent": 40, "protectRecentBatches": 4, "minRemovedTokens": 4096 },
+  "objective": { "primary": { "metric": "fresh-input", "minImprovement": 0.1 }, "secondary": ["logical-input", "wall-time", "cacheRead", "engine-prefill", "native-compactions", "requests"] },
+  "lanes": {
+    "Q": { "kind": "quality", "arms": ["native", "balanced"], "reps": 3, "seedUsagePercent": 65, "entersPrimaryDenominator": true },
+    "C": { "kind": "capability", "arms": ["balanced"], "reps": 3, "entersPrimaryDenominator": false },
+    "W": { "kind": "regime", "regime": "warm", "arms": ["native", "balanced"], "reps": 3, "seedUsagePercent": 45, "warmup": { "files": 2, "tokensEach": 6000 }, "entersPrimaryDenominator": false },
+    "X": { "kind": "regime", "regime": "long", "arms": ["native", "balanced"], "reps": 3, "seed": null, "entersPrimaryDenominator": false }
+  },
+  "scenarios": [
+    { "id": "Q01", "lane": "Q", "kind": "quality", "base": "L04", "requiresFold": true, "oracle": "contract-revision.txt == tenant-contract-73", "exactQuote": false },
+    { "id": "Q02", "lane": "Q", "kind": "quality", "base": "L02", "requiresFold": true, "oracle": "retry-contract.txt == 7", "exactQuote": false },
+    { "id": "Q03", "lane": "Q", "kind": "quality", "base": "L03", "requiresFold": true, "oracle": "grace-ms.txt == 1730", "exactQuote": false },
+    { "id": "Q04", "lane": "Q", "kind": "quality", "base": "L06", "requiresFold": true, "oracle": "build-tag.txt == build-r9q7", "exactQuote": false },
+    { "id": "Q05", "lane": "Q", "kind": "quality", "base": "L01", "requiresFold": true, "oracle": "root-cause.txt contains ZX-731 AND assistant quotes 'idempotency broken: reservation ZX-731 replayed after callback.' verbatim", "exactQuote": true },
+    { "id": "Q06", "lane": "Q", "kind": "quality", "base": "L05", "requiresFold": true, "oracle": "ticket.txt == TK-442 and not TK-991", "exactQuote": false },
+    { "id": "Q07", "lane": "Q", "kind": "quality", "base": "L06", "requiresFold": true, "oracle": "recovered.json keyA=alpha-931 keyB=beta-527", "exactQuote": false },
+    { "id": "Q08", "lane": "Q", "kind": "quality", "base": "L01", "requiresFold": true, "oracle": "rollback-marker.txt == rollback-619", "exactQuote": false },
+    { "id": "C01", "lane": "C", "kind": "capability", "requiresFold": true, "oracle": "restored.txt contains nce-8f3a21c4 and c01-end-8f3a-page2 (multi-page UTF-8 read)", "exactQuote": false },
+    { "id": "C02", "lane": "C", "kind": "capability", "requiresFold": false, "oracle": "needles.txt contains needle-alpha, needle-beta; not decoy-gamma (scope search)", "exactQuote": false },
+    { "id": "W-Q01", "lane": "W", "kind": "regime", "base": "Q01", "requiresFold": true, "oracle": "same as Q01; fold must occur at request >= 2", "exactQuote": false },
+    { "id": "W-Q03", "lane": "W", "kind": "regime", "base": "Q03", "requiresFold": true, "oracle": "same as Q03; fold must occur at request >= 2", "exactQuote": false },
+    { "id": "W-Q05", "lane": "W", "kind": "regime", "base": "Q05", "requiresFold": true, "oracle": "same as Q05 incl. exact quote; fold must occur at request >= 2", "exactQuote": true },
+    { "id": "W-Q07", "lane": "W", "kind": "regime", "base": "Q07", "requiresFold": true, "oracle": "same as Q07; fold must occur at request >= 2", "exactQuote": false },
+    { "id": "X01", "lane": "X", "kind": "regime", "requiresFold": true, "logs": { "count": 12, "lines": 300, "marked": 7, "markLine": 210, "token": "FIRST-ERROR-MARKER" }, "oracle": "marker.txt contains 'FIRST-ERROR-MARKER at build-07 line 210' AND assistant quotes the full log line verbatim; native arm must show nativeCompactions >= 1 for the pair to be eligible", "exactQuote": true }
+  ],
+  "guards": ["G01", "G02"],
+  "noFoldRegression": ["L01", "L02", "L03", "L04", "L05", "L06"],
+  "plannedEpisodes": 84,
+  "expectedPairs": 24,
+  "expectedCapabilities": 6,
+  "expectedRegimePairs": { "warm": 12, "long": 3 }
+}

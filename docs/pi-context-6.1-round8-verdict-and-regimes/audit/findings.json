@@ -1,0 +1,14 @@
+[
+  {"id": "G01", "severity": "P1", "attribution": "test", "title": "objective never computed; positive decisions unreachable", "evidence": ["eval/local/run-matrix.mjs:155", "eval/local/accounting.mjs:169"], "tasks": ["S02"]},
+  {"id": "G02", "severity": "P1", "attribution": "test", "title": "any candidate failure is review-needed; 2 reps cannot separate model noise from regression", "evidence": ["eval/local/gate.mjs:101-103", "artifacts/local-eval/review-qc-20260911-fold1/episodes.jsonl Q05"], "tasks": ["S03"]},
+  {"id": "G03", "severity": "P2", "attribution": "test", "title": "6.2 candidate signals not wired for Q lane", "evidence": ["eval/local/report.mjs:126-137", "eval/local/report.mjs:301"], "tasks": ["S04"]},
+  {"id": "G04", "severity": "P2", "attribution": "test", "title": "attempt success rates null in report", "evidence": ["eval/local/report.mjs:284-290"], "tasks": ["S02"]},
+  {"id": "G05", "severity": "P1", "attribution": "test", "title": "Q05 exact-quote oracle not implemented", "evidence": ["eval/local/review-fixtures/Q05.json", "eval/local/parse-session.mjs:193"], "tasks": ["S04"]},
+  {"id": "G06", "severity": "P0", "attribution": "dev", "title": "Darwin agent shares sidecar network namespace; upstream key on host tmp file", "evidence": ["eval/local/sandbox/run-agent.sh", "eval/local/run-episode.mjs:455-473"], "tasks": ["S05"]},
+  {"id": "G07", "severity": "P1", "attribution": "process", "title": "dirty runs; entry-only plugin hash; stale tarball", "evidence": ["artifacts/local-eval/review-qc-20260911-fold1/manifest.json"], "tasks": ["S04", "S07"]},
+  {"id": "G08", "severity": "P1", "attribution": "process", "title": "docs say UNRUN/inconclusive while three live runs say review-needed", "evidence": ["README.md:7", "HANDOFF.md:8", "docs/OPERATIONS.md:3", "artifacts/local-eval/CURRENT_RUNID"], "tasks": ["S07"]},
+  {"id": "G09", "severity": "P1", "attribution": "dev", "title": "R03 witness invariant inverted and unrecorded; persisted confirmation ignores derived exposure", "evidence": ["src/plugin.ts:519-524", "git show 44e8333b"], "tasks": ["S01"]},
+  {"id": "G10", "severity": "P1", "attribution": "test", "title": "no warm-cache mid-session fold lane; resume cold-start dominates Q economics", "evidence": ["evidence/run-aggregates.json runs[1].relativeChangeBalancedVsNative", "evidence/run-aggregates.json runs[2].relativeChangeBalancedVsNative"], "tasks": ["S06"]},
+  {"id": "G11", "severity": "P1", "attribution": "test", "title": "no long-session lane with >=2 native compactions", "evidence": ["eval/local/cases.json H03"], "tasks": ["S06"]},
+  {"id": "G12", "severity": "P2", "attribution": "test", "title": "seed bodies are noise padding", "evidence": ["eval/local/review-seed.mjs:36-41"], "tasks": ["S06"]}
+]
