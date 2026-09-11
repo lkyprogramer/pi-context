@@ -40,9 +40,15 @@ docs/**/evidence/logs/
 artifacts/local-eval/
 eval/local/seeds/*.secret
 eval/local/seeds/*.next
+eval/local/seeds/review/*.jsonl
 
 # Unexecuted local orchestration draft; not an implementation or verification record.
 /.workflow/pi-context-current-head-remediation-continuation/
+
+# Local agent/tool scratch (not project source).
+.loopx/
+.codex/goals/
+.local/
 
 
 # Local live-dump backups (not analysis reports).
