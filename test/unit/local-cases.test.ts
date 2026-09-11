@@ -17,7 +17,7 @@ it("cases.json mirrors the frozen scenario matrix", () => {
       taskFile?: string;
       protectedPaths?: string[];
       grader?: { kind?: string };
-      evidence?: { linePattern?: string };
+      evidence?: { kind?: string; linePattern?: string; sourceKind?: string };
     }>;
   };
   const scen = JSON.parse(
@@ -27,7 +27,7 @@ it("cases.json mirrors the frozen scenario matrix", () => {
   };
   expect(scen.cases.every((c) => cases.cases.some((x) => x.id === c.id))).toBe(true);
   expect(cases.cases.filter((c) => c.runner === "review").map((c) => c.id).sort()).toEqual(
-    ["C01", "C02", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08"],
+    ["C01", "C02", "Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q08", "W-Q01", "W-Q03", "W-Q05", "W-Q07", "X01"],
   );
   for (const c of scen.cases) {
     const local = cases.cases.find((x) => x.id === c.id);
@@ -52,6 +52,9 @@ it("cases.json mirrors the frozen scenario matrix", () => {
   }
   const h02 = cases.cases.find((c) => c.id === "H02");
   expect(h02?.evidence?.linePattern).toBe("idempotency broken");
+  const q05 = cases.cases.find((c) => c.id === "Q05");
+  expect(q05?.evidence?.sourceKind).toBe("any");
+  expect(q05?.evidence?.kind).toBe("verbatim-quote");
 });
 
 it("parse-session counts requests, cacheRead and history reads from a Pi JSONL", () => {

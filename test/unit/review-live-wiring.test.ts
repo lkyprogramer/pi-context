@@ -11,11 +11,13 @@ import {
   seedTextBlob,
   stubHeadOf,
   targetTokens,
+  warmupFiles,
 } from "../../eval/local/review-seed.mjs";
 import { evaluateFileOracle, requiresFoldMap } from "../../eval/local/review-spec.mjs";
 import {
   CAPABILITY_IDS,
   QUALITY_IDS,
+  REGIME_LANES,
   loadReviewFixture,
   validateScenario,
 } from "../../eval/local/scenarios.mjs";
@@ -41,6 +43,30 @@ test("generated seeds hide the witness and pair every tool call", () => {
     const last = [...assistants].reverse().find((e) => e.message.stopReason === "stop");
     expect(last?.message?.usage?.totalTokens).toBe(stamped);
     if (fx.requiresFold) expect(stamped).toBeGreaterThanOrEqual(Math.ceil(65536 * 0.6));
+  }
+});
+
+test("W lane seeds stay at 45% and repo-docs pads hide the witness", () => {
+  const uniquePad = /^[a-z]+-pad[0-9a-z]+/m;
+  for (const id of REGIME_LANES.warm) {
+    const fx = loadReviewFixture(id);
+    expect(fx.padSource).toBe("repo-docs");
+    expect(fx.seedUsagePercent).toBe(45);
+    const { entries, targetTokens: stamped } = buildReviewSeed(fx);
+    expect(stamped).toBe(Math.ceil(65_536 * 0.45));
+    const blob = seedTextBlob(entries);
+    expect(blob.includes(fx.witness), `${id} seed missing witness`).toBe(true);
+    const pads = entries.filter((e) => String(e.message?.toolCallId ?? "").startsWith("call-old-")
+      || String(e.message?.toolCallId ?? "").includes("pad"));
+    for (const row of pads) {
+      const text = String(row.message?.content?.[0]?.text ?? "");
+      expect(text.includes(fx.witness), `${id} pad leaked witness`).toBe(false);
+      expect(uniquePad.test(text), `${id} pad used uniquePad`).toBe(false);
+    }
+    for (const file of warmupFiles(fx, repo)) {
+      expect(file.text.includes(fx.witness), `${id} warmup leaked witness`).toBe(false);
+      expect(uniquePad.test(file.text), `${id} warmup used uniquePad`).toBe(false);
+    }
   }
 });
 

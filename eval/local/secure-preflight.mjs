@@ -86,15 +86,30 @@ try {
   const proc = String(surfaces.proc ?? "").includes(canary);
   const visible = dump.includes(canary) || output.includes(canary);
   const net = output.includes("net_blocked");
+  const egress = spawnSync("docker", [
+    "run", "--rm", "--network", "none", "--read-only",
+    "--user", "1000:1000",
+    image, "node", "-e",
+    "fetch('http://1.1.1.1/',{signal:AbortSignal.timeout(3000)}).then(()=>process.exit(1),()=>process.exit(0))",
+  ], { encoding: "utf8", timeout: 30_000 });
+  const agentEgress = egress.status !== 0;
   const report = {
-    ok: existsSync(join(work, "probe.json")) && !visible && !env && !models && !proc && net,
+    ok: existsSync(join(work, "probe.json")) && !visible && !env && !models && !proc && net && !agentEgress,
     env,
     models,
     proc,
     net,
+    agentEgress,
     canaryHash,
   };
-  console.log(JSON.stringify(report));
+  console.log(JSON.stringify({
+    ok: report.ok,
+    env,
+    models,
+    proc,
+    agentEgress,
+    canary: canaryHash.slice(0, 12),
+  }));
   process.exit(report.ok ? 0 : 1);
 } finally {
   await broker?.close?.();

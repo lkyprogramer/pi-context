@@ -13,7 +13,7 @@ function writeRun() {
     qualityIds: ["L01"],
     capabilityIds: ["H01"],
     requiresFold: { H01: true },
-    objective: { metric: "logical-input", known: true, relativeChange: -0.2, minImprovement: 0.1 },
+    objective: { primary: { metric: "fresh-input", minImprovement: 0.1 }, secondary: ["logical-input"] },
     expectedPairs: 1,
     expectedCapabilities: 1,
     scenarioHash: sha256Bytes("scenario-v1"),
@@ -29,14 +29,22 @@ function writeRun() {
     distFiles: { "extension.js": sha256Bytes("plugin") },
     plan,
   }));
-  const ep = (id: string, caseId: string, arm: string) => ({
-    episodeId: id,
-    manifest: { caseId, arm, rep: 1 },
-    status: "complete",
-    oracle: { passed: true, quotedVerbatim: true, protectedIntact: true },
-    mechanism: { folds: caseId.startsWith("H") ? 1 : 0, foldedErrorResults: 0 },
-    requests: [{ requestId: `${id}-q`, source: "pi-disjoint", usage: { input: 10, cacheRead: 0, cacheWrite: 0, output: 1 } }],
-  });
+  const ep = (id: string, caseId: string, arm: string) => {
+    const fresh = arm === "native" ? 50000 : 10000;
+    return {
+      episodeId: id,
+      manifest: { caseId, arm, rep: 1 },
+      status: "complete",
+      oracle: { passed: true, quotedVerbatim: true, protectedIntact: true },
+      mechanism: { folds: caseId.startsWith("H") ? 1 : 0, foldedErrorResults: 0 },
+      requests: [{
+        requestId: `${id}-q`,
+        source: "pi-disjoint",
+        usage: { input: fresh, cacheRead: 0, cacheWrite: 0, output: 1 },
+        normalized: { freshInput: fresh, cachedRead: 0, logicalInput: fresh },
+      }],
+    };
+  };
   mkdirSync(join(runDir, "episodes", "L01-native-r1"), { recursive: true });
   mkdirSync(join(runDir, "episodes", "L01-balanced-r1"), { recursive: true });
   mkdirSync(join(runDir, "episodes", "H01-balanced-r1"), { recursive: true });

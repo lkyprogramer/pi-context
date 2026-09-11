@@ -5,7 +5,7 @@ import { bindHooks, type PiExtensionAPI } from "../../src/pi/adapter.js";
 import { RequestWitnessTracker } from "../../src/projection/witness.js";
 import { archivedFixture, call, done, result, user } from "../helpers/context-audit-fixture.js";
 import type { AgentMessage } from "../../src/projection/render.js";
-import type { NativeEntry } from "../../src/contracts.js";
+import { sha256Hex, type NativeEntry } from "../../src/contracts.js";
 
 test("session-log fields confirm without a provider round-trip", () => {
   const id = { workspaceId: "w", sessionId: "s", provider: "p", model: "m", configHash: "c", compactionBoundary: null, epoch: 0 };
@@ -159,6 +159,135 @@ test("official session header omitted from getEntries is not missing-parent", ()
   expect(state.lastFieldHashes?.size, "session header must not empty the active view").toBeGreaterThan(0);
   expect(out).toBeDefined();
   expect(state.lastApplied).toBeGreaterThan(0);
+  state.index.closeSync();
+});
+
+test("persisted confirmation skips fields without a later successful assistant", () => {
+  const entries: NativeEntry[] = [user("u", null)];
+  let parent = "u";
+  const messages: AgentMessage[] = [{ role: "user", content: [{ type: "text", text: "question" }] }];
+  for (let i = 1; i <= 5; i++) {
+    entries.push(call(`c${i}`, parent, `call${i}`), result(`r${i}`, `c${i}`, `call${i}`, "z".repeat(8000)), done(`d${i}`, `r${i}`));
+    parent = `d${i}`;
+    messages.push(
+      { role: "assistant", content: [{ type: "toolCall", id: `call${i}`, name: "read" }] },
+      { role: "toolResult", toolCallId: `call${i}`, content: [{ type: "text", text: "z".repeat(8000) }] },
+      { role: "assistant", content: [{ type: "text", text: "done" }] },
+    );
+  }
+  // sixth batch: tool result present, no assistant after it → not derived-exposed
+  entries.push(call("c6", parent, "call6"), result("r6", "c6", "call6", "z".repeat(8000)));
+  parent = "r6";
+  messages.push(
+    { role: "assistant", content: [{ type: "toolCall", id: "call6", name: "read" }] },
+    { role: "toolResult", toolCallId: "call6", content: [{ type: "text", text: "z".repeat(8000) }] },
+  );
+  const cfg = parseConfig({ schemaVersion: 6, profile: "balanced", storage: { mode: "memory-only" },
+    fold: { protectRecentBatches: 1, minRemovedTokens: 8, minFoldableBytes: 1024 } });
+  const state = createPlugin(cfg);
+  const ctx = {
+    cwd: process.cwd(),
+    model: { id: "wire", provider: "controlled", contextWindow: 10000 },
+    getContextUsage: () => ({ tokens: 8000, contextWindow: 10000, percent: 80 }),
+    sessionManager: { getEntries: () => entries, getSessionId: () => "s", getLeafId: () => parent,
+      getEntry: (id: string) => entries.find((e) => e.id === id) },
+  };
+  applyContext(state, structuredClone(messages), ctx as never);
+  const id = state.lastIdentity!;
+  const hashes = state.lastFieldHashes!;
+  // Fold stubs the original r1 text, so lastFieldHashes no longer carries r1:0.
+  const original = sha256Hex("z".repeat(8000));
+  expect(state.witness.has(id, "r1:0", original)).toBe(true);
+  expect(state.witness.has(id, "r6:0", hashes.get("r6:0") ?? original), "unexposed field must not be confirmed").toBe(false);
+  state.index.closeSync();
+});
+
+test("error stopReason assistants do not expose a pending tool result", () => {
+  const entries: NativeEntry[] = [
+    user("u", null),
+    call("c1", "u", "call1"),
+    result("r1", "c1", "call1", "z".repeat(8000)),
+    {
+      id: "d1",
+      parentId: "r1",
+      type: "message",
+      message: { role: "assistant", content: [{ type: "text", text: "failed" }], stopReason: "error", usage: { input: 80, totalTokens: 90 } },
+    },
+  ];
+  const messages: AgentMessage[] = [
+    { role: "user", content: [{ type: "text", text: "question" }] },
+    { role: "assistant", content: [{ type: "toolCall", id: "call1", name: "read" }] },
+    { role: "toolResult", toolCallId: "call1", content: [{ type: "text", text: "z".repeat(8000) }] },
+    { role: "assistant", content: [{ type: "text", text: "failed" }] },
+  ];
+  const cfg = parseConfig({
+    schemaVersion: 6,
+    profile: "balanced",
+    storage: { mode: "memory-only" },
+    fold: { protectRecentBatches: 1, minRemovedTokens: 8, minFoldableBytes: 1024 },
+  });
+  const state = createPlugin(cfg);
+  applyContext(state, structuredClone(messages), {
+    cwd: process.cwd(),
+    model: { id: "wire", provider: "controlled", contextWindow: 10000 },
+    getContextUsage: () => ({ tokens: 8000, contextWindow: 10000, percent: 80 }),
+    sessionManager: {
+      getEntries: () => entries,
+      getSessionId: () => "s",
+      getLeafId: () => "d1",
+      getEntry: (id: string) => entries.find((e) => e.id === id),
+    },
+  } as never);
+  const id = state.lastIdentity!;
+  const hashes = state.lastFieldHashes!;
+  expect(hashes.has("r1:0")).toBe(true);
+  expect(state.witness.has(id, "r1:0", hashes.get("r1:0")!)).toBe(false);
+  state.index.closeSync();
+});
+
+test("sibling-branch success does not confirm the current branch field", () => {
+  const siblingDone = done("d-sib", "r-sib");
+  const entries: NativeEntry[] = [
+    user("u", null),
+    call("c1", "u", "call1"),
+    result("r1", "c1", "call1", "z".repeat(8000)),
+    done("d1", "r1"),
+    call("c-sib", "d1", "call-sib"),
+    result("r-sib", "c-sib", "call-sib", "z".repeat(8000)),
+    siblingDone,
+    call("c2", "d1", "call2"),
+    result("r2", "c2", "call2", "z".repeat(8000)),
+    done("d2", "r2"),
+  ];
+  const messages: AgentMessage[] = [
+    { role: "user", content: [{ type: "text", text: "question" }] },
+    { role: "assistant", content: [{ type: "toolCall", id: "call1", name: "read" }] },
+    { role: "toolResult", toolCallId: "call1", content: [{ type: "text", text: "z".repeat(8000) }] },
+    { role: "assistant", content: [{ type: "text", text: "done" }] },
+    { role: "assistant", content: [{ type: "toolCall", id: "call2", name: "read" }] },
+    { role: "toolResult", toolCallId: "call2", content: [{ type: "text", text: "z".repeat(8000) }] },
+    { role: "assistant", content: [{ type: "text", text: "done" }] },
+  ];
+  const cfg = parseConfig({
+    schemaVersion: 6,
+    profile: "balanced",
+    storage: { mode: "memory-only" },
+    fold: { protectRecentBatches: 1, minRemovedTokens: 8, minFoldableBytes: 1024 },
+  });
+  const state = createPlugin(cfg);
+  applyContext(state, structuredClone(messages), {
+    cwd: process.cwd(),
+    model: { id: "wire", provider: "controlled", contextWindow: 10000 },
+    getContextUsage: () => ({ tokens: 8000, contextWindow: 10000, percent: 80 }),
+    sessionManager: {
+      getEntries: () => entries,
+      getSessionId: () => "s",
+      getLeafId: () => "d2",
+      getEntry: (id: string) => entries.find((e) => e.id === id),
+    },
+  } as never);
+  const hashes = state.lastFieldHashes!;
+  expect([...hashes.keys()].some((k) => k.startsWith("r-sib:"))).toBe(false);
   state.index.closeSync();
 });
 

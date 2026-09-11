@@ -145,7 +145,7 @@ test("trial decisions match the reference cases", () => {
   for (const p of pairs.filter((_, i) => i % 2 === 0)) p.candidatePassed = false;
   expect(evaluateTrial(pairs, [{ eligible: true, passed: true }], objective(true, 0.4)).decision).toBe("review-needed");
   expect(evaluateTrial([pair({ foldApplied: false })], [], objective()).decision).toBe("inconclusive");
-  expect(evaluateTrial([pair({ evidencePassed: false })], [], objective()).decision).toBe("review-needed");
+  expect(evaluateTrial([pair({ evidencePassed: false })], [], objective()).decision).toBe("inconclusive");
   expect(evaluateTrial([pair()], [{ eligible: true, passed: true }], objective(true, 0.08)).decision).toBe("history-only");
   expect(evaluateTrial([pair()], [{ eligible: true, passed: true }], objective(false)).decision).toBe("quality-qualified-cost-unknown");
   expect(evaluateTrial([pair()], [{ eligible: true, passed: true }], objective()).decision).toBe("limited-balanced-trial");

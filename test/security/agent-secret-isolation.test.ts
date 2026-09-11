@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import { allowBrokerRequest } from "../../eval/sandbox/relay.ts";
@@ -8,26 +8,30 @@ import { startCredentialBroker } from "../../scripts/credential-broker.mjs";
 const repo = join(import.meta.dirname, "../..");
 
 test("agent launcher does not materialize provider credentials", () => {
-  const launcher = readFileSync("eval/local/sandbox/run-agent.sh", "utf8");
+  const launcher = readFileSync(join(repo, "eval/local/sandbox/run-agent.sh"), "utf8");
   expect(launcher).not.toContain('prov["apiKey"] = key');
   expect(launcher).not.toContain("--network bridge");
-  expect(launcher).not.toContain("chmod -R a+rwX");
-  expect(launcher).not.toContain('"$SOCK:/run/pctx/broker.sock"');
-  expect(launcher).toContain('"$SOCK_DIR:/run/pctx"');
-  expect(launcher).toContain('container:$BROKER_CID');
+  expect(launcher).not.toContain("container:$BROKER_CID");
+  expect(launcher).not.toContain("PCTX_BROKER_CID");
+  const runs = launcher.match(/docker run[\s\S]*?"\$IMAGE"/g) ?? [];
+  expect(runs.length).toBeGreaterThan(0);
+  for (const block of runs) expect(block, block).toContain("--network none");
+  expect(launcher).toContain("PCTX_BROKER_VOLUME");
+  expect(launcher).toContain("PCR_BROKER_SOCK=/run/pctx/broker.sock");
   expect(launcher).not.toContain("PCR_LIVE_API_KEY");
   expect(launcher).not.toContain("PCTX_MODEL_API_KEY");
 });
 
-test("episode runner keeps upstream keys in the parent broker", () => {
+test("episode runner keeps upstream keys in the parent broker or sidecar stdin", () => {
   const runner = readFileSync(join(repo, "eval/local/run-episode.mjs"), "utf8");
-  expect(runner).not.toContain("applyEndpointToModelsJson");
-  expect(runner).not.toContain("async function runOnHost");
-  expect(runner).toContain("startCredentialBroker");
-  expect(runner).toContain("--no-sandbox is removed");
-  expect(runner).not.toContain('join(out, "broker.sock")');
-  expect(runner).toContain('join("/tmp", "pctx-b-")');
-  expect(runner).toContain("darwin-sidecar-netns");
+  expect(runner).not.toContain("upstream.key");
+  expect(runner).not.toContain('join("/tmp", "pctx-k-")');
+  expect(runner).toContain("darwin-sidecar-volume-network-none");
+  expect(runner).toContain("docker volume create");
+  expect(existsSync(join(repo, "eval/local/sandbox/broker-tcp.mjs"))).toBe(false);
+  const sidecar = readFileSync(join(repo, "eval/local/sandbox/broker-unix.mjs"), "utf8");
+  expect(sidecar).not.toContain("readFileSync");
+  expect(sidecar).toContain("process.stdin");
 });
 
 test("relay denies metrics and non-chat paths", () => {

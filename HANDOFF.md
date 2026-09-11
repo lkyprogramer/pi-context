@@ -6,6 +6,7 @@
 
 - 默认 profile：**observe**（`pctx_history` + 不改写发往 provider 的消息）。不要改默认 profile。
 - 6.1-next-steps 交付决策：`inconclusive`（`artifacts/local-eval/review-final/REPORT.md`）。冻结 32+4 review 矩阵 live 为 **UNRUN**。
+- 当前交付决策：`inconclusive`（run `review-final`，HEAD `5a23e6a05a77`）
 - 被取代的个人试用：`20260909-112407`（`limited-balanced-trial`）。对照：`20260909-103813`、`20260908-215433`。不要删除这些失败/试用记录。
 - balanced 仍是 default-off。没有完整 live 证据时不得把默认改成 balanced。
 - 模型：`openclaw/Qwen3.8-27B-WORK` via `http://47.106.205.246:1082/v1`。`/metrics` 需 API key（无 key 是 401）。
@@ -19,6 +20,10 @@
 - H02 balanced `lost evidence 2/2` → `post-compaction-evidence-delta`。
 - H03 未到 60% trigger（folds=0）。
 - H03 必须走父 broker + sandbox（R06 已删除 `--no-sandbox` / host 直跑）。
+
+## 诊断数据（第 8 轮，不作交付）
+
+第 8 轮 84-episode live 尚未作为交付跑。S01–S06 代码已落地，但交付仍维持第 7 轮 `inconclusive`（run `review-final`），直到干净 HEAD 上 `PCTX_LIVE=1` 跑完 84 episode。本工作区没有 `artifacts/local-eval/review-qc-*` 三次 dirty 诊断 run，未离线复算。不把 dirty / UNRUN / diagnosticOnly 结果写成 8 轮交付。
 
 ## 常用命令
 

@@ -1,6 +1,8 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
+import { markerLine, setupLogWorkspace } from "../../eval/local/log-workspace.mjs";
 import {
   batchOrderErrors,
   buildReviewPlan,
@@ -18,20 +20,45 @@ test("oracle must have a real source and not be disclosed by the final prompt", 
   expect(validateScenario({ seedText: "target=7", witness: "target=7", finalPrompt: "continue from the recorded target", requiresFold: true }).ok).toBe(true);
 });
 
-test("frozen review plan is 32 quality + 4 capability UNRUN episodes", () => {
+test("frozen review plan is 48 quality + 6 capability + 24 warm + 6 long UNRUN episodes", () => {
   const plan = JSON.parse(readFileSync(join(import.meta.dirname, "../../eval/local/review-matrix.json"), "utf8"));
   const built = buildReviewPlan();
-  expect(plan.plannedMain).toBe(32);
-  expect(plan.plannedCapability).toBe(4);
-  expect(plan.order).toHaveLength(36);
+  expect(plan.plannedEpisodes).toBe(84);
+  expect(plan.expectedPairs).toBe(24);
+  expect(plan.expectedRegimePairs).toEqual({ warm: 12, long: 3 });
+  expect(plan.exactQuoteIds).toEqual(["Q05", "X01"]);
+  expect(plan.order).toHaveLength(84);
   expect(plan.liveStatus).toBe("UNRUN");
   expect(built.order).toEqual(plan.order);
+  expect(plan.order.every((o: { status: string; lane: string }) => o.status === "UNRUN" && ["Q", "C", "W", "X"].includes(o.lane))).toBe(true);
   const d = denominators(plan);
-  expect(d.quality).toBe(32);
-  expect(d.capability).toBe(4);
+  expect(d.quality).toBe(48);
+  expect(d.capability).toBe(6);
+  expect(d.regime).toBe(30);
   expect(d.noFoldGuard).toBe(2);
   expect(d.live).toBe("UNRUN");
   expect(plan.guardIds).toEqual(GUARD_IDS);
+});
+
+test("X01 workspace puts exactly one marker at build-07 line 210 and nothing else matches", () => {
+  const dir = mkdtempSync(join(tmpdir(), "x01-"));
+  const spec = { count: 12, lines: 300, marked: 7, markLine: 210, token: "FIRST-ERROR-MARKER" };
+  const m = setupLogWorkspace(dir, spec);
+  expect(m.file).toBe("logs/build-07.log");
+  const all = readdirSync(join(dir, "logs")).sort();
+  expect(all).toHaveLength(12);
+  let hits = 0;
+  for (const f of all) {
+    for (const [i, line] of readFileSync(join(dir, "logs", f), "utf8").split("\n").entries()) {
+      if (line.includes(spec.token)) {
+        hits++;
+        expect(f).toBe("build-07.log");
+        expect(i + 1).toBe(210);
+        expect(line).toBe(markerLine(spec));
+      }
+    }
+  }
+  expect(hits).toBe(1);
 });
 
 test("every Q/C fixture has a hidden witness", () => {

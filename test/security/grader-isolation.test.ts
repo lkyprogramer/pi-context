@@ -54,6 +54,13 @@ it("mutating a protected test file fails protectedIntact", { timeout: 120_000 },
   expect(grade.passed).toBe(false);
 });
 
+it("agent-like container has no egress", (ctx) => {
+  if (!dockerOk || !imageOk) ctx.skip();
+  const r = spawnSync("docker", ["run", "--rm", "--network", "none", "--read-only", "--user", "1000:1000", "pctx-t21-sandbox:0.85.1",
+    "node", "-e", "fetch('http://1.1.1.1/',{signal:AbortSignal.timeout(3000)}).then(()=>process.exit(1),()=>process.exit(0))"], { encoding: "utf8" });
+  expect(r.status).toBe(0);
+});
+
 it("rejects a symlink in an editable path", { timeout: 120_000 }, (ctx) => {
   if (!imageOk) ctx.skip();
   const cand = mkdtempSync(join(tmpdir(), "pctx-link-"));

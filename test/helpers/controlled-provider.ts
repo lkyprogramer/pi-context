@@ -23,6 +23,7 @@ export type ControlledScript = Array<{
   text?: string;
   toolCall?: { id: string; name: string; arguments?: unknown };
   stopReason?: string;
+  usagePercent?: number;
 }>;
 
 export interface SeededSession {
@@ -162,11 +163,12 @@ export function registerControlledProvider(
         await options.onPayload(payload, model);
       }
       const step = script[captured.length - 1] ?? {};
+      const stepPercent = typeof step.usagePercent === "number" ? step.usagePercent : scriptUsagePercent;
       const message = assistantMessage({
         text: step.text,
         toolCall: step.toolCall,
         stopReason: step.stopReason,
-        usageInput: Math.max(estimateTokens(messages), Math.ceil(opts.contextWindow * scriptUsagePercent)),
+        usageInput: Math.max(estimateTokens(messages), Math.ceil(opts.contextWindow * stepPercent)),
         model: modelId,
       });
       return {

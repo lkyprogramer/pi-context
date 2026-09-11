@@ -256,9 +256,10 @@ export function applyContext(
   const view = state.scope
     ? buildActiveView({ scope: state.scope, entries: snap.entries, messages })
     : null;
+  const exposed = view ? exposedEntryIds(view.branch) : new Set<string>();
   const boundary = view?.compactionBoundary ?? latestCompactionId(snap.entries, snap.leafId);
   const identity = identityOf(state, boundary);
-  if (view && identity) confirmPersistedFields(state, view, identity);
+  if (view && identity) confirmPersistedFields(state, view, identity, exposed);
   if (state.plan && !planStillValid(state.plan, {
     sessionId: snap.sessionId,
     compactionBoundary: boundary,
@@ -275,7 +276,7 @@ export function applyContext(
       scope: state.scope,
       view: foldable,
       batches: collectBatches(view.branch),
-      exposed: exposedEntryIds(view.branch),
+      exposed,
       usage,
       previous,
       modelId,
@@ -516,9 +517,15 @@ export function lastSuccessfulAssistantUsage(entries: NativeEntry[]): {
   return null;
 }
 
-function confirmPersistedFields(state: PluginState, view: ActiveView, identity: RequestIdentity): void {
+function confirmPersistedFields(
+  state: PluginState,
+  view: ActiveView,
+  identity: RequestIdentity,
+  exposed: ReadonlySet<string>,
+): void {
   for (const field of view.fields) {
     if (field.ref.kind !== "text" || !field.ref.sourceHash) continue;
+    if (!exposed.has(field.ref.entryId)) continue;
     state.witness.confirmPersisted(identity, field.key, field.ref.sourceHash);
   }
 }
