@@ -251,7 +251,7 @@ Changed: `artifacts/local-eval/review-final/` (force-added sanitized pack), `REA
 
 RED: round-7 `review-final` was `inconclusive` / `review-final` while live was still UNRUN.
 
-GREEN: `pnpm exec vitest run test/unit/docs-decision-consistency.test.ts --config vitest.config.ts` (run after this section); four docs quote `limited-balanced-trial` and `review-r8-20260911b`.
+GREEN: `pnpm exec vitest run test/unit/docs-decision-consistency.test.ts --config vitest.config.ts` exit 0. `pnpm check` after this pack exit 0 — 217 tests + `compat:scan` `{ok:true,files:25}`. Four docs quote `limited-balanced-trial` and `review-r8-20260911b`.
 
 ### Preflight on HEAD `878e92f292a7` (dirty=false)
 
