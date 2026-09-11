@@ -186,8 +186,13 @@ writeFileSync(join(out, "broker-hop.json"), JSON.stringify({
   port: broker.port ?? null,
 }, null, 2));
 try {
-  const r = spawnSync("bash", [sandboxScript, cwd, agentDir, out, window], {
-    encoding: "utf8", timeout: BUDGET.wallMs + 60_000, killSignal: "SIGKILL",
+  const r = await runSandboxAgent({
+    script: sandboxScript,
+    cwd,
+    agentDir,
+    out,
+    window,
+    timeoutMs: BUDGET.wallMs + 60_000,
     env: {
       ...process.env,
       ...(brokerSock ? { PCTX_BROKER_SOCK: brokerSock } : {}),
@@ -198,8 +203,6 @@ try {
       PCTX_BUDGET_TOOLS: String(BUDGET.toolCalls),
     },
   });
-  if (r.stdout) process.stdout.write(r.stdout);
-  if (r.stderr) process.stderr.write(r.stderr);
   if (r.status === 3) {
     status = "blocked";
     error = (r.stderr || r.stdout || "sandbox image missing").trim();
@@ -520,6 +523,33 @@ function stopBrokerSidecar(sidecar) {
   if (!sidecar) return;
   spawnSync("docker", ["rm", "-f", sidecar.cid ?? sidecar.name], { encoding: "utf8" });
   if (sidecar.volume) spawnSync("docker", ["volume", "rm", sidecar.volume], { encoding: "utf8" });
+}
+function runSandboxAgent({ script, cwd, agentDir, out, window, env, timeoutMs }) {
+  // Must be async spawn: the Linux parent unix broker lives in this process.
+  // spawnSync would freeze the event loop and the agent could never reach the provider.
+  return new Promise((resolve) => {
+    const child = spawn("bash", [script, cwd, agentDir, out, window], {
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      const text = String(chunk);
+      stdout += text;
+      process.stdout.write(text);
+    });
+    child.stderr.on("data", (chunk) => {
+      const text = String(chunk);
+      stderr += text;
+      process.stderr.write(text);
+    });
+    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
+    child.on("close", (status, signal) => {
+      clearTimeout(timer);
+      resolve({ status: status ?? (signal ? 1 : 0), stdout, stderr, signal });
+    });
+  });
 }
 function parseArgs(argv) { const o = {}; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (!a.startsWith("--")) continue; const k = a.slice(2); const v = argv[i + 1]; if (v && !v.startsWith("--")) { o[k] = v; i++; } else o[k] = true; } return o; }
 function need(k) { if (!args[k]) die(`--${k} required`); return String(args[k]); }

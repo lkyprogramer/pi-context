@@ -221,7 +221,9 @@ GREEN (static): `pnpm exec vitest run test/security/agent-secret-isolation.test.
 
 Implemented: Darwin sidecar = named volume + `docker run -i` + key on stdin first line + unix socket probe; `broker-hop.json.kind = darwin-sidecar-volume-network-none`. Agent `docker run` is only `--network none`. Unwritable socket dir throws with the path (no TCP fallback). `secure-preflight --canary` adds `agentEgress`. Source comment keeps the `docker volume create` literal the isolation test greps for.
 
-Docker canary: **BLOCKED** at implementation time (`docker` not on PATH). `apt-get install docker.io` was started later under user authorization; image `pctx-t21-sandbox:0.85.1` not built yet. S05 GREEN limited to static tests.
+Docker canary: **GREEN** after installing Docker 29.8.0 (static binary; `apt-get update` hung). `node eval/local/secure-preflight.mjs --canary` exit 0 `{ok:true, env:false, models:false, proc:false, agentEgress:false}`. Grader isolation 6/6 (no skips). Image `pctx-t21-sandbox:0.85.1` built from `eval/sandbox/Containerfile`.
+
+Linux live follow-up: first `PCTX_LIVE=1` episode hung because `spawnSync(run-agent.sh)` froze the in-process unix broker. Replaced with async `runSandboxAgent` (`spawn`). Stuck run kept at `artifacts/local-eval/review-r8-20260911/` (not a delivery).
 
 ## S06
 

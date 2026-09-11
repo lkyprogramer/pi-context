@@ -28,6 +28,8 @@ test("episode runner keeps upstream keys in the parent broker or sidecar stdin",
   expect(runner).not.toContain('join("/tmp", "pctx-k-")');
   expect(runner).toContain("darwin-sidecar-volume-network-none");
   expect(runner).toContain("docker volume create");
+  expect(runner).not.toMatch(/spawnSync\(\s*"bash",\s*\[sandboxScript/);
+  expect(runner).toContain("runSandboxAgent");
   expect(existsSync(join(repo, "eval/local/sandbox/broker-tcp.mjs"))).toBe(false);
   const sidecar = readFileSync(join(repo, "eval/local/sandbox/broker-unix.mjs"), "utf8");
   expect(sidecar).not.toContain("readFileSync");
