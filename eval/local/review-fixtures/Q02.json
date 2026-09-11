@@ -2,10 +2,10 @@
   "id": "Q02",
   "kind": "quality",
   "base": "L02",
-  "seedText": "旧重试上限3已废弃；生效契约 maxAttempts=7，terminal failure不得重试。",
+  "seedText": "前期工具记录，本行只作折叠头，不含判定值。\n旧重试上限3已废弃；生效契约 maxAttempts=7，terminal failure不得重试。",
   "witness": "maxAttempts=7",
-  "finalPrompt": "依据已经读取的生效契约修复重试行为；报告所用契约来源。",
+  "finalPrompt": "依据已经读取的生效契约修复重试行为；报告所用契约来源。把所用契约的关键上限数字单独写入 retry-contract.txt，一行、无其它文字。",
   "requiresFold": true,
-  "oracle": { "maxAttempts": 7 },
+  "oracle": { "file": "retry-contract.txt", "equals": "7" },
   "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
 }

@@ -18,6 +18,7 @@ import { engineOk, fetchModels, loadRepoEnv, modelEndpoint } from "./model-endpo
 import { plannedEpisodeId } from "./accounting.mjs";
 import { hashTree, sha256Bytes } from "./bundle.mjs";
 import { parseSession, verbatimQuote } from "./parse-session.mjs";
+import { REVIEW_BUDGET, requiresFoldMap } from "./review-spec.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");
@@ -25,32 +26,47 @@ loadRepoEnv(repo);
 const args = parseArgs(process.argv.slice(2));
 const mode = String(args.mode ?? "live");
 if (mode !== "live" && mode !== "controlled") die("--mode must be controlled|live");
-if (mode === "live" && process.env.PCTX_LIVE !== "1") {
-  die("live mode requires PCTX_LIVE=1 and the user-provided endpoint; refusing to search other providers");
-}
 const runDir = resolve(args.resume ?? args.out ?? die("--out required"));
 const dry = "dry" in args;
+if (mode === "live" && process.env.PCTX_LIVE !== "1" && !dry) {
+  die("live mode requires PCTX_LIVE=1 and the user-provided endpoint; refusing to search other providers");
+}
 mkdirSync(runDir, { recursive: true });
 
+let reviewCfg = null;
 if (args.config) {
-  const reviewCfg = JSON.parse(readFileSync(resolve(String(args.config)), "utf8"));
+  reviewCfg = JSON.parse(readFileSync(resolve(String(args.config)), "utf8"));
   writeFileSync(join(runDir, "plan.json"), JSON.stringify(reviewCfg, null, 2));
 }
+const isReviewLive = Boolean(reviewCfg?.plannedEpisodes === 36 && reviewCfg.qualityIds?.includes("Q01"));
+const CONTROLLED_TESTS = [
+  "test/host/after-fold-quality.test.ts",
+  "test/host/balanced-wire.test.ts",
+  "test/host/controlled-guards.test.ts",
+];
 if (mode === "controlled") {
-  const r = spawnSync("pnpm", ["exec", "vitest", "run", "test/host/after-fold-quality.test.ts", "test/host/balanced-wire.test.ts", "--config", "vitest.config.ts"], {
+  const r = spawnSync("pnpm", ["exec", "vitest", "run", ...CONTROLLED_TESTS, "--config", "vitest.config.ts"], {
     cwd: repo, encoding: "utf8", stdio: "inherit",
   });
   writeFileSync(join(runDir, "controlled.json"), JSON.stringify({
     mode: "controlled",
     exit: r.status,
     liveStatus: "UNRUN",
-    note: "host-controlled fold lane; live 36-episode matrix is a separate --mode live run",
+    liveDenominator: 36,
+    guardIds: reviewCfg?.guardIds ?? ["G01", "G02"],
+    tests: CONTROLLED_TESTS,
+    note: "host-controlled fold + G01/G02 guards; live 36-episode matrix is a separate --mode live run",
   }, null, 2));
   process.exit(r.status ?? 1);
 }
-const cases = JSON.parse(readFileSync(join(here, "cases.json"), "utf8")).cases.filter((c) => c.runner === "episode");
+const allCases = JSON.parse(readFileSync(join(here, "cases.json"), "utf8")).cases;
+const casesById = new Map(allCases.map((c) => [c.id, c]));
 const only = args.only ? String(args.only).split(",") : null;
-const selected = cases.filter((c) => !only || only.includes(c.id));
+const selected = allCases.filter((c) => {
+  if (only && !only.includes(c.id)) return false;
+  if (isReviewLive) return reviewCfg.order.some((o) => o.caseId === c.id);
+  return c.runner === "episode";
+});
 
 let manifest;
 const manifestPath = join(runDir, "manifest.json");
@@ -58,30 +74,48 @@ if (args.resume && existsSync(manifestPath)) {
   manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 } else {
   const seed = Number(args.seed ?? 42);
-  const order = [];
-  for (const c of selected) {
-    for (let rep = 1; rep <= c.reps; rep++) {
-      const arms = rep % 2 === 1 ? c.arms : [...c.arms].reverse();
-      for (const arm of arms) {
-        const episodeId = plannedEpisodeId(runDir.split("/").pop(), c.id, arm, rep);
-        order.push({ episodeId, caseId: c.id, arm, rep, windowProfile: c.windowProfile, sandbox: true });
+  let order = [];
+  if (isReviewLive) {
+    order = reviewCfg.order
+      .filter((o) => !only || only.includes(o.caseId))
+      .map((o) => ({
+        ...o,
+        windowProfile: casesById.get(o.caseId)?.windowProfile ?? "w64k",
+        sandbox: true,
+      }));
+  } else {
+    for (const c of selected) {
+      for (let rep = 1; rep <= c.reps; rep++) {
+        const arms = rep % 2 === 1 ? c.arms : [...c.arms].reverse();
+        for (const arm of arms) {
+          const episodeId = plannedEpisodeId(runDir.split("/").pop(), c.id, arm, rep);
+          order.push({ episodeId, caseId: c.id, arm, rep, windowProfile: c.windowProfile, sandbox: true });
+        }
       }
     }
+    shuffleGroups(order, seed);
   }
-  shuffleGroups(order, seed);
   const dist = join(repo, "dist/extension.js");
   const tarball = findTarball();
   const endpoint = modelEndpoint();
-  const qualityIds = selected.filter((c) => String(c.id).startsWith("L")).map((c) => c.id);
-  const capabilityIds = selected.filter((c) => String(c.id).startsWith("H")).map((c) => c.id);
-  const expectedPairs = qualityIds.reduce((n, id) => {
-    const c = selected.find((x) => x.id === id);
-    return n + (c ? c.reps : 0);
-  }, 0);
-  const expectedCapabilities = capabilityIds.reduce((n, id) => {
-    const c = selected.find((x) => x.id === id);
-    return n + (c ? c.reps * (c.arms.includes("balanced") ? 1 : 0) : 0);
-  }, 0);
+  const qualityIds = isReviewLive
+    ? reviewCfg.qualityIds.filter((id) => order.some((o) => o.caseId === id))
+    : selected.filter((c) => String(c.id).startsWith("L")).map((c) => c.id);
+  const capabilityIds = isReviewLive
+    ? reviewCfg.capabilityIds.filter((id) => order.some((o) => o.caseId === id))
+    : selected.filter((c) => String(c.id).startsWith("H")).map((c) => c.id);
+  const expectedPairs = isReviewLive
+    ? new Set(order.filter((o) => qualityIds.includes(o.caseId)).map((o) => `${o.caseId}:${o.rep}`)).size
+    : qualityIds.reduce((n, id) => {
+      const c = selected.find((x) => x.id === id);
+      return n + (c ? c.reps : 0);
+    }, 0);
+  const expectedCapabilities = isReviewLive
+    ? order.filter((o) => capabilityIds.includes(o.caseId)).length
+    : capabilityIds.reduce((n, id) => {
+      const c = selected.find((x) => x.id === id);
+      return n + (c ? c.reps * (c.arms.includes("balanced") ? 1 : 0) : 0);
+    }, 0);
   const porcelain = sh("git", ["status", "--porcelain"]);
   manifest = {
     runId: runDir.split("/").pop(), createdAt: new Date().toISOString(), seed,
@@ -99,7 +133,15 @@ if (args.resume && existsSync(manifestPath)) {
     sandboxImageId: imageId(),
     model: endpoint.expectModel, baseUrl: endpoint.baseUrl, thinking: "medium",
     models: modelsSnapshot(),
-    budget: { totalEpisodes: order.length, totalWallMs: 3.5 * 3600 * 1000, episode: { wallMs: 900000, modelCalls: 40, toolCalls: 80 }, h03: { wallMs: 3600000, modelCalls: 200, toolCalls: 400 } },
+    budget: isReviewLive
+      ? {
+        totalEpisodes: order.length,
+        totalWallMs: REVIEW_BUDGET.run.totalWallMs,
+        totalModelCalls: REVIEW_BUDGET.run.totalModelCalls,
+        totalToolCalls: REVIEW_BUDGET.run.totalToolCalls,
+        episode: { ...REVIEW_BUDGET.episode },
+      }
+      : { totalEpisodes: order.length, totalWallMs: 3.5 * 3600 * 1000, episode: { wallMs: 900000, modelCalls: 40, toolCalls: 80 }, h03: { wallMs: 3600000, modelCalls: 200, toolCalls: 400 } },
     configHash: null,
     configHashByArm: await expectedArmHashes(),
     metricsAvailable: metricsAvailable(),
@@ -107,11 +149,13 @@ if (args.resume && existsSync(manifestPath)) {
     plan: {
       qualityIds,
       capabilityIds,
-      requiresFold: Object.fromEntries(capabilityIds.map((id) => [id, true])),
+      requiresFold: isReviewLive
+        ? requiresFoldMap([...qualityIds, ...capabilityIds])
+        : Object.fromEntries(capabilityIds.map((id) => [id, true])),
       objective: { metric: "logical-input", known: false, relativeChange: null, minImprovement: 0.1 },
       expectedPairs,
       expectedCapabilities,
-      scenarioHash: sha256File(join(here, "cases.json")),
+      scenarioHash: sha256File(isReviewLive ? resolve(String(args.config)) : join(here, "cases.json")),
       order,
     },
   };
@@ -122,9 +166,11 @@ if (dry) { console.log(JSON.stringify({ runDir, episodes: manifest.order.length,
 if (!manifest.pluginSha256 && manifest.order.some((o) => o.arm !== "native")) die("dist/extension.js missing; run pnpm build");
 
 const started = Date.now();
-let blockedCount = 0, done = 0;
+let blockedCount = 0, done = 0, usedModel = 0, usedTools = 0;
 for (const ep of manifest.order) {
   if (Date.now() - started > manifest.budget.totalWallMs) { console.error("total wall budget exhausted; stopping"); break; }
+  if (manifest.budget.totalModelCalls != null && usedModel >= manifest.budget.totalModelCalls) { console.error("total model budget exhausted; stopping"); break; }
+  if (manifest.budget.totalToolCalls != null && usedTools >= manifest.budget.totalToolCalls) { console.error("total tool budget exhausted; stopping"); break; }
   const epDir = join(runDir, "episodes", `${ep.caseId}-${ep.arm}-r${ep.rep}`);
   if (existsSync(join(epDir, "result.json"))) { console.log(`skip existing ${epDir}`); continue; }
   mkdirSync(epDir, { recursive: true });
@@ -137,12 +183,15 @@ for (const ep of manifest.order) {
     blockedCount++; done++;
     continue;
   }
-  const cmd = ["run-episode.mjs", "--case", ep.caseId, "--arm", ep.arm, "--window", ep.windowProfile, "--rep", String(ep.rep), "--out", epDir, "--run", manifest.runId];
+  const cmd = ["run-episode.mjs", "--case", ep.caseId, "--arm", ep.arm, "--window", ep.windowProfile ?? "w64k", "--rep", String(ep.rep), "--out", epDir, "--run", manifest.runId, "--episode-id", ep.episodeId];
+  if (isReviewLive && manifest.budget.episode) {
+    cmd.push("--budget-wall-ms", String(manifest.budget.episode.wallMs), "--budget-model", String(manifest.budget.episode.modelCalls), "--budget-tools", String(manifest.budget.episode.toolCalls));
+  }
   const r = spawnSync("node", cmd.map((x, i) => (i === 0 ? join(here, x) : x)), { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] });
   const resultPath = join(epDir, "result.json");
   if (!existsSync(resultPath)) { appendFileSync(join(runDir, "episodes.jsonl"), `${JSON.stringify({ manifest: ep, status: "error", error: `runner exit ${r.status}` })}\n`); continue; }
   const result = JSON.parse(readFileSync(resultPath, "utf8"));
-  const spec = cases.find((c) => c.id === ep.caseId);
+  const spec = casesById.get(ep.caseId);
   if (result.status !== "blocked" && ep.caseId !== "H03" && result.oracle?.passed == null) {
     const secret = spec.seed ? join(repo, `${spec.seed}.secret`) : "";
     spawnSync("bash", [join(here, "grade.sh"), ep.caseId, result.workdir, epDir, secret], { stdio: "ignore" });
@@ -176,6 +225,9 @@ for (const ep of manifest.order) {
     appendFileSync(join(runDir, "attempts.jsonl"), readFileSync(join(epDir, "attempts.jsonl"), "utf8"));
   }
   for (const q of result.requests ?? []) appendFileSync(join(runDir, "requests.jsonl"), `${JSON.stringify({ caseId: ep.caseId, arm: ep.arm, rep: ep.rep, requestId: q.requestId, source: q.source, usage: q.usage, purpose: q.purpose })}\n`);
+  usedModel += result.requests?.length ?? 0;
+  const csPath = join(epDir, "container-status.json");
+  if (existsSync(csPath)) usedTools += JSON.parse(readFileSync(csPath, "utf8")).toolCalls ?? 0;
   done++;
   console.log(`[${done}/${manifest.order.length}] ${ep.caseId}/${ep.arm}/r${ep.rep} → ${result.status} oracle=${result.oracle?.passed} folds=${result.mechanism?.folds} wall=${Math.round((result.wallMs ?? 0) / 1000)}s`);
 }

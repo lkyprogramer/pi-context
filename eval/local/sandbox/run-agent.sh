@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Run the Pi agent for one episode inside pctx-t21-sandbox:0.85.1.
 #   run-agent.sh <workdir> <agentDir> <episodeDir> <windowProfile>
-# Parent must already be running the credential broker and pass PCTX_BROKER_SOCK.
-# Never sources .env and never writes an upstream API key. Network is none.
+# Parent must already be running the credential broker.
+# Never sources .env and never writes an upstream API key.
+# Linux: Unix socket + --network none.
+# Darwin: join the sidecar broker container network namespace (127.0.0.1:8080).
 set -euo pipefail
 WORK="$(cd "${1:?workdir}" && pwd)"
 AGENT="$(cd "${2:?agentDir}" && pwd)"
@@ -11,15 +13,12 @@ WINDOW="${4:?window}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../../.." && pwd)"
 IMAGE="${PCTX_SANDBOX_IMAGE:-pctx-t21-sandbox:0.85.1}"
-SOCK="${PCTX_BROKER_SOCK:?broker socket required}"
 TOKEN="${PCTX_BROKER_TOKEN:?opaque broker token required}"
+BROKER_CID="${PCTX_BROKER_CID:-}"
+SOCK="${PCTX_BROKER_SOCK:-}"
 
 if ! command -v docker >/dev/null 2>&1 || ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "blocked: sandbox image $IMAGE missing" >&2
-  exit 3
-fi
-if [[ ! -S "$SOCK" ]]; then
-  echo "blocked: broker socket missing" >&2
   exit 3
 fi
 
@@ -50,19 +49,44 @@ BUDGET_ENV=(
   -e "PCTX_BUDGET_TOOLS=${PCTX_BUDGET_TOOLS:-80}"
 )
 
+COMMON_ARGS=(
+  --rm
+  --read-only --tmpfs /tmp:rw,exec,size=1g
+  --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges
+  --memory 4g --pids-limit 512
+  -v "$WORK:/work"
+  -v "$AGENT:/home/node/.pi/agent"
+  -v "$REPO/dist:/plugin:ro"
+  -v "$OUT:/out"
+  -e PCTX_WINDOW="$WINDOW"
+  -e PCTX_PROMPTS=/out/prompts.json
+  -e PCTX_HOST_VERSION=0.85.1
+)
+
 set +u
-docker run --rm --network none --read-only --tmpfs /tmp:rw,exec,size=1g \
-  --user 1000:1000 --cap-drop ALL --security-opt no-new-privileges \
-  --memory 4g --pids-limit 512 \
-  -v "$WORK:/work" \
-  -v "$AGENT:/home/node/.pi/agent" \
-  -v "$REPO/dist:/plugin:ro" \
-  -v "$OUT:/out" \
-  -v "$SOCK:/run/pctx/broker.sock" \
-  -e PCTX_WINDOW="$WINDOW" \
-  -e PCTX_PROMPTS=/out/prompts.json \
-  -e PCTX_HOST_VERSION=0.85.1 \
+if [[ -n "$BROKER_CID" ]]; then
+  docker run "${COMMON_ARGS[@]}" \
+    --network "container:$BROKER_CID" \
+    "${BUDGET_ENV[@]}" \
+    "${SEED_ENV[@]}" \
+    "$IMAGE" sh -c 'exec node /out/run-in-container.mjs'
+  exit $?
+fi
+
+if [[ -z "$SOCK" || ! -S "$SOCK" ]]; then
+  echo "blocked: broker socket missing" >&2
+  exit 3
+fi
+SOCK_DIR="$(cd "$(dirname "$SOCK")" && pwd)"
+if [[ "$(basename "$SOCK")" != "broker.sock" ]]; then
+  echo "blocked: broker socket must be named broker.sock for the /run/pctx mount" >&2
+  exit 3
+fi
+
+docker run "${COMMON_ARGS[@]}" \
+  --network none \
+  -v "$SOCK_DIR:/run/pctx" \
   -e PCR_BROKER_SOCK=/run/pctx/broker.sock \
   "${BUDGET_ENV[@]}" \
   "${SEED_ENV[@]}" \
-  "$IMAGE" sh -c 'node /out/unix-relay.mjs & exec node /out/run-in-container.mjs'
+  "$IMAGE" sh -c 'exec node /out/run-in-container.mjs'

@@ -20,6 +20,8 @@ import { startCredentialBroker } from "../../scripts/credential-broker.mjs";
 import { aggregateAttempts, nextAttemptId, normalizeUsage, plannedEpisodeId } from "./accounting.mjs";
 import { foldedErrorCount, nonceEntryIds, nonceVerifiedReads, parseSession, verbatimQuote } from "./parse-session.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint, servedIdentity } from "./model-endpoint.mjs";
+import { ensureReviewSeed } from "./review-seed.mjs";
+import { REVIEW_BUDGET } from "./review-spec.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");            // eval/local → repo root
@@ -29,7 +31,6 @@ const caseId = need("case"), arm = need("arm"), window = need("window"), out = r
 const rep = Number(args.rep ?? 0);
 const sandboxScript = join(here, "sandbox", "run-agent.sh");
 const pluginEntry = resolve(args.plugin ?? join(repo, "dist/extension.js"));
-const BUDGET = { wallMs: caseId === "H03" ? 3_600_000 : 900_000, modelCalls: caseId === "H03" ? 200 : 40, toolCalls: caseId === "H03" ? 400 : 80 };
 
 mkdirSync(out, { recursive: true });
 if (!["native", "observe", "balanced"].includes(arm)) die(`bad arm ${arm}`);
@@ -37,7 +38,13 @@ if (!["w262k", "w64k"].includes(window)) die(`bad window ${window}`);
 
 const cases = JSON.parse(readFileSync(join(here, "cases.json"), "utf8")).cases;
 const spec = cases.find((c) => c.id === caseId);
-if (!spec || spec.runner !== "episode") die(`case ${caseId} is not an episode case`);
+if (!spec || (spec.runner !== "episode" && spec.runner !== "review")) die(`case ${caseId} is not an episode case`);
+const review = spec.runner === "review";
+const BUDGET = {
+  wallMs: Number(args["budget-wall-ms"] ?? (review ? REVIEW_BUDGET.episode.wallMs : caseId === "H03" ? 3_600_000 : 900_000)),
+  modelCalls: Number(args["budget-model"] ?? (review ? REVIEW_BUDGET.episode.modelCalls : caseId === "H03" ? 200 : 40)),
+  toolCalls: Number(args["budget-tools"] ?? (review ? REVIEW_BUDGET.episode.toolCalls : caseId === "H03" ? 400 : 80)),
+};
 if (!spec.arms.includes(arm)) die(`case ${caseId} does not run arm ${arm}`);
 if ("no-sandbox" in args) blocked("--no-sandbox is removed; all arms use the parent broker");
 const sandbox = true;
@@ -93,6 +100,9 @@ if (arm === "native" && Array.isArray(writtenSettings.extensions) && writtenSett
 
 let seedCopy = null;
 let seedSourceSha = null;
+if (review && spec.seed) {
+  ensureReviewSeed(spec, { dest: join(repo, spec.seed) });
+}
 if (spec.seed) {
   const seedAbs = join(repo, spec.seed);
   if (!existsSync(seedAbs)) blocked(`seed missing ${seedAbs}`);
@@ -102,7 +112,7 @@ if (spec.seed) {
   if (sha256File(seedAbs) !== seedSourceSha) blocked("seed source mutated while copying");
 }
 
-const episodeId = plannedEpisodeId(args.run, caseId, arm, rep);
+const episodeId = args["episode-id"] ? String(args["episode-id"]) : plannedEpisodeId(args.run, caseId, arm, rep);
 const manifest = {
   runId: args.run ?? null, episodeId, caseId, arm, rep, windowProfile: window, sandbox,
   hostVersion: piVersion(),
@@ -122,24 +132,54 @@ const t0 = Date.now();
 let status = "complete", error = null;
 writeFileSync(join(out, "prompts.json"), JSON.stringify(prompts));
 if (seedCopy) cpSync(seedCopy, join(out, "seed.jsonl"));
-const brokerSock = join(out, "broker.sock");
-const broker = await startCredentialBroker({
-  targetBaseUrl: baseUrl,
-  apiKey,
-  allowedModel: servedId ?? "openclaw/Qwen3.8-27B-WORK",
-  allowedToken: brokerToken,
-  socketPath: brokerSock,
-  maxRequests: BUDGET.modelCalls,
-  maxBodyBytes: 2_000_000,
-  requestTimeoutMs: 180_000,
-  socketMode: 0o600,
-});
+// Docker Desktop cannot hop a host Unix/TCP broker into the VM. On darwin a sidecar
+// broker container holds the upstream key and the agent joins its network namespace.
+// Linux keeps the parent unix socket + --network none hop. Keys never enter the agent.
+const darwinHop = process.platform === "darwin";
+const brokerDir = darwinHop ? null : mkdtempSync(join("/tmp", "pctx-b-"));
+const brokerSock = brokerDir ? join(brokerDir, "broker.sock") : "";
+if (brokerSock) writeFileSync(join(out, "broker-sock.path"), `${brokerSock}\n`);
+let broker;
+let sidecar = null;
+if (darwinHop) {
+  try {
+    sidecar = startBrokerSidecar({
+      baseUrl,
+      apiKey,
+      token: brokerToken,
+      model: servedId ?? "openclaw/Qwen3.8-27B-WORK",
+      maxRequests: BUDGET.modelCalls,
+    });
+  } catch (e) {
+    blocked(`broker sidecar: ${e instanceof Error ? e.message : e}`);
+  }
+  broker = { port: 8080, socketPath: null, close: async () => stopBrokerSidecar(sidecar) };
+} else {
+  broker = await startCredentialBroker({
+    targetBaseUrl: baseUrl,
+    apiKey,
+    allowedModel: servedId ?? "openclaw/Qwen3.8-27B-WORK",
+    allowedToken: brokerToken,
+    socketPath: brokerSock,
+    socketMode: 0o600,
+    maxRequests: BUDGET.modelCalls,
+    maxBodyBytes: 2_000_000,
+    requestTimeoutMs: 180_000,
+  });
+}
+writeFileSync(join(out, "broker-hop.json"), JSON.stringify({
+  kind: darwinHop ? "darwin-sidecar-netns" : "unix-network-none",
+  port: broker.port ?? null,
+  socketPath: broker.socketPath ?? null,
+  sidecar: sidecar?.name ?? null,
+}, null, 2));
 try {
   const r = spawnSync("bash", [sandboxScript, cwd, agentDir, out, window], {
     encoding: "utf8", timeout: BUDGET.wallMs + 60_000, killSignal: "SIGKILL",
     env: {
       ...process.env,
-      PCTX_BROKER_SOCK: brokerSock,
+      ...(brokerSock ? { PCTX_BROKER_SOCK: brokerSock } : {}),
+      ...(sidecar ? { PCTX_BROKER_CID: sidecar.cid } : {}),
       PCTX_BROKER_TOKEN: brokerToken,
       PCTX_BUDGET_WALL_MS: String(BUDGET.wallMs),
       PCTX_BUDGET_MODEL: String(BUDGET.modelCalls),
@@ -160,6 +200,7 @@ try {
   }
 } finally {
   await broker.close();
+  if (brokerDir) rmSync(brokerDir, { recursive: true, force: true });
 }
 const wallMs = Date.now() - t0;
 snap("after");
@@ -412,6 +453,46 @@ function protectedSha(root, paths) { const h = createHash("sha256"); for (const 
 function git(dir, a) { execFileSync("git", ["-C", dir, ...a], { stdio: "ignore" }); }
 function sha256(s) { return createHash("sha256").update(s).digest("hex"); }
 function sha256File(p) { return createHash("sha256").update(readFileSync(p)).digest("hex"); }
+function startBrokerSidecar({ baseUrl, apiKey, token, model, maxRequests }) {
+  const image = process.env.PCTX_SANDBOX_IMAGE ?? "pctx-t21-sandbox:0.85.1";
+  const name = `pctx-b-${randomBytes(6).toString("hex")}`;
+  const secretDir = mkdtempSync(join("/tmp", "pctx-k-"));
+  writeFileSync(join(secretDir, "upstream.key"), `${apiKey}\n`, { mode: 0o600 });
+  const started = spawnSync("docker", [
+    "run", "-d", "--name", name,
+    "--read-only", "--tmpfs", "/tmp:rw,size=64m",
+    "--user", "1000:1000", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+    "--memory", "512m", "--pids-limit", "64",
+    "-e", `PCR_LIVE_BASE_URL=${baseUrl}`,
+    "-e", `PCR_LIVE_MODEL=${model}`,
+    "-e", `PCTX_BROKER_TOKEN=${token}`,
+    "-e", `PCTX_BUDGET_MODEL=${maxRequests}`,
+    "-v", `${join(repo, "scripts/credential-broker.mjs")}:/opt/pctx/credential-broker.mjs:ro`,
+    "-v", `${join(here, "sandbox/broker-tcp.mjs")}:/opt/pctx/broker-tcp.mjs:ro`,
+    "-v", `${secretDir}:/run/pctx-secret:ro`,
+    image, "node", "/opt/pctx/broker-tcp.mjs",
+  ], { encoding: "utf8" });
+  if (started.status !== 0) {
+    rmSync(secretDir, { recursive: true, force: true });
+    throw new Error(`broker sidecar: ${(started.stderr || started.stdout || "docker run failed").trim()}`);
+  }
+  const cid = started.stdout.trim();
+  for (let i = 0; i < 50; i++) {
+    const probe = spawnSync("docker", ["exec", cid, "node", "-e",
+      "fetch('http://127.0.0.1:8080/v1/models').then((r)=>process.exit(r.status===403?0:1)).catch(()=>process.exit(2))",
+    ], { encoding: "utf8" });
+    if (probe.status === 0) return { cid, name, secretDir };
+    spawnSync("sleep", ["0.1"]);
+  }
+  spawnSync("docker", ["rm", "-f", cid], { encoding: "utf8" });
+  rmSync(secretDir, { recursive: true, force: true });
+  throw new Error("broker sidecar not ready");
+}
+function stopBrokerSidecar(sidecar) {
+  if (!sidecar) return;
+  spawnSync("docker", ["rm", "-f", sidecar.cid], { encoding: "utf8" });
+  if (sidecar.secretDir) rmSync(sidecar.secretDir, { recursive: true, force: true });
+}
 function parseArgs(argv) { const o = {}; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (!a.startsWith("--")) continue; const k = a.slice(2); const v = argv[i + 1]; if (v && !v.startsWith("--")) { o[k] = v; i++; } else o[k] = true; } return o; }
 function need(k) { if (!args[k]) die(`--${k} required`); return String(args[k]); }
 function die(m) { console.error(m); process.exit(2); }

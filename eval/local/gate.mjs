@@ -47,10 +47,17 @@ export function episodeKey(e) {
 }
 
 export function materializeItt(plan, episodes) {
-  const byKey = new Map((episodes ?? []).map((e) => [episodeKey(e), e]));
+  const byKey = new Map();
+  for (const e of episodes ?? []) {
+    byKey.set(episodeKey(e), e);
+    const fallback = `${e.manifest?.caseId}/${e.manifest?.arm}/r${e.manifest?.rep}`;
+    if (fallback.includes("undefined")) continue;
+    if (!byKey.has(fallback)) byKey.set(fallback, e);
+  }
   return (plan?.order ?? []).map((slot) => {
     const key = slot.episodeId ?? `${slot.caseId}/${slot.arm}/r${slot.rep}`;
-    return byKey.get(key) ?? {
+    const fallback = `${slot.caseId}/${slot.arm}/r${slot.rep}`;
+    return byKey.get(key) ?? byKey.get(fallback) ?? {
       episodeId: slot.episodeId ?? key,
       manifest: slot,
       status: "NOT_RUN",

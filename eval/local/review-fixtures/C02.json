@@ -2,7 +2,7 @@
   "id": "C02",
   "kind": "capability",
   "base": null,
-  "seedText": "当前分支两条合法needle：needle-alpha 与 needle-beta。兄弟分支诱饵 decoy-gamma。两次search需要分页。",
+  "seedText": "前期工具记录，本行只作折叠头，不含判定值。\n当前分支两条合法needle：needle-alpha 与 needle-beta。兄弟分支诱饵 decoy-gamma。两次search需要分页。",
   "witness": "needle-alpha",
   "finalPrompt": "在当前会话分支找到所有合法needle并读回原文。",
   "requiresFold": false,

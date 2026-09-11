@@ -1,0 +1,15 @@
+{
+  "id": "G02",
+  "kind": "controlled-guard",
+  "cluster": "media-errors",
+  "base": null,
+  "seedText": "图片+文本、错误、未完成两工具批次、重复ID。guard-token=g02-media-errors",
+  "witness": "g02-media-errors",
+  "finalPrompt": "继续处理尚未消费的工具批次。",
+  "requiresFold": false,
+  "oracle": {
+    "keepImageBlocks": true,
+    "keepErrorAndIncomplete": true,
+    "duplicateIdsNotComplete": true
+  }
+}

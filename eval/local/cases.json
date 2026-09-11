@@ -280,101 +280,203 @@
     },
     {
       "id": "Q01",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L04",
-      "reviewFixture": "eval/local/review-fixtures/Q01.json"
+      "taskFile": "eval/local/cases/Q01/TASK.md",
+      "seed": "eval/local/seeds/review/Q01.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q01.json",
+      "grader": {
+        "kind": "oracle-java+file",
+        "trusted": ["grader/Oracle.java"],
+        "editable": ["Deduplicator.java", "contract-revision.txt"],
+        "fileOracle": { "file": "contract-revision.txt", "equals": "tenant-contract-73" }
+      },
+      "protectedPaths": ["grader"]
     },
     {
       "id": "Q02",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L02",
-      "reviewFixture": "eval/local/review-fixtures/Q02.json"
+      "taskFile": "eval/local/cases/Q02/TASK.md",
+      "seed": "eval/local/seeds/review/Q02.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q02.json",
+      "grader": {
+        "kind": "verify-sh+file",
+        "trusted": ["verify.sh", "src/test"],
+        "editable": ["src/main", "retry-contract.txt"],
+        "fileOracle": { "file": "retry-contract.txt", "equals": "7" }
+      },
+      "protectedPaths": ["verify.sh", "src/test"]
     },
     {
       "id": "Q03",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L03",
-      "reviewFixture": "eval/local/review-fixtures/Q03.json"
+      "taskFile": "eval/local/cases/Q03/TASK.md",
+      "seed": "eval/local/seeds/review/Q03.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q03.json",
+      "grader": {
+        "kind": "verify-sh+file",
+        "trusted": ["verify.sh", "src/test"],
+        "editable": ["src/main", "grace-ms.txt"],
+        "fileOracle": { "file": "grace-ms.txt", "equals": "1730" }
+      },
+      "protectedPaths": ["verify.sh", "src/test"]
     },
     {
       "id": "Q04",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L06",
-      "reviewFixture": "eval/local/review-fixtures/Q04.json"
+      "taskFile": "eval/local/cases/Q04/TASK.md",
+      "seed": "eval/local/seeds/review/Q04.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q04.json",
+      "grader": {
+        "kind": "oracle-java+file",
+        "trusted": ["grader/Oracle.java"],
+        "editable": ["VerificationStatus.java", "build-tag.txt"],
+        "fileOracle": { "file": "build-tag.txt", "equals": "build-r9q7" }
+      },
+      "protectedPaths": ["grader"]
     },
     {
       "id": "Q05",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L01",
-      "reviewFixture": "eval/local/review-fixtures/Q05.json"
+      "taskFile": "eval/local/cases/Q05/TASK.md",
+      "seed": "eval/local/seeds/review/Q05.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q05.json",
+      "grader": {
+        "kind": "verify-sh+file",
+        "trusted": ["verify.sh", "src/test"],
+        "editable": ["src/main", "root-cause.txt"],
+        "fileOracle": { "file": "root-cause.txt", "contains": "ZX-731" }
+      },
+      "protectedPaths": ["verify.sh", "src/test"]
     },
     {
       "id": "Q06",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L05",
-      "reviewFixture": "eval/local/review-fixtures/Q06.json"
+      "taskFile": "eval/local/cases/Q06/TASK.md",
+      "seed": "eval/local/seeds/review/Q06.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q06.json",
+      "grader": {
+        "kind": "oracle-java+file",
+        "trusted": ["grader/Oracle.java"],
+        "editable": ["TenantRepository.java", "ticket.txt"],
+        "fileOracle": { "file": "ticket.txt", "equals": "TK-442", "forbidden": ["TK-991"] }
+      },
+      "protectedPaths": ["grader"]
     },
     {
       "id": "Q07",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L06",
-      "reviewFixture": "eval/local/review-fixtures/Q07.json"
+      "taskFile": "eval/local/cases/Q07/TASK.md",
+      "seed": "eval/local/seeds/review/Q07.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q07.json",
+      "grader": {
+        "kind": "oracle-java+file",
+        "trusted": ["grader/Oracle.java"],
+        "editable": ["VerificationStatus.java", "recovered.json"],
+        "fileOracle": { "file": "recovered.json", "keyA": "alpha-931", "keyB": "beta-527" }
+      },
+      "protectedPaths": ["grader"]
     },
     {
       "id": "Q08",
+      "role": "quality",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["native", "balanced"],
       "reps": 2,
       "fixture": "eval/local/fixtures/L01",
-      "reviewFixture": "eval/local/review-fixtures/Q08.json"
+      "taskFile": "eval/local/cases/Q08/TASK.md",
+      "seed": "eval/local/seeds/review/Q08.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/Q08.json",
+      "grader": {
+        "kind": "verify-sh+file",
+        "trusted": ["verify.sh", "src/test"],
+        "editable": ["src/main", "rollback-marker.txt"],
+        "fileOracle": { "file": "rollback-marker.txt", "equals": "rollback-619" }
+      },
+      "protectedPaths": ["verify.sh", "src/test"]
     },
     {
       "id": "C01",
+      "role": "capability",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["balanced"],
       "reps": 2,
-      "reviewFixture": "eval/local/review-fixtures/C01.json"
+      "fixture": "eval/local/fixtures/C01",
+      "taskFile": "eval/local/cases/C01/TASK.md",
+      "seed": "eval/local/seeds/review/C01.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/C01.json",
+      "grader": {
+        "kind": "file-oracle",
+        "trusted": [],
+        "editable": ["restored.txt"],
+        "fileOracle": { "file": "restored.txt", "needles": ["nce-8f3a21c4", "c01-end-8f3a-page2"] }
+      },
+      "protectedPaths": []
     },
     {
       "id": "C02",
+      "role": "capability",
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
       "arms": ["balanced"],
       "reps": 2,
-      "reviewFixture": "eval/local/review-fixtures/C02.json"
+      "fixture": "eval/local/fixtures/C02",
+      "taskFile": "eval/local/cases/C02/TASK.md",
+      "seed": "eval/local/seeds/review/C02.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/C02.json",
+      "grader": {
+        "kind": "file-oracle",
+        "trusted": [],
+        "editable": ["needles.txt"],
+        "fileOracle": { "file": "needles.txt", "needles": ["needle-alpha", "needle-beta"], "forbidden": ["decoy-gamma"] }
+      },
+      "protectedPaths": []
     }
   ]
 }

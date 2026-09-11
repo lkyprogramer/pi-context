@@ -6,6 +6,7 @@ import {
   buildReviewPlan,
   CAPABILITY_IDS,
   denominators,
+  GUARD_IDS,
   loadReviewFixture,
   QUALITY_IDS,
   validateScenario,
@@ -28,7 +29,9 @@ test("frozen review plan is 32 quality + 4 capability UNRUN episodes", () => {
   const d = denominators(plan);
   expect(d.quality).toBe(32);
   expect(d.capability).toBe(4);
+  expect(d.noFoldGuard).toBe(2);
   expect(d.live).toBe("UNRUN");
+  expect(plan.guardIds).toEqual(GUARD_IDS);
 });
 
 test("every Q/C fixture has a hidden witness", () => {
@@ -38,6 +41,17 @@ test("every Q/C fixture has a hidden witness", () => {
     expect(v.ok, `${id} ${v.errors.join(",")}`).toBe(true);
     expect(fx.oracle).toBeTruthy();
     if (id.startsWith("Q")) expect(fx.requiresFold).toBe(true);
+  }
+});
+
+test("G01/G02 guards are hidden-witness no-fold fixtures", () => {
+  for (const id of GUARD_IDS) {
+    const fx = loadReviewFixture(id);
+    const v = validateScenario(fx);
+    expect(v.ok, `${id} ${v.errors.join(",")}`).toBe(true);
+    expect(fx.kind).toBe("controlled-guard");
+    expect(fx.requiresFold).toBe(false);
+    expect(fx.finalPrompt.includes(fx.witness)).toBe(false);
   }
 });
 

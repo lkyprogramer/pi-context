@@ -1,0 +1,14 @@
+{
+  "id": "G01",
+  "kind": "controlled-guard",
+  "cluster": "observe-noop",
+  "base": "L04",
+  "seedText": "短普通工具会话，无压力。guard-token=g01-observe-noop",
+  "witness": "g01-observe-noop",
+  "finalPrompt": "继续工作。",
+  "requiresFold": false,
+  "oracle": {
+    "observeBytesUnchanged": true,
+    "balancedNoFoldWithoutPressure": true
+  }
+}

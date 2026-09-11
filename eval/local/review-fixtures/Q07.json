@@ -2,7 +2,7 @@
   "id": "Q07",
   "kind": "quality",
   "base": "L06",
-  "seedText": "同一assistant批次readA/readB两份结果，分别 keyA=alpha-931/keyB=beta-527；后续内容不能靠同样OK字符串合并。",
+  "seedText": "前期工具记录，本行只作折叠头，不含判定值。\n同一assistant批次readA/readB两份结果，readA 记录 keyA=alpha-931；readB 另有独立记录。后续内容不能靠同样OK字符串合并。",
   "witness": "alpha-931",
   "witnessB": "beta-527",
   "finalPrompt": "核对之前两份检查记录，将两项key按各自标签写入recovered.json，再完成验证状态修复。",

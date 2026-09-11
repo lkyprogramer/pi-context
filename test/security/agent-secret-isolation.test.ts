@@ -12,6 +12,11 @@ test("agent launcher does not materialize provider credentials", () => {
   expect(launcher).not.toContain('prov["apiKey"] = key');
   expect(launcher).not.toContain("--network bridge");
   expect(launcher).not.toContain("chmod -R a+rwX");
+  expect(launcher).not.toContain('"$SOCK:/run/pctx/broker.sock"');
+  expect(launcher).toContain('"$SOCK_DIR:/run/pctx"');
+  expect(launcher).toContain('container:$BROKER_CID');
+  expect(launcher).not.toContain("PCR_LIVE_API_KEY");
+  expect(launcher).not.toContain("PCTX_MODEL_API_KEY");
 });
 
 test("episode runner keeps upstream keys in the parent broker", () => {
@@ -20,6 +25,9 @@ test("episode runner keeps upstream keys in the parent broker", () => {
   expect(runner).not.toContain("async function runOnHost");
   expect(runner).toContain("startCredentialBroker");
   expect(runner).toContain("--no-sandbox is removed");
+  expect(runner).not.toContain('join(out, "broker.sock")');
+  expect(runner).toContain('join("/tmp", "pctx-b-")');
+  expect(runner).toContain("darwin-sidecar-netns");
 });
 
 test("relay denies metrics and non-chat paths", () => {

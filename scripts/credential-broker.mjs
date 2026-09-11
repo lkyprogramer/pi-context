@@ -380,23 +380,37 @@ export function startCredentialBroker(input) {
       resolve({
         url: extra.url,
         port: extra.port,
+        listenHost: extra.listenHost ?? null,
         socketPath: extra.socketPath ?? null,
         close: closeServers,
         requestCount: () => requestCount,
       });
     };
     if (typeof input.socketPath === "string" && input.socketPath.length > 0) {
+      if (Buffer.byteLength(input.socketPath) > 103) {
+        reject(new Error(`broker socket path exceeds 103-byte sun_path limit (${Buffer.byteLength(input.socketPath)}): ${input.socketPath}`));
+        return;
+      }
       if (existsSync(input.socketPath)) unlinkSync(input.socketPath);
       server.listen(input.socketPath, () => {
+        if (!existsSync(input.socketPath)) {
+          reject(new Error(`broker socket missing after listen: ${input.socketPath}`));
+          server.close();
+          return;
+        }
         chmodSync(input.socketPath, input.socketMode ?? 0o600);
         finish({ url: "http://127.0.0.1:8080/v1", port: 8080, socketPath: input.socketPath });
       });
       return;
     }
-    server.listen(0, "127.0.0.1", () => {
+    const listenHost = typeof input.listenHost === "string" && input.listenHost.length > 0
+      ? input.listenHost
+      : "127.0.0.1";
+    const listenPort = Number.isSafeInteger(input.listenPort) ? input.listenPort : 0;
+    server.listen(listenPort, listenHost, () => {
       const addr = server.address();
-      const port = addr && typeof addr === "object" ? addr.port : 0;
-      finish({ url: `http://127.0.0.1:${port}/v1`, port });
+      const port = addr && typeof addr === "object" ? addr.port : listenPort;
+      finish({ url: `http://127.0.0.1:${port}/v1`, port, listenHost });
     });
   });
 }
