@@ -29,7 +29,11 @@ fi
 
 # 1. protectedIntact: compare candidate's protected paths against the trusted fixture (baseline from fixture, not from agent).
 TRUSTED_TMP=""
-cleanup_trusted() { [[ -n "${TRUSTED_TMP:-}" && -d "$TRUSTED_TMP" ]] && rm -rf "$TRUSTED_TMP"; }
+cleanup_trusted() {
+  if [[ -n "${TRUSTED_TMP:-}" && -d "$TRUSTED_TMP" ]]; then
+    rm -rf "$TRUSTED_TMP"
+  fi
+}
 trap cleanup_trusted EXIT
 if [[ -n "$FIX" ]]; then
   TRUSTED_ROOT="$FIX"; [[ -d "$FIX/initial" ]] && TRUSTED_ROOT="$FIX/initial"

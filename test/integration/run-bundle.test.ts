@@ -141,4 +141,9 @@ test("a W/X-only critical violation still recomputes as blocked", () => {
   const bundle = buildBundle(runDir);
   expect(bundle.decision.decision).toBe("blocked");
   expect(recomputeDecision(bundle).decision).toBe("blocked");
+  const publishedShape = {
+    ...bundle,
+    episodes: bundle.episodes.map(({ manifest: _ignored, ...ep }) => ep),
+  };
+  expect(recomputeDecision(publishedShape).decision).toBe("blocked");
 });

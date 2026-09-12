@@ -300,5 +300,6 @@ Changed: `eval/local/grade.sh`, `eval/local/log-workspace.mjs`, `eval/local/run-
 - X01 `fixture:null` made `grade.sh` treat TRUSTED_ROOT as `$REPO/None` and skip `logs/` comparison. Trusted logs are now rematerialized from the case `logs` spec.
 - Darwin sidecar wait used `spawnSync("sleep")`, which froze stdout so `ready` never arrived. Wait is async via `waitForReadyJson`.
 - Agent command now starts `unix-relay.mjs` beside `run-in-container.mjs` (image entrypoint socat still runs if the socket exists at start; EADDRINUSE on the node relay is ignored).
-- `recomputeDecision` rebuilds W/X `regimePairs` from bundled episodes so a regime-only critical violation stays `blocked`.
+- `recomputeDecision` rebuilds W/X `regimePairs` from bundled episodes so a regime-only critical violation stays `blocked`. Sanitized episodes keep slim `manifest` identity; pair builders also accept top-level `caseId`/`arm`/`rep` so already-published bundles without nested manifest still recompute.
+- `grade.sh` EXIT trap no longer returns 1 when `TRUSTED_TMP` is empty (`set -e` was turning a successful L01 grade into process status 1).
 

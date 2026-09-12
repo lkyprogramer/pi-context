@@ -204,16 +204,22 @@ function emptyObjective() {
   };
 }
 
+function identityOf(episode) {
+  return {
+    caseId: episode?.caseId ?? episode?.manifest?.caseId,
+    arm: episode?.arm ?? episode?.manifest?.arm,
+    rep: episode?.rep ?? episode?.manifest?.rep,
+  };
+}
+
 export function regimePairsFromItt(plan, episodes, lane) {
   const ids = new Set(plan?.regimeLanes?.[lane]?.ids ?? []);
   const byCaseRep = new Map();
   for (const episode of episodes ?? []) {
-    const caseId = episode.manifest?.caseId;
+    const { caseId, arm, rep } = identityOf(episode);
     if (!ids.has(caseId)) continue;
-    const rep = episode.manifest?.rep;
     const key = `${caseId}:${rep}`;
     const row = byCaseRep.get(key) ?? { caseId, rep, lane: lane === "warm" ? "W" : "X" };
-    const arm = episode.manifest?.arm;
     const passed = episode.status === "NOT_RUN" ? null : episode.oracle?.passed ?? null;
     if (arm === "native") {
       row.native = episode;
@@ -406,14 +412,16 @@ export function attemptRates(attempts) {
 }
 
 export function episodeKey(e) {
-  return e.episodeId ?? `${e.manifest?.caseId}/${e.manifest?.arm}/r${e.manifest?.rep}`;
+  const { caseId, arm, rep } = identityOf(e);
+  return e.episodeId ?? `${caseId}/${arm}/r${rep}`;
 }
 
 export function materializeItt(plan, episodes) {
   const byKey = new Map();
   for (const e of episodes ?? []) {
     byKey.set(episodeKey(e), e);
-    const fallback = `${e.manifest?.caseId}/${e.manifest?.arm}/r${e.manifest?.rep}`;
+    const { caseId, arm, rep } = identityOf(e);
+    const fallback = `${caseId}/${arm}/r${rep}`;
     if (fallback.includes("undefined")) continue;
     if (!byKey.has(fallback)) byKey.set(fallback, e);
   }
@@ -435,12 +443,10 @@ export function pairsFromItt(plan, episodes) {
   const exact = new Set(plan?.exactQuoteIds ?? []);
   const byCaseRep = new Map();
   for (const e of episodes ?? []) {
-    const caseId = e.manifest?.caseId;
-    const rep = e.manifest?.rep;
+    const { caseId, arm, rep } = identityOf(e);
     if (!quality.has(caseId)) continue;
     const key = `${caseId}:${rep}`;
     const row = byCaseRep.get(key) ?? { caseId, rep };
-    const arm = e.manifest?.arm;
     const passed = e.status === "NOT_RUN" ? null : e.oracle?.passed ?? null;
     if (arm === "native") {
       row.native = e;
@@ -459,15 +465,19 @@ export function capabilitiesFromItt(plan, episodes) {
   const ids = new Set(plan?.capabilityIds ?? []);
   const exact = new Set(plan?.exactQuoteIds ?? []);
   return (episodes ?? [])
-    .filter((e) => ids.has(e.manifest?.caseId) && e.manifest?.arm === "balanced")
+    .filter((e) => {
+      const { caseId, arm } = identityOf(e);
+      return ids.has(caseId) && arm === "balanced";
+    })
     .map((e) => {
-      const foldRequired = plan?.requiresFold?.[e.manifest.caseId] ?? true;
+      const { caseId, rep } = identityOf(e);
+      const foldRequired = plan?.requiresFold?.[caseId] ?? true;
       const foldApplied = (e.mechanism?.folds ?? 0) >= 1;
       const eligible = e.status !== "NOT_RUN" && e.status !== "blocked" && (!foldRequired || foldApplied);
-      const quoteOk = !exact.has(e.manifest.caseId) || e.oracle?.quotedVerbatim === true;
+      const quoteOk = !exact.has(caseId) || e.oracle?.quotedVerbatim === true;
       return {
-        caseId: e.manifest.caseId,
-        rep: e.manifest.rep,
+        caseId,
+        rep,
         eligible,
         passed: eligible && e.oracle?.passed === true && quoteOk,
       };

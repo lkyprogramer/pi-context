@@ -49,11 +49,16 @@ export function verifyFileHashes(expected, root) {
 }
 
 export function sanitizeEpisode(ep) {
+  const caseId = ep.caseId ?? ep.manifest?.caseId ?? null;
+  const arm = ep.arm ?? ep.manifest?.arm ?? null;
+  const rep = ep.rep ?? ep.manifest?.rep ?? null;
   return {
     episodeId: ep.episodeId ?? null,
-    caseId: ep.manifest?.caseId ?? null,
-    arm: ep.manifest?.arm ?? null,
-    rep: ep.manifest?.rep ?? null,
+    caseId,
+    arm,
+    rep,
+    // Slim identity so offline recompute can rebuild W/X pairs from the published bundle.
+    manifest: { caseId, arm, rep },
     status: ep.status ?? null,
     error: typeof ep.error === "string" ? ep.error.slice(0, 200) : null,
     oracle: {
