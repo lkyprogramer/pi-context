@@ -23,6 +23,7 @@ import { engineOk, fetchModels, loadRepoEnv, modelEndpoint, servedIdentity } fro
 import { setupLogWorkspace } from "./log-workspace.mjs";
 import { ensureReviewSeed, warmupFiles } from "./review-seed.mjs";
 import { REVIEW_BUDGET } from "./review-spec.mjs";
+import { waitForReadyJson } from "./sidecar-ready.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");            // eval/local → repo root
@@ -153,7 +154,7 @@ let broker;
 let sidecar = null;
 if (darwinHop) {
   try {
-    sidecar = startBrokerSidecar({
+    sidecar = await startBrokerSidecar({
       baseUrl,
       apiKey,
       token: brokerToken,
@@ -458,7 +459,7 @@ function protectedSha(root, paths) { const h = createHash("sha256"); for (const 
 function git(dir, a) { execFileSync("git", ["-C", dir, ...a], { stdio: "ignore" }); }
 function sha256(s) { return createHash("sha256").update(s).digest("hex"); }
 function sha256File(p) { return createHash("sha256").update(readFileSync(p)).digest("hex"); }
-function startBrokerSidecar({ baseUrl, apiKey, token, model, maxRequests }) {
+async function startBrokerSidecar({ baseUrl, apiKey, token, model, maxRequests }) {
   const image = process.env.PCTX_SANDBOX_IMAGE ?? "pctx-t21-sandbox:0.85.1";
   const rand = randomBytes(4).toString("hex");
   const volume = `pctx-sock-${rand}`;
@@ -486,6 +487,7 @@ function startBrokerSidecar({ baseUrl, apiKey, token, model, maxRequests }) {
     "-e", "PCTX_BROKER_SOCKET_PATH=/run/pctx/broker.sock",
     image, "node", "/opt/pctx/broker-unix.mjs",
   ], { stdio: ["pipe", "pipe", "pipe"] });
+  const readyPromise = waitForReadyJson(child.stdout, 5_000);
   try {
     child.stdin.write(`${apiKey}\n`);
   } catch {
@@ -493,17 +495,7 @@ function startBrokerSidecar({ baseUrl, apiKey, token, model, maxRequests }) {
     spawnSync("docker", ["volume", "rm", volume], { encoding: "utf8" });
     throw new Error("sidecar stdin write failed");
   }
-  const deadline = Date.now() + 5_000;
-  let ready = false;
-  let buf = "";
-  child.stdout.on("data", (chunk) => {
-    buf += String(chunk);
-    if (buf.includes('"ready":true') || buf.includes('"ready": true')) ready = true;
-  });
-  while (!ready && Date.now() < deadline) {
-    spawnSync("sleep", ["0.1"]);
-    if (buf.includes('"ready"')) { ready = true; break; }
-  }
+  const ready = await readyPromise;
   if (!ready) {
     spawnSync("docker", ["rm", "-f", name], { encoding: "utf8" });
     spawnSync("docker", ["volume", "rm", volume], { encoding: "utf8" });

@@ -85,4 +85,4 @@ docker run --rm \
   -e PCR_BROKER_SOCK=/run/pctx/broker.sock \
   "${BUDGET_ENV[@]}" \
   "${SEED_ENV[@]}" \
-  "$IMAGE" sh -c 'exec node /out/run-in-container.mjs'
+  "$IMAGE" sh -c 'node /out/unix-relay.mjs & exec node /out/run-in-container.mjs'

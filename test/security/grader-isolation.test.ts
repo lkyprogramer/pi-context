@@ -3,6 +3,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, symlinkSync, 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
+import { setupLogWorkspace } from "../../eval/local/log-workspace.mjs";
 
 const repo = join(import.meta.dirname, "../..");
 const docker = spawnSync("docker", ["version", "--format", "{{.Server.Version}}"], { encoding: "utf8" });
@@ -71,4 +72,30 @@ it("rejects a symlink in an editable path", { timeout: 120_000 }, (ctx) => {
   const grade = JSON.parse(readFileSync(join(out, "grade.json"), "utf8"));
   expect(grade.passed).toBe(false);
   expect(grade.exitCode).toBe(97);
+});
+
+it("X01 tampered logs fail protectedIntact even with a correct marker.txt", () => {
+  const spec = { count: 12, lines: 300, marked: 7, markLine: 210, token: "FIRST-ERROR-MARKER" };
+  const cand = mkdtempSync(join(tmpdir(), "pctx-x01-"));
+  setupLogWorkspace(cand, spec);
+  writeFileSync(join(cand, "marker.txt"), "FIRST-ERROR-MARKER at build-07 line 210\n");
+  writeFileSync(join(cand, "logs/build-07.log"), "tampered\n");
+  const out = mkdtempSync(join(tmpdir(), "pctx-x01-grade-"));
+  const r = spawnSync("bash", [join(repo, "eval/local/grade.sh"), "X01", cand, out], { encoding: "utf8" });
+  expect(r.status).toBe(0);
+  const grade = JSON.parse(readFileSync(join(out, "grade.json"), "utf8"));
+  expect(grade.protectedIntact).toBe(false);
+  expect(grade.passed).toBe(false);
+});
+
+it("X01 intact logs keep protectedIntact and pass the marker file oracle", () => {
+  const spec = { count: 12, lines: 300, marked: 7, markLine: 210, token: "FIRST-ERROR-MARKER" };
+  const cand = mkdtempSync(join(tmpdir(), "pctx-x01-ok-"));
+  setupLogWorkspace(cand, spec);
+  writeFileSync(join(cand, "marker.txt"), "FIRST-ERROR-MARKER at build-07 line 210\n");
+  const out = mkdtempSync(join(tmpdir(), "pctx-x01-ok-grade-"));
+  spawnSync("bash", [join(repo, "eval/local/grade.sh"), "X01", cand, out], { encoding: "utf8" });
+  const grade = JSON.parse(readFileSync(join(out, "grade.json"), "utf8"));
+  expect(grade.protectedIntact).toBe(true);
+  expect(grade.passed).toBe(true);
 });

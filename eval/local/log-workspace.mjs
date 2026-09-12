@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 export function markerLine(spec) {
   const n = String(spec.marked).padStart(2, "0");
@@ -26,4 +27,9 @@ export function setupLogWorkspace(cwd, spec) {
     writeFileSync(join(cwd, "logs", `${prefix}-${String(n).padStart(2, "0")}.log`), `${rows.join("\n")}\n`);
   }
   return { file: `logs/${markedName}`, line: markLine, text: markedText };
+}
+
+const invoked = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
+if (invoked && process.argv[2] && process.argv[3]) {
+  setupLogWorkspace(process.argv[2], JSON.parse(process.argv[3]));
 }

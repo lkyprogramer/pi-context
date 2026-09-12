@@ -187,6 +187,11 @@ export function writeBundle(runDir, destDir = join(runDir, "bundle")) {
 export function recomputeDecision(bundle) {
   const objective = objectiveFromPairs(bundle.pairs, bundle.plan.objective);
   const diagnosticOnly = bundle.manifest?.diagnosticOnly === true || bundle.manifest?.git?.dirty === true;
+  const warmPairs = regimePairsFromItt(bundle.plan, bundle.episodes, "warm");
+  const longPairs = regimePairsFromItt(bundle.plan, bundle.episodes, "long");
+  const regimes = {};
+  if (warmPairs.length) regimes.warm = regimeSummary(warmPairs, bundle.plan.objective);
+  if (longPairs.length) regimes.long = regimeSummary(longPairs, bundle.plan.objective);
   return evaluateTrial({
     pairs: bundle.pairs,
     capabilities: bundle.capabilities,
@@ -195,10 +200,12 @@ export function recomputeDecision(bundle) {
     expectedCapabilities: bundle.plan.expectedCapabilities,
     attempts: bundle.attempts,
     plan: bundle.plan,
+    regimes,
     diagnosticOnly,
     dirtyReason: bundle.manifest?.diagnosticOnly === true
       ? "dirty-tree diagnostic run"
       : "dirty-tree run (legacy manifest)",
     candidates: bundle.decision?.candidates ?? [],
+    regimePairs: [...warmPairs, ...longPairs],
   });
 }

@@ -76,3 +76,69 @@ test("a missing planned episode stays NOT_RUN and cannot pass", () => {
   expect(bundle.episodes.some((e) => e.status === "NOT_RUN")).toBe(true);
   expect(bundle.decision.decision).toBe("inconclusive");
 });
+
+test("a W/X-only critical violation still recomputes as blocked", () => {
+  const runDir = mkdtempSync(join(tmpdir(), "pctx-bundle-x-"));
+  const nativeId = "run1:L01:native:r1";
+  const episodeId = "run1:L01:balanced:r1";
+  const capId = "run1:H01:balanced:r1";
+  const xNative = "run1:X01:native:r1";
+  const xBalanced = "run1:X01:balanced:r1";
+  const plan = {
+    qualityIds: ["L01"],
+    capabilityIds: ["H01"],
+    regimeLanes: { long: { ids: ["X01"], arms: ["native", "balanced"] } },
+    requiresFold: { H01: true, X01: true },
+    objective: { primary: { metric: "fresh-input", minImprovement: 0.1 }, secondary: ["logical-input"] },
+    expectedPairs: 1,
+    expectedCapabilities: 1,
+    scenarioHash: sha256Bytes("scenario-v1"),
+    order: [
+      { episodeId: nativeId, caseId: "L01", arm: "native", rep: 1 },
+      { episodeId, caseId: "L01", arm: "balanced", rep: 1 },
+      { episodeId: capId, caseId: "H01", arm: "balanced", rep: 1 },
+      { episodeId: xNative, caseId: "X01", arm: "native", rep: 1 },
+      { episodeId: xBalanced, caseId: "X01", arm: "balanced", rep: 1 },
+    ],
+  };
+  writeFileSync(join(runDir, "manifest.json"), JSON.stringify({
+    runId: "run1",
+    pluginSha256: "abc",
+    distFiles: { "extension.js": sha256Bytes("plugin") },
+    plan,
+  }));
+  const ep = (id: string, caseId: string, arm: string, extra: Record<string, unknown> = {}) => {
+    const fresh = arm === "native" ? 50000 : 10000;
+    return {
+      episodeId: id,
+      manifest: { caseId, arm, rep: 1 },
+      status: "complete",
+      oracle: { passed: true, quotedVerbatim: true, protectedIntact: extra.protectedIntact ?? true },
+      mechanism: {
+        folds: caseId === "H01" || (caseId === "X01" && arm === "balanced") ? 1 : 0,
+        foldedErrorResults: 0,
+        nativeCompactions: caseId === "X01" && arm === "native" ? 1 : 0,
+      },
+      requests: [{
+        requestId: `${id}-q`,
+        source: "pi-disjoint",
+        usage: { input: fresh, cacheRead: 0, cacheWrite: 0, output: 1 },
+        normalized: { freshInput: fresh, cachedRead: 0, logicalInput: fresh },
+      }],
+    };
+  };
+  for (const [dir, id, caseId, arm, extra] of [
+    ["L01-native-r1", nativeId, "L01", "native", {}],
+    ["L01-balanced-r1", episodeId, "L01", "balanced", {}],
+    ["H01-balanced-r1", capId, "H01", "balanced", {}],
+    ["X01-native-r1", xNative, "X01", "native", {}],
+    ["X01-balanced-r1", xBalanced, "X01", "balanced", { protectedIntact: false }],
+  ] as const) {
+    mkdirSync(join(runDir, "episodes", dir), { recursive: true });
+    writeFileSync(join(runDir, "episodes", dir, "result.json"), JSON.stringify(ep(id, caseId, arm, extra)));
+  }
+  writeFileSync(join(runDir, "attempts.jsonl"), `${JSON.stringify({ episodeId, attemptId: `${episodeId}:a1`, status: "complete", requests: [] })}\n`);
+  const bundle = buildBundle(runDir);
+  expect(bundle.decision.decision).toBe("blocked");
+  expect(recomputeDecision(bundle).decision).toBe("blocked");
+});

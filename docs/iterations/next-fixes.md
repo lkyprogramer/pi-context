@@ -293,3 +293,12 @@ GREEN: `pnpm exec vitest run test/unit/docs-decision-consistency.test.ts --confi
 - GitHub Actions on this HEAD not claimed here
 - 300 gate / publish / production not run
 
+## PR review (Codex on `e925297`)
+
+Changed: `eval/local/grade.sh`, `eval/local/log-workspace.mjs`, `eval/local/run-episode.mjs`, `eval/local/sidecar-ready.mjs`, `eval/local/sandbox/run-agent.sh`, `eval/local/bundle.mjs`, `test/security/grader-isolation.test.ts`, `test/security/agent-secret-isolation.test.ts`, `test/integration/run-bundle.test.ts`, `test/unit/sidecar-ready.test.ts`
+
+- X01 `fixture:null` made `grade.sh` treat TRUSTED_ROOT as `$REPO/None` and skip `logs/` comparison. Trusted logs are now rematerialized from the case `logs` spec.
+- Darwin sidecar wait used `spawnSync("sleep")`, which froze stdout so `ready` never arrived. Wait is async via `waitForReadyJson`.
+- Agent command now starts `unix-relay.mjs` beside `run-in-container.mjs` (image entrypoint socat still runs if the socket exists at start; EADDRINUSE on the node relay is ignored).
+- `recomputeDecision` rebuilds W/X `regimePairs` from bundled episodes so a regime-only critical violation stays `blocked`.
+
