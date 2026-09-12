@@ -1,6 +1,16 @@
 # Operations (6.1)
 
-This plugin talks to official Pi 0.85.1 only. Default profile is observe. Balanced fold is default-off. The 6.1-next-steps delivery decision is **`inconclusive`** (`artifacts/local-eval/review-final/`, live review matrix **UNRUN**). Dated trial `20260909-112407` (`limited-balanced-trial`) is superseded as a delivery claim and kept on disk.
+This plugin talks to official Pi 0.85.1 only. Default profile is observe. Balanced fold is default-off. Current delivery decision: `limited-balanced-trial` (run `review-r8-20260911b`, HEAD `878e92f292a7`). Personal explicit trial; default stays observe; no non-inferiority claim.
+
+Round-7 delivery at that time was `inconclusive` (live review matrix UNRUN; run `review-final`, HEAD `5a23e6a05a77`). Dated trial `20260909-112407` is superseded as a delivery claim and kept on disk.
+
+regimes (fresh-input relativeChange · nativeCompactions native/candidate):
+
+- Q (24 pairs): −0.645 · 5/0
+- warm (12 pairs): −0.017 · 12/2
+- long (3 pairs): +0.195 · 4/1
+
+candidates: `fold-time-model-hint` below-gate; `inline-ref-marker` below-gate; `cold-aligned-fold` met (diagnostic registration only, not implemented).
 
 ## Model endpoint
 
@@ -60,7 +70,7 @@ pnpm eval:local -- --out artifacts/local-eval/$(date +%Y%m%d-%H%M%S)
 pnpm eval:report artifacts/local-eval/<runId>
 ```
 
-`--resume <runDir>` fills missing episode dirs only. Do not retune fold parameters and keep only the second run. Current evidence run: `20260909-112407`. Contrasts: `20260909-103813` (L06 class-file wrong-action), `20260908-215433` (no verified read, no metrics).
+`--resume <runDir>` fills missing episode dirs only. Do not retune fold parameters and keep only the second run. Current evidence run: `review-r8-20260911b`. Contrasts: `20260909-103813` (L06 class-file wrong-action), `20260908-215433` (no verified read, no metrics). Round-7 pack backup: `artifacts/local-eval/review-final-r7-backup/`.
 
 H03 episodes temporarily point `HOME` at a temp dir. Restore `HOME` before `grade.sh` so Docker still sees `~/.docker`.
 

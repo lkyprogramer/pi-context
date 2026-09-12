@@ -38,11 +38,12 @@ if (args.config) {
   reviewCfg = JSON.parse(readFileSync(resolve(String(args.config)), "utf8"));
   writeFileSync(join(runDir, "plan.json"), JSON.stringify(reviewCfg, null, 2));
 }
-const isReviewLive = Boolean(reviewCfg?.plannedEpisodes === 36 && reviewCfg.qualityIds?.includes("Q01"));
+const isReviewLive = Boolean(reviewCfg?.qualityIds?.includes("Q01"));
 const CONTROLLED_TESTS = [
   "test/host/after-fold-quality.test.ts",
   "test/host/balanced-wire.test.ts",
   "test/host/controlled-guards.test.ts",
+  "test/host/warm-fold-regime.test.ts",
 ];
 if (mode === "controlled") {
   const r = spawnSync("pnpm", ["exec", "vitest", "run", ...CONTROLLED_TESTS, "--config", "vitest.config.ts"], {
@@ -52,10 +53,10 @@ if (mode === "controlled") {
     mode: "controlled",
     exit: r.status,
     liveStatus: "UNRUN",
-    liveDenominator: 36,
+    liveDenominator: 84,
     guardIds: reviewCfg?.guardIds ?? ["G01", "G02"],
     tests: CONTROLLED_TESTS,
-    note: "host-controlled fold + G01/G02 guards; live 36-episode matrix is a separate --mode live run",
+    note: "host-controlled fold + G01/G02 + W-lane regime; live 84-episode matrix is a separate --mode live run",
   }, null, 2));
   process.exit(r.status ?? 1);
 }
@@ -117,13 +118,22 @@ if (args.resume && existsSync(manifestPath)) {
       return n + (c ? c.reps * (c.arms.includes("balanced") ? 1 : 0) : 0);
     }, 0);
   const porcelain = sh("git", ["status", "--porcelain"]);
+  if (mode === "live" && porcelain.length > 0 && !("allow-dirty" in args) && !dry) {
+    die("live run refused: working tree dirty; use --allow-dirty for a diagnostic-only run");
+  }
+  const distFiles = hashTree(join(repo, "dist"));
+  const distDigest = sha256Bytes(JSON.stringify(Object.entries(distFiles).sort(([a], [b]) => a.localeCompare(b))));
+  const diagnosticOnly = mode === "live" && porcelain.length > 0;
+  const reviewPlan = isReviewLive ? reviewCfg : null;
   manifest = {
     runId: runDir.split("/").pop(), createdAt: new Date().toISOString(), seed,
     git: { head: sh("git", ["rev-parse", "HEAD"]), tree: sh("git", ["rev-parse", "HEAD^{tree}"]), dirty: porcelain.length > 0 },
     dirtyDigest: porcelain ? sha256Bytes(porcelain) : null,
+    diagnosticOnly,
     hostVersion: piVersion(),
     pluginSha256: existsSync(dist) ? sha256File(dist) : null,
-    distFiles: hashTree(join(repo, "dist")),
+    distFiles,
+    distDigest,
     piPackageHash: existsSync(join(repo, "node_modules/@earendil-works/pi-coding-agent/package.json"))
       ? sha256File(join(repo, "node_modules/@earendil-works/pi-coding-agent/package.json"))
       : null,
@@ -140,22 +150,37 @@ if (args.resume && existsSync(manifestPath)) {
         totalModelCalls: REVIEW_BUDGET.run.totalModelCalls,
         totalToolCalls: REVIEW_BUDGET.run.totalToolCalls,
         episode: { ...REVIEW_BUDGET.episode },
+        episodeLong: { ...(REVIEW_BUDGET.episodeLong ?? { wallMs: 900_000, modelCalls: 40, toolCalls: 80 }) },
       }
       : { totalEpisodes: order.length, totalWallMs: 3.5 * 3600 * 1000, episode: { wallMs: 900000, modelCalls: 40, toolCalls: 80 }, h03: { wallMs: 3600000, modelCalls: 200, toolCalls: 400 } },
     configHash: null,
     configHashByArm: await expectedArmHashes(),
     metricsAvailable: metricsAvailable(),
     order,
-    plan: {
+    plan: reviewPlan ? {
+      ...reviewPlan,
       qualityIds,
       capabilityIds,
-      requiresFold: isReviewLive
-        ? requiresFoldMap([...qualityIds, ...capabilityIds])
-        : Object.fromEntries(capabilityIds.map((id) => [id, true])),
-      objective: { metric: "logical-input", known: false, relativeChange: null, minImprovement: 0.1 },
+      expectedPairs: reviewPlan.expectedPairs ?? expectedPairs,
+      expectedCapabilities: reviewPlan.expectedCapabilities ?? expectedCapabilities,
+      requiresFold: reviewPlan.requiresFold ?? requiresFoldMap([...qualityIds, ...capabilityIds, ...(reviewPlan.regimeLanes?.warm?.ids ?? []), ...(reviewPlan.regimeLanes?.long?.ids ?? [])]),
+      objective: reviewPlan.objective ?? {
+        primary: { metric: "fresh-input", minImprovement: 0.1 },
+        secondary: ["logical-input", "wall-time", "cacheRead", "engine-prefill", "native-compactions", "requests"],
+      },
+      scenarioHash: sha256File(resolve(String(args.config))),
+      order,
+    } : {
+      qualityIds,
+      capabilityIds,
+      requiresFold: Object.fromEntries(capabilityIds.map((id) => [id, true])),
+      objective: {
+        primary: { metric: "fresh-input", minImprovement: 0.1 },
+        secondary: ["logical-input", "wall-time", "cacheRead", "engine-prefill", "native-compactions", "requests"],
+      },
       expectedPairs,
       expectedCapabilities,
-      scenarioHash: sha256File(isReviewLive ? resolve(String(args.config)) : join(here, "cases.json")),
+      scenarioHash: sha256File(join(here, "cases.json")),
       order,
     },
   };
@@ -184,8 +209,10 @@ for (const ep of manifest.order) {
     continue;
   }
   const cmd = ["run-episode.mjs", "--case", ep.caseId, "--arm", ep.arm, "--window", ep.windowProfile ?? "w64k", "--rep", String(ep.rep), "--out", epDir, "--run", manifest.runId, "--episode-id", ep.episodeId];
+  const specBudget = casesById.get(ep.caseId)?.budget === "episodeLong" || ep.caseId === "X01" || ep.lane === "X";
   if (isReviewLive && manifest.budget.episode) {
-    cmd.push("--budget-wall-ms", String(manifest.budget.episode.wallMs), "--budget-model", String(manifest.budget.episode.modelCalls), "--budget-tools", String(manifest.budget.episode.toolCalls));
+    const epBudget = specBudget ? (manifest.budget.episodeLong ?? REVIEW_BUDGET.episodeLong ?? manifest.budget.episode) : manifest.budget.episode;
+    cmd.push("--budget-wall-ms", String(epBudget.wallMs), "--budget-model", String(epBudget.modelCalls), "--budget-tools", String(epBudget.toolCalls));
   }
   const r = spawnSync("node", cmd.map((x, i) => (i === 0 ? join(here, x) : x)), { encoding: "utf8", stdio: ["ignore", "inherit", "inherit"] });
   const resultPath = join(epDir, "result.json");
@@ -203,7 +230,7 @@ for (const ep of manifest.order) {
   const sessionFile = join(epDir, "session", "session.jsonl");
   if (spec?.evidence?.kind === "verbatim-quote" && existsSync(sessionFile)) {
     const parsed = parseSession(sessionFile);
-    result.oracle = { ...(result.oracle ?? {}), quotedVerbatim: verbatimQuote(parsed, { linePattern: spec.evidence.linePattern, sinceMs: new Date(result.manifest?.startedAt ?? 0).getTime() }) };
+    result.oracle = { ...(result.oracle ?? {}), quotedVerbatim: verbatimQuote(parsed, { linePattern: spec.evidence.linePattern, sinceMs: new Date(result.manifest?.startedAt ?? 0).getTime(), sourceKind: spec.evidence.sourceKind ?? "isError" }) };
   }
   if (result.status !== "blocked") {
     const status = existsSync(join(epDir, "status.json")) ? JSON.parse(readFileSync(join(epDir, "status.json"), "utf8")) : null;

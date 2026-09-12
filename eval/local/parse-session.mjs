@@ -190,12 +190,13 @@ function textOf(content) {
  * matches `linePattern` inside an earlier `isError=true` toolResult? Returns null when no such source line exists
  * (unknown), true/false otherwise. Whitespace is collapsed on both sides; nothing else is normalised.
  */
-export function verbatimQuote(parsed, { linePattern, sinceMs }) {
+export function verbatimQuote(parsed, { linePattern, sinceMs, sourceKind = "isError" }) {
   const re = new RegExp(linePattern);
   const norm = (s) => s.replace(/\s+/g, " ").trim();
   let sourceLine = null;
   for (const e of parsed.entries) {
-    if (e.type !== "message" || e.message?.role !== "toolResult" || !e.message.isError) continue;
+    if (e.type !== "message" || e.message?.role !== "toolResult") continue;
+    if (sourceKind === "isError" && !e.message.isError) continue;
     const line = textOf(e.message.content).split("\n").find((l) => re.test(l));
     if (line) { sourceLine = norm(line); break; }
   }

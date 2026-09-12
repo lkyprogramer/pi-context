@@ -145,20 +145,43 @@ export function pairedSuccessDelta(pairs) {
 }
 
 export function evaluateTrial(pairs, capabilities, objective, expectedPairs = null, expectedCapabilities = null) {
-  const answer = (decision, reason) => ({ decision, reason });
+  const primary = objective?.primary ?? objective ?? {};
+  const answer = (decision, reason, extra = {}) => ({ decision, reason, ...extra });
   if (!pairs.length || (expectedPairs != null && pairs.length !== expectedPairs)) {
     return answer("inconclusive", "planned denominator incomplete");
   }
   if (pairedSuccessDelta(pairs) == null) return answer("inconclusive", "missing quality outcome");
-  if (pairs.some((p) => p.criticalViolation === true)) return answer("observe-only", "critical violation");
+  if (pairs.some((p) => p.criticalViolation === true)) return answer("blocked", "critical violation");
   if (pairs.some((p) => p.foldRequired === true && p.foldApplied !== true)) {
     return answer("inconclusive", "optimization not exercised");
   }
-  if (pairs.some((p) => p.evidencePassed !== true)) {
-    return answer("review-needed", "required evidence failed or unmeasured");
+  const discordant = [];
+  const bByCase = {};
+  let b = 0;
+  let c = 0;
+  let shared = 0;
+  for (const pair of pairs) {
+    if (pair.candidatePassed === false && pair.nativePassed === true) {
+      discordant.push({ caseId: pair.caseId, rep: pair.rep, kind: "candidate-fail-native-pass" });
+      b += 1;
+      bByCase[pair.caseId] = (bByCase[pair.caseId] ?? 0) + 1;
+    } else if (pair.candidatePassed === true && pair.nativePassed === false) {
+      discordant.push({ caseId: pair.caseId, rep: pair.rep, kind: "candidate-pass-native-fail" });
+      c += 1;
+    } else if (pair.candidatePassed === false && pair.nativePassed === false) {
+      discordant.push({ caseId: pair.caseId, rep: pair.rep, kind: "shared-failure" });
+      shared += 1;
+    }
   }
-  if (pairs.some((p) => p.candidatePassed !== true)) {
-    return answer("review-needed", "candidate task failure; retain first-attempt details");
+  const counts = { b, c, shared, bByCase };
+  if (Object.values(bByCase).some((n) => n >= 2) || b - c >= 2) {
+    const named = discordant
+      .filter((row) => row.kind === "candidate-fail-native-pass")
+      .map((row) => `${row.caseId}/r${row.rep} ${row.kind}`);
+    return answer("review-needed", `candidate new failures: ${named.join("; ")}; b=${b} c=${c} shared=${shared}`, {
+      discordant,
+      counts,
+    });
   }
   if (expectedCapabilities != null && capabilities.length !== expectedCapabilities) {
     return answer("inconclusive", "capability denominator incomplete");
@@ -166,13 +189,13 @@ export function evaluateTrial(pairs, capabilities, objective, expectedPairs = nu
   if (!capabilities.length || capabilities.some((c) => c.eligible !== true || c.passed !== true)) {
     return answer("inconclusive", "capability unproven");
   }
-  if (objective.known !== true) return answer("quality-qualified-cost-unknown", "quality is not cost proof");
-  const change = objective.relativeChange;
-  const minimum = objective.minImprovement;
+  if (primary.known !== true) return answer("quality-qualified-cost-unknown", "quality is not cost proof");
+  const change = primary.relativeChange;
+  const minimum = primary.minImprovement;
   if (typeof change !== "number" || typeof minimum !== "number") {
     return answer("inconclusive", "missing preregistered objective");
   }
-  if (!["logical-input", "wall-time", "monetary-cost"].includes(objective.metric)) {
+  if (!["fresh-input", "logical-input", "wall-time", "monetary-cost"].includes(primary.metric)) {
     return answer("inconclusive", "use a separate preregistered protocol for a quality-first objective");
   }
   if (change > -minimum) return answer("history-only", "no demonstrated objective improvement");

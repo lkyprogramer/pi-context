@@ -3,7 +3,8 @@ import { loadReviewFixture, validateScenario } from "./scenarios.mjs";
 
 export const REVIEW_BUDGET = {
   episode: { wallMs: 600_000, modelCalls: 24, toolCalls: 48 },
-  run: { totalWallMs: 3_600_000, totalModelCalls: 600, totalToolCalls: 720 },
+  episodeLong: { wallMs: 900_000, modelCalls: 40, toolCalls: 80 },
+  run: { totalWallMs: 7_200_000, totalModelCalls: 1_500, totalToolCalls: 2_400 },
 };
 
 const FILE_ORACLE_BY_ID = {
@@ -69,8 +70,16 @@ export function evaluateFileOracle(oracle, readText) {
 export function requiresFoldMap(ids) {
   const out = {};
   for (const id of ids) {
-    const fx = loadReviewFixture(id);
-    out[id] = fx.requiresFold === true;
+    try {
+      const fx = loadReviewFixture(id);
+      out[id] = fx.requiresFold === true;
+    } catch (error) {
+      if (id === "X01") {
+        out[id] = true;
+        continue;
+      }
+      throw error;
+    }
   }
   return out;
 }

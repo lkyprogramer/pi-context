@@ -8,7 +8,10 @@ CASE="${1:?case}"; CAND="$(cd "${2:?candidate}" && pwd)"; OUT="$(mkdir -p "${3:?
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../.." && pwd)"
 IMAGE="${PCTX_SANDBOX_IMAGE:-pctx-t21-sandbox:0.85.1}"
 SPEC="$(python3 -c 'import json,sys; c=[x for x in json.load(open(sys.argv[1]))["cases"] if x["id"]==sys.argv[2]][0]; print(json.dumps(c))' "$HERE/cases.json" "$CASE")"
-FIX="$REPO/$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["fixture"])' "$SPEC")"
+FIX_REL="$(python3 -c 'import json,sys; v=json.loads(sys.argv[1]).get("fixture"); print(v if isinstance(v,str) and v else "")' "$SPEC")"
+LOGS_JSON="$(python3 -c 'import json,sys; print(json.dumps(json.loads(sys.argv[1]).get("logs") or {}))' "$SPEC")"
+FIX=""
+[[ -n "$FIX_REL" ]] && FIX="$REPO/$FIX_REL"
 KIND="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["grader"]["kind"])' "$SPEC")"
 EDITABLE="$(python3 -c 'import json,sys; print(" ".join(json.loads(sys.argv[1])["grader"]["editable"]))' "$SPEC")"
 PROTECTED="$(python3 -c 'import json,sys; print(" ".join(json.loads(sys.argv[1]).get("protectedPaths") or []))' "$SPEC")"
@@ -18,18 +21,44 @@ NEED_DOCKER=true
 [[ "$KIND" == "file-oracle" ]] && NEED_DOCKER=false
 if [[ "$NEED_DOCKER" == true ]]; then
   docker image inspect "$IMAGE" >/dev/null 2>&1 || { echo '{"passed":false,"reason":"blocked: sandbox image missing"}' >"$OUT/grade.json"; exit 0; }
+  if [[ -z "$FIX" ]]; then
+    echo '{"passed":false,"reason":"blocked: trusted fixture missing"}' >"$OUT/grade.json"
+    exit 0
+  fi
 fi
 
 # 1. protectedIntact: compare candidate's protected paths against the trusted fixture (baseline from fixture, not from agent).
-TRUSTED_ROOT="$FIX"; [[ -d "$FIX/initial" ]] && TRUSTED_ROOT="$FIX/initial"
-protected_ok=true
-for p in $PROTECTED; do
-  if [[ -e "$TRUSTED_ROOT/$p" ]]; then
-    a="$(cd "$TRUSTED_ROOT" && find "$p" -type f | sort | xargs shasum -a 256 2>/dev/null | shasum -a 256 | cut -d' ' -f1)"
-    b="$(cd "$CAND" && { find "$p" -type f 2>/dev/null | sort | xargs shasum -a 256 2>/dev/null || true; } | shasum -a 256 | cut -d' ' -f1)"
-    [[ "$a" == "$b" ]] || protected_ok=false
+TRUSTED_TMP=""
+cleanup_trusted() {
+  if [[ -n "${TRUSTED_TMP:-}" && -d "$TRUSTED_TMP" ]]; then
+    rm -rf "$TRUSTED_TMP"
   fi
-done
+}
+trap cleanup_trusted EXIT
+if [[ -n "$FIX" ]]; then
+  TRUSTED_ROOT="$FIX"; [[ -d "$FIX/initial" ]] && TRUSTED_ROOT="$FIX/initial"
+elif [[ "$LOGS_JSON" != "{}" ]]; then
+  TRUSTED_TMP="$(mktemp -d "${TMPDIR:-/tmp}/pctx-trusted-XXXXXX")"
+  node "$HERE/log-workspace.mjs" "$TRUSTED_TMP" "$LOGS_JSON"
+  TRUSTED_ROOT="$TRUSTED_TMP"
+else
+  TRUSTED_TMP="$(mktemp -d "${TMPDIR:-/tmp}/pctx-trusted-XXXXXX")"
+  TRUSTED_ROOT="$TRUSTED_TMP"
+fi
+protected_ok=true
+if [[ -z "$FIX" && "$LOGS_JSON" == "{}" && -n "$PROTECTED" ]]; then
+  protected_ok=false
+else
+  for p in $PROTECTED; do
+    if [[ -e "$TRUSTED_ROOT/$p" ]]; then
+      a="$(cd "$TRUSTED_ROOT" && find "$p" -type f | sort | xargs shasum -a 256 2>/dev/null | shasum -a 256 | cut -d' ' -f1)"
+      b="$(cd "$CAND" && { find "$p" -type f 2>/dev/null | sort | xargs shasum -a 256 2>/dev/null || true; } | shasum -a 256 | cut -d' ' -f1)"
+      [[ "$a" == "$b" ]] || protected_ok=false
+    elif [[ -n "$TRUSTED_TMP" && "$LOGS_JSON" != "{}" ]]; then
+      protected_ok=false
+    fi
+  done
+fi
 
 # 1b. outsideEditable (wrong-action signal): candidate files that differ from the trusted root and are neither editable nor protected.
 outside_editable="$(python3 - "$TRUSTED_ROOT" "$CAND" "$EDITABLE" "$PROTECTED" "$OUT/outside-editable.json" <<'PY'

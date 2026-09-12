@@ -7,7 +7,15 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { median } from "./accounting.mjs";
-import { capabilitiesFromItt, evaluateTrial, materializeItt, pairsFromItt } from "./gate.mjs";
+import {
+  capabilitiesFromItt,
+  evaluateTrial,
+  materializeItt,
+  objectiveFromPairs,
+  pairsFromItt,
+  regimePairsFromItt,
+  regimeSummary,
+} from "./gate.mjs";
 
 function usageOf(r) {
   return r.usage ?? r;
@@ -123,21 +131,97 @@ export function cacheChannelAvailable(episodes) {
   return false;
 }
 
-export function candidates(summary, episodes = []) {
+export function candidates(summary, episodes = [], plan = {}) {
   const out = [];
-  const h02 = summary.byCaseArm.H02 ?? {};
-  const lost = Object.entries(h02).filter(([, c]) => c.lostEvidence > 0).map(([arm, c]) => `${arm} ${c.lostEvidence}/${c.quotedVerbatimKnown}`);
-  if (lost.length) out.push({ candidate: "post-compaction-evidence-delta", evidence: lost });
-  const hEps = episodes.filter((e) => ["H01", "H02"].includes(e.manifest?.caseId) && e.status !== "blocked");
-  const searchedNoRef = hEps.filter((e) => ["observe", "balanced"].includes(e.manifest.arm) && (e.mechanism?.historySearches ?? 0) >= 1 && (e.mechanism?.verifiedReads ?? 0) === 0);
-  if (searchedNoRef.length >= 2) out.push({ candidate: "inline-ref-marker", evidence: searchedNoRef.map((e) => `${e.manifest.caseId}/${e.manifest.arm}/r${e.manifest.rep}`) });
-  const stubIgnored = hEps.filter((e) => e.manifest.arm === "balanced" && (e.mechanism?.folds ?? 0) >= 1 && (e.mechanism?.historyReads ?? 0) === 0 && (e.mechanism?.historySearches ?? 0) === 0 && e.oracle?.passed === false);
-  if (stubIgnored.length >= 2) out.push({ candidate: "fold-time-model-hint", evidence: stubIgnored.map((e) => `${e.manifest.caseId}/r${e.manifest.rep}`) });
+  const quality = new Set(plan.qualityIds ?? []);
+  const warmIds = new Set(plan.regimeLanes?.warm?.ids ?? []);
+  const longIds = new Set(plan.regimeLanes?.long?.ids ?? []);
+  const foldHint = (episodes ?? []).filter((e) =>
+    (quality.has(e.manifest?.caseId) || String(e.manifest?.caseId ?? "").startsWith("Q"))
+    && e.manifest?.arm === "balanced"
+    && (e.mechanism?.folds ?? 0) >= 1
+    && (e.mechanism?.historyReads ?? 0) === 0
+    && (e.mechanism?.historySearches ?? 0) === 0
+    && e.oracle?.passed === false
+    && e.status !== "blocked"
+  );
+  if (foldHint.length) {
+    out.push({
+      candidate: "fold-time-model-hint",
+      evidence: foldHint.map((e) => `${e.manifest.caseId}/r${e.manifest.rep}`),
+      status: foldHint.length >= 2 ? "met" : "below-gate",
+    });
+  }
+  const searchedNoRef = (episodes ?? []).filter((e) =>
+    ["observe", "balanced"].includes(e.manifest?.arm)
+    && (e.mechanism?.historySearches ?? 0) >= 1
+    && (e.mechanism?.verifiedReads ?? 0) === 0
+    && e.status !== "blocked"
+  );
+  if (searchedNoRef.length) {
+    out.push({
+      candidate: "inline-ref-marker",
+      evidence: searchedNoRef.map((e) => `${e.manifest.caseId}/${e.manifest.arm}/r${e.manifest.rep}`),
+      status: searchedNoRef.length >= 2 ? "met" : "below-gate",
+    });
+  }
+  const byRep = new Map();
+  for (const e of episodes ?? []) {
+    if (!longIds.has(e.manifest?.caseId)) continue;
+    const key = `${e.manifest.caseId}:${e.manifest.rep}`;
+    const row = byRep.get(key) ?? { native: null, candidate: null };
+    if (e.manifest.arm === "native") row.native = e;
+    if (e.manifest.arm === "balanced") row.candidate = e;
+    byRep.set(key, row);
+  }
+  const post = [];
+  for (const [key, row] of byRep) {
+    if ((row.native?.mechanism?.nativeCompactions ?? 0) >= 1
+      && row.native?.oracle?.quotedVerbatim === false
+      && row.candidate?.oracle?.quotedVerbatim === true) {
+      post.push(key);
+    }
+  }
+  if (post.length) {
+    out.push({
+      candidate: "post-compaction-evidence-delta",
+      evidence: post,
+      status: post.length >= 2 ? "met" : "below-gate",
+    });
+  }
+  const qPairs = pairsFromItt({ ...plan, qualityIds: plan.qualityIds ?? [...quality] }, episodes);
+  const qObj = objectiveFromPairs(qPairs, plan.objective ?? { primary: { metric: "fresh-input", minImprovement: 0.1 } });
+  const warmPairs = regimePairsFromItt(plan, episodes, "warm");
+  const wObj = warmPairs.length ? regimeSummary(warmPairs, plan.objective).objective : null;
+  if (qObj.primary.known && wObj?.primary?.known
+    && qObj.primary.relativeChange <= -0.3
+    && wObj.primary.relativeChange >= -0.05) {
+    out.push({
+      candidate: "cold-aligned-fold",
+      evidence: [
+        `Q fresh-input ${qObj.primary.relativeChange}`,
+        `W fresh-input ${wObj.primary.relativeChange}`,
+      ],
+      status: "met",
+    });
+  } else if (warmIds.size && qPairs.length && warmPairs.length) {
+    out.push({
+      candidate: "cold-aligned-fold",
+      evidence: [`Q known=${qObj.primary.known}`, `W known=${wObj?.primary?.known ?? false}`],
+      status: "below-gate",
+    });
+  }
+  void summary;
   return out;
 }
 
+/** @deprecated not used for decisions since round 7 */
+export function legacyDecide(summary, scenarios, episodes = []) {
+  return decideGates(summary, scenarios, episodes);
+}
+
 export function decide(summary, scenarios, episodes = []) {
-  return { ...decideGates(summary, scenarios, episodes), candidates: candidates(summary, episodes) };
+  return { ...legacyDecide(summary, scenarios, episodes), candidates: candidates(summary, episodes) };
 }
 
 function decideGates(summary, scenarios, episodes = []) {
@@ -211,14 +295,45 @@ function decideGates(summary, scenarios, episodes = []) {
   return { decision: "limited-balanced-trial", gate: null, reasons: ["quality, mechanism and cost gates passed on this environment; default profile stays observe"] };
 }
 
+export function renderDecision(decision) {
+  const L = ["## decision", ""];
+  L.push(`decision: ${decision.decision}`);
+  L.push(`reason: ${decision.reason ?? (decision.reasons ?? []).join("; ")}`);
+  const discordant = decision.discordant ?? [];
+  if (discordant.length) {
+    L.push("discordant:");
+    for (const row of discordant) L.push(`- ${row.caseId}/r${row.rep} ${row.kind}`);
+  } else {
+    L.push("discordant: none");
+  }
+  const counts = decision.counts ?? { b: 0, c: 0, shared: 0 };
+  L.push(`counts: b=${counts.b ?? 0} c=${counts.c ?? 0} shared=${counts.shared ?? 0}`);
+  const rates = decision.attemptRates ?? {};
+  L.push(`attemptRates: first=${fmt(rates.firstAttemptSuccess)} final=${rates.finalAttemptSuccess == null ? "n/a" : fmt(rates.finalAttemptSuccess)}`);
+  const primary = decision.objective?.primary ?? {};
+  L.push(`objective.primary: ${primary.metric ?? "fresh-input"} relativeChange=${fmt(primary.relativeChange)} known=${primary.known === true}`);
+  return L.join("\n");
+}
+
 export function renderMarkdown(summary, decision, manifest) {
   const L = [];
   const metrics = manifest.metricsAvailable === false || manifest.baseUrl
     ? ` · baseUrl ${manifest.baseUrl ?? "n/a"} · /metrics ${manifest.metricsAvailable === false ? "unavailable" : (manifest.metricsAvailable ? "available" : "unspecified")}`
     : "";
-  L.push(`# local-eval ${manifest.runId}`, "", `HEAD ${manifest.git?.head} (dirty=${manifest.git?.dirty}) · pi ${manifest.hostVersion} · plugin ${manifest.pluginSha256?.slice(0, 12) ?? "none"} · model ${manifest.model} · thinking ${manifest.thinking}${metrics}`, "");
-  L.push(`## decision: ${decision.decision}${decision.gate ? ` (failed gate: ${decision.gate})` : ""}`, "", ...decision.reasons.map((r) => `- ${r}`), "", `candidates: ${decision.candidates?.length ? decision.candidates.map((c) => `${c.candidate} [${c.evidence.join(", ")}]`).join("; ") : "none"}`, "");
-  if (summary.blocked.length) { L.push("## blocked episodes", "", ...summary.blocked.map((b) => `- ${b.caseId}/${b.arm}/r${b.rep}: ${b.reason}`), ""); }
+  const dist = manifest.distDigest ? String(manifest.distDigest).slice(0, 12) : "none";
+  const entry = manifest.pluginSha256?.slice(0, 12) ?? "none";
+  L.push(`# local-eval ${manifest.runId}`, "", `HEAD ${manifest.git?.head} (dirty=${manifest.git?.dirty}) · pi ${manifest.hostVersion} · dist ${dist} (entry ${entry}) · model ${manifest.model} · thinking ${manifest.thinking}${metrics}`, "");
+  if (decision.diagnosticOnly || manifest.diagnosticOnly || manifest.git?.dirty) {
+    L.push("**DIAGNOSTIC ONLY**", "");
+  }
+  const reasons = decision.reasons ?? (decision.reason ? [decision.reason] : []);
+  if (decision.discordant || decision.counts || decision.attemptRates || decision.objective) {
+    L.push(renderDecision(decision), "");
+  } else {
+    L.push(`## decision: ${decision.decision}${decision.gate ? ` (failed gate: ${decision.gate})` : ""}`, "", ...reasons.map((r) => `- ${r}`), "");
+  }
+  L.push(`candidates: ${decision.candidates?.length ? decision.candidates.map((c) => `${c.candidate} [${(c.evidence ?? []).join(", ")}]${c.status ? ` ${c.status}` : ""}`).join("; ") : "none"}`, "");
+  if ((summary.blocked ?? []).length) { L.push("## blocked episodes", "", ...summary.blocked.map((b) => `- ${b.caseId}/${b.arm}/r${b.rep}: ${b.reason}`), ""); }
   if (summary.priorAttempts?.length) {
     L.push("## prior blocked/error attempts (later overwritten by resume)", "", ...summary.priorAttempts.map((b) => `- ${b.caseId}/${b.arm}/r${b.rep}: ${b.status} ${b.reason ?? ""}`), "");
   }
@@ -236,7 +351,28 @@ export function renderMarkdown(summary, decision, manifest) {
   }
   L.push("", "## engine (NInfer /metrics deltas)", "", "| case | arm | prefix hit tokens | prefill tokens | hit ratio | unknown |", "|---|---|---:|---:|---:|---:|");
   for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.engine.unknown ? "n/a" : c.engine.prefixHit} | ${c.engine.unknown ? "n/a" : c.engine.prefill} | ${fmt(c.engine.prefixHitRatio)} | ${c.engine.unknown} |`);
-  L.push("", "Small samples (2 reps per cell). Counts only; no percentages extrapolated. Quality cases at w262k do not trigger folds by design.", "");
+  const primary = decision.objective?.primary;
+  const secondary = decision.objective?.secondary ?? {};
+  if (primary || Object.keys(secondary).length) {
+    L.push("", "## objective", "", "| metric | role | known | nativeSum | candidateSum | relativeChange |", "|---|---|---|---:|---:|---:|");
+    if (primary) {
+      L.push(`| ${primary.metric ?? "fresh-input"} | primary | ${primary.known === true} | ${primary.nativeSum ?? "n/a"} | ${primary.candidateSum ?? "n/a"} | ${fmt(primary.relativeChange)} |`);
+    }
+    for (const [metric, row] of Object.entries(secondary)) {
+      L.push(`| ${metric} | secondary | ${row.known === true} | ${row.nativeSum ?? "n/a"} | ${row.candidateSum ?? "n/a"} | ${fmt(row.relativeChange)} |`);
+    }
+  }
+  const regimes = decision.regimes ?? {};
+  if (regimes.warm || regimes.long) {
+    L.push("", "## regimes", "", "| lane | pairs | b | c | shared | fresh-input | nativeCompactions n/c |", "|---|---:|---:|---:|---:|---:|---:|");
+    for (const lane of ["warm", "long"]) {
+      const row = regimes[lane];
+      if (!row) continue;
+      L.push(`| ${lane} | ${row.pairs ?? 0} | ${row.b ?? 0} | ${row.c ?? 0} | ${row.shared ?? 0} | ${fmt(row.objective?.primary?.relativeChange)} | ${row.nativeCompactions?.native ?? 0}/${row.nativeCompactions?.candidate ?? 0} |`);
+    }
+  }
+  const reps = manifest.plan?.repsPerCase ?? 2;
+  L.push("", `Small samples (${reps} reps per cell). Counts only; no percentages extrapolated.`, "");
   return L.join("\n");
 }
 
@@ -284,20 +420,60 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { episodes, priorAttempts } = loadEpisodes(runDir);
   const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
   if (!manifest.plan) { console.error("frozen plan missing from run manifest"); process.exit(2); }
+  const attempts = [];
+  if (existsSync(join(runDir, "attempts.jsonl"))) {
+    for (const line of readFileSync(join(runDir, "attempts.jsonl"), "utf8").trim().split("\n").filter(Boolean)) {
+      try { attempts.push(JSON.parse(line)); } catch { /* skip */ }
+    }
+  }
   const itt = materializeItt(manifest.plan, episodes);
   const summary = summarize(itt, priorAttempts);
+  const pairs = pairsFromItt(manifest.plan, itt);
+  const objective = objectiveFromPairs(pairs, manifest.plan.objective);
+  const warmPairs = regimePairsFromItt(manifest.plan, itt, "warm");
+  const longPairs = regimePairsFromItt(manifest.plan, itt, "long");
+  const regimes = {};
+  if (warmPairs.length) regimes.warm = regimeSummary(warmPairs, manifest.plan.objective);
+  if (longPairs.length) regimes.long = regimeSummary(longPairs, manifest.plan.objective);
+  const diagnosticOnly = manifest.diagnosticOnly === true || manifest.git?.dirty === true;
+  const dirtyReason = manifest.diagnosticOnly === true
+    ? `dirty-tree diagnostic run (${String(manifest.dirtyDigest ?? manifest.distDigest ?? "dirty").slice(0, 12)})`
+    : "dirty-tree run (legacy manifest)";
+  const cand = candidates(summary, itt, manifest.plan);
   const decision = evaluateTrial({
-    pairs: pairsFromItt(manifest.plan, itt),
+    pairs,
     capabilities: capabilitiesFromItt(manifest.plan, itt),
-    objective: manifest.plan.objective,
-    expectedPairs: manifest.plan.expectedPairs,
-    expectedCapabilities: manifest.plan.expectedCapabilities,
+    objective,
+    attempts,
+    plan: manifest.plan,
+    regimes,
+    diagnosticOnly,
+    dirtyReason,
+    candidates: cand,
+    regimePairs: [...warmPairs, ...longPairs],
   });
+  if (decision.flags?.length) {
+    for (const flag of decision.flags) summary.flags.push({ flag });
+  }
+  for (const e of itt) {
+    if ((e.requests ?? []).length === 0 && e.status !== "NOT_RUN") {
+      summary.flags.push({ flag: "no-requests", caseId: e.manifest?.caseId, arm: e.manifest?.arm });
+    }
+  }
   writeFileSync(join(runDir, "report.json"), JSON.stringify({
-    manifest: { runId: manifest.runId, git: manifest.git, hostVersion: manifest.hostVersion, pluginSha256: manifest.pluginSha256, configHash: manifest.configHash, scenarioHash: manifest.plan.scenarioHash },
+    manifest: {
+      runId: manifest.runId,
+      git: manifest.git,
+      hostVersion: manifest.hostVersion,
+      pluginSha256: manifest.pluginSha256,
+      distDigest: manifest.distDigest ?? null,
+      diagnosticOnly,
+      configHash: manifest.configHash,
+      scenarioHash: manifest.plan.scenarioHash,
+    },
     summary,
     decision,
   }, null, 2));
-  writeFileSync(join(runDir, "report.md"), renderMarkdown(summary, { ...decision, reasons: [decision.reason], candidates: [] }, manifest));
+  writeFileSync(join(runDir, "report.md"), renderMarkdown(summary, decision, manifest));
   console.log(readFileSync(join(runDir, "report.md"), "utf8"));
 }

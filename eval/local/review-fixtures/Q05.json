@@ -7,5 +7,6 @@
   "finalPrompt": "修复预订幂等问题，并把最早失败的完整断言行保存到root-cause.txt。不要改tests。",
   "requiresFold": true,
   "oracle": { "file": "root-cause.txt", "contains": "ZX-731" },
+  "exactQuote": true,
   "reverseOracle": { "initialMustFail": true, "knownGoodMustPass": true }
 }

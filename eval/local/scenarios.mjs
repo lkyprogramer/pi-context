@@ -8,6 +8,10 @@ export const QUALITY_IDS = ["Q01", "Q02", "Q03", "Q04", "Q05", "Q06", "Q07", "Q0
 export const CAPABILITY_IDS = ["C01", "C02"];
 export const GUARD_IDS = ["G01", "G02"];
 export const NO_FOLD_REGRESSION = ["L01", "L02", "L03", "L04", "L05", "L06"];
+export const REGIME_LANES = {
+  warm: ["W-Q01", "W-Q03", "W-Q05", "W-Q07"],
+  long: ["X01"],
+};
 
 export function validateScenario({ seedText, witness, finalPrompt, requiresFold }) {
   const errors = [];
@@ -31,32 +35,78 @@ export function listReviewFixtures() {
   return readdirSync(REVIEW_FIXTURE_DIR).filter((n) => n.endsWith(".json")).map((n) => n.replace(/\.json$/, "")).sort();
 }
 
-export function buildReviewPlan() {
-  const order = [];
-  for (const id of QUALITY_IDS) {
-    for (let rep = 1; rep <= 2; rep++) {
-      for (const arm of ["native", "balanced"]) {
-        order.push({ episodeId: `review:${id}:${arm}:r${rep}`, caseId: id, arm, rep, kind: "quality", status: "UNRUN" });
-      }
+function pushCase(order, id, arms, kind, lane, repsPerCase) {
+  for (let rep = 1; rep <= repsPerCase; rep++) {
+    for (const arm of arms) {
+      order.push({
+        episodeId: `review:${id}:${arm}:r${rep}`,
+        caseId: id,
+        arm,
+        rep,
+        kind,
+        lane,
+        status: "UNRUN",
+      });
     }
+  }
+}
+
+export function buildReviewPlan({ repsPerCase = 3 } = {}) {
+  const order = [];
+  const requiresFold = {};
+  for (const id of QUALITY_IDS) {
+    pushCase(order, id, ["native", "balanced"], "quality", "Q", repsPerCase);
+    requiresFold[id] = true;
   }
   for (const id of CAPABILITY_IDS) {
-    for (let rep = 1; rep <= 2; rep++) {
-      order.push({ episodeId: `review:${id}:balanced:r${rep}`, caseId: id, arm: "balanced", rep, kind: "capability", status: "UNRUN" });
-    }
+    pushCase(order, id, ["balanced"], "capability", "C", repsPerCase);
+    requiresFold[id] = id !== "C02";
   }
+  for (const id of REGIME_LANES.warm) {
+    pushCase(order, id, ["native", "balanced"], "regime", "W", repsPerCase);
+    requiresFold[id] = true;
+  }
+  for (const id of REGIME_LANES.long) {
+    pushCase(order, id, ["native", "balanced"], "regime", "X", repsPerCase);
+    requiresFold[id] = true;
+  }
+  const expectedPairs = QUALITY_IDS.length * repsPerCase;
+  const expectedCapabilities = CAPABILITY_IDS.length * repsPerCase;
+  const expectedRegimePairs = {
+    warm: REGIME_LANES.warm.length * repsPerCase,
+    long: REGIME_LANES.long.length * repsPerCase,
+  };
+  const plannedEpisodes = expectedPairs * 2 + expectedCapabilities + expectedRegimePairs.warm * 2 + expectedRegimePairs.long * 2;
   return {
-    schemaVersion: 1,
-    plannedMain: 32,
-    plannedCapability: 4,
-    plannedEpisodes: 36,
+    schemaVersion: 2,
+    repsPerCase,
+    plannedMain: expectedPairs * 2,
+    plannedCapability: expectedCapabilities,
+    plannedEpisodes,
     liveStatus: "UNRUN",
     qualityIds: QUALITY_IDS,
     capabilityIds: CAPABILITY_IDS,
+    regimeLanes: {
+      warm: { ids: [...REGIME_LANES.warm], arms: ["native", "balanced"] },
+      long: { ids: [...REGIME_LANES.long], arms: ["native", "balanced"] },
+    },
     guardIds: GUARD_IDS,
     noFoldRegression: NO_FOLD_REGRESSION,
-    optional: ["H03"],
+    exactQuoteIds: ["Q05", "X01"],
+    requiresFold,
+    expectedPairs,
+    expectedCapabilities,
+    expectedRegimePairs,
+    objective: {
+      primary: { metric: "fresh-input", minImprovement: 0.1 },
+      secondary: ["logical-input", "wall-time", "cacheRead", "engine-prefill", "native-compactions", "requests"],
+    },
     window: { triggerPercent: 60, protectRecentBatches: 4, minRemovedTokens: 4096 },
+    budget: {
+      episode: { wallMs: 600_000, modelCalls: 24, toolCalls: 48 },
+      episodeLong: { wallMs: 900_000, modelCalls: 40, toolCalls: 80 },
+      run: { totalWallMs: 7_200_000, totalModelCalls: 1_500, totalToolCalls: 2_400 },
+    },
     order,
   };
 }
@@ -75,6 +125,7 @@ export function denominators(plan = buildReviewPlan()) {
   return {
     quality: plan.order.filter((o) => o.kind === "quality").length,
     capability: plan.order.filter((o) => o.kind === "capability").length,
+    regime: plan.order.filter((o) => o.kind === "regime").length,
     noFoldGuard: plan.guardIds.length,
     live: plan.liveStatus,
   };

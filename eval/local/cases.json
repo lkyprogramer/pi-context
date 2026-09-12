@@ -284,19 +284,32 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L04",
       "taskFile": "eval/local/cases/Q01/TASK.md",
       "seed": "eval/local/seeds/review/Q01.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q01.json",
       "grader": {
         "kind": "oracle-java+file",
-        "trusted": ["grader/Oracle.java"],
-        "editable": ["Deduplicator.java", "contract-revision.txt"],
-        "fileOracle": { "file": "contract-revision.txt", "equals": "tenant-contract-73" }
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "Deduplicator.java",
+          "contract-revision.txt"
+        ],
+        "fileOracle": {
+          "file": "contract-revision.txt",
+          "equals": "tenant-contract-73"
+        }
       },
-      "protectedPaths": ["grader"]
+      "protectedPaths": [
+        "grader"
+      ]
     },
     {
       "id": "Q02",
@@ -304,19 +317,34 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L02",
       "taskFile": "eval/local/cases/Q02/TASK.md",
       "seed": "eval/local/seeds/review/Q02.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q02.json",
       "grader": {
         "kind": "verify-sh+file",
-        "trusted": ["verify.sh", "src/test"],
-        "editable": ["src/main", "retry-contract.txt"],
-        "fileOracle": { "file": "retry-contract.txt", "equals": "7" }
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main",
+          "retry-contract.txt"
+        ],
+        "fileOracle": {
+          "file": "retry-contract.txt",
+          "equals": "7"
+        }
       },
-      "protectedPaths": ["verify.sh", "src/test"]
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ]
     },
     {
       "id": "Q03",
@@ -324,19 +352,34 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L03",
       "taskFile": "eval/local/cases/Q03/TASK.md",
       "seed": "eval/local/seeds/review/Q03.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q03.json",
       "grader": {
         "kind": "verify-sh+file",
-        "trusted": ["verify.sh", "src/test"],
-        "editable": ["src/main", "grace-ms.txt"],
-        "fileOracle": { "file": "grace-ms.txt", "equals": "1730" }
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main",
+          "grace-ms.txt"
+        ],
+        "fileOracle": {
+          "file": "grace-ms.txt",
+          "equals": "1730"
+        }
       },
-      "protectedPaths": ["verify.sh", "src/test"]
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ]
     },
     {
       "id": "Q04",
@@ -344,19 +387,32 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L06",
       "taskFile": "eval/local/cases/Q04/TASK.md",
       "seed": "eval/local/seeds/review/Q04.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q04.json",
       "grader": {
         "kind": "oracle-java+file",
-        "trusted": ["grader/Oracle.java"],
-        "editable": ["VerificationStatus.java", "build-tag.txt"],
-        "fileOracle": { "file": "build-tag.txt", "equals": "build-r9q7" }
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "VerificationStatus.java",
+          "build-tag.txt"
+        ],
+        "fileOracle": {
+          "file": "build-tag.txt",
+          "equals": "build-r9q7"
+        }
       },
-      "protectedPaths": ["grader"]
+      "protectedPaths": [
+        "grader"
+      ]
     },
     {
       "id": "Q05",
@@ -364,19 +420,39 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L01",
       "taskFile": "eval/local/cases/Q05/TASK.md",
       "seed": "eval/local/seeds/review/Q05.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q05.json",
       "grader": {
         "kind": "verify-sh+file",
-        "trusted": ["verify.sh", "src/test"],
-        "editable": ["src/main", "root-cause.txt"],
-        "fileOracle": { "file": "root-cause.txt", "contains": "ZX-731" }
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main",
+          "root-cause.txt"
+        ],
+        "fileOracle": {
+          "file": "root-cause.txt",
+          "contains": "ZX-731"
+        }
       },
-      "protectedPaths": ["verify.sh", "src/test"]
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ],
+      "evidence": {
+        "kind": "verbatim-quote",
+        "sourceKind": "any",
+        "linePattern": "idempotency broken: reservation ZX-731 replayed after callback\\."
+      }
     },
     {
       "id": "Q06",
@@ -384,19 +460,35 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L05",
       "taskFile": "eval/local/cases/Q06/TASK.md",
       "seed": "eval/local/seeds/review/Q06.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q06.json",
       "grader": {
         "kind": "oracle-java+file",
-        "trusted": ["grader/Oracle.java"],
-        "editable": ["TenantRepository.java", "ticket.txt"],
-        "fileOracle": { "file": "ticket.txt", "equals": "TK-442", "forbidden": ["TK-991"] }
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "TenantRepository.java",
+          "ticket.txt"
+        ],
+        "fileOracle": {
+          "file": "ticket.txt",
+          "equals": "TK-442",
+          "forbidden": [
+            "TK-991"
+          ]
+        }
       },
-      "protectedPaths": ["grader"]
+      "protectedPaths": [
+        "grader"
+      ]
     },
     {
       "id": "Q07",
@@ -404,19 +496,33 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L06",
       "taskFile": "eval/local/cases/Q07/TASK.md",
       "seed": "eval/local/seeds/review/Q07.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q07.json",
       "grader": {
         "kind": "oracle-java+file",
-        "trusted": ["grader/Oracle.java"],
-        "editable": ["VerificationStatus.java", "recovered.json"],
-        "fileOracle": { "file": "recovered.json", "keyA": "alpha-931", "keyB": "beta-527" }
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "VerificationStatus.java",
+          "recovered.json"
+        ],
+        "fileOracle": {
+          "file": "recovered.json",
+          "keyA": "alpha-931",
+          "keyB": "beta-527"
+        }
       },
-      "protectedPaths": ["grader"]
+      "protectedPaths": [
+        "grader"
+      ]
     },
     {
       "id": "Q08",
@@ -424,19 +530,34 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["native", "balanced"],
-      "reps": 2,
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/L01",
       "taskFile": "eval/local/cases/Q08/TASK.md",
       "seed": "eval/local/seeds/review/Q08.jsonl",
       "reviewFixture": "eval/local/review-fixtures/Q08.json",
       "grader": {
         "kind": "verify-sh+file",
-        "trusted": ["verify.sh", "src/test"],
-        "editable": ["src/main", "rollback-marker.txt"],
-        "fileOracle": { "file": "rollback-marker.txt", "equals": "rollback-619" }
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main",
+          "rollback-marker.txt"
+        ],
+        "fileOracle": {
+          "file": "rollback-marker.txt",
+          "equals": "rollback-619"
+        }
       },
-      "protectedPaths": ["verify.sh", "src/test"]
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ]
     },
     {
       "id": "C01",
@@ -444,8 +565,10 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["balanced"],
-      "reps": 2,
+      "arms": [
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/C01",
       "taskFile": "eval/local/cases/C01/TASK.md",
       "seed": "eval/local/seeds/review/C01.jsonl",
@@ -453,8 +576,16 @@
       "grader": {
         "kind": "file-oracle",
         "trusted": [],
-        "editable": ["restored.txt"],
-        "fileOracle": { "file": "restored.txt", "needles": ["nce-8f3a21c4", "c01-end-8f3a-page2"] }
+        "editable": [
+          "restored.txt"
+        ],
+        "fileOracle": {
+          "file": "restored.txt",
+          "needles": [
+            "nce-8f3a21c4",
+            "c01-end-8f3a-page2"
+          ]
+        }
       },
       "protectedPaths": []
     },
@@ -464,8 +595,10 @@
       "runner": "review",
       "liveStatus": "UNRUN",
       "windowProfile": "w64k",
-      "arms": ["balanced"],
-      "reps": 2,
+      "arms": [
+        "balanced"
+      ],
+      "reps": 3,
       "fixture": "eval/local/fixtures/C02",
       "taskFile": "eval/local/cases/C02/TASK.md",
       "seed": "eval/local/seeds/review/C02.jsonl",
@@ -473,10 +606,230 @@
       "grader": {
         "kind": "file-oracle",
         "trusted": [],
-        "editable": ["needles.txt"],
-        "fileOracle": { "file": "needles.txt", "needles": ["needle-alpha", "needle-beta"], "forbidden": ["decoy-gamma"] }
+        "editable": [
+          "needles.txt"
+        ],
+        "fileOracle": {
+          "file": "needles.txt",
+          "needles": [
+            "needle-alpha",
+            "needle-beta"
+          ],
+          "forbidden": [
+            "decoy-gamma"
+          ]
+        }
       },
       "protectedPaths": []
+    },
+    {
+      "id": "W-Q01",
+      "role": "regime",
+      "runner": "review",
+      "lane": "W",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
+      "fixture": "eval/local/fixtures/L04",
+      "taskFile": "eval/local/cases/W-Q01/TASK.md",
+      "seed": "eval/local/seeds/review/W-Q01.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/W-Q01.json",
+      "grader": {
+        "kind": "oracle-java+file",
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "Deduplicator.java",
+          "contract-revision.txt",
+          "notes/"
+        ],
+        "fileOracle": {
+          "file": "contract-revision.txt",
+          "equals": "tenant-contract-73"
+        }
+      },
+      "protectedPaths": [
+        "grader"
+      ],
+      "warmup": {
+        "files": 2,
+        "tokensEach": 6000
+      }
+    },
+    {
+      "id": "W-Q03",
+      "role": "regime",
+      "runner": "review",
+      "lane": "W",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
+      "fixture": "eval/local/fixtures/L03",
+      "taskFile": "eval/local/cases/W-Q03/TASK.md",
+      "seed": "eval/local/seeds/review/W-Q03.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/W-Q03.json",
+      "grader": {
+        "kind": "verify-sh+file",
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main",
+          "grace-ms.txt",
+          "notes/"
+        ],
+        "fileOracle": {
+          "file": "grace-ms.txt",
+          "equals": "1730"
+        }
+      },
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ],
+      "warmup": {
+        "files": 2,
+        "tokensEach": 6000
+      }
+    },
+    {
+      "id": "W-Q05",
+      "role": "regime",
+      "runner": "review",
+      "lane": "W",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
+      "fixture": "eval/local/fixtures/L01",
+      "taskFile": "eval/local/cases/W-Q05/TASK.md",
+      "seed": "eval/local/seeds/review/W-Q05.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/W-Q05.json",
+      "grader": {
+        "kind": "verify-sh+file",
+        "trusted": [
+          "verify.sh",
+          "src/test"
+        ],
+        "editable": [
+          "src/main",
+          "root-cause.txt",
+          "notes/"
+        ],
+        "fileOracle": {
+          "file": "root-cause.txt",
+          "contains": "ZX-731"
+        }
+      },
+      "protectedPaths": [
+        "verify.sh",
+        "src/test"
+      ],
+      "warmup": {
+        "files": 2,
+        "tokensEach": 6000
+      },
+      "evidence": {
+        "kind": "verbatim-quote",
+        "sourceKind": "any",
+        "linePattern": "idempotency broken: reservation ZX-731 replayed after callback\\."
+      }
+    },
+    {
+      "id": "W-Q07",
+      "role": "regime",
+      "runner": "review",
+      "lane": "W",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
+      "fixture": "eval/local/fixtures/L06",
+      "taskFile": "eval/local/cases/W-Q07/TASK.md",
+      "seed": "eval/local/seeds/review/W-Q07.jsonl",
+      "reviewFixture": "eval/local/review-fixtures/W-Q07.json",
+      "grader": {
+        "kind": "oracle-java+file",
+        "trusted": [
+          "grader/Oracle.java"
+        ],
+        "editable": [
+          "VerificationStatus.java",
+          "recovered.json",
+          "notes/"
+        ],
+        "fileOracle": {
+          "file": "recovered.json",
+          "keyA": "alpha-931",
+          "keyB": "beta-527"
+        }
+      },
+      "protectedPaths": [
+        "grader"
+      ],
+      "warmup": {
+        "files": 2,
+        "tokensEach": 6000
+      }
+    },
+    {
+      "id": "X01",
+      "role": "regime",
+      "runner": "review",
+      "lane": "X",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
+      "fixture": null,
+      "seed": null,
+      "logs": {
+        "count": 12,
+        "lines": 300,
+        "marked": 7,
+        "markLine": 210,
+        "token": "FIRST-ERROR-MARKER"
+      },
+      "taskFile": "eval/local/cases/X01/TASK.md",
+      "budget": "episodeLong",
+      "grader": {
+        "kind": "file-oracle",
+        "trusted": [],
+        "editable": [
+          "marker.txt"
+        ],
+        "fileOracle": {
+          "file": "marker.txt",
+          "contains": "FIRST-ERROR-MARKER at build-07 line 210"
+        }
+      },
+      "protectedPaths": [
+        "logs"
+      ],
+      "evidence": {
+        "kind": "verbatim-quote",
+        "sourceKind": "any",
+        "linePattern": "FIRST-ERROR-MARKER at build-07 line 210"
+      }
     }
   ]
 }

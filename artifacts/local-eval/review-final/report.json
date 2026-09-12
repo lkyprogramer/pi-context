@@ -1,359 +1,1952 @@
 {
   "manifest": {
-    "runId": "review-final",
-    "createdAt": "2026-09-09T09:54:29.915Z",
-    "head": "5a23e6a0",
-    "liveStatus": "UNRUN",
-    "defaultProfile": "observe",
-    "host": "pi-0.85.1",
-    "decision": "inconclusive",
-    "superseded": [
-      {
-        "runId": "20260909-112407",
-        "decision": "limited-balanced-trial",
-        "note": "pre-R10 trial; not the 8+2 review matrix"
-      }
-    ]
-  },
-  "plan": {
-    "schemaVersion": 1,
-    "plannedMain": 32,
-    "plannedCapability": 4,
-    "plannedEpisodes": 36,
-    "liveStatus": "UNRUN",
-    "qualityIds": [
-      "Q01",
-      "Q02",
-      "Q03",
-      "Q04",
-      "Q05",
-      "Q06",
-      "Q07",
-      "Q08"
-    ],
-    "capabilityIds": [
-      "C01",
-      "C02"
-    ],
-    "guardIds": [
-      "G01",
-      "G02"
-    ],
-    "noFoldRegression": [
-      "L01",
-      "L02",
-      "L03",
-      "L04",
-      "L05",
-      "L06"
-    ],
-    "optional": [
-      "H03"
-    ],
-    "window": {
-      "triggerPercent": 60,
-      "protectRecentBatches": 4,
-      "minRemovedTokens": 4096
+    "runId": "review-r8-20260911b",
+    "git": {
+      "head": "878e92f292a7a0d50252d0fa49d89b91c696ca0f",
+      "tree": "1f31a135bb95fa60adcb04bdce71c57064668bf5",
+      "dirty": false
     },
-    "order": [
-      {
-        "episodeId": "review:Q01:native:r1",
-        "caseId": "Q01",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+    "hostVersion": "0.85.1",
+    "pluginSha256": "34dfcba7da19394c47391f746f13459160793e2a9c205f8720a40b25b02b8f19",
+    "distDigest": "b414ff09808fa691afdfa106994e29e6e6b0704a7e228308bc6fb916c4a2085c",
+    "diagnosticOnly": false,
+    "configHash": null,
+    "scenarioHash": "1e0130b64666bd21a508926049755ff4ed412ed2503f83eb27dfaef37d508d69"
+  },
+  "summary": {
+    "byCaseArm": {
+      "Q01": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 137262,
+          "cacheReadSum": 499081,
+          "outputSum": 3506,
+          "unknownUsage": 0,
+          "requests": 14,
+          "walls": [
+            69480,
+            45668,
+            44525
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 0,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 591895,
+            "prefill": 137332,
+            "unknown": 0,
+            "prefixHitRatio": 0.811674554014045
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            5,
+            5,
+            4
+          ],
+          "wallP50": 45668,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 49168,
+          "cacheReadSum": 239908,
+          "outputSum": 5795,
+          "unknownUsage": 0,
+          "requests": 20,
+          "walls": [
+            41529,
+            32763,
+            29697
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 15,
+            "nativeCompactions": 0,
+            "historyReads": 3,
+            "historySearches": 2,
+            "verifiedReads": 3,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52206,
+            "invalidatedTokensEstimate": 64788
+          },
+          "engine": {
+            "prefixHit": 239908,
+            "prefill": 49168,
+            "unknown": 0,
+            "prefixHitRatio": 0.8299132408086455
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            6,
+            8,
+            6
+          ],
+          "wallP50": 32763,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q01:balanced:r1",
-        "caseId": "Q01",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+      "Q02": {
+        "native": {
+          "episodes": 3,
+          "passed": 2,
+          "failed": 1,
+          "timeout": 0,
+          "inputSum": 140793,
+          "cacheReadSum": 1127352,
+          "outputSum": 8993,
+          "unknownUsage": 0,
+          "requests": 28,
+          "walls": [
+            86654,
+            63417,
+            121939
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 1,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 1175589,
+            "prefill": 160117,
+            "unknown": 0,
+            "prefixHitRatio": 0.8801255665543166
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            11,
+            8,
+            9
+          ],
+          "wallP50": 86654,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 2,
+          "failed": 1,
+          "timeout": 0,
+          "inputSum": 45128,
+          "cacheReadSum": 353176,
+          "outputSum": 6559,
+          "unknownUsage": 0,
+          "requests": 26,
+          "walls": [
+            26657,
+            43338,
+            42354
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 15,
+            "nativeCompactions": 0,
+            "historyReads": 2,
+            "historySearches": 1,
+            "verifiedReads": 2,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52191,
+            "invalidatedTokensEstimate": 64575
+          },
+          "engine": {
+            "prefixHit": 353176,
+            "prefill": 53447,
+            "unknown": 0,
+            "prefixHitRatio": 0.8685588370554543
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            7,
+            9,
+            10
+          ],
+          "wallP50": 42354,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q01:native:r2",
-        "caseId": "Q01",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
+      "Q03": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 238793,
+          "cacheReadSum": 691719,
+          "outputSum": 8238,
+          "unknownUsage": 0,
+          "requests": 29,
+          "walls": [
+            83750,
+            82593,
+            59427
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 3,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 782890,
+            "prefill": 238844,
+            "unknown": 0,
+            "prefixHitRatio": 0.7662366134434206
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            11,
+            11,
+            7
+          ],
+          "wallP50": 82593,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 84870,
+          "cacheReadSum": 472086,
+          "outputSum": 5723,
+          "unknownUsage": 0,
+          "requests": 26,
+          "walls": [
+            79293,
+            36299,
+            37492
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 15,
+            "nativeCompactions": 0,
+            "historyReads": 3,
+            "historySearches": 5,
+            "verifiedReads": 3,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52212,
+            "invalidatedTokensEstimate": 64698
+          },
+          "engine": {
+            "prefixHit": 472086,
+            "prefill": 84870,
+            "unknown": 0,
+            "prefixHitRatio": 0.8476181242324349
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            10,
+            8,
+            8
+          ],
+          "wallP50": 37492,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q01:balanced:r2",
-        "caseId": "Q01",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
+      "Q04": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 137235,
+          "cacheReadSum": 590640,
+          "outputSum": 3300,
+          "unknownUsage": 0,
+          "requests": 16,
+          "walls": [
+            44966,
+            39010,
+            46221
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 0,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 869378,
+            "prefill": 137664,
+            "unknown": 0,
+            "prefixHitRatio": 0.8632986509003596
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            5,
+            4,
+            7
+          ],
+          "wallP50": 44966,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 47796,
+          "cacheReadSum": 256058,
+          "outputSum": 4262,
+          "unknownUsage": 0,
+          "requests": 20,
+          "walls": [
+            22925,
+            34258,
+            37619
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 15,
+            "nativeCompactions": 0,
+            "historyReads": 3,
+            "historySearches": 2,
+            "verifiedReads": 3,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52203,
+            "invalidatedTokensEstimate": 64710
+          },
+          "engine": {
+            "prefixHit": 256058,
+            "prefill": 47796,
+            "unknown": 0,
+            "prefixHitRatio": 0.8427007707649068
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            5,
+            9,
+            6
+          ],
+          "wallP50": 34258,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q02:native:r1",
-        "caseId": "Q02",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+      "Q05": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 141388,
+          "cacheReadSum": 1025871,
+          "outputSum": 6818,
+          "unknownUsage": 0,
+          "requests": 26,
+          "walls": [
+            70106,
+            63158,
+            64577
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 1,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 1121900,
+            "prefill": 163507,
+            "unknown": 0,
+            "prefixHitRatio": 0.8727974874883986
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 3,
+          "quotedVerbatimKnown": 3,
+          "requestCounts": [
+            8,
+            9,
+            9
+          ],
+          "wallP50": 64577,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 49604,
+          "cacheReadSum": 339737,
+          "outputSum": 7459,
+          "unknownUsage": 0,
+          "requests": 24,
+          "walls": [
+            45869,
+            32849,
+            41296
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 15,
+            "nativeCompactions": 0,
+            "historyReads": 4,
+            "historySearches": 2,
+            "verifiedReads": 3,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52227,
+            "invalidatedTokensEstimate": 64650
+          },
+          "engine": {
+            "prefixHit": 339737,
+            "prefill": 61982,
+            "unknown": 0,
+            "prefixHitRatio": 0.8457080695710185
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 3,
+          "quotedVerbatimKnown": 3,
+          "requestCounts": [
+            8,
+            8,
+            8
+          ],
+          "wallP50": 41296,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q02:balanced:r1",
-        "caseId": "Q02",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+      "Q06": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 136703,
+          "cacheReadSum": 730724,
+          "outputSum": 2743,
+          "unknownUsage": 0,
+          "requests": 19,
+          "walls": [
+            44077,
+            41908,
+            44827
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 0,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 1010266,
+            "prefill": 137683,
+            "unknown": 0,
+            "prefixHitRatio": 0.8800617449033015
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            7,
+            6,
+            6
+          ],
+          "wallP50": 44077,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 48462,
+          "cacheReadSum": 200004,
+          "outputSum": 5163,
+          "unknownUsage": 0,
+          "requests": 17,
+          "walls": [
+            28706,
+            24913,
+            26430
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 15,
+            "nativeCompactions": 0,
+            "historyReads": 3,
+            "historySearches": 1,
+            "verifiedReads": 3,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52212,
+            "invalidatedTokensEstimate": 64854
+          },
+          "engine": {
+            "prefixHit": 200004,
+            "prefill": 48462,
+            "unknown": 0,
+            "prefixHitRatio": 0.8049552051387312
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            6,
+            5,
+            6
+          ],
+          "wallP50": 26430,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q02:native:r2",
-        "caseId": "Q02",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
+      "Q07": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 132932,
+          "cacheReadSum": 750570,
+          "outputSum": 5431,
+          "unknownUsage": 0,
+          "requests": 20,
+          "walls": [
+            51472,
+            52468,
+            51333
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 0,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 977948,
+            "prefill": 133204,
+            "unknown": 0,
+            "prefixHitRatio": 0.8801208115541348
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            7,
+            7,
+            6
+          ],
+          "wallP50": 51472,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 52363,
+          "cacheReadSum": 240378,
+          "outputSum": 7465,
+          "unknownUsage": 0,
+          "requests": 20,
+          "walls": [
+            34524,
+            33718,
+            51413
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 18,
+            "nativeCompactions": 0,
+            "historyReads": 6,
+            "historySearches": 1,
+            "verifiedReads": 6,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 54384,
+            "invalidatedTokensEstimate": 57810
+          },
+          "engine": {
+            "prefixHit": 240378,
+            "prefill": 52363,
+            "unknown": 0,
+            "prefixHitRatio": 0.8211285744053617
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 1,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 1,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 1,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            7,
+            6,
+            7
+          ],
+          "wallP50": 34524,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q02:balanced:r2",
-        "caseId": "Q02",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
+      "Q08": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 138063,
+          "cacheReadSum": 1114630,
+          "outputSum": 5493,
+          "unknownUsage": 0,
+          "requests": 27,
+          "walls": [
+            60547,
+            62662,
+            62830
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 0,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 1306582,
+            "prefill": 138202,
+            "unknown": 0,
+            "prefixHitRatio": 0.9043441787838182
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            8,
+            9,
+            10
+          ],
+          "wallP50": 62662,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 49641,
+          "cacheReadSum": 419349,
+          "outputSum": 6167,
+          "unknownUsage": 0,
+          "requests": 29,
+          "walls": [
+            41239,
+            32468,
+            34466
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 15,
+            "nativeCompactions": 0,
+            "historyReads": 4,
+            "historySearches": 1,
+            "verifiedReads": 3,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52224,
+            "invalidatedTokensEstimate": 64590
+          },
+          "engine": {
+            "prefixHit": 419349,
+            "prefill": 49641,
+            "unknown": 0,
+            "prefixHitRatio": 0.8941533934625472
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            12,
+            8,
+            9
+          ],
+          "wallP50": 34466,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q03:native:r1",
-        "caseId": "Q03",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+      "C01": {
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 55098,
+          "cacheReadSum": 519870,
+          "outputSum": 13717,
+          "unknownUsage": 0,
+          "requests": 36,
+          "walls": [
+            61818,
+            69990,
+            66689
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 18,
+            "nativeCompactions": 0,
+            "historyReads": 17,
+            "historySearches": 8,
+            "verifiedReads": 7,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 55179,
+            "invalidatedTokensEstimate": 58275
+          },
+          "engine": {
+            "prefixHit": 519870,
+            "prefill": 55098,
+            "unknown": 0,
+            "prefixHitRatio": 0.904172058271069
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 70.38333333333334,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 70.38333333333334,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            12,
+            11,
+            13
+          ],
+          "wallP50": 66689,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q03:balanced:r1",
-        "caseId": "Q03",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+      "C02": {
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 31877,
+          "cacheReadSum": 291211,
+          "outputSum": 4178,
+          "unknownUsage": 0,
+          "requests": 16,
+          "walls": [
+            30903,
+            18178,
+            16201
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 0,
+            "historyReads": 6,
+            "historySearches": 8,
+            "verifiedReads": 6,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 291211,
+            "prefill": 31877,
+            "unknown": 0,
+            "prefixHitRatio": 0.9013364779874213
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            6,
+            5,
+            5
+          ],
+          "wallP50": 18178,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q03:native:r2",
-        "caseId": "Q03",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
+      "W-Q01": {
+        "native": {
+          "episodes": 3,
+          "passed": 0,
+          "failed": 3,
+          "timeout": 0,
+          "inputSum": 232473,
+          "cacheReadSum": 617778,
+          "outputSum": 18426,
+          "unknownUsage": 0,
+          "requests": 37,
+          "walls": [
+            103536,
+            90566,
+            132008
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 3,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 734839,
+            "prefill": 232635,
+            "unknown": 0,
+            "prefixHitRatio": 0.7595439257282366
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            12,
+            11,
+            14
+          ],
+          "wallP50": 103536,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 187493,
+          "cacheReadSum": 871988,
+          "outputSum": 10473,
+          "unknownUsage": 0,
+          "requests": 31,
+          "walls": [
+            65664,
+            84186,
+            89119
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 18,
+            "nativeCompactions": 0,
+            "historyReads": 5,
+            "historySearches": 4,
+            "verifiedReads": 5,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52983,
+            "invalidatedTokensEstimate": 126504
+          },
+          "engine": {
+            "prefixHit": 871988,
+            "prefill": 187493,
+            "unknown": 0,
+            "prefixHitRatio": 0.8230331643512248
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            10,
+            11,
+            10
+          ],
+          "wallP50": 84186,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q03:balanced:r2",
-        "caseId": "Q03",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
+      "W-Q03": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 205259,
+          "cacheReadSum": 366689,
+          "outputSum": 14788,
+          "unknownUsage": 0,
+          "requests": 36,
+          "walls": [
+            89902,
+            91883,
+            83299
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 3,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 441179,
+            "prefill": 205919,
+            "unknown": 0,
+            "prefixHitRatio": 0.6817808121799172
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            14,
+            12,
+            10
+          ],
+          "wallP50": 89902,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 264922,
+          "cacheReadSum": 851794,
+          "outputSum": 14178,
+          "unknownUsage": 0,
+          "requests": 38,
+          "walls": [
+            123414,
+            121762,
+            86146
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 6,
+            "nativeCompactions": 2,
+            "historyReads": 6,
+            "historySearches": 7,
+            "verifiedReads": 4,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 52989,
+            "invalidatedTokensEstimate": 126511
+          },
+          "engine": {
+            "prefixHit": 851794,
+            "prefill": 264922,
+            "unknown": 0,
+            "prefixHitRatio": 0.7627668986564176
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            12,
+            14,
+            12
+          ],
+          "wallP50": 121762,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q04:native:r1",
-        "caseId": "Q04",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+      "W-Q05": {
+        "native": {
+          "episodes": 3,
+          "passed": 0,
+          "failed": 3,
+          "timeout": 0,
+          "inputSum": 179227,
+          "cacheReadSum": 195521,
+          "outputSum": 14900,
+          "unknownUsage": 0,
+          "requests": 35,
+          "walls": [
+            77472,
+            98274,
+            89879
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 3,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 224192,
+            "prefill": 179455,
+            "unknown": 0,
+            "prefixHitRatio": 0.5554159946686089
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 3,
+          "quotedVerbatimKnown": 3,
+          "requestCounts": [
+            9,
+            12,
+            14
+          ],
+          "wallP50": 89879,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 0,
+          "failed": 3,
+          "timeout": 0,
+          "inputSum": 165122,
+          "cacheReadSum": 693315,
+          "outputSum": 6341,
+          "unknownUsage": 0,
+          "requests": 28,
+          "walls": [
+            59309,
+            67391,
+            60971
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 18,
+            "nativeCompactions": 0,
+            "historyReads": 0,
+            "historySearches": 1,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 53004,
+            "invalidatedTokensEstimate": 126588
+          },
+          "engine": {
+            "prefixHit": 693315,
+            "prefill": 165122,
+            "unknown": 0,
+            "prefixHitRatio": 0.8076480859981571
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 3,
+          "quotedVerbatimKnown": 3,
+          "requestCounts": [
+            9,
+            10,
+            9
+          ],
+          "wallP50": 60971,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q04:balanced:r1",
-        "caseId": "Q04",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
+      "W-Q07": {
+        "native": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 230740,
+          "cacheReadSum": 540755,
+          "outputSum": 19706,
+          "unknownUsage": 0,
+          "requests": 42,
+          "walls": [
+            127246,
+            95951,
+            121241
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 3,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 638797,
+            "prefill": 230836,
+            "unknown": 0,
+            "prefixHitRatio": 0.7345592911032585
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            17,
+            12,
+            13
+          ],
+          "wallP50": 121241,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 215705,
+          "cacheReadSum": 1027877,
+          "outputSum": 11399,
+          "unknownUsage": 0,
+          "requests": 34,
+          "walls": [
+            105168,
+            79275,
+            113712
+          ],
+          "mech": {
+            "folds": 3,
+            "replacements": 18,
+            "nativeCompactions": 0,
+            "historyReads": 6,
+            "historySearches": 1,
+            "verifiedReads": 6,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 53127,
+            "invalidatedTokensEstimate": 126653
+          },
+          "engine": {
+            "prefixHit": 1027877,
+            "prefill": 215705,
+            "unknown": 0,
+            "prefixHitRatio": 0.8265454147776343
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 0,
+          "requestCounts": [
+            11,
+            10,
+            13
+          ],
+          "wallP50": 105168,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       },
-      {
-        "episodeId": "review:Q04:native:r2",
-        "caseId": "Q04",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q04:balanced:r2",
-        "caseId": "Q04",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q05:native:r1",
-        "caseId": "Q05",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q05:balanced:r1",
-        "caseId": "Q05",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q05:native:r2",
-        "caseId": "Q05",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q05:balanced:r2",
-        "caseId": "Q05",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q06:native:r1",
-        "caseId": "Q06",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q06:balanced:r1",
-        "caseId": "Q06",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q06:native:r2",
-        "caseId": "Q06",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q06:balanced:r2",
-        "caseId": "Q06",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q07:native:r1",
-        "caseId": "Q07",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q07:balanced:r1",
-        "caseId": "Q07",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q07:native:r2",
-        "caseId": "Q07",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q07:balanced:r2",
-        "caseId": "Q07",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q08:native:r1",
-        "caseId": "Q08",
-        "arm": "native",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q08:balanced:r1",
-        "caseId": "Q08",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q08:native:r2",
-        "caseId": "Q08",
-        "arm": "native",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:Q08:balanced:r2",
-        "caseId": "Q08",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "quality",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:C01:balanced:r1",
-        "caseId": "C01",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "capability",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:C01:balanced:r2",
-        "caseId": "C01",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "capability",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:C02:balanced:r1",
-        "caseId": "C02",
-        "arm": "balanced",
-        "rep": 1,
-        "kind": "capability",
-        "status": "UNRUN"
-      },
-      {
-        "episodeId": "review:C02:balanced:r2",
-        "caseId": "C02",
-        "arm": "balanced",
-        "rep": 2,
-        "kind": "capability",
-        "status": "UNRUN"
+      "X01": {
+        "native": {
+          "episodes": 3,
+          "passed": 2,
+          "failed": 1,
+          "timeout": 0,
+          "inputSum": 289547,
+          "cacheReadSum": 2254855,
+          "outputSum": 13873,
+          "unknownUsage": 0,
+          "requests": 102,
+          "walls": [
+            227554,
+            288695,
+            124663
+          ],
+          "mech": {
+            "folds": 0,
+            "replacements": 0,
+            "nativeCompactions": 4,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 0,
+            "invalidatedTokensEstimate": 0
+          },
+          "engine": {
+            "prefixHit": 2298070,
+            "prefill": 289600,
+            "unknown": 0,
+            "prefixHitRatio": 0.8880846475787098
+          },
+          "cacheAfterFold": [],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 3,
+          "requestCounts": [
+            39,
+            29,
+            34
+          ],
+          "wallP50": 227554,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        },
+        "balanced": {
+          "episodes": 3,
+          "passed": 3,
+          "failed": 0,
+          "timeout": 0,
+          "inputSum": 345979,
+          "cacheReadSum": 2441624,
+          "outputSum": 11808,
+          "unknownUsage": 0,
+          "requests": 106,
+          "walls": [
+            198949,
+            262918,
+            197558
+          ],
+          "mech": {
+            "folds": 5,
+            "replacements": 13,
+            "nativeCompactions": 1,
+            "historyReads": 0,
+            "historySearches": 0,
+            "verifiedReads": 0,
+            "foldedErrorResults": 0,
+            "savedTokensEstimate": 65950,
+            "invalidatedTokensEstimate": 158803
+          },
+          "engine": {
+            "prefixHit": 2441624,
+            "prefill": 345979,
+            "unknown": 0,
+            "prefixHitRatio": 0.8758865591692935
+          },
+          "cacheAfterFold": [
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            },
+            {
+              "dipRatio": 0,
+              "recovered": 2,
+              "unknown": false
+            }
+          ],
+          "nonce": {
+            "correct": 0,
+            "honest": 0
+          },
+          "ttfts": [],
+          "wrongActions": 0,
+          "lostEvidence": 0,
+          "quotedVerbatimKnown": 3,
+          "requestCounts": [
+            37,
+            28,
+            41
+          ],
+          "wallP50": 198949,
+          "ttftP50": null,
+          "cacheReadRatio": null,
+          "uncachedInputSum": null
+        }
       }
-    ]
+    },
+    "blocked": [],
+    "blockedCount": 0,
+    "total": 84,
+    "flags": [],
+    "priorAttempts": [],
+    "cacheReadChannelAvailable": true
   },
   "decision": {
-    "decision": "inconclusive",
-    "reason": "missing quality outcome",
-    "firstAttemptSuccess": null,
-    "finalAttemptSuccess": null,
-    "pairedSuccessDelta": null
-  },
-  "pairs": 16,
-  "capabilities": 4,
-  "itt": 36
+    "decision": "limited-balanced-trial",
+    "reason": "small canary only; no default change and no noninferiority claim",
+    "discordant": [
+      {
+        "caseId": "Q02",
+        "rep": 1,
+        "kind": "candidate-fail-native-pass"
+      },
+      {
+        "caseId": "Q02",
+        "rep": 2,
+        "kind": "candidate-pass-native-fail"
+      }
+    ],
+    "counts": {
+      "b": 1,
+      "c": 1,
+      "shared": 0,
+      "bByCase": {
+        "Q02": 1
+      }
+    },
+    "attemptRates": {
+      "firstAttemptSuccess": 1,
+      "finalAttemptSuccess": 1
+    },
+    "firstAttemptSuccess": 1,
+    "finalAttemptSuccess": 1,
+    "pairedSuccessDelta": 0,
+    "objective": {
+      "primary": {
+        "metric": "fresh-input",
+        "minImprovement": 0.1,
+        "known": true,
+        "relativeChange": -0.6450772917187859,
+        "nativeSum": 1203169,
+        "candidateSum": 427032,
+        "pairsUsed": 24
+      },
+      "secondary": {
+        "logical-input": {
+          "known": true,
+          "relativeChange": -0.6188491077298017,
+          "nativeSum": 7733756,
+          "candidateSum": 2947728
+        },
+        "wall-time": {
+          "known": true,
+          "relativeChange": -0.387962527827993,
+          "nativeSum": 1457615,
+          "candidateSum": 892115
+        },
+        "cacheRead": {
+          "known": true,
+          "relativeChange": -0.6140169329342064,
+          "nativeSum": 6530587,
+          "candidateSum": 2520696
+        },
+        "engine-prefill": {
+          "known": true,
+          "relativeChange": -0.6408263427226921,
+          "nativeSum": 1246553,
+          "candidateSum": 447729
+        },
+        "native-compactions": {
+          "known": true,
+          "relativeChange": -1,
+          "nativeSum": 5,
+          "candidateSum": 0
+        },
+        "requests": {
+          "known": true,
+          "relativeChange": 0.016759776536312776,
+          "nativeSum": 179,
+          "candidateSum": 182
+        }
+      }
+    },
+    "regimes": {
+      "warm": {
+        "pairs": 12,
+        "b": 0,
+        "c": 3,
+        "shared": 3,
+        "objective": {
+          "primary": {
+            "metric": "fresh-input",
+            "minImprovement": 0.1,
+            "known": true,
+            "relativeChange": -0.01705440256506141,
+            "nativeSum": 847699,
+            "candidateSum": 833242,
+            "pairsUsed": 12
+          },
+          "secondary": {
+            "logical-input": {
+              "known": true,
+              "relativeChange": 0.6656852675668752,
+              "nativeSum": 2568442,
+              "candidateSum": 4278216
+            },
+            "wall-time": {
+              "known": true,
+              "relativeChange": -0.12082343744927193,
+              "nativeSum": 1201257,
+              "candidateSum": 1056117
+            },
+            "cacheRead": {
+              "known": true,
+              "relativeChange": 1.0020270313463429,
+              "nativeSum": 1720743,
+              "candidateSum": 3444974
+            },
+            "engine-prefill": {
+              "known": true,
+              "relativeChange": -0.018381447731918077,
+              "nativeSum": 848845,
+              "candidateSum": 833242
+            },
+            "native-compactions": {
+              "known": true,
+              "relativeChange": -0.8333333333333334,
+              "nativeSum": 12,
+              "candidateSum": 2
+            },
+            "requests": {
+              "known": true,
+              "relativeChange": -0.1266666666666667,
+              "nativeSum": 150,
+              "candidateSum": 131
+            }
+          }
+        },
+        "nativeCompactions": {
+          "native": 12,
+          "candidate": 2
+        },
+        "quoteFailures": {
+          "native": 0,
+          "candidate": 0
+        }
+      },
+      "long": {
+        "pairs": 3,
+        "b": 0,
+        "c": 1,
+        "shared": 0,
+        "objective": {
+          "primary": {
+            "metric": "fresh-input",
+            "minImprovement": 0.1,
+            "known": true,
+            "relativeChange": 0.19489754685767768,
+            "nativeSum": 289547,
+            "candidateSum": 345979,
+            "pairsUsed": 3
+          },
+          "secondary": {
+            "logical-input": {
+              "known": true,
+              "relativeChange": 0.09558277347683264,
+              "nativeSum": 2544402,
+              "candidateSum": 2787603
+            },
+            "wall-time": {
+              "known": true,
+              "relativeChange": 0.0288854008038546,
+              "nativeSum": 640912,
+              "candidateSum": 659425
+            },
+            "cacheRead": {
+              "known": true,
+              "relativeChange": 0.08282971632322256,
+              "nativeSum": 2254855,
+              "candidateSum": 2441624
+            },
+            "engine-prefill": {
+              "known": true,
+              "relativeChange": 0.19467886740331486,
+              "nativeSum": 289600,
+              "candidateSum": 345979
+            },
+            "native-compactions": {
+              "known": true,
+              "relativeChange": -0.75,
+              "nativeSum": 4,
+              "candidateSum": 1
+            },
+            "requests": {
+              "known": true,
+              "relativeChange": 0.03921568627450989,
+              "nativeSum": 102,
+              "candidateSum": 106
+            }
+          }
+        },
+        "nativeCompactions": {
+          "native": 4,
+          "candidate": 1
+        },
+        "quoteFailures": {
+          "native": 0,
+          "candidate": 0
+        }
+      }
+    },
+    "candidates": [
+      {
+        "candidate": "fold-time-model-hint",
+        "evidence": [
+          "Q02/r1"
+        ],
+        "status": "below-gate"
+      },
+      {
+        "candidate": "inline-ref-marker",
+        "evidence": [
+          "W-Q05/balanced/r1"
+        ],
+        "status": "below-gate"
+      },
+      {
+        "candidate": "cold-aligned-fold",
+        "evidence": [
+          "Q fresh-input -0.6450772917187859",
+          "W fresh-input -0.01705440256506141"
+        ],
+        "status": "met"
+      }
+    ],
+    "diagnosticOnly": false,
+    "flags": []
+  }
 }

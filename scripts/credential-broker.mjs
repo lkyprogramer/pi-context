@@ -7,7 +7,7 @@
 
 import { createServer } from "node:http";
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { accessSync, chmodSync, constants, existsSync, mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
@@ -391,7 +391,20 @@ export function startCredentialBroker(input) {
         reject(new Error(`broker socket path exceeds 103-byte sun_path limit (${Buffer.byteLength(input.socketPath)}): ${input.socketPath}`));
         return;
       }
+      const socketDir = dirname(input.socketPath);
+      try {
+        if (!existsSync(socketDir)) {
+          throw new Error(`missing`);
+        }
+        accessSync(socketDir, constants.W_OK);
+      } catch {
+        reject(new Error(`broker socket directory not writable: ${socketDir}`));
+        return;
+      }
       if (existsSync(input.socketPath)) unlinkSync(input.socketPath);
+      server.once("error", (err) => {
+        reject(new Error(`broker socket listen failed for ${input.socketPath}: ${err instanceof Error ? err.message : err}`));
+      });
       server.listen(input.socketPath, () => {
         if (!existsSync(input.socketPath)) {
           reject(new Error(`broker socket missing after listen: ${input.socketPath}`));

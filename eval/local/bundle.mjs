@@ -4,7 +4,8 @@
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { capabilitiesFromItt, evaluateTrial, materializeItt, pairsFromItt } from "./gate.mjs";
+import { capabilitiesFromItt, evaluateTrial, materializeItt, objectiveFromPairs, pairsFromItt, regimePairsFromItt, regimeSummary } from "./gate.mjs";
+import { candidates } from "./report.mjs";
 
 const FORBIDDEN = /api[_-]?key\s*[:=]|authorization\s*[:=]|Bearer\s+\S|sk-[A-Za-z0-9]{8,}|BEGIN [A-Z]+ PRIVATE/i;
 
@@ -48,11 +49,16 @@ export function verifyFileHashes(expected, root) {
 }
 
 export function sanitizeEpisode(ep) {
+  const caseId = ep.caseId ?? ep.manifest?.caseId ?? null;
+  const arm = ep.arm ?? ep.manifest?.arm ?? null;
+  const rep = ep.rep ?? ep.manifest?.rep ?? null;
   return {
     episodeId: ep.episodeId ?? null,
-    caseId: ep.manifest?.caseId ?? null,
-    arm: ep.manifest?.arm ?? null,
-    rep: ep.manifest?.rep ?? null,
+    caseId,
+    arm,
+    rep,
+    // Slim identity so offline recompute can rebuild W/X pairs from the published bundle.
+    manifest: { caseId, arm, rep },
     status: ep.status ?? null,
     error: typeof ep.error === "string" ? ep.error.slice(0, 200) : null,
     oracle: {
@@ -124,13 +130,29 @@ export function buildBundle(runDir) {
       attempts.push(sanitizeAttempt(JSON.parse(line)));
     }
   }
+  const objective = objectiveFromPairs(pairs, plan.objective);
+  const warmPairs = regimePairsFromItt(plan, itt, "warm");
+  const longPairs = regimePairsFromItt(plan, itt, "long");
+  const regimes = {};
+  if (warmPairs.length) regimes.warm = regimeSummary(warmPairs, plan.objective);
+  if (longPairs.length) regimes.long = regimeSummary(longPairs, plan.objective);
+  const diagnosticOnly = manifest.diagnosticOnly === true || manifest.git?.dirty === true;
+  const cand = candidates({}, itt, plan);
   const decision = evaluateTrial({
     pairs,
     capabilities,
-    objective: plan.objective,
+    objective,
     expectedPairs: plan.expectedPairs,
     expectedCapabilities: plan.expectedCapabilities,
     attempts,
+    plan,
+    regimes,
+    diagnosticOnly,
+    dirtyReason: manifest.diagnosticOnly === true
+      ? `dirty-tree diagnostic run (${String(manifest.dirtyDigest ?? manifest.distDigest ?? "dirty").slice(0, 12)})`
+      : "dirty-tree run (legacy manifest)",
+    candidates: cand,
+    regimePairs: [...warmPairs, ...longPairs],
   });
   const bundle = {
     manifest: {
@@ -138,6 +160,8 @@ export function buildBundle(runDir) {
       git: manifest.git ?? null,
       hostVersion: manifest.hostVersion ?? null,
       pluginSha256: manifest.pluginSha256 ?? null,
+      distDigest: manifest.distDigest ?? null,
+      diagnosticOnly,
       tarballSha256: manifest.tarballSha256 ?? null,
       distFiles: manifest.distFiles ?? null,
       piPackageHash: manifest.piPackageHash ?? null,
@@ -152,6 +176,7 @@ export function buildBundle(runDir) {
     pairs,
     capabilities,
     decision,
+    objective,
   };
   assertSanitized(bundle);
   return bundle;
@@ -165,12 +190,27 @@ export function writeBundle(runDir, destDir = join(runDir, "bundle")) {
 }
 
 export function recomputeDecision(bundle) {
+  const objective = objectiveFromPairs(bundle.pairs, bundle.plan.objective);
+  const diagnosticOnly = bundle.manifest?.diagnosticOnly === true || bundle.manifest?.git?.dirty === true;
+  const warmPairs = regimePairsFromItt(bundle.plan, bundle.episodes, "warm");
+  const longPairs = regimePairsFromItt(bundle.plan, bundle.episodes, "long");
+  const regimes = {};
+  if (warmPairs.length) regimes.warm = regimeSummary(warmPairs, bundle.plan.objective);
+  if (longPairs.length) regimes.long = regimeSummary(longPairs, bundle.plan.objective);
   return evaluateTrial({
     pairs: bundle.pairs,
     capabilities: bundle.capabilities,
-    objective: bundle.plan.objective,
+    objective,
     expectedPairs: bundle.plan.expectedPairs,
     expectedCapabilities: bundle.plan.expectedCapabilities,
     attempts: bundle.attempts,
+    plan: bundle.plan,
+    regimes,
+    diagnosticOnly,
+    dirtyReason: bundle.manifest?.diagnosticOnly === true
+      ? "dirty-tree diagnostic run"
+      : "dirty-tree run (legacy manifest)",
+    candidates: bundle.decision?.candidates ?? [],
+    regimePairs: [...warmPairs, ...longPairs],
   });
 }

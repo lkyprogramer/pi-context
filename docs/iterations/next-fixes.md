@@ -146,3 +146,160 @@ GREEN: `pnpm check` exit 0 — 186 tests, compat `{ok:true,files:33}`. `pnpm bui
 Live 36-episode review matrix: **UNRUN** (`PCTX_LIVE` unset; runner requires it). Delivery decision is **`inconclusive`**. Default profile stays observe. Dated trial `20260909-112407` is superseded as a delivery claim and kept on disk. No 2% non-inferiority or global-best claim.
 
 Not run: `PCTX_LIVE=1` 36-episode live matrix, remote Actions.
+
+## S01
+
+Changed: `src/plugin.ts`, `test/unit/request-witness.test.ts`, `docs/iterations/next-fixes.md`
+
+RED: `pnpm exec vitest run test/unit/request-witness.test.ts --config vitest.config.ts` — persisted confirmation used to confirm `r6:0` (no later successful assistant).
+
+GREEN: same file 14/14; `test/host/balanced-wire.test.ts` 6/6; `test/host/after-fold-quality.test.ts` 2/2; `pnpm typecheck` exit 0.
+
+Implemented: `applyContext` computes `exposed = exposedEntryIds(view.branch)` once and passes it to `confirmPersistedFields` and `planFold`. `confirmPersistedFields` confirms only `exposed.has(field.ref.entryId)` text fields. Extra negatives: error `stopReason` is not exposure; sibling-branch success does not confirm the current branch.
+
+The new unit case cannot read `lastFieldHashes.get("r1:0")` after an 80% fold (original text is stubbed). It confirms `r1:0` with `sha256Hex("z".repeat(8000))` independently. Assertion direction unchanged.
+
+### R03 修订登记
+
+`44e8333b` (`fix: fold persisted session results on the first resume request`) confirmed every ActiveView text field with a source hash. Round 8 keeps that resume-first-request fold, but confirmation is now the derived-exposure set only.
+
+Abandoned same-process wire-first witnessing for persisted fields: a resume request is already cold, so folding has no prefix-cache cost; recoverability is `pctx_history`, not “which model saw the bytes”. P02 sibling / P03 post-compact exposure stay isolated by ActiveView `parentId` walk and `compactionBoundary` identity.
+
+Residual risk: after a model switch the new model only sees stubs — the same as any fold.
+
+Not run: `pnpm check`, live, remote Actions.
+
+## S02
+
+Changed: `eval/local/gate.mjs`, `eval/local/accounting.mjs`, `eval/local/report.mjs`, `eval/local/run-matrix.mjs`, `eval/local/bundle.mjs`, `test/unit/trial-gate.test.ts`, `test/unit/objective.test.ts`
+
+RED: missing `objectiveFromPairs` / `metricOf("fresh-input")`.
+
+GREEN: `pnpm exec vitest run test/unit/objective.test.ts test/unit/trial-gate.test.ts test/integration/run-bundle.test.ts --config vitest.config.ts` exit 0; `pnpm typecheck` exit 0.
+
+Implemented: `metricOf` sums request `freshInput` / `logicalInput` / `cachedRead` (any null → null; empty requests → 0). `objectiveFromPairs` pools candidate/native, `nativeSum === 0` or any null → `known:false`. Primary metric frozen `fresh-input` / `minImprovement 0.1`. Attempt rates: first vs final per episode. Manifest plan objective no longer writes `known`/`relativeChange`.
+
+Self-check: replacing the unknown request’s `null` with `0` makes `primary.known === true` (relativeChange ≈ −0.756). Test file left with `null`.
+
+Offline recompute of `artifacts/local-eval/review-qc-*` **BLOCKED** (directories absent in this workspace).
+
+Not run: `pnpm check`, live.
+
+## S03
+
+Changed: `eval/local/gate.mjs`, `eval/local/accounting.mjs`, `eval/local/report.mjs`, `eval/local/scenarios.mjs`, `eval/local/review-spec.mjs`, `eval/local/review-matrix.json`, `test/unit/trial-gate.test.ts`, `test/unit/review-scenarios.test.ts`, `test/unit/review-live-wiring.test.ts`
+
+RED: object `evaluateTrial` treated any candidate-only fail as `review-needed`; reason did not name pairs.
+
+GREEN: `pnpm exec vitest run test/unit/trial-gate.test.ts test/unit/review-scenarios.test.ts test/unit/review-live-wiring.test.ts test/integration/run-bundle.test.ts --config vitest.config.ts` exit 0.
+
+Implemented: `discordance` → `{ b, c, shared, bByCase, discordant[] }`. `review-needed` only if some case `b≥2` or `b−c≥2`. `evidencePassed:false` alone is not `review-needed` (accounting positional API → `inconclusive` via capability unproven). `answer()` must not let `{ discordant: disc }` overwrite the `discordant` array (extra is the whole counts object). H02 quote test uses two reps so `b=2`. Plan `repsPerCase: 3`; S06 later expands to 84.
+
+`REVIEW_BUDGET.run = { totalWallMs: 7_200_000, totalModelCalls: 1_500, totalToolCalls: 2_400 }`.
+
+Not run: offline `report.mjs` on missing `review-qc-*`.
+
+## S04
+
+Changed: `eval/local/parse-session.mjs`, `eval/local/cases.json`, `eval/local/review-fixtures/Q05.json`, `eval/local/gate.mjs`, `eval/local/report.mjs`, `eval/local/run-matrix.mjs`, `eval/local/bundle.mjs`, `test/unit/trial-gate.test.ts`, `test/unit/local-cases.test.ts`, `test/unit/report-provenance.test.ts`
+
+RED: Q05 quote unmeasured; report header lacked `dist <digest12>` / `DIAGNOSTIC ONLY`.
+
+GREEN: `pnpm exec vitest run test/unit/trial-gate.test.ts test/unit/local-cases.test.ts test/unit/report-provenance.test.ts test/integration/run-bundle.test.ts --config vitest.config.ts` exit 0.
+
+Implemented: `verbatimQuote(..., { sourceKind: "any" })` takes the first matching toolResult line. Q05 `evidence.sourceKind: "any"` + fixture `exactQuote: true`. `pairsFromItt` fills quotes from `plan.exactQuoteIds`. `candidates()`: `fold-time-model-hint`, `inline-ref-marker`, `post-compaction-evidence-delta` (X only), `cold-aligned-fold` (diagnostic, not implemented). Live dirty without `--allow-dirty` dies; `--allow-dirty` → `diagnosticOnly` and decision forced `inconclusive`. Q05 quote tests set all three Q05 quotes to booleans so r1 is not `unmeasured`.
+
+Not run: live dirty-tree rejection on a real provider.
+
+## S05
+
+Changed: `eval/local/sandbox/run-agent.sh`, `eval/local/sandbox/broker-unix.mjs` (new), `eval/local/sandbox/broker-tcp.mjs` (deleted), `eval/local/run-episode.mjs`, `eval/local/secure-preflight.mjs`, `scripts/credential-broker.mjs`, `test/security/agent-secret-isolation.test.ts`, `test/security/grader-isolation.test.ts`
+
+RED: launcher still mentioned `BROKER_CID`; runner lacked `docker volume create` literal / `darwin-sidecar-volume-network-none`.
+
+GREEN (static): `pnpm exec vitest run test/security/agent-secret-isolation.test.ts test/security/grader-isolation.test.ts --config vitest.config.ts` — 10 tests, 5 grader cases skipped (no Docker). `pnpm typecheck` exit 0.
+
+Implemented: Darwin sidecar = named volume + `docker run -i` + key on stdin first line + unix socket probe; `broker-hop.json.kind = darwin-sidecar-volume-network-none`. Agent `docker run` is only `--network none`. Unwritable socket dir throws with the path (no TCP fallback). `secure-preflight --canary` adds `agentEgress`. Source comment keeps the `docker volume create` literal the isolation test greps for.
+
+Docker canary: **GREEN** after installing Docker 29.8.0 (static binary; `apt-get update` hung). `node eval/local/secure-preflight.mjs --canary` exit 0 `{ok:true, env:false, models:false, proc:false, agentEgress:false}`. Grader isolation 6/6 (no skips). Image `pctx-t21-sandbox:0.85.1` built from `eval/sandbox/Containerfile`.
+
+Linux live follow-up: first `PCTX_LIVE=1` episode hung because `spawnSync(run-agent.sh)` froze the in-process unix broker. Replaced with async `runSandboxAgent` (`spawn`). Stuck run kept at `artifacts/local-eval/review-r8-20260911/` (not a delivery).
+
+## S06
+
+Changed: `eval/local/cases.json`, `eval/local/cases/W-Q0{1,3,5,7}/TASK.md`, `eval/local/cases/X01/TASK.md`, `eval/local/review-fixtures/W-Q0{1,3,5,7}.json`, `eval/local/review-seed.mjs`, `eval/local/review-spec.mjs`, `eval/local/scenarios.mjs`, `eval/local/review-matrix.json`, `eval/local/log-workspace.mjs`, `eval/local/run-episode.mjs`, `eval/local/run-matrix.mjs`, `eval/local/gate.mjs`, `eval/local/report.mjs`, `test/unit/review-scenarios.test.ts`, `test/unit/review-live-wiring.test.ts`, `test/unit/local-cases.test.ts`, `test/host/warm-fold-regime.test.ts`, `test/helpers/controlled-provider.ts`
+
+RED: missing W/X plan 84; missing warm-fold host test.
+
+GREEN: `pnpm exec vitest run test/unit/review-scenarios.test.ts test/unit/review-live-wiring.test.ts test/unit/local-cases.test.ts test/host/warm-fold-regime.test.ts --config vitest.config.ts` exit 0; `pnpm typecheck` exit 0.
+
+`node eval/local/run-matrix.mjs --mode live --dry --config eval/local/review-matrix.json --out /tmp/pctx-s06-dry` → 84 episodes including `W-Q01/native/1` and `X01/balanced/3`.
+
+Implemented: W lane seed 45% + `padSource:"repo-docs"` + two warmup dumps; X01 logs 12×300 / markLine 210; `episodeLong` 900s/40/80; regimes excluded from the main quality denominator.
+
+Host W-Q01: Pi `getContextUsage` is last-assistant usage plus trailing, so the card’s `[0.47, 0.57, 0.67]` already folds on the second prompt once dump-a (~47kB / ~11.8k estimated tokens) is in trailing. Script is `[0.40, 0.50, 0.67]`. Each prompt is a text stop; dumps are appended as a complete toolCall+result batch (no usage on the toolCall assistant) so they sit in `protectRecentBatches: 4`. Filter warmup dumps by `[dump-a ` / `[dump-b ` because seed repo-docs pads also start with `[dump-N`.
+
+`ControlledScript.usagePercent` is per-step and may be below the default 65% seed stamp (out of the R03 helper default). Documented here; `src/` fold defaults unchanged.
+
+`node eval/local/run-matrix.mjs --mode controlled ...` not re-run as a single wrapper after the host tests above (those three plus `controlled-guards` are the wrapper’s list).
+
+Not run: Docker-backed controlled sandbox episodes; live model.
+
+## S07
+
+Changed: `artifacts/local-eval/review-final/` (force-added sanitized pack), `README.md`, `HANDOFF.md`, `docs/OPERATIONS.md`, `docs/CONFIGURATION.md`, `docs/iterations/next-fixes.md`
+
+RED: round-7 `review-final` was `inconclusive` / `review-final` while live was still UNRUN.
+
+GREEN: `pnpm exec vitest run test/unit/docs-decision-consistency.test.ts --config vitest.config.ts` exit 0. `pnpm check` after this pack exit 0 — 217 tests + `compat:scan` `{ok:true,files:25}`. Four docs quote `limited-balanced-trial` and `review-r8-20260911b`.
+
+### Preflight on HEAD `878e92f292a7` (dirty=false)
+
+- `pnpm check` exit 0 — 217 tests + `compat:scan` `{ok:true,files:25}`
+- `pnpm typecheck` exit 0
+- `pnpm build && pnpm smoke` exit 0 — 14 tests
+- `node eval/local/secure-preflight.mjs --canary` exit 0 `{ok:true, env:false, models:false, proc:false, agentEgress:false}`
+- `node eval/local/run-matrix.mjs --mode controlled --config eval/local/review-matrix.json` — 11 host tests, exit 0
+- Docker: image `pctx-t21-sandbox:0.85.1` (`sha256:f36c813de266…`)
+
+### Live
+
+- Hung non-delivery: `artifacts/local-eval/review-r8-20260911/` (Linux `spawnSync` froze the in-process unix broker; Q01/native stuck). Kept on disk.
+- Delivery: `PCTX_LIVE=1 node eval/local/run-matrix.mjs --mode live --config eval/local/review-matrix.json --seed 42 --out artifacts/local-eval/review-r8-20260911b`
+- runId `review-r8-20260911b`, HEAD `878e92f292a7`, `diagnosticOnly:false`, dirty=false
+- 84/84 complete, `blockedCount=0`, `NOT_RUN=0`, elapsedMs `6503987` (~108 min; run wall budget 7_200_000)
+- requests.jsonl 902 lines (model-call budget 1500); attempts 84/84 first=1.000 final=1.000
+- X01 native r1 first request input=1539 (cat); next input=6999 ≥ 4000 — not calibration-aborted
+- `/metrics` available; engine-prefill relativeChange −0.641, same direction as fresh-input
+
+### Machine decision
+
+- `report.json.decision.decision` = `limited-balanced-trial`
+- reason: `small canary only; no default change and no noninferiority claim`
+- `recomputeDecision(bundle)` = same
+- discordant: Q02/r1 candidate-fail-native-pass; Q02/r2 candidate-pass-native-fail; b=1 c=1 shared=0
+- objective.primary: fresh-input relativeChange=−0.645 known=true (nativeSum 1203169 / candidateSum 427032, 24 pairs)
+- regimes.warm: 12 pairs, b=0 c=3 shared=3, fresh-input −0.017, nativeCompactions 12/2
+- regimes.long: 3 pairs, b=0 c=1 shared=0, fresh-input +0.195, nativeCompactions 4/1, quoteFailures 0/0
+- candidates: fold-time-model-hint below-gate; inline-ref-marker below-gate; cold-aligned-fold met (diagnostic, not implemented)
+- W spot-check: Q01/balanced/r1 first request already folded (foldEvent before first wire; input 11426 vs native ~44k). W-Q01/balanced/r1 first two requests unfolder (23036, 29961).
+- Q05: file oracle pass both arms; quotedVerbatim false both arms (lost evidence 3/3); not quote-discordant
+- Default profile stays observe. No 2% non-inferiority or global-best claim.
+
+### Unverified
+
+- Darwin live sidecar not run (this host is Linux)
+- `review-qc-*` three dirty diagnostic runs absent; not recomputed
+- GitHub Actions on this HEAD not claimed here
+- 300 gate / publish / production not run
+
+## PR review (Codex on `e925297`)
+
+Changed: `eval/local/grade.sh`, `eval/local/log-workspace.mjs`, `eval/local/run-episode.mjs`, `eval/local/sidecar-ready.mjs`, `eval/local/sandbox/run-agent.sh`, `eval/local/bundle.mjs`, `test/security/grader-isolation.test.ts`, `test/security/agent-secret-isolation.test.ts`, `test/integration/run-bundle.test.ts`, `test/unit/sidecar-ready.test.ts`
+
+- X01 `fixture:null` made `grade.sh` treat TRUSTED_ROOT as `$REPO/None` and skip `logs/` comparison. Trusted logs are now rematerialized from the case `logs` spec.
+- Darwin sidecar wait used `spawnSync("sleep")`, which froze stdout so `ready` never arrived. Wait is async via `waitForReadyJson`.
+- Agent command now starts `unix-relay.mjs` beside `run-in-container.mjs` (image entrypoint socat still runs if the socket exists at start; EADDRINUSE on the node relay is ignored).
+- `recomputeDecision` rebuilds W/X `regimePairs` from bundled episodes so a regime-only critical violation stays `blocked`. Sanitized episodes keep slim `manifest` identity; pair builders also accept top-level `caseId`/`arm`/`rep` so already-published bundles without nested manifest still recompute.
+- `grade.sh` EXIT trap no longer returns 1 when `TRUSTED_TMP` is empty (`set -e` was turning a successful L01 grade into process status 1).
+

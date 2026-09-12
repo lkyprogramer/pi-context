@@ -10,7 +10,7 @@
  * Never writes tool-result bodies into events.jsonl (bytes + sha256 only).
  * All arms use the parent credential broker. --no-sandbox is rejected.
  */
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -20,8 +20,10 @@ import { startCredentialBroker } from "../../scripts/credential-broker.mjs";
 import { aggregateAttempts, nextAttemptId, normalizeUsage, plannedEpisodeId } from "./accounting.mjs";
 import { foldedErrorCount, nonceEntryIds, nonceVerifiedReads, parseSession, verbatimQuote } from "./parse-session.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint, servedIdentity } from "./model-endpoint.mjs";
-import { ensureReviewSeed } from "./review-seed.mjs";
+import { setupLogWorkspace } from "./log-workspace.mjs";
+import { ensureReviewSeed, warmupFiles } from "./review-seed.mjs";
 import { REVIEW_BUDGET } from "./review-spec.mjs";
+import { waitForReadyJson } from "./sidecar-ready.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, "../..");            // eval/local → repo root
@@ -41,9 +43,9 @@ const spec = cases.find((c) => c.id === caseId);
 if (!spec || (spec.runner !== "episode" && spec.runner !== "review")) die(`case ${caseId} is not an episode case`);
 const review = spec.runner === "review";
 const BUDGET = {
-  wallMs: Number(args["budget-wall-ms"] ?? (review ? REVIEW_BUDGET.episode.wallMs : caseId === "H03" ? 3_600_000 : 900_000)),
-  modelCalls: Number(args["budget-model"] ?? (review ? REVIEW_BUDGET.episode.modelCalls : caseId === "H03" ? 200 : 40)),
-  toolCalls: Number(args["budget-tools"] ?? (review ? REVIEW_BUDGET.episode.toolCalls : caseId === "H03" ? 400 : 80)),
+  wallMs: Number(args["budget-wall-ms"] ?? (spec.budget === "episodeLong" ? REVIEW_BUDGET.episodeLong.wallMs : review ? REVIEW_BUDGET.episode.wallMs : caseId === "H03" ? 3_600_000 : 900_000)),
+  modelCalls: Number(args["budget-model"] ?? (spec.budget === "episodeLong" ? REVIEW_BUDGET.episodeLong.modelCalls : review ? REVIEW_BUDGET.episode.modelCalls : caseId === "H03" ? 200 : 40)),
+  toolCalls: Number(args["budget-tools"] ?? (spec.budget === "episodeLong" ? REVIEW_BUDGET.episodeLong.toolCalls : review ? REVIEW_BUDGET.episode.toolCalls : caseId === "H03" ? 400 : 80)),
 };
 if (!spec.arms.includes(arm)) die(`case ${caseId} does not run arm ${arm}`);
 if ("no-sandbox" in args) blocked("--no-sandbox is removed; all arms use the parent broker");
@@ -66,10 +68,20 @@ const cwd = join(home, "work"), agentDir = join(home, ".pi", "agent"), sessionDi
 mkdirSync(cwd, { recursive: true }); mkdirSync(agentDir, { recursive: true }); mkdirSync(sessionDir, { recursive: true });
 if (caseId === "H03") {
   setupH03Workspace(cwd, repo, out);
-} else {
+} else if (spec.logs) {
+  const marked = setupLogWorkspace(cwd, spec.logs);
+  writeFileSync(join(out, "marker.json"), JSON.stringify(marked, null, 2));
+} else if (spec.fixture) {
   const fixtureSrc = join(repo, spec.fixture, existsSync(join(repo, spec.fixture, "initial")) ? "initial" : "");
   cpSync(fixtureSrc, cwd, { recursive: true });
   for (const p of ["grader"]) rmSync(join(cwd, p), { recursive: true, force: true });   // agent never sees grader
+}
+if (spec.warmup || String(spec.id ?? caseId).startsWith("W-")) {
+  const fx = JSON.parse(readFileSync(join(repo, spec.reviewFixture ?? join("eval/local/review-fixtures", `${caseId}.json`)), "utf8"));
+  const files = warmupFiles(fx, repo);
+  mkdirSync(join(cwd, "notes"), { recursive: true });
+  writeFileSync(join(cwd, "notes", "dump-a.txt"), files[0].text);
+  writeFileSync(join(cwd, "notes", "dump-b.txt"), files[1].text);
 }
 git(cwd, ["init", "-q"]); git(cwd, ["add", "-A"]); git(cwd, ["-c", "user.email=e@l", "-c", "user.name=e", "commit", "-qm", "baseline"]);
 const baselineSha = protectedSha(cwd, spec.protectedPaths);
@@ -132,9 +144,8 @@ const t0 = Date.now();
 let status = "complete", error = null;
 writeFileSync(join(out, "prompts.json"), JSON.stringify(prompts));
 if (seedCopy) cpSync(seedCopy, join(out, "seed.jsonl"));
-// Docker Desktop cannot hop a host Unix/TCP broker into the VM. On darwin a sidecar
-// broker container holds the upstream key and the agent joins its network namespace.
-// Linux keeps the parent unix socket + --network none hop. Keys never enter the agent.
+// Linux: parent unix socket + --network none.
+// Darwin: named volume unix socket sidecar, agent still --network none. Key only via sidecar stdin.
 const darwinHop = process.platform === "darwin";
 const brokerDir = darwinHop ? null : mkdtempSync(join("/tmp", "pctx-b-"));
 const brokerSock = brokerDir ? join(brokerDir, "broker.sock") : "";
@@ -143,7 +154,7 @@ let broker;
 let sidecar = null;
 if (darwinHop) {
   try {
-    sidecar = startBrokerSidecar({
+    sidecar = await startBrokerSidecar({
       baseUrl,
       apiKey,
       token: brokerToken,
@@ -153,7 +164,7 @@ if (darwinHop) {
   } catch (e) {
     blocked(`broker sidecar: ${e instanceof Error ? e.message : e}`);
   }
-  broker = { port: 8080, socketPath: null, close: async () => stopBrokerSidecar(sidecar) };
+  broker = { port: 8080, socketPath: "/run/pctx/broker.sock", close: async () => stopBrokerSidecar(sidecar) };
 } else {
   broker = await startCredentialBroker({
     targetBaseUrl: baseUrl,
@@ -168,26 +179,31 @@ if (darwinHop) {
   });
 }
 writeFileSync(join(out, "broker-hop.json"), JSON.stringify({
-  kind: darwinHop ? "darwin-sidecar-netns" : "unix-network-none",
-  port: broker.port ?? null,
-  socketPath: broker.socketPath ?? null,
+  kind: darwinHop ? "darwin-sidecar-volume-network-none" : "unix-network-none",
+  volume: sidecar?.volume ?? null,
   sidecar: sidecar?.name ?? null,
+  socketPath: darwinHop ? "/run/pctx/broker.sock" : (broker.socketPath ?? null),
+  agentNetwork: "none",
+  port: broker.port ?? null,
 }, null, 2));
 try {
-  const r = spawnSync("bash", [sandboxScript, cwd, agentDir, out, window], {
-    encoding: "utf8", timeout: BUDGET.wallMs + 60_000, killSignal: "SIGKILL",
+  const r = await runSandboxAgent({
+    script: sandboxScript,
+    cwd,
+    agentDir,
+    out,
+    window,
+    timeoutMs: BUDGET.wallMs + 60_000,
     env: {
       ...process.env,
       ...(brokerSock ? { PCTX_BROKER_SOCK: brokerSock } : {}),
-      ...(sidecar ? { PCTX_BROKER_CID: sidecar.cid } : {}),
+      ...(sidecar?.volume ? { PCTX_BROKER_VOLUME: sidecar.volume } : {}),
       PCTX_BROKER_TOKEN: brokerToken,
       PCTX_BUDGET_WALL_MS: String(BUDGET.wallMs),
       PCTX_BUDGET_MODEL: String(BUDGET.modelCalls),
       PCTX_BUDGET_TOOLS: String(BUDGET.toolCalls),
     },
   });
-  if (r.stdout) process.stdout.write(r.stdout);
-  if (r.stderr) process.stderr.write(r.stderr);
   if (r.status === 3) {
     status = "blocked";
     error = (r.stderr || r.stdout || "sandbox image missing").trim();
@@ -250,6 +266,7 @@ if (spec.evidence?.kind === "verbatim-quote") {
     oracle.quotedVerbatim = verbatimQuote(parsed, {
       linePattern: spec.evidence.linePattern,
       sinceMs: new Date(manifest.startedAt).getTime(),
+      sourceKind: spec.evidence.sourceKind ?? "isError",
     });
   }
 }
@@ -359,20 +376,9 @@ function setupH03Workspace(cwd, repo, episodeOut) {
     cpSync(src, dst, { recursive: true });
     rmSync(join(dst, "grader"), { recursive: true, force: true });
   }
-  mkdirSync(join(cwd, "logs"), { recursive: true });
-  const marked = 7;
-  const markLine = 1700;
-  for (let n = 1; n <= 12; n++) {
-    const lines = [];
-    for (let i = 1; i <= 2500; i++) {
-      lines.push(n === marked && i === markLine
-        ? `[ERROR] FIRST-ERROR-MARKER at build-${String(n).padStart(2, "0")} line ${i}`
-        : `[INFO] maven-build-${String(n).padStart(2, "0")} line=${i} compiling module ok elapsed=${i}ms`);
-    }
-    writeFileSync(join(cwd, "logs", `build-${String(n).padStart(2, "0")}.log`), `${lines.join("\n")}\n`);
-  }
+  const marked = setupLogWorkspace(cwd, { count: 12, lines: 2500, marked: 7, markLine: 1700, token: "FIRST-ERROR-MARKER" });
   writeFileSync(join(episodeOut, "marker.json"), JSON.stringify({
-    file: `logs/build-${String(marked).padStart(2, "0")}.log`, line: markLine, token: "FIRST-ERROR-MARKER",
+    file: marked.file, line: marked.line, token: "FIRST-ERROR-MARKER",
   }, null, 2));
 }
 function h03Prompts(repo) {
@@ -453,50 +459,95 @@ function protectedSha(root, paths) { const h = createHash("sha256"); for (const 
 function git(dir, a) { execFileSync("git", ["-C", dir, ...a], { stdio: "ignore" }); }
 function sha256(s) { return createHash("sha256").update(s).digest("hex"); }
 function sha256File(p) { return createHash("sha256").update(readFileSync(p)).digest("hex"); }
-function startBrokerSidecar({ baseUrl, apiKey, token, model, maxRequests }) {
+async function startBrokerSidecar({ baseUrl, apiKey, token, model, maxRequests }) {
   const image = process.env.PCTX_SANDBOX_IMAGE ?? "pctx-t21-sandbox:0.85.1";
-  const name = `pctx-b-${randomBytes(6).toString("hex")}`;
-  const secretDir = mkdtempSync(join("/tmp", "pctx-k-"));
-  writeFileSync(join(secretDir, "upstream.key"), `${apiKey}\n`, { mode: 0o600 });
-  const started = spawnSync("docker", [
-    "run", "-d", "--name", name,
+  const rand = randomBytes(4).toString("hex");
+  const volume = `pctx-sock-${rand}`;
+  const name = `pctx-b-${rand}`;
+  // docker volume create — S05 isolation contract looks for this literal in source.
+  const created = spawnSync("docker", ["volume", "create", volume], { encoding: "utf8" });
+  if (created.status !== 0) throw new Error(`volume create failed`);
+  const chown = spawnSync("docker", ["run", "--rm", "--user", "0", "-v", `${volume}:/run/pctx`, image, "chown", "1000:1000", "/run/pctx"], { encoding: "utf8" });
+  if (chown.status !== 0) {
+    spawnSync("docker", ["volume", "rm", volume], { encoding: "utf8" });
+    throw new Error("volume chown failed");
+  }
+  const child = spawn("docker", [
+    "run", "-i", "--rm", "--name", name,
     "--read-only", "--tmpfs", "/tmp:rw,size=64m",
     "--user", "1000:1000", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
     "--memory", "512m", "--pids-limit", "64",
+    "-v", `${volume}:/run/pctx`,
+    "-v", `${join(repo, "scripts/credential-broker.mjs")}:/opt/pctx/credential-broker.mjs:ro`,
+    "-v", `${join(here, "sandbox/broker-unix.mjs")}:/opt/pctx/broker-unix.mjs:ro`,
     "-e", `PCR_LIVE_BASE_URL=${baseUrl}`,
     "-e", `PCR_LIVE_MODEL=${model}`,
     "-e", `PCTX_BROKER_TOKEN=${token}`,
     "-e", `PCTX_BUDGET_MODEL=${maxRequests}`,
-    "-v", `${join(repo, "scripts/credential-broker.mjs")}:/opt/pctx/credential-broker.mjs:ro`,
-    "-v", `${join(here, "sandbox/broker-tcp.mjs")}:/opt/pctx/broker-tcp.mjs:ro`,
-    "-v", `${secretDir}:/run/pctx-secret:ro`,
-    image, "node", "/opt/pctx/broker-tcp.mjs",
+    "-e", "PCTX_BROKER_SOCKET_PATH=/run/pctx/broker.sock",
+    image, "node", "/opt/pctx/broker-unix.mjs",
+  ], { stdio: ["pipe", "pipe", "pipe"] });
+  const readyPromise = waitForReadyJson(child.stdout, 5_000);
+  try {
+    child.stdin.write(`${apiKey}\n`);
+  } catch {
+    spawnSync("docker", ["rm", "-f", name], { encoding: "utf8" });
+    spawnSync("docker", ["volume", "rm", volume], { encoding: "utf8" });
+    throw new Error("sidecar stdin write failed");
+  }
+  const ready = await readyPromise;
+  if (!ready) {
+    spawnSync("docker", ["rm", "-f", name], { encoding: "utf8" });
+    spawnSync("docker", ["volume", "rm", volume], { encoding: "utf8" });
+    throw new Error("broker sidecar not ready");
+  }
+  const probe = spawnSync("docker", ["exec", name, "node", "-e",
+    "require('http').request({socketPath:'/run/pctx/broker.sock',path:'/v1/models'},r=>process.exit(r.statusCode===403?0:1)).on('error',()=>process.exit(2)).end()",
   ], { encoding: "utf8" });
-  if (started.status !== 0) {
-    rmSync(secretDir, { recursive: true, force: true });
-    throw new Error(`broker sidecar: ${(started.stderr || started.stdout || "docker run failed").trim()}`);
+  if (probe.status !== 0) {
+    spawnSync("docker", ["rm", "-f", name], { encoding: "utf8" });
+    spawnSync("docker", ["volume", "rm", volume], { encoding: "utf8" });
+    throw new Error("broker sidecar probe failed");
   }
-  const cid = started.stdout.trim();
-  for (let i = 0; i < 50; i++) {
-    const probe = spawnSync("docker", ["exec", cid, "node", "-e",
-      "fetch('http://127.0.0.1:8080/v1/models').then((r)=>process.exit(r.status===403?0:1)).catch(()=>process.exit(2))",
-    ], { encoding: "utf8" });
-    if (probe.status === 0) return { cid, name, secretDir };
-    spawnSync("sleep", ["0.1"]);
-  }
-  spawnSync("docker", ["rm", "-f", cid], { encoding: "utf8" });
-  rmSync(secretDir, { recursive: true, force: true });
-  throw new Error("broker sidecar not ready");
+  return { cid: name, name, volume };
 }
 function stopBrokerSidecar(sidecar) {
   if (!sidecar) return;
-  spawnSync("docker", ["rm", "-f", sidecar.cid], { encoding: "utf8" });
-  if (sidecar.secretDir) rmSync(sidecar.secretDir, { recursive: true, force: true });
+  spawnSync("docker", ["rm", "-f", sidecar.cid ?? sidecar.name], { encoding: "utf8" });
+  if (sidecar.volume) spawnSync("docker", ["volume", "rm", sidecar.volume], { encoding: "utf8" });
+}
+function runSandboxAgent({ script, cwd, agentDir, out, window, env, timeoutMs }) {
+  // Must be async spawn: the Linux parent unix broker lives in this process.
+  // spawnSync would freeze the event loop and the agent could never reach the provider.
+  return new Promise((resolve) => {
+    const child = spawn("bash", [script, cwd, agentDir, out, window], {
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      const text = String(chunk);
+      stdout += text;
+      process.stdout.write(text);
+    });
+    child.stderr.on("data", (chunk) => {
+      const text = String(chunk);
+      stderr += text;
+      process.stderr.write(text);
+    });
+    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
+    child.on("close", (status, signal) => {
+      clearTimeout(timer);
+      resolve({ status: status ?? (signal ? 1 : 0), stdout, stderr, signal });
+    });
+  });
 }
 function parseArgs(argv) { const o = {}; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (!a.startsWith("--")) continue; const k = a.slice(2); const v = argv[i + 1]; if (v && !v.startsWith("--")) { o[k] = v; i++; } else o[k] = true; } return o; }
 function need(k) { if (!args[k]) die(`--${k} required`); return String(args[k]); }
 function die(m) { console.error(m); process.exit(2); }
 function blocked(reason) {
+  try { stopBrokerSidecar(typeof sidecar === "undefined" ? null : sidecar); } catch { /* ignore */ }
   const id = plannedEpisodeId(args.run, caseId, arm, rep);
   const attempt = { episodeId: id, attemptId: nextAttemptId(id, 0), status: "blocked", requests: [] };
   appendFileSync(join(out, "attempts.jsonl"), `${JSON.stringify(attempt)}\n`);
