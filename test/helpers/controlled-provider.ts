@@ -308,6 +308,13 @@ export async function openPluginSession(
     scriptUsagePercent?: number;
     extensionRoot?: string;
     resumeFile?: string;
+    /** Same HOME / cwd / agentDir / staging as an earlier process (`pi -p --session-id`). */
+    reuse?: {
+      home: string;
+      cwd: string;
+      agentDir: string;
+      staging: string;
+    };
   },
 ): Promise<{
   session: {
@@ -327,48 +334,51 @@ export async function openPluginSession(
   sessionDir: string;
 }> {
   ensureDist();
-  const home = mkdtempSync(join(tmpdir(), "pctx-d01-home-"));
-  const cwd = mkdtempSync(join(tmpdir(), "pctx-d01-cwd-"));
-  const staging = mkdtempSync(join(tmpdir(), "pctx-d01-ext-"));
+  const reuse = opts.reuse;
+  const home = reuse?.home ?? mkdtempSync(join(tmpdir(), "pctx-d01-home-"));
+  const cwd = reuse?.cwd ?? mkdtempSync(join(tmpdir(), "pctx-d01-cwd-"));
+  const staging = reuse?.staging ?? mkdtempSync(join(tmpdir(), "pctx-d01-ext-"));
   const sessionDir = mkdtempSync(join(tmpdir(), "pctx-d01-sess-"));
-  const agentDir = join(home, ".pi", "agent");
+  const agentDir = reuse?.agentDir ?? join(home, ".pi", "agent");
   process.env.HOME = home;
-  mkdirSync(agentDir, { recursive: true });
-  mkdirSync(join(cwd, ".pi"), { recursive: true });
-  writeFileSync(
-    join(cwd, ".pi", "pctx.json"),
-    JSON.stringify({
-      schemaVersion: 6,
-      profile: opts.profile,
-      fold: {
-        triggerPercent: opts.triggerPercent ?? 60,
-        targetPercent: opts.targetPercent ?? 40,
-        protectRecentBatches: opts.protectRecentBatches ?? 1,
-        minRemovedTokens: opts.minRemovedTokens ?? 500,
-      },
-    }),
-  );
-  const extensionRoot = opts.extensionRoot ?? join(repoRoot, "dist");
-  const fromDist = extensionRoot.endsWith("dist") ? extensionRoot : join(extensionRoot, "dist");
-  cpSync(fromDist, join(staging, "dist"), { recursive: true });
-  writeFileSync(
-    join(staging, "package.json"),
-    JSON.stringify({
-      name: "pi-context",
-      version: "5.0.0-dev.0",
-      type: "module",
-      pi: { extensions: ["./dist/extension.js"] },
-    }),
-  );
-  writeFileSync(
-    join(agentDir, "settings.json"),
-    JSON.stringify({
-      defaultProvider: "controlled",
-      defaultModel: "wire",
-      extensions: opts.loadPlugin === false ? [] : [staging],
-      compaction: { enabled: false, keepRecentTokens: 256, reserveTokens: 4096 },
-    }),
-  );
+  if (!reuse) {
+    mkdirSync(agentDir, { recursive: true });
+    mkdirSync(join(cwd, ".pi"), { recursive: true });
+    writeFileSync(
+      join(cwd, ".pi", "pctx.json"),
+      JSON.stringify({
+        schemaVersion: 6,
+        profile: opts.profile,
+        fold: {
+          triggerPercent: opts.triggerPercent ?? 60,
+          targetPercent: opts.targetPercent ?? 40,
+          protectRecentBatches: opts.protectRecentBatches ?? 1,
+          minRemovedTokens: opts.minRemovedTokens ?? 500,
+        },
+      }),
+    );
+    const extensionRoot = opts.extensionRoot ?? join(repoRoot, "dist");
+    const fromDist = extensionRoot.endsWith("dist") ? extensionRoot : join(extensionRoot, "dist");
+    cpSync(fromDist, join(staging, "dist"), { recursive: true });
+    writeFileSync(
+      join(staging, "package.json"),
+      JSON.stringify({
+        name: "pi-context",
+        version: "5.0.0-dev.0",
+        type: "module",
+        pi: { extensions: ["./dist/extension.js"] },
+      }),
+    );
+    writeFileSync(
+      join(agentDir, "settings.json"),
+      JSON.stringify({
+        defaultProvider: "controlled",
+        defaultModel: "wire",
+        extensions: opts.loadPlugin === false ? [] : [staging],
+        compaction: { enabled: false, keepRecentTokens: 256, reserveTokens: 4096 },
+      }),
+    );
+  }
 
   const settings = pi.SettingsManager.create(cwd, agentDir, { projectTrusted: true });
   settings.applyOverrides?.({
@@ -452,6 +462,12 @@ export async function openBalancedSession(
     script?: ControlledScript;
     scriptUsagePercent?: number;
     resumeFile?: string;
+    reuse?: {
+      home: string;
+      cwd: string;
+      agentDir: string;
+      staging: string;
+    };
   },
 ) {
   return openPluginSession(pi, {
@@ -463,6 +479,7 @@ export async function openBalancedSession(
     script: opts.script,
     scriptUsagePercent: opts.scriptUsagePercent,
     resumeFile: opts.resumeFile,
+    reuse: opts.reuse,
   });
 }
 

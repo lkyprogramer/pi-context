@@ -57,6 +57,23 @@ All under `<agentDir>` (`PI_CODING_AGENT_DIR` if set, else `~/.pi/agent`). Setti
 - `pctx/index.sqlite` — rebuildable FTS index (persistent workspaces only).
 - `pctx/plans/<workspaceId>/<sessionId>.json` — active fold plan locators (identity + `entryId:blockIndex` + `sourceHash`, no text) so a resumed `pi` process keeps the same fold. Safe to delete; costs one unfolded request on the next resume.
 
+## Coexistence with SoL-Pi and context-mode
+
+All three can load on official Pi 0.85.1. They do not share state. Install is not enable: each plugin is gated by its own config / `settings.json` `extensions` list.
+
+Host and unit tests isolate `HOME` / `PI_CODING_AGENT_DIR` and load **only** the staged `pi-context` package (`noSkills`, no extra extensions). That is the equivalent of turning SoL-Pi and context-mode off. Live or interactive checks that need a neighbour must add that package to the isolated agent dir and turn it on explicitly; do not inherit `~/.pi/agent`.
+
+### SoL-Pi
+
+- Action Fusion / Reducer / OCC stay SoL-Pi's. pi-context does not rewrite them.
+- ObservationPack needs a persistent Pi session directory. `pi --no-session` (typical sub-agent) raises a non-fatal extension error: `requires a persistent Pi session directory`. Do not use OP-dependent features in no-session sub-agents; give the child a real `--session-id` / session dir, or leave OP off.
+- To exercise SoL-Pi in a test: copy or install it into the isolated `settings.json` `extensions` and use a persistent session. To disable it: omit it from `extensions` or leave its feature flags off.
+
+### context-mode
+
+- Adds a large fixed prefix (skills + `ctx_*` tool schemas; measured ~5–7k+ tokens). No shared contract with pi-context.
+- Not recommended as a default co-install. If a scenario needs it, `--no-skills` cuts the skill prefix. Fold / observe-identity tests must keep it unloaded.
+
 ## Telemetry jsonl
 
 Default `telemetry.jsonl` is `false`. When enabled (`"telemetry": { "jsonl": true }`), files land in `<agentDir>/pctx/telemetry/<sessionId>.jsonl`. Rotate or delete that directory; `maxLogBytes` (default 5 MiB) caps a single file. `telemetry.includeContent` cannot be true.
@@ -78,7 +95,7 @@ pnpm eval:local -- --out artifacts/local-eval/$(date +%Y%m%d-%H%M%S)
 pnpm eval:report artifacts/local-eval/<runId>
 ```
 
-`--resume <runDir>` fills missing episode dirs only. Do not retune fold parameters and keep only the second run. Current evidence run: `review-r8-20260911b`. Contrasts: `20260909-103813` (L06 class-file wrong-action), `20260908-215433` (no verified read, no metrics). Round-7 pack backup: `artifacts/local-eval/review-final-r7-backup/`.
+`--resume <runDir>` fills missing episode dirs only. Do not retune fold parameters and keep only the second run. Current evidence run: `review-r8-20260911b`. Contrasts: `20260909-103813` (L06 class-file wrong-action), `20260908-215433` (no verified read, no metrics). Round-7 pack backup: `artifacts/local-eval/review-final-r7-backup/`. Git tracks only `artifacts/local-eval/review-final/{REPORT.md,report.json,MANIFEST.sha256}`.
 
 H03 episodes temporarily point `HOME` at a temp dir. Restore `HOME` before `grade.sh` so Docker still sees `~/.docker`.
 

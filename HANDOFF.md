@@ -11,7 +11,7 @@
 - balanced 仍是 default-off。不得把默认改成 balanced。
 - 模型：`openclaw/Qwen3.8-27B-WORK` via `http://47.106.205.246:1082/v1`。`/metrics` 需 API key（无 key 是 401）。
 - 打包：`pi-context-6.1.0.tgz` sha256 `36c1019d7e46864c5fc3cb5bff426ea178b4da6eba3f7563b5cf1d5ca372b1cd`。
-- 不要提交 `.env`、`eval/local/seeds/*.secret`、或带会话正文的 live 产物。可提交脱敏的 `artifacts/local-eval/review-final/`。不要 publish、不要打 tag，除非用户另行授权。
+- 不要提交 `.env`、`eval/local/seeds/*.secret`、或带会话正文的 live 产物。`artifacts/local-eval/review-final/` 只跟踪 `REPORT.md`、`report.json`、`MANIFEST.sha256`；attempts / bundle / requests 等留本机（已被 `artifacts/local-eval/` ignore）。不要 publish、不要打 tag，除非用户另行授权。
 
 ## 已知限制
 

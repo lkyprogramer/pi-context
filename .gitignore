@@ -37,6 +37,7 @@ docs/**/evidence/repo/
 docs/**/evidence/logs/
 
 # Local 6.1 eval runs (E03). Never commit episode dumps or nonce secrets.
+# review-final/ is force-added for REPORT.md, report.json, MANIFEST.sha256 only.
 artifacts/local-eval/
 eval/local/seeds/*.secret
 eval/local/seeds/*.next

@@ -38,7 +38,15 @@ export async function loadOfficialPi(): Promise<{
       getEntry: (id: string) => unknown;
       buildSessionContext: () => { messages: unknown[] };
     };
-    open: (path: string, sessionDir?: string, cwd?: string) => { getEntries: () => unknown[]; getSessionFile: () => string | undefined };
+    open: (path: string, sessionDir?: string, cwd?: string) => {
+      getSessionFile: () => string | undefined;
+      getEntries: () => unknown[];
+      appendMessage: (message: unknown) => string;
+      getSessionId: () => string;
+      getLeafId: () => string | null;
+      getEntry: (id: string) => unknown;
+      buildSessionContext: () => { messages: unknown[] };
+    };
   };
   ModelRuntime: { create: (opts: Record<string, unknown>) => Promise<{
     registerProvider: (id: string, config: Record<string, unknown>) => void;

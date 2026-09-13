@@ -86,7 +86,7 @@ pnpm smoke
 
 `pnpm check` is typecheck + default vitest + `compat:scan`. Live eval is not in CI.
 
-The frozen review plan is `eval/local/review-matrix.json` (84 episodes: Q quality + C capability + W/X regimes). Live run `review-r8-20260911b` completed 84/84. Do not commit `.env`, `eval/local/seeds/*.secret`, or raw live sessions. The sanitized delivery pack is `artifacts/local-eval/review-final/`.
+The frozen review plan is `eval/local/review-matrix.json` (84 episodes: Q quality + C capability + W/X regimes). Live run `review-r8-20260911b` completed 84/84. Do not commit `.env`, `eval/local/seeds/*.secret`, or raw live sessions. The sanitized delivery pack is `artifacts/local-eval/review-final/` (`REPORT.md`, `report.json`, `MANIFEST.sha256` only).
 
 ```bash
 node eval/local/secure-preflight.mjs --canary
