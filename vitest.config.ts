@@ -12,6 +12,7 @@ export default defineConfig({
       "test/unit/report.test.ts",
       "test/integration/java-cases.test.ts",
     ],
+    setupFiles: ["test/helpers/setup-env.ts"],
     testTimeout: 30_000,
     hookTimeout: 30_000,
   },

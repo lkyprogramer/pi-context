@@ -1,9 +1,9 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { StatusView } from "../contracts.js";
 import type { PluginState } from "../plugin.js";
+import { resolveAgentDir } from "../pi/agent-dir.js";
 
 export interface RequestMetrics {
   runId: string;
@@ -114,7 +114,7 @@ export function statusView(state: PluginState, ctx: ExtensionContext): StatusVie
 }
 
 export function writeStatusFile(state: PluginState, ctx?: { agentDir?: string; getContextUsage?: ExtensionContext["getContextUsage"]; model?: ExtensionContext["model"] }): void {
-  const dir = state.agentDir ?? (typeof ctx?.agentDir === "string" ? ctx.agentDir : join(homedir(), ".pi", "agent"));
+  const dir = resolveAgentDir(state.agentDir ?? (typeof ctx?.agentDir === "string" ? ctx.agentDir : null));
   mkdirSync(dir, { recursive: true });
   const view = statusView(state, (ctx ?? {}) as ExtensionContext);
   writeFileSync(join(dir, "pctx-status.json"), JSON.stringify(view));

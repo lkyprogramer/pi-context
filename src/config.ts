@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import { ERROR, hashCanonical, type PctxConfig, type Profile, type Sha256 } from "./contracts.js";
+import { resolveAgentDir } from "./pi/agent-dir.js";
 
 export type { PctxConfig } from "./contracts.js";
 
@@ -148,9 +148,9 @@ function deepMergeConfig(base: Record<string, unknown>, overlay: Record<string, 
   return out;
 }
 
-export function loadConfig(cwd: string, projectTrusted: boolean): LoadedConfig {
+export function loadConfig(cwd: string, projectTrusted: boolean, agentDir: string = resolveAgentDir()): LoadedConfig {
   const warnings: string[] = [];
-  const globalDir = join(homedir(), ".pi", "agent");
+  const globalDir = agentDir;
   const globalPath = join(globalDir, "pctx.json");
   const globalLegacy = join(globalDir, "pctx-v5.json");
   const projectPath = join(cwd, ".pi", "pctx.json");

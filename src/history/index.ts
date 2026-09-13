@@ -1,8 +1,8 @@
 import { accessSync, constants, mkdirSync, statSync } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { ERROR, type NativeEntry, type Scope } from "../contracts.js";
+import { resolveAgentDir } from "../pi/agent-dir.js";
 import { blocksOf, textSourceHash } from "./refs.js";
 
 export interface IndexedHit {
@@ -105,8 +105,8 @@ function indexUnavailable(message: string): never {
   throw err;
 }
 
-function defaultPersistentPath(): string {
-  return join(homedir(), ".pi", "agent", "pctx", "index.sqlite");
+export function defaultPersistentPath(agentDir?: string | null): string {
+  return join(resolveAgentDir(agentDir), "pctx", "index.sqlite");
 }
 
 function resolveDbPath(mode: "persistent" | "memory-only", dbPath: string | null): string {

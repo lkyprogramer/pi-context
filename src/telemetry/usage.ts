@@ -1,6 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, renameSync, statSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
+import { resolveAgentDir } from "../pi/agent-dir.js";
 import { unknownCostStaysEmpty } from "../projection/budget.js";
 import type { FoldEvent, RequestRecord, UsageRecord } from "../contracts.js";
 
@@ -62,7 +62,7 @@ export interface TelemetrySink {
 
 function appendJsonl(state: TelemetrySink, payload: Record<string, unknown>): void {
   if (!state.config.telemetry.jsonl) return;
-  const root = state.agentDir || join(homedir(), ".pi", "agent");
+  const root = resolveAgentDir(state.agentDir);
   const dir = join(root, "pctx", "telemetry");
   mkdirSync(dir, { recursive: true });
   const file = join(dir, `${state.sessionId}.jsonl`);

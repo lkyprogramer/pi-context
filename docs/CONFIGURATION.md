@@ -4,9 +4,11 @@ pi-context 6.1 reads `pctx.json` (`schemaVersion: 6`). Old `pctx-v5.json` is ign
 
 ## Paths
 
+`<agentDir>` follows Pi's own resolution: `PI_CODING_AGENT_DIR` when set, otherwise `~/.pi/agent`. The same dir holds `pctx-status.json`, the persistent index and fold-plan files.
+
 | File | When it applies |
 |---|---|
-| `~/.pi/agent/pctx.json` | Always, if present |
+| `<agentDir>/pctx.json` | Always, if present |
 | `<cwd>/.pi/pctx.json` | Only when the host reports the project as trusted (`ctx.isProjectTrusted()`). Requires Pi `settings.json` `defaultProjectTrust: "always"` or an explicit trust decision. Untrusted project files are skipped with `untrusted-project-config`. |
 | `~/.pi/agent/pctx-v5.json` / `<cwd>/.pi/pctx-v5.json` | Never loaded. Warning only. |
 
@@ -32,7 +34,7 @@ Project files are never trusted by default.
 }
 ```
 
-`persistent` indexing needs an explicit `storage.dbPath` (recommended `~/.pi/agent/pctx/index.sqlite`); otherwise the index stays memory-only. Search fail-closes when the index is down; `pctx_history` read still walks native session entries. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`. The 6.1-next-steps work does not change these defaults. Current delivery decision: `limited-balanced-trial` (run `review-r8-20260911b`, HEAD `878e92f292a7`).
+`storage.dbPath: null` with `mode: "persistent"` uses `<agentDir>/pctx/index.sqlite`; set `dbPath` to move it. Workspaces at `HOME` or `/` always stay memory-only regardless of `mode`. Search fail-closes when the index is down; `pctx_history` read still walks native session entries. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`. The 6.1-next-steps work does not change these defaults. Current delivery decision: `limited-balanced-trial` (run `review-r8-20260911b`, HEAD `878e92f292a7`).
 
 ## Profiles
 
