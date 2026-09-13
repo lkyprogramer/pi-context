@@ -96,6 +96,8 @@ export function parseSession(path) {
           empty,
           page,
           sourceHash: typeof meta?.sourceHash === "string" ? meta.sourceHash : null,
+          diagnostic: typeof meta?.diagnostic === "string" ? meta.diagnostic : null,
+          code: typeof meta?.code === "string" ? meta.code : null,
         });
       } else {
         for (const text of texts) {
@@ -207,4 +209,70 @@ export function verbatimQuote(parsed, { linePattern, sinceMs, sourceKind = "isEr
     if (norm(textOf(e.message.content)).includes(sourceLine)) return true;
   }
   return false;
+}
+
+/** Token/id present in a later assistant message. Used when the case only needs semantic equivalence. */
+export function semanticQuote(parsed, { token, sinceMs }) {
+  const needle = String(token ?? "").trim();
+  if (!needle) return null;
+  for (const e of parsed.entries) {
+    if (e.type !== "message" || e.message?.role !== "assistant") continue;
+    if (sinceMs && new Date(e.timestamp).getTime() < sinceMs) continue;
+    if (textOf(e.message.content).includes(needle)) return true;
+  }
+  return false;
+}
+
+const SHORT_REF = /^([0-9a-f]{8})(?::(\d{1,6}))?$/;
+const REF_DENIALS = ["REF_OUT_OF_RANGE", "REF_KIND", "REF_ENTRY", "REF_SCOPE", "REF_VERSION"];
+
+function estimateReadTokens(page) {
+  return Math.ceil(Buffer.byteLength(String(page ?? ""), "utf8") / 4);
+}
+
+/**
+ * Recall availability from the session JSONL: REF_* denials, first-attempt read
+ * success, short-ref usage, and character-estimate token cost per read.
+ */
+export function historyRecall(parsed) {
+  const refDenials = Object.fromEntries(REF_DENIALS.map((code) => [code, 0]));
+  const reads = [];
+  for (const call of parsed.toolCalls ?? []) {
+    if (call.name !== "pctx_history" || call.arguments?.action !== "read") continue;
+    const ref = String(call.arguments?.ref ?? "");
+    const result = (parsed.historyReadResults ?? []).find((row) => row.toolCallId === call.id);
+    const diagnostic = result?.diagnostic ?? null;
+    if (diagnostic && Object.hasOwn(refDenials, diagnostic)) refDenials[diagnostic] += 1;
+    const tokens = estimateReadTokens(result?.page ?? "");
+    reads.push({
+      ref,
+      short: SHORT_REF.test(ref.trim()),
+      verified: result?.verified === true,
+      empty: result?.empty !== false,
+      tokens,
+      diagnostic,
+    });
+  }
+  const shortRefReads = reads.filter((row) => row.short).length;
+  const first = reads[0];
+  const readTokenCost = reads.reduce((sum, row) => sum + row.tokens, 0);
+  return {
+    refDenials,
+    shortRefReads,
+    historyReads: reads.length,
+    shortRefUsage: reads.length ? shortRefReads / reads.length : null,
+    readTokenCost,
+    readTokenCostPerRead: reads.length ? readTokenCost / reads.length : null,
+    firstAttemptRecallSuccess: first ? first.verified && !first.empty : null,
+  };
+}
+
+export function firstAttemptRecallHit(parsed, linePattern) {
+  if (!linePattern) return null;
+  const re = new RegExp(linePattern);
+  const firstRead = (parsed.toolCalls ?? []).find((call) => call.name === "pctx_history" && call.arguments?.action === "read");
+  if (!firstRead) return null;
+  const result = (parsed.historyReadResults ?? []).find((row) => row.toolCallId === firstRead.id);
+  if (!result || !result.verified || result.empty) return false;
+  return re.test(String(result.page ?? ""));
 }

@@ -5,20 +5,22 @@ import type { AssistantRecord } from "./telemetry/metrics.js";
 import { HistoryIndex, defaultPersistentPath } from "./history/index.js";
 import { SearchSnapshotStore, SEARCH_SNAPSHOT_LIMITS } from "./history/page-snapshots.js";
 import { readHistory } from "./history/read.js";
-import { encodeRef, isFieldRef, parseShortRef, resolveShortRef } from "./history/refs.js";
+import { decodeRef, encodeRef, isFieldRef, parseShortRef, resolveShortRef } from "./history/refs.js";
+import { parseObsRef, readObservation, virtualReducerRef } from "./history/sol-pi.js";
 import { readBudgetFor } from "./projection/budget.js";
 import { searchHistory } from "./history/search.js";
 import { buildScope, normalizeWorkspace } from "./history/scope.js";
 import { buildActiveView, identityIncomplete, mappingFromView } from "./projection/active-view.js";
 import { collectBatches } from "./projection/batches.js";
 import { exposedEntryIds } from "./projection/exposed.js";
-import { planFold, planStillValid, restorePlan, shouldFold } from "./projection/planner.js";
+import { attachEvidenceIndex, buildEvidenceIndex } from "./projection/evidence-index.js";
+import { foldCadenceOk, planColdFold, planFold, planStillValid, restorePlan, shouldFold } from "./projection/planner.js";
 import { deletePlan, loadPlan, savePlan, type StoredPlan } from "./projection/plan-store.js";
 import { renderFold, type AgentMessage } from "./projection/render.js";
 import { resolveAgentDir } from "./pi/agent-dir.js";
 import { estimateTokens, sha256Hex, utf8Bytes } from "./contracts.js";
 import { latestCompactionId, mapToolResults, sessionSnapshot, toolCallIdOf, type SessionReader } from "./pi/source-reader.js";
-import { recordFold } from "./telemetry/usage.js";
+import { recordDeferredWarmFold, recordFold } from "./telemetry/usage.js";
 import type { ActiveView } from "./projection/view-contracts.js";
 import type { AppliedReceipt, RequestIdentity } from "./projection/view-contracts.js";
 import {
@@ -33,6 +35,7 @@ export interface PluginTelemetry {
   lastRequests: RequestRecord[];
   folds: number;
   foldEvents: FoldEvent[];
+  deferredWarmFolds: number;
 }
 
 export interface PluginState {
@@ -43,6 +46,11 @@ export interface PluginState {
   plan: FoldPlan | null;
   /** True once this process has tried to reload the persisted plan for the current session. */
   planRestoreAttempted: boolean;
+  /** Next context hook may plan to targetPercent without the 60% trigger. */
+  coldFoldPending: boolean;
+  lastFoldUsageTokens: number | null;
+  lastSeenUsageTokens: number | null;
+  recentTokenIncrements: number[];
   telemetry: PluginTelemetry;
   configHash: string;
   configSource: string;
@@ -53,7 +61,10 @@ export interface PluginState {
   historyReads: number;
   historySearches: number;
   verifiedReads: number;
+  /** entryIds already retrieved via a verified pctx_history read. */
+  historyReadEntryIds: Set<string>;
   sessionId: string;
+  sessionDir: string | null;
   agentDir: string | null;
   modelId: string;
   lastApplied: number;
@@ -83,7 +94,11 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     scope: null,
     plan: null,
     planRestoreAttempted: false,
-    telemetry: { lastRequests: [], folds: 0, foldEvents: [] },
+    coldFoldPending: false,
+    lastFoldUsageTokens: null,
+    lastSeenUsageTokens: null,
+    recentTokenIncrements: [],
+    telemetry: { lastRequests: [], folds: 0, foldEvents: [], deferredWarmFolds: 0 },
     configHash: configHashOf(config),
     configSource: "default",
     warnings: [],
@@ -93,7 +108,9 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     historyReads: 0,
     historySearches: 0,
     verifiedReads: 0,
+    historyReadEntryIds: new Set(),
     sessionId: "unknown",
+    sessionDir: null,
     agentDir: null,
     modelId: "unknown",
     lastApplied: 0,
@@ -166,7 +183,7 @@ export function indexBranch(state: PluginState, entries: NativeEntry[], cwd: str
   const scope = buildScope({ cwd, sessionId, leafId, getEntry });
   state.scope = scope;
   try {
-    state.index.upsertBranchSync(scope, entries);
+    state.index.upsertBranchSync(scope, entries, { sessionDir: state.sessionDir });
   } catch {
     /* unavailable index stays fail-closed */
   }
@@ -197,7 +214,7 @@ export async function historyTool(
   state.scope = scope;
   if (req.action === "search") {
     try {
-      state.index.upsertBranchSync(scope, entries);
+      state.index.upsertBranchSync(scope, entries, { sessionDir: state.sessionDir });
     } catch (err) {
       const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
       if (code === "INDEX_UNAVAILABLE") return { code: "degraded", cursor: null, diagnostic: "history: unavailable" };
@@ -217,7 +234,7 @@ export async function historyTool(
     });
   }
   try {
-    state.index.upsertBranchSync(scope, entries);
+    state.index.upsertBranchSync(scope, entries, { sessionDir: state.sessionDir });
   } catch (err) {
     const code = err && typeof err === "object" && "code" in err ? String((err as { code?: string }).code) : "";
     if (code !== "INDEX_UNAVAILABLE") throw err;
@@ -227,12 +244,31 @@ export async function historyTool(
   if ("insufficient" in budget) {
     return { ok: false, code: "insufficient-context", cursor: null, diagnostic: "INSUFFICIENT_CONTEXT" };
   }
+  const obsId = parseObsRef(req.ref);
+  if (obsId) {
+    const result = readObservation({
+      sessionDir: state.sessionDir,
+      sessionId,
+      obsId,
+      cursor: req.cursor,
+      budget,
+      config: state.config,
+    });
+    if (result.verified === true) state.verifiedReads += 1;
+    return result;
+  }
   let ref = req.ref;
   const short = parseShortRef(ref);
   if (short) {
     const resolved = resolveShortRef(scope, short, entries);
-    if (!isFieldRef(resolved)) return { ok: false, code: "denied", cursor: null, diagnostic: resolved.code };
-    ref = encodeRef(resolved);
+    if (isFieldRef(resolved)) {
+      ref = encodeRef(resolved);
+    } else {
+      const match = entries.filter((entry) => entry.id === short.entryId);
+      const virtual = match.length === 1 ? virtualReducerRef(scope, match[0]!, short.blockIndex) : null;
+      if (!virtual) return { ok: false, code: "denied", cursor: null, diagnostic: resolved.code };
+      ref = encodeRef(virtual);
+    }
   }
   const result = readHistory({
     scope,
@@ -241,9 +277,78 @@ export async function historyTool(
     budget,
     config: state.config,
     getEntry,
+    sessionDir: state.sessionDir,
   });
-  if (result.verified === true) state.verifiedReads += 1;
+  if (result.verified === true) {
+    state.verifiedReads += 1;
+    const loc = decodeRef(ref);
+    if (isFieldRef(loc)) state.historyReadEntryIds.add(loc.entryId);
+  }
   return result;
+}
+
+export interface BeforeCompactEventLike {
+  preparation?: {
+    previousSummary?: string;
+    firstKeptEntryId?: string;
+    tokensBefore?: number;
+  };
+  branchEntries?: readonly NativeEntry[];
+  customInstructions?: string;
+}
+
+export interface BeforeCompactResultLike {
+  compaction: {
+    summary: string;
+    firstKeptEntryId: string;
+    tokensBefore: number;
+    details: { pctxEvidenceIndex: true; bytes: number };
+  };
+}
+
+/**
+ * Attach a deterministic evidence index to the compaction summary. Cut point
+ * (firstKeptEntryId) is unchanged. No candidates / off / missing cut point →
+ * undefined so native or SoL-Pi OCC generateSummary still runs.
+ */
+export function applyBeforeCompact(
+  state: PluginState,
+  event: BeforeCompactEventLike,
+  ctx?: ExtensionContext,
+): BeforeCompactResultLike | undefined {
+  if (state.profile === "off") return undefined;
+  const firstKept = event.preparation?.firstKeptEntryId;
+  if (!firstKept) return undefined;
+  let entries = (event.branchEntries?.length ? event.branchEntries : []) as NativeEntry[];
+  if (ctx) {
+    const snap = sessionSnapshot({
+      cwd: ctx.cwd,
+      sessionManager: ctx.sessionManager as unknown as SessionReader | undefined,
+    });
+    state.sessionId = snap.sessionId;
+    state.sessionDir = snap.sessionDir;
+    state.agentDir = resolveAgentDir((ctx as { agentDir?: string }).agentDir ?? state.agentDir);
+    indexBranch(state, snap.entries, snap.cwd, snap.sessionId, snap.leafId);
+    if (entries.length === 0) entries = snap.entries;
+  }
+  if (entries.length === 0) return undefined;
+  const visible = state.scope?.visibleEntryIds ?? new Set(entries.map((entry) => entry.id));
+  const index = buildEvidenceIndex({
+    entries,
+    visibleEntryIds: visible,
+    exposed: exposedEntryIds(entries),
+    readEntryIds: state.historyReadEntryIds,
+    leafId: state.scope?.leafId ?? null,
+  });
+  if (!index.text) return undefined;
+  return {
+    compaction: {
+      summary: attachEvidenceIndex(event.preparation?.previousSummary, index.text),
+      firstKeptEntryId: firstKept,
+      tokensBefore: event.preparation?.tokensBefore ?? 0,
+      details: { pctxEvidenceIndex: true, bytes: index.bytes },
+    },
+  };
 }
 
 export function applyContext(
@@ -258,6 +363,7 @@ export function applyContext(
     sessionManager: ctx.sessionManager as unknown as SessionReader | undefined,
   });
   state.sessionId = snap.sessionId;
+  state.sessionDir = snap.sessionDir;
   state.agentDir = resolveAgentDir((ctx as { agentDir?: string }).agentDir ?? state.agentDir);
   const model = ctx.model as { id?: string; provider?: string; contextWindow?: number } | undefined;
   const modelId = model?.id ?? state.modelId;
@@ -289,52 +395,72 @@ export function applyContext(
     state.plan = null;
     discardPersistedPlan(state);
   }
-  if (canPlan && shouldFold(usage, state.plan, state.config.fold) && usage && state.scope && view && identity) {
-    const previous = state.plan;
+  noteUsageSample(state, usage);
+  if (canPlan && view && identity && state.scope) {
     const foldable = witnessedView(view, state, identity);
-    const next = planFold({
-      scope: state.scope,
-      view: foldable,
-      batches: collectBatches(view.branch),
-      exposed,
-      usage,
-      previous,
-      modelId,
-      cfg: state.config,
-      configHash: state.configHash,
-    });
-    if (next && next !== previous) {
-      const mappingForIndex = mappingFromView(view);
-      const preview = renderFold(structuredClone(messages), next, mappingForIndex);
-      if (preview.applied === 0) {
-        /* do not publish a no-op epoch */
-      } else {
-        const added = preview.appliedKeys.filter((key) => !previous?.replacements.has(key)).length;
-        const first = preview.firstChangedIndex;
-        recordFold(state, {
+    const window = usage?.contextWindow ?? model?.contextWindow ?? 0;
+    if (state.coldFoldPending && window > 0) {
+      const tokens = estimateMessagesTokens(messages);
+      const previous = state.plan;
+      const next = planColdFold({
+        scope: state.scope,
+        view: foldable,
+        batches: collectBatches(view.branch),
+        exposed,
+        tokens,
+        contextWindow: window,
+        previous,
+        modelId,
+        cfg: state.config,
+        configHash: state.configHash,
+      });
+      publishPlan(state, {
+        next,
+        previous,
+        messages,
+        view,
+        identity,
+        reason: "cold",
+        percentBefore: window > 0 ? (tokens / window) * 100 : 0,
+        usageTokens: tokens,
+      });
+    } else if (usage && shouldFold(usage, state.plan, state.config.fold)) {
+      if (!foldCadenceOk({
+        plan: state.plan,
+        usage,
+        lastFoldUsageTokens: state.lastFoldUsageTokens,
+        increments: state.recentTokenIncrements,
+        fold: state.config.fold,
+      })) {
+        recordDeferredWarmFold(state, {
           at: new Date().toISOString(),
           sessionId: snap.sessionId,
-          planId: next.planId,
-          reason: "threshold",
-          added,
-          addedEntryIds: addedEntryIds(next, previous),
-          savedTokensEstimate: previewSaved(preview.beforeHash, preview.afterHash, next, previous),
-          firstChangedIndex: first,
-          invalidatedTokensEstimate: invalidateEstimate(messages, first),
+          planId: state.plan?.planId ?? null,
           percentBefore: usage.percent ?? 0,
         });
-        state.plan = next;
-        persistPlan(state);
-        state.lastReceipt = {
-          requestId: state.lastWitnessRequestId ?? next.planId,
+      } else {
+        const previous = state.plan;
+        const next = planFold({
+          scope: state.scope,
+          view: foldable,
+          batches: collectBatches(view.branch),
+          exposed,
+          usage,
+          previous,
+          modelId,
+          cfg: state.config,
+          configHash: state.configHash,
+        });
+        publishPlan(state, {
+          next,
+          previous,
+          messages,
+          view,
           identity,
-          planId: next.planId,
-          appliedKeys: preview.appliedKeys,
-          beforeHash: preview.beforeHash,
-          afterHash: preview.afterHash,
-          estimatedSavedTokens: addedSaved(next, previous),
-          estimateMethod: "character-estimate",
-        };
+          reason: "threshold",
+          percentBefore: usage.percent ?? 0,
+          usageTokens: usage.tokens,
+        });
       }
     }
   }
@@ -488,8 +614,80 @@ function invalidateEstimate(messages: AgentMessage[], first: number | null): num
   return tokens;
 }
 
+export function markColdFold(state: PluginState): void {
+  state.coldFoldPending = true;
+}
+
+export function consumeColdFold(state: PluginState): void {
+  state.coldFoldPending = false;
+}
+
+function noteUsageSample(state: PluginState, usage: ContextUsageLike | null): void {
+  const tokens = usage?.tokens;
+  if (tokens == null) return;
+  if (state.lastSeenUsageTokens != null) {
+    state.recentTokenIncrements = [...state.recentTokenIncrements, tokens - state.lastSeenUsageTokens].slice(-8);
+  }
+  state.lastSeenUsageTokens = tokens;
+}
+
+function estimateMessagesTokens(messages: AgentMessage[]): number {
+  return messages.reduce((sum, message) => sum + estimateTokens(messageText(message)), 0);
+}
+
+function publishPlan(
+  state: PluginState,
+  input: {
+    next: FoldPlan | null;
+    previous: FoldPlan | null;
+    messages: AgentMessage[];
+    view: ActiveView;
+    identity: RequestIdentity;
+    reason: FoldEvent["reason"];
+    percentBefore: number;
+    usageTokens: number | null | undefined;
+  },
+): void {
+  const { next, previous } = input;
+  if (!next || next === previous) return;
+  const mappingForIndex = mappingFromView(input.view);
+  const preview = renderFold(structuredClone(input.messages), next, mappingForIndex);
+  if (preview.applied === 0) return;
+  const added = preview.appliedKeys.filter((key) => !previous?.replacements.has(key)).length;
+  const first = preview.firstChangedIndex;
+  recordFold(state, {
+    at: new Date().toISOString(),
+    sessionId: next.sessionId,
+    planId: next.planId,
+    reason: input.reason,
+    added,
+    addedEntryIds: addedEntryIds(next, previous),
+    savedTokensEstimate: previewSaved(preview.beforeHash, preview.afterHash, next, previous),
+    firstChangedIndex: first,
+    invalidatedTokensEstimate: invalidateEstimate(input.messages, first),
+    percentBefore: input.percentBefore,
+  });
+  state.plan = next;
+  persistPlan(state);
+  if (input.usageTokens != null) state.lastFoldUsageTokens = input.usageTokens;
+  state.lastReceipt = {
+    requestId: state.lastWitnessRequestId ?? next.planId,
+    identity: input.identity,
+    planId: next.planId,
+    appliedKeys: preview.appliedKeys,
+    beforeHash: preview.beforeHash,
+    afterHash: preview.afterHash,
+    estimatedSavedTokens: addedSaved(next, previous),
+    estimateMethod: "character-estimate",
+  };
+}
+
 export function fenceIdentity(state: PluginState): void {
   state.plan = null;
+  state.coldFoldPending = false;
+  state.lastFoldUsageTokens = null;
+  state.lastSeenUsageTokens = null;
+  state.recentTokenIncrements = [];
   state.lastWitnessRequestId = null;
   state.lastIdentity = null;
   state.lastFieldHashes = null;

@@ -28,21 +28,25 @@ Project files are never trusted by default.
     "protectRecentBatches": 4,
     "minRemovedTokens": 4096,
     "minFoldableBytes": 1024,
-    "stubHeadChars": 120
+    "stubHeadChars": 120,
+    "stubHeadBytes": 0,
+    "stubTailBytes": 0
   },
   "telemetry": { "includeContent": false, "jsonl": false, "maxLogBytes": 5242880 }
 }
 ```
 
-`storage.dbPath: null` with `mode: "persistent"` uses `<agentDir>/pctx/index.sqlite`; set `dbPath` to move it. Workspaces at `HOME` or `/` always stay memory-only regardless of `mode`. Search fail-closes when the index is down; `pctx_history` read still walks native session entries. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`. The 6.1-next-steps work does not change these defaults. Current delivery decision: `limited-balanced-trial` (run `review-r8-20260911b`, HEAD `878e92f292a7`).
+`storage.dbPath: null` with `mode: "persistent"` uses `<agentDir>/pctx/index.sqlite`; set `dbPath` to move it. Workspaces at `HOME` or `/` always stay memory-only regardless of `mode`. Search fail-closes when the index is down; `pctx_history` read still walks native session entries. `fold.triggerPercent` must be `< 85`. `fold.targetPercent` must be `< triggerPercent`. `stubHeadBytes` / `stubTailBytes` default to 0 (current 120-character first-line head, no tail). They are candidate flags only: `stubHeadBytes=512` and `stubHeadBytes=512` plus `stubTailBytes=512` (OP-style). Do not change the default unless a recall live shows `firstAttemptRecallSuccess` up and fold savings down by less than 10%. `telemetry.includeContent` cannot be true. Unknown fields, NaN, and negatives are `PCTX_CONFIG`. The 6.1-next-steps work does not change these defaults. Current delivery decision: `limited-balanced-trial` (run `review-r8-20260911b`, HEAD `878e92f292a7`).
 
 ## Profiles
 
 | Profile | Native request | `pctx_history` | Fold |
 |---|---|---|---|
 | `off` | unchanged | disabled | none |
-| `observe` (default) | unchanged | on, scope-limited | none |
+| `observe` (default) | unchanged until native compact; then a ≤1.5 KB evidence index may be appended to the compact summary | on, scope-limited | none |
 | `balanced` | fold old exposed tool results after the usage threshold | same as observe | threshold, then freeze |
+
+`pctx_history read` also accepts a SoL-Pi ObservationPack id `obs_<24hex>` when a persistent session dir is present. The object is served only after the OP ledger `contentHash` matches. Reducer receipts stay as-is; the original `source_artifact` is indexed for search.
 
 `/pctx profile <p>` changes the in-memory profile only. It does not write `pctx.json`.
 

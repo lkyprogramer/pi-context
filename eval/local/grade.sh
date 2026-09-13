@@ -45,20 +45,47 @@ else
   TRUSTED_TMP="$(mktemp -d "${TMPDIR:-/tmp}/pctx-trusted-XXXXXX")"
   TRUSTED_ROOT="$TRUSTED_TMP"
 fi
-protected_ok=true
-if [[ -z "$FIX" && "$LOGS_JSON" == "{}" && -n "$PROTECTED" ]]; then
-  protected_ok=false
-else
-  for p in $PROTECTED; do
-    if [[ -e "$TRUSTED_ROOT/$p" ]]; then
-      a="$(cd "$TRUSTED_ROOT" && find "$p" -type f | sort | xargs shasum -a 256 2>/dev/null | shasum -a 256 | cut -d' ' -f1)"
-      b="$(cd "$CAND" && { find "$p" -type f 2>/dev/null | sort | xargs shasum -a 256 2>/dev/null || true; } | shasum -a 256 | cut -d' ' -f1)"
-      [[ "$a" == "$b" ]] || protected_ok=false
-    elif [[ -n "$TRUSTED_TMP" && "$LOGS_JSON" != "{}" ]]; then
-      protected_ok=false
-    fi
-  done
-fi
+protected_ok="$(python3 - "$TRUSTED_ROOT" "$CAND" "$PROTECTED" "$FIX" "$LOGS_JSON" <<'PY'
+import hashlib, os, sys
+trusted, cand, protected, fix, logs = sys.argv[1], sys.argv[2], sys.argv[3].split(), sys.argv[4], sys.argv[5]
+def digest(root, rel):
+    base = os.path.join(root, rel)
+    files = []
+    if os.path.isfile(base):
+        files = [base]
+    elif os.path.isdir(base):
+        for dirpath, _, names in os.walk(base):
+            for name in names:
+                path = os.path.join(dirpath, name)
+                if os.path.isfile(path) and not os.path.islink(path):
+                    files.append(path)
+    else:
+        return None
+    rows = []
+    for path in sorted(files):
+        h = hashlib.sha256()
+        with open(path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        rows.append(h.hexdigest() + "  " + os.path.relpath(path, root).replace(os.sep, "/"))
+    return hashlib.sha256("\n".join(rows).encode()).hexdigest()
+if not protected:
+    print("true")
+    raise SystemExit
+if not fix and logs == "{}" and protected:
+    print("false")
+    raise SystemExit
+ok = True
+for rel in protected:
+    a = digest(trusted, rel)
+    if a is None:
+        if logs != "{}":
+            ok = False
+        continue
+    ok = ok and a == digest(cand, rel)
+print("true" if ok else "false")
+PY
+)"
 
 # 1b. outsideEditable (wrong-action signal): candidate files that differ from the trusted root and are neither editable nor protected.
 outside_editable="$(python3 - "$TRUSTED_ROOT" "$CAND" "$EDITABLE" "$PROTECTED" "$OUT/outside-editable.json" <<'PY'

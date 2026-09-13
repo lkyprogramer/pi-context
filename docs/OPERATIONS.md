@@ -67,18 +67,35 @@ Host and unit tests isolate `HOME` / `PI_CODING_AGENT_DIR` and load **only** the
 
 - Action Fusion / Reducer / OCC stay SoL-Pi's. pi-context does not rewrite them.
 - ObservationPack needs a persistent Pi session directory. `pi --no-session` (typical sub-agent) raises a non-fatal extension error: `requires a persistent Pi session directory`. Do not use OP-dependent features in no-session sub-agents; give the child a real `--session-id` / session dir, or leave OP off.
+- `pctx_history read` accepts `obs_<24hex>` from `<sessionDir>/sol-pi/<sessionId>/observation-pack/objects/`. The ledger `contentHash` is checked before any page is returned. Paging uses pi-context cursors (not OP's 16 KiB `obs_recall` page).
+- Reducer receipts (`sol_pi_evidence_receipt_v1`) are left untouched. `source_artifact` under that session's `sol-pi/<sessionId>/` tree is indexed so search can find the original log; `read` of `entryId:1` returns that archive after hash check. Paths outside the session runtime root are ignored.
 - To exercise SoL-Pi in a test: copy or install it into the isolated `settings.json` `extensions` and use a persistent session. To disable it: omit it from `extensions` or leave its feature flags off.
+- Compaction-front evidence index (observe and balanced): on `session_before_compact`, pi-context appends a ≤1.5 KB `<pctx-evidence>` block of derived-exposed, not-yet-read tool results (`id=` / `tool=` / `head≤80` / `bytes=`), newest first, current-branch only. The native cut point is unchanged. SoL-Pi OCC still applies because it calls `ctx.compact()`; this hook fires on that path too. The last `update_plan` tool-result id is reserved so the model can read the plan back after OCC clears SoL-Pi plan state. No candidates → hook returns nothing and native/OCC `generateSummary` still runs. Sessions that never compact stay byte-identical. This does not call `ctx.compact()` and does not take over compaction timing.
 
 ### context-mode
 
 - Adds a large fixed prefix (skills + `ctx_*` tool schemas; measured ~5–7k+ tokens). No shared contract with pi-context.
 - Not recommended as a default co-install. If a scenario needs it, `--no-skills` cuts the skill prefix. Fold / observe-identity tests must keep it unloaded.
 
+### Co-install matrix
+
+| Environment | Recommend | Keep off | Why |
+|---|---|---|---|
+| Local 4090 (cache $0) | Action Fusion + Reducer(openclaw) + pi-context | OCC; context-mode by default | Fusion/Reducer shrink tool results without busting prefix. OCC on this stack became "compact whenever it can" and wipes SoL-Pi plan state. pi-context observe still adds evidence index + `obs_` / receipt recall. |
+| Cloud, billed on cache | ObservationPack + OCC + pi-context **observe** | Action Fusion if the provider already caches well; context-mode by default | OP + OCC trade context for cache-read discount. pi-context observe does not fold (no extra KV miss) and keeps receipts / `obs_` readable. Do not promote balanced until the cold-fold live gates pass. |
+
+### Verification debt
+
+- Darwin sidecar live (even 6 pairs): **未验证**. Docs stay fail-closed until a real sidecar run exists. Key remains only at `/run/pctx-secret/upstream.key` on that path.
+- TUI coexistence: **host smoke verified** (`test/host/sol-pi-tui-coexist.test.ts`) on official Pi 0.85.1. Isolated `HOME` / `PI_CODING_AGENT_DIR`, `noSkills`, context-mode unloaded. SoL-Pi is copied in explicitly (`actionFusion` + `observationPack` + reducer, OCC off) from `PCTX_SOL_PI_ROOT` or `~/.pi/agent/git/github.com/NVlabs/SoL-Pi`; without that tree the SoL-Pi arm is skipped. Together: `/pctx status` works, `pctx_history` and `obs_recall` both register, no `ctx_*` tools. SoL-Pi off: `/pctx` still works and `obs_recall` is absent. This is a `createAgentSession` TUI-bind smoke, not a human TTY session.
+
 ## Telemetry jsonl
 
 Default `telemetry.jsonl` is `false`. When enabled (`"telemetry": { "jsonl": true }`), files land in `<agentDir>/pctx/telemetry/<sessionId>.jsonl`. Rotate or delete that directory; `maxLogBytes` (default 5 MiB) caps a single file. `telemetry.includeContent` cannot be true.
 
 Eval episodes also write `artifacts/local-eval/<runId>/episodes/<id>/requests.jsonl` (gitignored).
+
+Report recall columns (`refDenials`, first-attempt recall, short-ref usage, per-read token cost) are computed from the session JSONL. `quotedVerbatim` is required only for log/error-line cases (`X01`, `H02`). Q05 / W-Q05 use semantic equivalence (`ZX-731`). `grade.sh` hashes protected paths in Python so Linux hosts without `shasum` still record `protectedIntact`. Candidate stub flags (`fold.stubHeadBytes` / `fold.stubTailBytes`) stay off unless a recall live meets the upgrade gate.
 
 ## Return to observe
 

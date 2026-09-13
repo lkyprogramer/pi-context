@@ -18,7 +18,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { startCredentialBroker } from "../../scripts/credential-broker.mjs";
 import { aggregateAttempts, nextAttemptId, normalizeUsage, plannedEpisodeId } from "./accounting.mjs";
-import { foldedErrorCount, nonceEntryIds, nonceVerifiedReads, parseSession, verbatimQuote } from "./parse-session.mjs";
+import { firstAttemptRecallHit, foldedErrorCount, historyRecall, nonceEntryIds, nonceVerifiedReads, parseSession, semanticQuote, verbatimQuote } from "./parse-session.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint, servedIdentity } from "./model-endpoint.mjs";
 import { setupLogWorkspace } from "./log-workspace.mjs";
 import { ensureReviewSeed, warmupFiles } from "./review-seed.mjs";
@@ -259,15 +259,29 @@ if (arm !== "native") {
 const before = JSON.parse(readFileSync(join(out, "metrics-before.json"), "utf8")), after = JSON.parse(readFileSync(join(out, "metrics-after.json"), "utf8"));
 const delta = (k) => (before.available && after.available && before[k] != null && after[k] != null && after[k] >= before[k]) ? after[k] - before[k] : null;
 const oracle = gradeCandidate(caseId, cwd, spec);
-if (spec.evidence?.kind === "verbatim-quote") {
+if (spec.evidence?.kind === "verbatim-quote" || spec.evidence?.kind === "recall-line") {
   const sessionFile = join(out, "session", "session.jsonl");
   let parsed = existsSync(sessionFile) ? parseSession(sessionFile) : null;
   if (parsed) {
-    oracle.quotedVerbatim = verbatimQuote(parsed, {
-      linePattern: spec.evidence.linePattern,
-      sinceMs: new Date(manifest.startedAt).getTime(),
-      sourceKind: spec.evidence.sourceKind ?? "isError",
-    });
+    const verbatim = spec.evidence.linePattern
+      ? verbatimQuote(parsed, {
+        linePattern: spec.evidence.linePattern,
+        sinceMs: new Date(manifest.startedAt).getTime(),
+        sourceKind: spec.evidence.sourceKind ?? "isError",
+      })
+      : null;
+    const semantic = spec.evidence.semanticToken
+      ? semanticQuote(parsed, { token: spec.evidence.semanticToken, sinceMs: new Date(manifest.startedAt).getTime() })
+      : verbatim;
+    if ((spec.evidence.quoteMode ?? "verbatim") === "semantic") {
+      oracle.quotedSemantic = semantic;
+    } else {
+      oracle.quotedVerbatim = verbatim;
+      oracle.quotedSemantic = semantic;
+    }
+    if (spec.evidence.kind === "recall-line") {
+      oracle.firstAttemptRecallHit = firstAttemptRecallHit(parsed, spec.evidence.linePattern);
+    }
   }
 }
 copyTelemetry(agentDir, out);
@@ -330,6 +344,7 @@ const result = {
     nonceFolded: parsed && nonce ? (nonceIds.length ? nonceIds.some((id) => foldedEntryIds.includes(id)) : false) : null,
     savedTokensEstimate: foldEvents.length ? foldEvents.reduce((s, f) => s + (f.savedTokensEstimate ?? 0), 0) : null,
     invalidatedTokensEstimate: foldEvents.length ? foldEvents.reduce((s, f) => s + (f.invalidatedTokensEstimate ?? 0), 0) : null,
+    ...(parsed ? historyRecall(parsed) : {}),
   },
   engine: {
     requestsDelta: delta("requests"),

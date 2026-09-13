@@ -4,6 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { ERROR, type NativeEntry, type Scope } from "../contracts.js";
 import { resolveAgentDir } from "../pi/agent-dir.js";
 import { blocksOf, textSourceHash } from "./refs.js";
+import { extraIndexedTexts } from "./sol-pi.js";
 
 export interface IndexedHit {
   workspaceId: string;
@@ -202,11 +203,19 @@ export class HistoryIndex {
     return idx;
   }
 
-  async upsertBranch(scope: Scope, entries: readonly NativeEntry[]): Promise<{ inserted: number }> {
-    return { inserted: this.upsertBranchSync(scope, entries) };
+  async upsertBranch(
+    scope: Scope,
+    entries: readonly NativeEntry[],
+    extras?: { sessionDir?: string | null },
+  ): Promise<{ inserted: number }> {
+    return { inserted: this.upsertBranchSync(scope, entries, extras) };
   }
 
-  upsertBranchSync(scope: Scope, entries: readonly NativeEntry[]): number {
+  upsertBranchSync(
+    scope: Scope,
+    entries: readonly NativeEntry[],
+    extras?: { sessionDir?: string | null },
+  ): number {
     const db = this.requireDb();
     this.lastNewRows = 0;
     this.lastNewBytes = 0;
@@ -216,7 +225,9 @@ export class HistoryIndex {
       const prior = db.prepare(
         "SELECT last_indexed_leaf AS leaf FROM session_leaf WHERE workspace_id = ? AND session_id = ?",
       ).get(scope.workspaceId, scope.sessionId) as { leaf: string | null } | undefined;
-      if (prior?.leaf === scope.leafId) return 0;
+      if (prior?.leaf === scope.leafId) {
+        return this.backfillReducerSources(scope, entries, extras);
+      }
     }
     const insertBlock = db.prepare(
       `INSERT OR IGNORE INTO blocks(workspace_id, session_id, entry_id, block_index, source_hash, tool_name, byte_len, indexed_at)
@@ -228,6 +239,7 @@ export class HistoryIndex {
        WHERE workspace_id = ? AND session_id = ? AND entry_id = ? AND block_index = ?`,
     );
     let inserted = 0;
+    let pendingExtras = false;
     const now = Date.now();
     let used = this.bytes();
     db.exec("BEGIN");
@@ -273,10 +285,45 @@ export class HistoryIndex {
           this.lastNewRows += 1;
           this.lastNewBytes += byteLen;
         }
+        const extra = extraIndexedTexts(entry, extras?.sessionDir, scope.sessionId);
+        if (extra === "pending") {
+          indexed = false;
+          pendingExtras = true;
+        } else if (extra && indexed) {
+          const priorExtra = existing.get(scope.workspaceId, scope.sessionId, entry.id, extra.blockIndex) as
+            | { sourceHash: string }
+            | undefined;
+          if (!priorExtra) {
+            if (used + extra.bytes > this.maxIndexBytes) {
+              this.indexFull = true;
+              indexed = false;
+            } else {
+              const result = insertBlock.run(
+                scope.workspaceId,
+                scope.sessionId,
+                entry.id,
+                extra.blockIndex,
+                extra.hash,
+                toolName,
+                extra.bytes,
+                now,
+              );
+              if (result.changes > 0) {
+                insertText.run(Number(result.lastInsertRowid), extra.text);
+                used += extra.bytes;
+                inserted += 1;
+                this.lastNewRows += 1;
+                this.lastNewBytes += extra.bytes;
+              }
+            }
+          } else if (priorExtra.sourceHash !== extra.hash) {
+            this.noteSourceChanged();
+          }
+        }
         if (indexed) this.knownEntries.add(knownKey);
       }
-      if (!this.indexFull) {
-        db.prepare(
+      if (!this.indexFull && !pendingExtras) {
+          db.prepare(
           `INSERT INTO session_leaf(workspace_id, session_id, last_indexed_leaf)
            VALUES(?,?,?)
            ON CONFLICT(workspace_id, session_id) DO UPDATE SET last_indexed_leaf = excluded.last_indexed_leaf`,
@@ -388,6 +435,81 @@ export class HistoryIndex {
       hashedFields: this.lastHashedFields,
       physicalBytes: this.physicalBytes(),
     };
+  }
+
+  private backfillReducerSources(
+    scope: Scope,
+    entries: readonly NativeEntry[],
+    extras?: { sessionDir?: string | null },
+  ): number {
+    if (!extras?.sessionDir) return 0;
+    const db = this.requireDb();
+    const insertBlock = db.prepare(
+      `INSERT OR IGNORE INTO blocks(workspace_id, session_id, entry_id, block_index, source_hash, tool_name, byte_len, indexed_at)
+       VALUES(?,?,?,?,?,?,?,?)`,
+    );
+    const insertText = db.prepare("INSERT INTO blocks_text(id, text) VALUES(?, ?)");
+    const existing = db.prepare(
+      `SELECT source_hash AS sourceHash FROM blocks
+       WHERE workspace_id = ? AND session_id = ? AND entry_id = ? AND block_index = ?`,
+    );
+    let inserted = 0;
+    let pendingExtras = false;
+    const now = Date.now();
+    let used = this.bytes();
+    db.exec("BEGIN");
+    try {
+      for (const entry of entries) {
+        const extra = extraIndexedTexts(entry, extras.sessionDir, scope.sessionId);
+        if (extra === "pending") {
+          pendingExtras = true;
+          continue;
+        }
+        if (!extra) continue;
+        const prior = existing.get(scope.workspaceId, scope.sessionId, entry.id, extra.blockIndex) as
+          | { sourceHash: string }
+          | undefined;
+        if (prior) {
+          if (prior.sourceHash !== extra.hash) this.noteSourceChanged();
+          this.knownEntries.add(`${scope.workspaceId}|${scope.sessionId}|${entry.id}`);
+          continue;
+        }
+        if (used + extra.bytes > this.maxIndexBytes) {
+          this.indexFull = true;
+          pendingExtras = true;
+          break;
+        }
+        const result = insertBlock.run(
+          scope.workspaceId,
+          scope.sessionId,
+          entry.id,
+          extra.blockIndex,
+          extra.hash,
+          entry.message?.toolName ?? null,
+          extra.bytes,
+          now,
+        );
+        if (result.changes === 0) continue;
+        insertText.run(Number(result.lastInsertRowid), extra.text);
+        used += extra.bytes;
+        inserted += 1;
+        this.lastNewRows += 1;
+        this.lastNewBytes += extra.bytes;
+        this.knownEntries.add(`${scope.workspaceId}|${scope.sessionId}|${entry.id}`);
+      }
+      if (!this.indexFull && !pendingExtras && scope.leafId) {
+        db.prepare(
+          `INSERT INTO session_leaf(workspace_id, session_id, last_indexed_leaf)
+           VALUES(?,?,?)
+           ON CONFLICT(workspace_id, session_id) DO UPDATE SET last_indexed_leaf = excluded.last_indexed_leaf`,
+        ).run(scope.workspaceId, scope.sessionId, scope.leafId);
+      }
+      db.exec("COMMIT");
+    } catch (err) {
+      try { db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw err;
+    }
+    return inserted;
   }
 
   private rememberExisting(): void {

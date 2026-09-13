@@ -26,7 +26,8 @@ test("frozen review plan is 48 quality + 6 capability + 24 warm + 6 long UNRUN e
   expect(plan.plannedEpisodes).toBe(84);
   expect(plan.expectedPairs).toBe(24);
   expect(plan.expectedRegimePairs).toEqual({ warm: 12, long: 3 });
-  expect(plan.exactQuoteIds).toEqual(["Q05", "X01"]);
+  expect(plan.exactQuoteIds).toEqual(["X01"]);
+  expect(plan.semanticQuoteIds).toEqual(["Q05"]);
   expect(plan.order).toHaveLength(84);
   expect(plan.liveStatus).toBe("UNRUN");
   expect(built.order).toEqual(plan.order);

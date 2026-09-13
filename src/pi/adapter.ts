@@ -6,22 +6,28 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   MessageEndEvent,
+  SessionBeforeCompactEvent,
   SessionCompactEvent,
+  SessionStartEvent,
 } from "@earendil-works/pi-coding-agent";
 import {
   acceptAssistantWitness,
+  applyBeforeCompact,
   applyContext,
   applyConfigFailure,
   applyLoadedConfig,
   closeSessionIndex,
   createPlugin,
+  consumeColdFold,
   fenceIdentity,
   historyTool,
   indexBranch,
+  markColdFold,
   noteNativeCompact,
   observeProviderRequest,
   openSessionIndex,
   setProfile,
+  type BeforeCompactEventLike,
   type PluginState,
 } from "../plugin.js";
 import { loadConfig } from "../config.js";
@@ -88,6 +94,7 @@ export function entriesFromCtx(ctx: ExtensionContext): {
   sessionId: string;
   leafId: string | null;
   cwd: string;
+  sessionDir: string | null;
 } {
   return sessionSnapshot({
     cwd: ctx.cwd,
@@ -98,7 +105,7 @@ export function entriesFromCtx(ctx: ExtensionContext): {
 export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(DEFAULT_CONFIG)): PluginState {
   const hostVersion = readHostVersion();
   state.hostVersion = hostVersion;
-  pi.on("session_start", (_e, ctx) => {
+  pi.on("session_start", (event: SessionStartEvent, ctx) => {
     state.agentDir = resolveAgentDir((ctx as { agentDir?: string }).agentDir);
     try {
       applyLoadedConfig(state, loadConfig(ctx.cwd, projectTrustedOf(ctx), state.agentDir));
@@ -111,11 +118,14 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     const provider = (ctx.model as { provider?: string } | undefined)?.provider;
     if (typeof provider === "string") state.provider = provider;
     fenceIdentity(state);
+    state.historyReadEntryIds.clear();
     // A new or resumed session may carry a fold plan persisted by an earlier process.
     state.planRestoreAttempted = false;
+    if (event.reason === "resume" || event.reason === "fork") markColdFold(state);
     openSessionIndex(state, ctx.cwd);
-    const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+    const { entries, sessionId, leafId, cwd, sessionDir } = entriesFromCtx(ctx);
     state.sessionId = sessionId;
+    state.sessionDir = sessionDir;
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
   pi.on("context", ((event: { messages?: AgentMessage[] }, ctx: ExtensionContext) => {
@@ -124,11 +134,13 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     return applyContext(state, messages, ctx);
   }) as never);
   pi.on("tool_result", (_e, ctx) => {
-    const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+    const { entries, sessionId, leafId, cwd, sessionDir } = entriesFromCtx(ctx);
+    state.sessionDir = sessionDir;
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
   pi.on("before_provider_request", ((event: { payload?: unknown }) => {
     observeProviderRequest(state, event.payload);
+    consumeColdFold(state);
     return undefined;
   }) as never);
   pi.on("message_start", () => {
@@ -177,8 +189,12 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
       mappingVersion: PI_USAGE_MAPPING,
     });
   });
+  pi.on("session_before_compact", (event: SessionBeforeCompactEvent, ctx) => {
+    return applyBeforeCompact(state, event as unknown as BeforeCompactEventLike, ctx);
+  });
   pi.on("session_compact", (event: SessionCompactEvent) => {
     noteNativeCompact(state, event.willRetry !== true);
+    markColdFold(state);
     const compact = event as SessionCompactEvent & {
       result?: { usage?: AssistantUsageLike };
       usage?: AssistantUsageLike;
@@ -212,6 +228,7 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
   });
   pi.on("model_select", (event: { model?: { id?: string; provider?: string } }) => {
     fenceIdentity(state);
+    markColdFold(state);
     if (event?.model?.id) state.modelId = event.model.id;
     if (event?.model?.provider) state.provider = event.model.provider;
   });
@@ -224,7 +241,8 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     writeStatusFile(state, ctx);
   });
   pi.on("agent_settled", (_e, ctx) => {
-    const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+    const { entries, sessionId, leafId, cwd, sessionDir } = entriesFromCtx(ctx);
+    state.sessionDir = sessionDir;
     indexBranch(state, entries, cwd, sessionId, leafId);
   });
   return state;

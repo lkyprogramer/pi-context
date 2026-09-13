@@ -1,6 +1,7 @@
 import type { HistoryResult, NativeEntry, Scope, SearchHit } from "../contracts.js";
 import { estimateTokens, sha256Hex } from "../contracts.js";
-import { encodeCursor, decodeCursor, encodeRef, isFieldRef, refForField } from "./refs.js";
+import { encodeCursor, decodeCursor, encodeRef } from "./refs.js";
+import { resolveIndexedField } from "./sol-pi.js";
 import type { HistoryIndex } from "./index.js";
 import type { PctxConfig } from "../config.js";
 import { SearchSnapshotStore, type SnapshotHit } from "./page-snapshots.js";
@@ -71,8 +72,8 @@ function pageFromSnapshot(input: {
     const stored = input.snapshot.hits[scanned]!;
     const entry = input.getEntry(stored.entryId);
     if (!entry || !input.scope.visibleEntryIds.has(stored.entryId)) continue;
-    const field = refForField(input.scope, entry, stored.blockIndex);
-    if (!isFieldRef(field) || field.sourceHash !== stored.sourceHash) continue;
+    const field = resolveIndexedField(input.scope, entry, stored.blockIndex, stored.sourceHash);
+    if (!field) continue;
     const excerpt = stored.excerpt;
     const cost = estimateTokens(excerpt) + estimateTokens(stored.ref);
     if (hits.length === 0 && cost > input.config.history.searchMaxTokens) {
@@ -162,8 +163,8 @@ export async function searchHistory(input: {
     if (stored.length >= input.snapshots.maxHits) break;
     const entry = input.getEntry(hit.entryId);
     if (!entry) continue;
-    const field = refForField(input.scope, entry, hit.blockIndex);
-    if (!isFieldRef(field)) continue;
+    const field = resolveIndexedField(input.scope, entry, hit.blockIndex, hit.sourceHash);
+    if (!field) continue;
     stored.push({
       ref: encodeRef(field),
       entryId: hit.entryId,

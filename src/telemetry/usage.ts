@@ -97,6 +97,20 @@ export function recordRequest(state: TelemetrySink, record: RequestRecord): void
   });
 }
 
+export function recordDeferredWarmFold(
+  state: TelemetrySink & { telemetry: TelemetrySink["telemetry"] & { deferredWarmFolds?: number } },
+  event: { at: string; sessionId: string; planId: string | null; percentBefore: number },
+): void {
+  state.telemetry.deferredWarmFolds = (state.telemetry.deferredWarmFolds ?? 0) + 1;
+  appendJsonl(state, {
+    type: "deferred-warm-fold",
+    at: event.at,
+    sessionId: event.sessionId,
+    planId: event.planId,
+    percentBefore: event.percentBefore,
+  });
+}
+
 export function recordFold(state: TelemetrySink, event: FoldEvent): void {
   state.telemetry.folds += 1;
   state.telemetry.foldEvents = [...state.telemetry.foldEvents, event];

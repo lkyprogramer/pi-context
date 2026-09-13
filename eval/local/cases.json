@@ -450,6 +450,8 @@
       ],
       "evidence": {
         "kind": "verbatim-quote",
+        "quoteMode": "semantic",
+        "semanticToken": "ZX-731",
         "sourceKind": "any",
         "linePattern": "idempotency broken: reservation ZX-731 replayed after callback\\."
       }
@@ -744,6 +746,8 @@
       },
       "evidence": {
         "kind": "verbatim-quote",
+        "quoteMode": "semantic",
+        "semanticToken": "ZX-731",
         "sourceKind": "any",
         "linePattern": "idempotency broken: reservation ZX-731 replayed after callback\\."
       }
@@ -827,9 +831,55 @@
       ],
       "evidence": {
         "kind": "verbatim-quote",
+        "quoteMode": "verbatim",
         "sourceKind": "any",
         "linePattern": "FIRST-ERROR-MARKER at build-07 line 210"
       }
+    },
+    {
+      "id": "R01",
+      "role": "recall-candidate",
+      "runner": "episode",
+      "liveStatus": "UNRUN",
+      "windowProfile": "w64k",
+      "arms": [
+        "native",
+        "balanced"
+      ],
+      "reps": 3,
+      "logs": {
+        "count": 1,
+        "lines": 80,
+        "marked": 1,
+        "markLine": 40,
+        "token": "RECALL-TARGET-LINE",
+        "prefix": "dump"
+      },
+      "taskFile": "eval/local/cases/R01/TASK.md",
+      "grader": {
+        "kind": "file-oracle",
+        "trusted": [],
+        "editable": [
+          "recall.txt"
+        ],
+        "fileOracle": {
+          "file": "recall.txt",
+          "contains": "RECALL-TARGET-LINE"
+        }
+      },
+      "protectedPaths": [
+        "logs"
+      ],
+      "evidence": {
+        "kind": "recall-line",
+        "quoteMode": "verbatim",
+        "linePattern": "RECALL-TARGET-LINE"
+      },
+      "candidates": [
+        "stub-head-120",
+        "stub-head-512b",
+        "stub-head-tail-512b"
+      ]
     }
   ]
 }

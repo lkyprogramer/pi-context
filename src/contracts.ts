@@ -28,6 +28,10 @@ export interface PctxConfig {
     minRemovedTokens: number;
     minFoldableBytes: number;
     stubHeadChars: number;
+    /** Candidate-only. 0 keeps the 120-char first-line head. */
+    stubHeadBytes: number;
+    /** Candidate-only. 0 omits the OP-style tail. */
+    stubTailBytes: number;
   };
   telemetry: { includeContent: false; jsonl: boolean; maxLogBytes: number };
 }
@@ -63,7 +67,7 @@ export interface FoldEvent {
   at: string;
   sessionId: string;
   planId: string;
-  reason: "threshold";
+  reason: "threshold" | "cold";
   added: number;
   addedEntryIds: string[];
   savedTokensEstimate: number;

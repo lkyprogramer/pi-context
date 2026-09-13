@@ -33,6 +33,23 @@ export function stubHead(text: string, maxChars: number): string {
   return first.slice(0, maxChars);
 }
 
+export function stubPrefixBytes(text: string, maxBytes: number): string {
+  if (maxBytes <= 0) return "";
+  const buf = utf8Bytes(text);
+  let end = Math.min(maxBytes, buf.length);
+  while (end > 0 && end < buf.length && (buf[end]! & 0xc0) === 0x80) end -= 1;
+  return buf.subarray(0, end).toString("utf8");
+}
+
+export function stubTailBytes(text: string, maxBytes: number): string {
+  if (maxBytes <= 0) return "";
+  const buf = utf8Bytes(text);
+  if (buf.length <= maxBytes) return text;
+  let start = buf.length - maxBytes;
+  while (start < buf.length && (buf[start]! & 0xc0) === 0x80) start += 1;
+  return buf.subarray(start).toString("utf8");
+}
+
 export function stubFor(input: {
   toolName: string;
   callId: string;
@@ -40,6 +57,7 @@ export function stubFor(input: {
   bytes: number;
   sourceHash: string;
   head: string;
+  tail?: string;
   ref: SourceRef;
   entryId: string;
   blockIndex: number;
@@ -48,12 +66,14 @@ export function stubFor(input: {
   const outcome = input.isError ? "error" : "ok";
   // `id=` is the short ref pctx_history accepts; small models mistype the long base64 ref.
   const shortId = input.blockIndex === 0 ? input.entryId : `${input.entryId}:${input.blockIndex}`;
-  return [
+  const lines = [
     "[pctx folded tool result; original retained in session log]",
     `tool=${input.toolName} call=${input.callId} outcome=${outcome} bytes=${input.bytes} sha256=${sha} id=${shortId}`,
     `head: ${JSON.stringify(input.head)}`,
-    `read: pctx_history(action="read", ref="${shortId}")  full ref: ${input.ref}`,
-  ].join("\n");
+  ];
+  if (input.tail) lines.push(`tail: ${JSON.stringify(input.tail)}`);
+  lines.push(`read: pctx_history(action="read", ref="${shortId}")  full ref: ${input.ref}`);
+  return lines.join("\n");
 }
 
 /** Build the replacement for one live field; null when the stub would not be shorter than the text. */
@@ -67,7 +87,8 @@ function replacementFor(field: ActiveField, entry: NativeEntry, fold: PctxConfig
     isError: false,
     bytes,
     sourceHash: field.ref.sourceHash,
-    head: stubHead(field.rawText, fold.stubHeadChars),
+    head: fold.stubHeadBytes > 0 ? stubPrefixBytes(field.rawText, fold.stubHeadBytes) : stubHead(field.rawText, fold.stubHeadChars),
+    tail: fold.stubTailBytes > 0 ? stubTailBytes(field.rawText, fold.stubTailBytes) : "",
     ref: encodeRef(field.ref),
     entryId: entry.id,
     blockIndex: field.blockIndex,
@@ -164,7 +185,7 @@ export function restorePlan(
   };
 }
 
-export function planFold(input: {
+export interface PlanFoldInput {
   scope: Scope;
   view?: ActiveView;
   entries?: readonly NativeEntry[];
@@ -175,11 +196,76 @@ export function planFold(input: {
   modelId: string;
   cfg: PctxConfig;
   configHash: string;
-}): FoldPlan | null {
+}
+
+/**
+ * Pi's native compaction is observed around this percent of the window.
+ * Not a fold knob — used only to estimate how many requests remain before a cache bust.
+ */
+export const COMPACTION_OBSERVE_PERCENT = 85;
+/** Incremental warm folds wait until compaction is this many requests away. */
+export const FOLD_CADENCE_HORIZON = 2;
+
+export function averageContextTokenIncrement(increments: readonly number[]): number {
+  const pos = increments.filter((n) => Number.isFinite(n) && n > 0);
+  if (pos.length === 0) return 0;
+  return pos.reduce((sum, n) => sum + n, 0) / pos.length;
+}
+
+/**
+ * Warm-path throttle: a plan epoch does not grow unless usage rose by at least
+ * minRemovedTokens since the last fold *and* the next native compaction is
+ * estimated within FOLD_CADENCE_HORIZON requests. First fold in an epoch is
+ * always allowed (shouldFold still owns the 60% trigger).
+ */
+export function foldCadenceOk(input: {
+  plan: FoldPlan | null;
+  usage: ContextUsageLike;
+  lastFoldUsageTokens: number | null;
+  increments: readonly number[];
+  fold: PctxConfig["fold"];
+}): boolean {
+  if (!input.plan) return true;
+  const tokens = input.usage.tokens;
+  if (tokens == null || !(input.usage.contextWindow > 0)) return false;
+  const last = input.lastFoldUsageTokens;
+  if (last == null || tokens - last < input.fold.minRemovedTokens) return false;
+  const avg = averageContextTokenIncrement(input.increments);
+  if (avg <= 0) return false;
+  const compactAt = (input.usage.contextWindow * COMPACTION_OBSERVE_PERCENT) / 100;
+  return (compactAt - tokens) / avg <= FOLD_CADENCE_HORIZON;
+}
+
+export function planFold(input: PlanFoldInput): FoldPlan | null {
+  const fold = input.cfg.fold;
+  if (input.usage.percent == null || input.usage.percent < fold.triggerPercent) return input.previous;
+  if (!(input.usage.contextWindow > 0)) return input.previous;
+  return planTowardTarget(input);
+}
+
+/**
+ * Cold-point planner: ignore the 60% trigger and aim at targetPercent.
+ * `tokens` must be the unfolded outbound estimate (session messages + any
+ * system-prompt allowance). Last-assistant usage underestimates after a prior fold.
+ */
+export function planColdFold(input: Omit<PlanFoldInput, "usage"> & { tokens: number; contextWindow: number }): FoldPlan | null {
+  if (!(input.contextWindow > 0) || !Number.isFinite(input.tokens) || input.tokens <= 0) return input.previous;
+  const target = (input.contextWindow * input.cfg.fold.targetPercent) / 100;
+  // Same worth-it floor as a warm plan: a 45% W-lane seed is only ~3k above 40%,
+  // which is below minRemoved, so resume stays unfolded until later dumps.
+  if (input.tokens - target < input.cfg.fold.minRemovedTokens) return input.previous;
+  const percent = (input.tokens / input.contextWindow) * 100;
+  return planTowardTarget({
+    ...input,
+    usage: { tokens: input.tokens, contextWindow: input.contextWindow, percent },
+  });
+}
+
+function planTowardTarget(input: PlanFoldInput): FoldPlan | null {
   const view = input.view ?? viewFromEntries(input.scope, input.entries ?? []);
   if (identityIncomplete(view.diagnostics)) return input.previous;
   const fold = input.cfg.fold;
-  if (input.usage.percent == null || input.usage.percent < fold.triggerPercent) return input.previous;
+  if (input.usage.percent == null) return input.previous;
   if (!(input.usage.contextWindow > 0)) return input.previous;
   const protectedIds = protectSet(input.batches, fold.protectRecentBatches);
   const viewKeys = new Set(view.fields.map((field) => field.key));

@@ -55,8 +55,10 @@
     "L06"
   ],
   "exactQuoteIds": [
-    "Q05",
     "X01"
+  ],
+  "semanticQuoteIds": [
+    "Q05"
   ],
   "requiresFold": {
     "Q01": true,

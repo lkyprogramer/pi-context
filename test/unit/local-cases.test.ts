@@ -17,7 +17,8 @@ it("cases.json mirrors the frozen scenario matrix", () => {
       taskFile?: string;
       protectedPaths?: string[];
       grader?: { kind?: string };
-      evidence?: { kind?: string; linePattern?: string; sourceKind?: string };
+      evidence?: { kind?: string; linePattern?: string; sourceKind?: string; quoteMode?: string; semanticToken?: string };
+      logs?: unknown;
     }>;
   };
   const scen = JSON.parse(
@@ -39,8 +40,12 @@ it("cases.json mirrors the frozen scenario matrix", () => {
   for (const c of cases.cases) {
     if (c.runner !== "episode") continue;
     const fixtureDir = c.fixture ? join(repo, c.fixture) : "";
-    if (c.id === "H03") {
-      expect(existsSync(join(repo, "eval/local/cases/H03/TASK.md"))).toBe(true);
+    if (c.id === "H03" || c.id === "R01") {
+      expect(existsSync(join(repo, `eval/local/cases/${c.id}/TASK.md`))).toBe(true);
+      continue;
+    }
+    if (c.logs) {
+      if (c.taskFile) expect(existsSync(join(repo, c.taskFile))).toBe(true);
       continue;
     }
     expect(
@@ -55,6 +60,8 @@ it("cases.json mirrors the frozen scenario matrix", () => {
   const q05 = cases.cases.find((c) => c.id === "Q05");
   expect(q05?.evidence?.sourceKind).toBe("any");
   expect(q05?.evidence?.kind).toBe("verbatim-quote");
+  expect(q05?.evidence?.quoteMode).toBe("semantic");
+  expect(q05?.evidence?.semanticToken).toBe("ZX-731");
 });
 
 it("parse-session counts requests, cacheRead and history reads from a Pi JSONL", () => {

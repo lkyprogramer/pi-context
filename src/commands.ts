@@ -60,15 +60,18 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
     label: "History",
     description:
       "Search or read authorized native history. Cannot select workspace or branch. " +
-      "read accepts either the full ref (pctx:6:...) or the short entryId from search hits / fold stubs " +
-      "(e.g. ref=\"3f9a2c1e\", or \"3f9a2c1e:1\" for a later text block); short ids resolve only inside the current session.",
+      "read accepts the full ref (pctx:6:...), the short entryId from search hits / fold stubs " +
+      "(e.g. ref=\"3f9a2c1e\", or \"3f9a2c1e:1\" for a later text block), or a SoL-Pi observation id " +
+      "(obs_<24hex>) from ObservationPack. Short ids and obs ids resolve only inside the current session; " +
+      "obs reads page with pctx cursors after ledger contentHash verification.",
     parameters: HISTORY_PARAMS,
     async execute(_id: string, params: Record<string, unknown>, _signal: unknown, _upd: unknown, ctx: ExtensionContext) {
       const extra = Object.keys(params).filter((k) => !["action", "query", "limit", "cursor", "ref", "maxTokens"].includes(k));
       if (extra.length || "workspace" in params || "session" in params) {
         return { content: [{ type: "text", text: JSON.stringify({ code: "denied", diagnostic: "unknown field" }) }] };
       }
-      const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
+      const { entries, sessionId, leafId, cwd, sessionDir } = entriesFromCtx(ctx);
+      state.sessionDir = sessionDir;
       const req = params as unknown as HistoryRequest;
       const usageRaw = typeof ctx.getContextUsage === "function" ? ctx.getContextUsage() : undefined;
       const contextWindow = usageRaw?.contextWindow ?? ctx.model?.contextWindow ?? 0;

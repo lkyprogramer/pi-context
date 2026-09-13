@@ -17,6 +17,8 @@ export const DEFAULT_CONFIG: PctxConfig = {
     minRemovedTokens: 4096,
     minFoldableBytes: 1024,
     stubHeadChars: 120,
+    stubHeadBytes: 0,
+    stubTailBytes: 0,
   },
   telemetry: { includeContent: false, jsonl: false, maxLogBytes: 5242880 },
 };
@@ -38,6 +40,8 @@ const FOLD_KEYS = new Set([
   "minRemovedTokens",
   "minFoldableBytes",
   "stubHeadChars",
+  "stubHeadBytes",
+  "stubTailBytes",
 ]);
 const TELEMETRY_KEYS = new Set(["includeContent", "jsonl", "maxLogBytes"]);
 const LEGACY_KEYS = ["checkpoint", "semantic", "projection"];
@@ -108,6 +112,8 @@ export function parseConfig(input: unknown): PctxConfig {
   fold.minRemovedTokens = nonNegative(fold.minRemovedTokens, "fold.minRemovedTokens");
   fold.minFoldableBytes = nonNegative(fold.minFoldableBytes, "fold.minFoldableBytes");
   fold.stubHeadChars = nonNegative(fold.stubHeadChars, "fold.stubHeadChars");
+  fold.stubHeadBytes = nonNegative(fold.stubHeadBytes, "fold.stubHeadBytes");
+  fold.stubTailBytes = nonNegative(fold.stubTailBytes, "fold.stubTailBytes");
   if (fold.protectRecentBatches < 1) fail("fold.protectRecentBatches must be >= 1");
   if (fold.triggerPercent >= 85) fail("fold.triggerPercent must be < 85");
   if (fold.targetPercent >= fold.triggerPercent) fail("fold.targetPercent must be < fold.triggerPercent");

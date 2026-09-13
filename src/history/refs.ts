@@ -16,6 +16,16 @@ import {
 
 const PREFIX = "pctx:6:";
 
+export function utf8Prefix(text: string, maxBytes: number): string {
+  if (!Number.isInteger(maxBytes) || maxBytes < 0) {
+    throw new Error("maxBytes must be a nonnegative integer");
+  }
+  const data = utf8Bytes(text);
+  let end = Math.min(maxBytes, data.length);
+  while (end > 0 && end < data.length && (data[end]! & 0xc0) === 0x80) end -= 1;
+  return data.subarray(0, end).toString("utf8");
+}
+
 export function blocksOf(entry: NativeEntry): ContentBlock[] {
   const content = entry.message?.content;
   if (Array.isArray(content)) return content;

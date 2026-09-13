@@ -18,7 +18,7 @@ it("balanced context hook never rewrites the trailing user message", async () =>
   const out = await handlers.get("context")?.({ type: "context", messages }, ctx);
   expect(messages[2]).toEqual({ role: "user", content: [{ type: "text", text: "second" }] });
   expect(out === undefined || (out as { messages?: unknown[] }).messages?.[2]).toBeTruthy();
-  expect(handlers.has("session_before_compact")).toBe(false);
+  expect(handlers.has("session_before_compact")).toBe(true);
 });
 
 it("checkpoint modules are gone", () => {

@@ -52,3 +52,20 @@ it("appends replacements without rewriting previous stub objects", () => {
   expect(second!.replacements.get("r1:0")).toBe(old);
   expect(second!.replacements.size).toBeGreaterThanOrEqual(first!.replacements.size);
 });
+
+it("candidate stubHeadBytes + stubTailBytes add an OP-style tail without changing the default stub", () => {
+  const usage = { tokens: 8000, contextWindow: 10000, percent: 80 };
+  const batches = collectBatches(entries);
+  const defaultPlan = planFold({ scope, entries, batches, exposed: exposedEntryIds(entries), usage, previous: null, modelId: "m", cfg, configHash: "h" });
+  const defaultStub = defaultPlan!.replacements.get("r1:0")!.stub;
+  expect(defaultStub).toContain("id=r1");
+  expect(defaultStub).not.toContain("\ntail: ");
+  const candidate = {
+    ...cfg,
+    fold: { ...cfg.fold, stubHeadBytes: 512, stubTailBytes: 512 },
+  };
+  const next = planFold({ scope, entries, batches, exposed: exposedEntryIds(entries), usage, previous: null, modelId: "m", cfg: candidate, configHash: "h2" });
+  const stub = next!.replacements.get("r1:0")!.stub;
+  expect(stub).toContain("\ntail: ");
+  expect(stub.length).toBeGreaterThan(defaultStub.length);
+});

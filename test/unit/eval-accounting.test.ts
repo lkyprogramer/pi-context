@@ -2,9 +2,9 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { decide, summarize } from "../../eval/local/report.mjs";
+import { cacheCostSensitivity, decide, renderMarkdown, summarize } from "../../eval/local/report.mjs";
 import { assertArm } from "../../eval/local/arm-contract.mjs";
-import { nonceVerifiedReads, parseSession, sha256Utf8, verbatimQuote } from "../../eval/local/parse-session.mjs";
+import { historyRecall, nonceVerifiedReads, parseSession, semanticQuote, sha256Utf8, verbatimQuote } from "../../eval/local/parse-session.mjs";
 import { fileURLToPath } from "node:url";
 
 const req = (input: number | null, cacheRead: number | null) => ({ usage: { input, cacheRead, output: 10, cacheWrite: 0, totalTokens: (input ?? 0) + 10 }, stopReason: "stop", planId: null, replacementsApplied: 0, contextPercentBefore: null, at: "t", sessionId: "s", profile: "balanced" });
@@ -285,11 +285,59 @@ it("verbatimQuote matches the seed AssertionError, not the obsolete expected/got
   expect(verbatimQuote(parsed, { linePattern: "idempotency broken" })).toBe(true);
 });
 
+it("semanticQuote accepts the witness token without the full assertion line", () => {
+  const p = writeSession([
+    { type: "session", version: 3, id: "s" },
+    { type: "message", id: "err", timestamp: "2026-09-09T00:00:00.000Z", message: { role: "toolResult", isError: false, content: [{ type: "text", text: "idempotency broken: reservation ZX-731 replayed after callback." }] } },
+    { type: "message", id: "a", timestamp: "2026-09-09T00:01:00.000Z", message: { role: "assistant", content: [{ type: "text", text: "Root cause is reservation ZX-731 replayed twice." }] } },
+  ]);
+  const parsed = parseSession(p);
+  expect(verbatimQuote(parsed, { linePattern: "idempotency broken: reservation ZX-731 replayed after callback\\.", sourceKind: "any" })).toBe(false);
+  expect(semanticQuote(parsed, { token: "ZX-731" })).toBe(true);
+});
+
+it("historyRecall classifies REF_* denials, short refs, and first-attempt success", () => {
+  const p = writeSession([
+    { type: "session", version: 3, id: "s" },
+    { type: "message", id: "a1", timestamp: "2026-09-09T00:00:00.000Z", message: { role: "assistant", content: [{ type: "toolCall", id: "c1", name: "pctx_history", arguments: { action: "read", ref: "3f9a2c1e" } }] } },
+    { type: "message", id: "r1", timestamp: "2026-09-09T00:00:01.000Z", message: { role: "toolResult", toolCallId: "c1", content: [{ type: "text", text: JSON.stringify({ code: "ok", verified: true, sourceHash: "a".repeat(64) }) }, { type: "text", text: "RECALL-TARGET-LINE mid dump" }] } },
+    { type: "message", id: "a2", timestamp: "2026-09-09T00:00:02.000Z", message: { role: "assistant", content: [{ type: "toolCall", id: "c2", name: "pctx_history", arguments: { action: "read", ref: "deadbeef" } }] } },
+    { type: "message", id: "r2", timestamp: "2026-09-09T00:00:03.000Z", message: { role: "toolResult", toolCallId: "c2", content: [{ type: "text", text: JSON.stringify({ code: "denied", diagnostic: "REF_SCOPE", verified: false }) }] } },
+  ]);
+  const parsed = parseSession(p);
+  const recall = historyRecall(parsed);
+  expect(recall.historyReads).toBe(2);
+  expect(recall.shortRefReads).toBe(2);
+  expect(recall.shortRefUsage).toBe(1);
+  expect(recall.firstAttemptRecallSuccess).toBe(true);
+  expect(recall.refDenials.REF_SCOPE).toBe(1);
+  expect(recall.readTokenCost).toBeGreaterThan(0);
+});
+
 it("quality + nonce-verified H01 + cost evidence can reach limited-balanced-trial", () => {
   const eps = passingMatrix();
   const decision = decide(summarize(eps as never), scenarios, eps as never);
   expect(decision.decision).toBe("limited-balanced-trial");
   expect(decision.gate).toBeNull();
+});
+
+it("W-lane cacheRead sensitivity marks cloud tariffs where extra cacheRead makes balanced lose", () => {
+  const w = (arm: string, input: number, cacheRead: number) => ({
+    manifest: { caseId: "W-Q01", arm, rep: 1 },
+    status: "complete",
+    oracle: { passed: true },
+    requests: [req(input, cacheRead)],
+    mechanism: { folds: arm === "balanced" ? 1 : 0, replacements: 0, nativeCompactions: 0, historyReads: 0, historySearches: 0, verifiedReads: 0 },
+    engine: { prefixHitTokensDelta: 0, prefillTokensDelta: 1, requestsDelta: 1 },
+    wallMs: 1000,
+  });
+  const summary = summarize([w("native", 100_000, 20_000), w("balanced", 98_000, 40_000)] as never);
+  const rows = cacheCostSensitivity(summary);
+  expect(rows.find((r) => r.id === "local-4090")?.verdict).toBe("tie (local $0)");
+  expect(rows.find((r) => r.id === "openai-gpt4o")?.verdict).toBe("balanced loses");
+  const md = renderMarkdown(summary, { decision: "inconclusive", reasons: [], candidates: [] }, { runId: "r", git: { head: "h", dirty: false }, hostVersion: "0.85.1", model: "m", thinking: "off", plan: { repsPerCase: 3 } });
+  expect(md).toContain("cacheRead cost sensitivity (W lane)");
+  expect(md).toContain("balanced loses");
 });
 
 it("a native arm with a plugin status file is blocked", () => {

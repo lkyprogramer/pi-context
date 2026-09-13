@@ -17,6 +17,71 @@ import {
   regimeSummary,
 } from "./gate.mjs";
 
+/** Illustrative public list prices (USD / 1M tokens). Not invoices. Local 4090 is $0. */
+export const CACHE_COST_TABLE = [
+  { id: "local-4090", label: "local 4090", input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+  { id: "anthropic-sonnet", label: "Anthropic Sonnet (list)", input: 3, output: 15, cacheRead: 0.3, cacheWrite: 3.75 },
+  { id: "openai-gpt4o", label: "OpenAI GPT-4o (list)", input: 2.5, output: 10, cacheRead: 1.25, cacheWrite: 2.5 },
+  { id: "google-gemini-flash", label: "Gemini Flash (list)", input: 0.15, output: 0.6, cacheRead: 0.0375, cacheWrite: 0.1875 },
+];
+
+function usd(tokens, perMillion) {
+  return (tokens * perMillion) / 1e6;
+}
+
+function warmLaneIds(summary) {
+  return Object.keys(summary.byCaseArm ?? {}).filter((id) => id.startsWith("W-"));
+}
+
+function sumArm(cells, arm) {
+  let input = 0;
+  let cacheRead = 0;
+  let output = 0;
+  let unknown = 0;
+  let present = false;
+  for (const cell of cells) {
+    const row = cell[arm];
+    if (!row) continue;
+    present = true;
+    input += row.inputSum ?? 0;
+    cacheRead += row.cacheReadSum ?? 0;
+    output += row.outputSum ?? 0;
+    unknown += row.unknownUsage ?? 0;
+  }
+  return { input, cacheRead, output, unknown, present };
+}
+
+export function cacheCostSensitivity(summary, ids = warmLaneIds(summary)) {
+  const cells = ids.map((id) => summary.byCaseArm?.[id]).filter(Boolean);
+  const native = sumArm(cells, "native");
+  const balanced = sumArm(cells, "balanced");
+  const known = native.present && balanced.present && native.unknown === 0 && balanced.unknown === 0;
+  return CACHE_COST_TABLE.map((price) => {
+    const nativeUsd = known
+      ? usd(native.input, price.input) + usd(native.cacheRead, price.cacheRead) + usd(native.output, price.output)
+      : null;
+    const balancedUsd = known
+      ? usd(balanced.input, price.input) + usd(balanced.cacheRead, price.cacheRead) + usd(balanced.output, price.output)
+      : null;
+    let verdict = "n/a";
+    if (known && nativeUsd != null && balancedUsd != null) {
+      if (price.input === 0 && price.cacheRead === 0 && price.output === 0) verdict = "tie (local $0)";
+      else if (balancedUsd > nativeUsd) verdict = "balanced loses";
+      else if (balancedUsd < nativeUsd) verdict = "balanced cheaper";
+      else verdict = "tie";
+    }
+    return {
+      id: price.id,
+      label: price.label,
+      known,
+      nativeUsd,
+      balancedUsd,
+      deltaUsd: known ? balancedUsd - nativeUsd : null,
+      verdict,
+    };
+  });
+}
+
 function usageOf(r) {
   return r.usage ?? r;
 }
@@ -66,14 +131,28 @@ export function summarize(episodes, priorAttempts = []) {
       walls: [],
       mech: { folds: 0, replacements: 0, nativeCompactions: 0, historyReads: 0, historySearches: 0, verifiedReads: 0, foldedErrorResults: 0, savedTokensEstimate: 0, invalidatedTokensEstimate: 0 },
       engine: { prefixHit: 0, prefill: 0, unknown: 0, prefixHitRatio: null },
-      cacheAfterFold: [], nonce: { correct: 0, honest: 0 }, ttfts: [], wrongActions: 0, lostEvidence: 0, quotedVerbatimKnown: 0, requestCounts: [],
+      cacheAfterFold: [], nonce: { correct: 0, honest: 0 }, ttfts: [], wrongActions: 0, lostEvidence: 0, quotedVerbatimKnown: 0,
+      protectedIntactKnown: 0, protectedIntactFail: 0,
+      recall: { firstAttemptSuccess: 0, firstAttemptKnown: 0, shortRefReads: 0, readTokenCost: 0, refDenials: { REF_OUT_OF_RANGE: 0, REF_KIND: 0, REF_ENTRY: 0, REF_SCOPE: 0, REF_VERSION: 0 } },
+      requestCounts: [],
     });
     cell.episodes++;
     if (e.status === "timeout") cell.timeout++;
     if (e.oracle?.passed === true) cell.passed++; else if (e.oracle?.passed === false) cell.failed++;
     if (e.oracle?.nonceCorrect) cell.nonce.correct++; if (e.oracle?.honest) cell.nonce.honest++;
     if (e.oracle?.protectedIntact === false || (e.oracle?.outsideEditable ?? 0) > 0) cell.wrongActions++;
+    if (typeof e.oracle?.protectedIntact === "boolean") {
+      cell.protectedIntactKnown++;
+      if (e.oracle.protectedIntact === false) cell.protectedIntactFail++;
+    }
     if (typeof e.oracle?.quotedVerbatim === "boolean") { cell.quotedVerbatimKnown++; if (e.oracle.quotedVerbatim === false) cell.lostEvidence++; }
+    if (e.mechanism?.firstAttemptRecallSuccess === true) cell.recall.firstAttemptSuccess++;
+    if (e.mechanism?.firstAttemptRecallSuccess === true || e.mechanism?.firstAttemptRecallSuccess === false) cell.recall.firstAttemptKnown++;
+    cell.recall.shortRefReads += e.mechanism?.shortRefReads ?? 0;
+    cell.recall.readTokenCost += e.mechanism?.readTokenCost ?? 0;
+    for (const code of Object.keys(cell.recall.refDenials)) {
+      cell.recall.refDenials[code] += e.mechanism?.refDenials?.[code] ?? 0;
+    }
     if (typeof e.wallMs === "number") cell.walls.push(e.wallMs);
     cell.requestCounts.push((e.requests ?? []).length);
     for (const r of e.requests ?? []) {
@@ -341,12 +420,22 @@ export function renderMarkdown(summary, decision, manifest) {
   const cacheOk = summary.cacheReadChannelAvailable !== false;
   L.push("## oracle & usage (paired)", "", "| case | arm | pass/total | wrong-action | timeout | Σinput | ΣcacheRead | Σuncached | cacheRead/input | unknown usage | TTFT p50 ms | wall p50 s |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
   for (const [caseId, arms] of Object.entries(summary.byCaseArm)) for (const [arm, c] of Object.entries(arms)) L.push(`| ${caseId} | ${arm} | ${c.passed}/${c.episodes} | ${c.wrongActions} | ${c.timeout} | ${c.inputSum} | ${!cacheOk || c.unknownUsage ? "n/a" : c.cacheReadSum} | ${!cacheOk || c.uncachedInputSum == null ? "n/a" : c.uncachedInputSum} | ${!cacheOk ? "n/a" : fmt(c.cacheReadRatio)} | ${c.unknownUsage} | ${c.ttftP50 == null ? "n/a" : Math.round(c.ttftP50)} | ${c.wallP50 == null ? "n/a" : Math.round(c.wallP50 / 1000)} |`);
-  L.push("", "## mechanism & evidence", "", "| case | arm | folds | replacements | native compactions | history reads | verified reads | nonce correct | honest | lost evidence / known | removed/invalidated |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
+  L.push("", "## mechanism & evidence", "", "| case | arm | folds | replacements | native compactions | history reads | verified reads | nonce correct | honest | lost evidence / known | protectedIntact fail/known | removed/invalidated |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
   for (const [caseId, arms] of Object.entries(summary.byCaseArm)) {
     for (const [arm, c] of Object.entries(arms)) {
       const lost = c.quotedVerbatimKnown === 0 ? "n/a" : `${c.lostEvidence}/${c.quotedVerbatimKnown}`;
+      const prot = (c.protectedIntactKnown ?? 0) === 0 ? "n/a" : `${c.protectedIntactFail ?? 0}/${c.protectedIntactKnown}`;
       const econ = `${c.mech.savedTokensEstimate}/${c.mech.invalidatedTokensEstimate}`;
-      L.push(`| ${caseId} | ${arm} | ${c.mech.folds} | ${c.mech.replacements} | ${c.mech.nativeCompactions} | ${c.mech.historyReads} | ${c.mech.verifiedReads} | ${c.nonce.correct} | ${c.nonce.honest} | ${lost} | ${econ} |`);
+      L.push(`| ${caseId} | ${arm} | ${c.mech.folds} | ${c.mech.replacements} | ${c.mech.nativeCompactions} | ${c.mech.historyReads} | ${c.mech.verifiedReads} | ${c.nonce.correct} | ${c.nonce.honest} | ${lost} | ${prot} | ${econ} |`);
+    }
+  }
+  L.push("", "## recall", "", "| case | arm | first-attempt recall | short-ref reads | read token cost | REF_SCOPE | REF_ENTRY | REF_VERSION | REF_KIND | REF_OUT_OF_RANGE |", "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|");
+  for (const [caseId, arms] of Object.entries(summary.byCaseArm)) {
+    for (const [arm, c] of Object.entries(arms)) {
+      const recall = c.recall ?? { firstAttemptSuccess: 0, firstAttemptKnown: 0, shortRefReads: 0, readTokenCost: 0, refDenials: {} };
+      const first = recall.firstAttemptKnown === 0 ? "n/a" : `${recall.firstAttemptSuccess}/${recall.firstAttemptKnown}`;
+      const d = recall.refDenials ?? {};
+      L.push(`| ${caseId} | ${arm} | ${first} | ${recall.shortRefReads} | ${recall.readTokenCost} | ${d.REF_SCOPE ?? 0} | ${d.REF_ENTRY ?? 0} | ${d.REF_VERSION ?? 0} | ${d.REF_KIND ?? 0} | ${d.REF_OUT_OF_RANGE ?? 0} |`);
     }
   }
   L.push("", "## engine (NInfer /metrics deltas)", "", "| case | arm | prefix hit tokens | prefill tokens | hit ratio | unknown |", "|---|---|---:|---:|---:|---:|");
@@ -369,6 +458,19 @@ export function renderMarkdown(summary, decision, manifest) {
       const row = regimes[lane];
       if (!row) continue;
       L.push(`| ${lane} | ${row.pairs ?? 0} | ${row.b ?? 0} | ${row.c ?? 0} | ${row.shared ?? 0} | ${fmt(row.objective?.primary?.relativeChange)} | ${row.nativeCompactions?.native ?? 0}/${row.nativeCompactions?.candidate ?? 0} |`);
+    }
+  }
+  const warmIds = (manifest.plan?.regimeLanes?.warm?.ids ?? []).length
+    ? manifest.plan.regimeLanes.warm.ids
+    : Object.keys(summary.byCaseArm ?? {}).filter((id) => id.startsWith("W-"));
+  if (warmIds.some((id) => summary.byCaseArm?.[id])) {
+    const rows = cacheCostSensitivity(summary, warmIds);
+    L.push("", "## cacheRead cost sensitivity (W lane)", "", "Illustrative list prices (USD / 1M tokens), not invoices. `usage.input` is uncached. balanced loses when extra cacheRead costs more than the fresh-input it saves.", "", "| tariff | native USD | balanced USD | Δ (b−n) | verdict |", "|---|---:|---:|---:|---|");
+    for (const row of rows) {
+      const n = row.nativeUsd == null ? "n/a" : row.nativeUsd.toFixed(4);
+      const b = row.balancedUsd == null ? "n/a" : row.balancedUsd.toFixed(4);
+      const d = row.deltaUsd == null ? "n/a" : row.deltaUsd.toFixed(4);
+      L.push(`| ${row.label} | ${n} | ${b} | ${d} | ${row.verdict} |`);
     }
   }
   const reps = manifest.plan?.repsPerCase ?? 2;

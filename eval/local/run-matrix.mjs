@@ -17,7 +17,7 @@ import { assertArm } from "./arm-contract.mjs";
 import { engineOk, fetchModels, loadRepoEnv, modelEndpoint } from "./model-endpoint.mjs";
 import { plannedEpisodeId } from "./accounting.mjs";
 import { hashTree, sha256Bytes } from "./bundle.mjs";
-import { parseSession, verbatimQuote } from "./parse-session.mjs";
+import { firstAttemptRecallHit, parseSession, semanticQuote, verbatimQuote } from "./parse-session.mjs";
 import { REVIEW_BUDGET, requiresFoldMap } from "./review-spec.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -228,9 +228,24 @@ for (const ep of manifest.order) {
     }
   }
   const sessionFile = join(epDir, "session", "session.jsonl");
-  if (spec?.evidence?.kind === "verbatim-quote" && existsSync(sessionFile)) {
+  if ((spec?.evidence?.kind === "verbatim-quote" || spec?.evidence?.kind === "recall-line") && existsSync(sessionFile)) {
     const parsed = parseSession(sessionFile);
-    result.oracle = { ...(result.oracle ?? {}), quotedVerbatim: verbatimQuote(parsed, { linePattern: spec.evidence.linePattern, sinceMs: new Date(result.manifest?.startedAt ?? 0).getTime(), sourceKind: spec.evidence.sourceKind ?? "isError" }) };
+    const sinceMs = new Date(result.manifest?.startedAt ?? 0).getTime();
+    const verbatim = spec.evidence.linePattern
+      ? verbatimQuote(parsed, { linePattern: spec.evidence.linePattern, sinceMs, sourceKind: spec.evidence.sourceKind ?? "isError" })
+      : null;
+    const semantic = spec.evidence.semanticToken
+      ? semanticQuote(parsed, { token: spec.evidence.semanticToken, sinceMs })
+      : verbatim;
+    result.oracle = { ...(result.oracle ?? {}) };
+    if ((spec.evidence.quoteMode ?? "verbatim") === "semantic") result.oracle.quotedSemantic = semantic;
+    else {
+      result.oracle.quotedVerbatim = verbatim;
+      result.oracle.quotedSemantic = semantic;
+    }
+    if (spec.evidence.kind === "recall-line") {
+      result.oracle.firstAttemptRecallHit = firstAttemptRecallHit(parsed, spec.evidence.linePattern);
+    }
   }
   if (result.status !== "blocked") {
     const status = existsSync(join(epDir, "status.json")) ? JSON.parse(readFileSync(join(epDir, "status.json"), "utf8")) : null;

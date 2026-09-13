@@ -1,19 +1,10 @@
 import type { ContentBlock, HistoryResult, NativeEntry, ReadBudget, Scope } from "../contracts.js";
-import { estimateTokens, utf8Bytes } from "../contracts.js";
 import { DEFAULT_CONFIG, type PctxConfig } from "../config.js";
 import { authorize } from "./scope.js";
-import { blocksOf, decodeCursor, decodeRef, encodeCursor, encodeRef, isFieldRef, refForField } from "./refs.js";
+import { blocksOf, decodeCursor, decodeRef, encodeCursor, encodeRef, isFieldRef, refForField, utf8Prefix } from "./refs.js";
+import { loadReducerArchive, receiptOf, sliceUtf8Page, virtualReducerRef } from "./sol-pi.js";
 
-export function utf8Prefix(text: string, maxBytes: number): string {
-  if (!Number.isInteger(maxBytes) || maxBytes < 0) {
-    const err = new Error("maxBytes must be a nonnegative integer");
-    throw err;
-  }
-  const data = utf8Bytes(text);
-  let end = Math.min(maxBytes, data.length);
-  while (end > 0 && end < data.length && (data[end]! & 0xc0) === 0x80) end -= 1;
-  return data.subarray(0, end).toString("utf8");
-}
+export { utf8Prefix };
 
 function fail(code: HistoryResult["code"], diagnostic: string, extra: Partial<HistoryResult> = {}): HistoryResult {
   return { ok: false, code, cursor: null, diagnostic, ...extra };
@@ -27,6 +18,7 @@ export function readHistory(input: {
   maxTokens?: number;
   config?: PctxConfig;
   getEntry: (id: string) => NativeEntry | undefined;
+  sessionDir?: string | null;
 }): HistoryResult {
   const config = input.config ?? DEFAULT_CONFIG;
   const budget: ReadBudget = input.budget ?? {
@@ -42,15 +34,17 @@ export function readHistory(input: {
   if (!authorize(input.scope, locator.entryId)) return fail("denied", "not in visible ancestors");
   const entry = input.getEntry(locator.entryId);
   if (!entry) return fail("source-missing", "native entry missing");
-  const recomputed = refForField(input.scope, entry, locator.blockIndex);
-  if (!isFieldRef(recomputed)) return fail("source-missing", recomputed.code);
+  const native = refForField(input.scope, entry, locator.blockIndex);
+  const virtual = isFieldRef(native) ? null : virtualReducerRef(input.scope, entry, locator.blockIndex);
+  const recomputed = isFieldRef(native) ? native : virtual;
+  if (!recomputed) return fail("source-missing", isFieldRef(native) ? "block missing" : native.code);
   if (recomputed.sourceHash !== locator.sourceHash || recomputed.kind !== locator.kind) {
     return fail("stale-ref", "STALE_REF");
   }
   const blocks = blocksOf(entry);
   const block = blocks[locator.blockIndex];
-  if (!block) return fail("source-missing", "block missing");
   if (locator.kind === "image") {
+    if (!block) return fail("source-missing", "block missing");
     if (block.type !== "image" || typeof block.data !== "string") {
       return fail("source-missing", "image block missing");
     }
@@ -69,10 +63,20 @@ export function readHistory(input: {
       details: { estimateKind: budget.estimateKind, totalBytes: bytes },
     };
   }
-  if (block.type !== "text" || typeof block.text !== "string") {
+  let body: string | null = null;
+  if (block && block.type === "text" && typeof block.text === "string") {
+    body = block.text;
+  } else if (!block) {
+    const receipt = receiptOf(entry);
+    const loaded = receipt
+      ? loadReducerArchive(input.sessionDir, input.scope.sessionId, receipt, locator.blockIndex)
+      : null;
+    if (!loaded) return fail("source-missing", "reducer archive missing");
+    if (loaded.hash !== locator.sourceHash) return fail("stale-ref", "STALE_REF");
+    body = loaded.text;
+  } else {
     return fail("degraded", "non-text cannot be ranged");
   }
-  const buf = utf8Bytes(block.text);
   let start = 0;
   if (input.cursor) {
     let cur: Record<string, unknown>;
@@ -83,43 +87,10 @@ export function readHistory(input: {
     }
     if (!readCursorMatches(cur, locator)) return fail("stale-cursor", "stale-cursor");
     start = Number(cur.byteOffset ?? cur.endByte ?? 0);
-    if (!Number.isInteger(start) || start < 0 || start > buf.length) {
-      return fail("stale-cursor", "stale-cursor");
-    }
-    if (start < buf.length && (buf[start]! & 0xc0) === 0x80) {
-      return fail("stale-cursor", "stale-cursor");
-    }
   }
-  if (start === buf.length) {
-    return {
-      ok: true,
-      code: "ok",
-      page: "",
-      cursor: null,
-      nextCursor: null,
-      byteOffset: start,
-      nextByteOffset: null,
-      totalBytes: buf.length,
-      sourceHash: locator.sourceHash,
-      verified: true,
-      details: { estimateKind: budget.estimateKind },
-    };
-  }
-  const cap = Math.min(budget.maxBytes, config.history.readMaxBytes, buf.length - start);
-  let text = utf8Prefix(buf.subarray(start).toString("utf8"), cap);
-  while (text && estimateTokens(text) > budget.maxTokens) {
-    const bytes = Buffer.byteLength(text, "utf8");
-    const over = estimateTokens(text) - budget.maxTokens;
-    const nextCap = Math.max(0, bytes - Math.max(1, over * 4));
-    if (nextCap >= bytes) {
-      text = utf8Prefix(buf.subarray(start).toString("utf8"), bytes - 1);
-    } else {
-      text = utf8Prefix(buf.subarray(start).toString("utf8"), nextCap);
-    }
-  }
-  if (!text) return fail("insufficient-context", "INSUFFICIENT_CONTEXT");
-  const end = start + Buffer.byteLength(text, "utf8");
-  const nextOffset = end < buf.length ? end : null;
+  const sliced = sliceUtf8Page(body, start, budget, config);
+  if (!sliced.ok) return sliced.result;
+  const nextOffset = sliced.end < sliced.total ? sliced.end : null;
   const nextCursor =
     nextOffset == null
       ? null
@@ -137,12 +108,12 @@ export function readHistory(input: {
   return {
     ok: true,
     code: "ok",
-    page: text,
+    page: sliced.page,
     cursor: nextCursor,
     nextCursor,
-    byteOffset: start,
+    byteOffset: sliced.start,
     nextByteOffset: nextOffset,
-    totalBytes: buf.length,
+    totalBytes: sliced.total,
     sourceHash: locator.sourceHash,
     verified: true,
     details: { estimateKind: budget.estimateKind, ref: encodeRef(locator) },

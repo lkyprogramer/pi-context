@@ -6,6 +6,13 @@ export interface SessionReader {
   getLeafId(): string | null;
   getEntry(id: string): NativeEntry | undefined;
   getEntries?(): NativeEntry[];
+  getSessionDir?(): string | undefined;
+}
+
+export function sessionDirOf(sm: SessionReader | undefined | null): string | null {
+  if (!sm || typeof sm.getSessionDir !== "function") return null;
+  const dir = sm.getSessionDir();
+  return typeof dir === "string" && dir.trim() ? dir : null;
 }
 
 export function sessionSnapshot(ctx: { cwd?: string; sessionManager?: SessionReader }): {
@@ -13,14 +20,21 @@ export function sessionSnapshot(ctx: { cwd?: string; sessionManager?: SessionRea
   sessionId: string;
   leafId: string | null;
   cwd: string;
+  sessionDir: string | null;
 } {
   const sm = ctx.sessionManager;
   const cwd = ctx.cwd || process.cwd();
-  if (!sm) return { entries: [], sessionId: "unknown", leafId: null, cwd };
+  if (!sm) return { entries: [], sessionId: "unknown", leafId: null, cwd, sessionDir: null };
   const sessionId = sm.getSessionId();
   const leafId = sm.getLeafId();
   const entries = typeof sm.getEntries === "function" ? [...(sm.getEntries() as NativeEntry[])] : readVisibleSnapshot(sm);
-  return { entries: includeHiddenAncestors(sm, entries, leafId), sessionId, leafId, cwd };
+  return {
+    entries: includeHiddenAncestors(sm, entries, leafId),
+    sessionId,
+    leafId,
+    cwd,
+    sessionDir: sessionDirOf(sm),
+  };
 }
 
 /** Official getEntries() omits the session header, which is still the parent of the first real entry. */
