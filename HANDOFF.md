@@ -18,7 +18,7 @@
 - 本机 Node 可能低于 `engines >=22.19.0`（警告）；沙箱镜像是 22.19.0。跑测试用 nvm Node 22.22.2。
 - 此栈 `cacheRead` 常大于 `input`，Σuncached 记 n/a；成本以 engine `prefillTokensDelta` 为准。
 - Q05：file oracle 双边全过。逐字 quote 只对日志/错误行 case（X01 / H02）入门；Q05 改为 `quoteMode=semantic`（`ZX-731`），不再把语义等价判成 lost evidence。
-- X lane（X01，3 pair）：native r1 oracle fail（`missing marker.txt`）且 `quotedVerbatim=true`、`nativeCompactions=2`；native r2 pass / quoted true / nativeCompactions=2；native r3 pass / quoted true / **nativeCompactions=0**（该 pair 对 long-lane compaction 为 unexercised）。balanced 3/3 pass、quoted true、folds 2/2/1。long regime：b=0 c=1 shared=0，fresh-input +0.195，nativeCompactions 4/1，quoteFailures 0/0。
+- X lane（X01，3 pair）Darwin `wxq-coldfold-20260913`：native 2/3（r2 file-oracle fail）、balanced 3/3；`protectedIntact` 6/6、`quotedVerbatim` 6/6。balanced 每条 folds=2（`reason=threshold`，无 seed，不是 resume 冷点）、nativeCompactions 1/1/1。long regime：b=0 c=1 shared=0，fresh-input **+0.689**（r8 为 +0.195，未降到 ≤ 0），nativeCompactions 4/3。不推广 balanced。
 - H03 必须走父 broker + sandbox（R06 已删除 `--no-sandbox` / host 直跑）。
 
 ## 诊断数据（不作交付）
