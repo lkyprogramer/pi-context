@@ -40,9 +40,11 @@ cp "$HERE/run-in-container.mjs" "$OUT/run-in-container.mjs"
 cp "$REPO/eval/sandbox/unix-relay.mjs" "$OUT/unix-relay.mjs"
 chmod u+rwX "$WORK" "$AGENT" "$OUT" || true
 
-SEED_ENV=()
+# Always pass PCTX_SEED. Empty means no seed file (X01). Do not use an empty
+# array here: macOS bash 3.2 + set -u treats "${arr[@]}" as unbound.
+SEED_PATH=""
 if [[ -f "$OUT/seed.jsonl" ]]; then
-  SEED_ENV=(-e PCTX_SEED=/out/seed.jsonl)
+  SEED_PATH=/out/seed.jsonl
 fi
 BUDGET_ENV=(
   -e "PCTX_BUDGET_WALL_MS=${PCTX_BUDGET_WALL_MS:-900000}"
@@ -84,5 +86,5 @@ docker run --rm \
   -e PCTX_HOST_VERSION=0.85.1 \
   -e PCR_BROKER_SOCK=/run/pctx/broker.sock \
   "${BUDGET_ENV[@]}" \
-  "${SEED_ENV[@]}" \
+  -e "PCTX_SEED=$SEED_PATH" \
   "$IMAGE" sh -c 'node /out/unix-relay.mjs & exec node /out/run-in-container.mjs'

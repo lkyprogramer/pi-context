@@ -18,6 +18,8 @@ test("agent launcher does not materialize provider credentials", () => {
   for (const block of runs) expect(block, block).toContain("--network none");
   expect(launcher).toContain("PCTX_BROKER_VOLUME");
   expect(launcher).toContain("PCR_BROKER_SOCK=/run/pctx/broker.sock");
+  expect(launcher).toContain('-e "PCTX_SEED=$SEED_PATH"');
+  expect(launcher).not.toContain("${SEED_ENV[@]}");
   expect(launcher).toMatch(/node \/out\/unix-relay\.mjs &/);
   expect(launcher).not.toContain("--entrypoint");
   expect(launcher).not.toContain("PCR_LIVE_API_KEY");
@@ -35,6 +37,10 @@ test("episode runner keeps upstream keys in the parent broker or sidecar stdin",
   expect(runner).toContain("await startBrokerSidecar");
   expect(runner).not.toMatch(/spawnSync\(\s*"sleep"/);
   expect(runner).toContain("waitForReadyJson");
+  const container = readFileSync(join(repo, "eval/local/sandbox/run-in-container.mjs"), "utf8");
+  expect(container).toContain('reason: "resume"');
+  expect(container).toContain('reason: "new"');
+  expect(container).toContain("sessionStartEvent");
   expect(existsSync(join(repo, "eval/local/sandbox/broker-tcp.mjs"))).toBe(false);
   const sidecar = readFileSync(join(repo, "eval/local/sandbox/broker-unix.mjs"), "utf8");
   expect(sidecar).not.toContain("readFileSync");

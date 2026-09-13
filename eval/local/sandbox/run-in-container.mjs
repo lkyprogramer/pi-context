@@ -34,8 +34,13 @@ const runtime = await pi.ModelRuntime.create({ modelsPath: join(agentDir, "model
 const model = runtime.getModel("work", "openclaw/Qwen3.8-27B-WORK");
 if (!model) throw new Error("model not resolved from models.json");
 const sessionManager = seedCopy ? pi.SessionManager.open(seedCopy, sessionDir, cwd) : pi.SessionManager.create(cwd, sessionDir);
+// Default session_start reason is "startup", which is not a pi-context cold point.
+// Opening a review seed is a resume; a fresh X/H episode is a new session.
 const { session } = await pi.createAgentSession({
   cwd, agentDir, settingsManager, resourceLoader: loader, sessionManager, modelRuntime: runtime, model, thinkingLevel: "medium",
+  sessionStartEvent: seedCopy
+    ? { type: "session_start", reason: "resume", previousSessionFile: seedCopy }
+    : { type: "session_start", reason: "new" },
 });
 await session.bindExtensions?.({ uiContext: { notify() {} } });
 
