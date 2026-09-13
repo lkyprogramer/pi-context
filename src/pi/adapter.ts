@@ -30,6 +30,7 @@ import type { NativeEntry } from "../contracts.js";
 import { recordAssistant, writeStatusFile } from "../telemetry/metrics.js";
 import { PI_USAGE_MAPPING, recordRequest } from "../telemetry/usage.js";
 import type { AgentMessage } from "../projection/render.js";
+import { resolveAgentDir } from "./agent-dir.js";
 import { sessionSnapshot, type SessionReader } from "./source-reader.js";
 
 export type PiExtensionAPI = ExtensionAPI;
@@ -98,8 +99,9 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
   const hostVersion = readHostVersion();
   state.hostVersion = hostVersion;
   pi.on("session_start", (_e, ctx) => {
+    state.agentDir = resolveAgentDir((ctx as { agentDir?: string }).agentDir);
     try {
-      applyLoadedConfig(state, loadConfig(ctx.cwd, projectTrustedOf(ctx)));
+      applyLoadedConfig(state, loadConfig(ctx.cwd, projectTrustedOf(ctx), state.agentDir));
     } catch (err) {
       applyConfigFailure(state, err);
       ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
@@ -109,8 +111,8 @@ export function bindHooks(pi: PiExtensionAPI, state: PluginState = createPlugin(
     const provider = (ctx.model as { provider?: string } | undefined)?.provider;
     if (typeof provider === "string") state.provider = provider;
     fenceIdentity(state);
-    const agentDir = (ctx as { agentDir?: string }).agentDir;
-    if (typeof agentDir === "string") state.agentDir = agentDir;
+    // A new or resumed session may carry a fold plan persisted by an earlier process.
+    state.planRestoreAttempted = false;
     openSessionIndex(state, ctx.cwd);
     const { entries, sessionId, leafId, cwd } = entriesFromCtx(ctx);
     state.sessionId = sessionId;

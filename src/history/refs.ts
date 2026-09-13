@@ -68,6 +68,36 @@ export function refForField(scope: Scope, entry: NativeEntry, blockIndex: number
   return { code: "REF_KIND" };
 }
 
+/**
+ * Short form accepted by `pctx_history read`: `<entryId>` or `<entryId>:<blockIndex>`, where
+ * entryId is the 8-hex native id shown in search hits and fold stubs. Anything else (including
+ * a malformed full ref such as `pctx:6`) falls through to decodeRef and keeps its diagnostics.
+ */
+const SHORT_REF = /^([0-9a-f]{8})(?::(\d{1,6}))?$/;
+
+export function parseShortRef(ref: unknown): { entryId: string; blockIndex: number } | null {
+  if (typeof ref !== "string") return null;
+  const m = SHORT_REF.exec(ref.trim());
+  if (!m) return null;
+  return { entryId: m[1]!, blockIndex: m[2] === undefined ? 0 : Number(m[2]) };
+}
+
+/**
+ * Resolve a short ref to the canonical FieldRef server-side. The entry must be exactly one
+ * entry of the current session snapshot and a visible ancestor; the sourceHash comes from
+ * the resolved entry, so the subsequent read verifies it like any full ref.
+ */
+export function resolveShortRef(
+  scope: Scope,
+  short: { entryId: string; blockIndex: number },
+  entries: readonly NativeEntry[],
+): FieldRef | RefError {
+  const matches = entries.filter((entry) => entry.id === short.entryId);
+  if (matches.length !== 1) return { code: "REF_ENTRY" };
+  if (!scope.visibleEntryIds.has(short.entryId)) return { code: "REF_SCOPE" };
+  return refForField(scope, matches[0]!, short.blockIndex);
+}
+
 export function encodeRef(ref: FieldRef): SourceRef {
   return PREFIX + Buffer.from(JSON.stringify(ref), "utf8").toString("base64url");
 }

@@ -1,7 +1,7 @@
 import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { HistoryRequest, StatusView } from "./contracts.js";
 import type { PluginState } from "./plugin.js";
-import { historyTool, indexBranch, setProfile } from "./plugin.js";
+import { historyTool, indexBranch, persistPlan, setProfile } from "./plugin.js";
 import { statusView, writeStatusFile } from "./telemetry/metrics.js";
 import { viewFromEntries } from "./projection/active-view.js";
 import { collectBatches } from "./projection/batches.js";
@@ -58,7 +58,10 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
   pi.registerTool({
     name: "pctx_history",
     label: "History",
-    description: "Search or read authorized native history. Cannot select workspace or branch.",
+    description:
+      "Search or read authorized native history. Cannot select workspace or branch. " +
+      "read accepts either the full ref (pctx:6:...) or the short entryId from search hits / fold stubs " +
+      "(e.g. ref=\"3f9a2c1e\", or \"3f9a2c1e:1\" for a later text block); short ids resolve only inside the current session.",
     parameters: HISTORY_PARAMS,
     async execute(_id: string, params: Record<string, unknown>, _signal: unknown, _upd: unknown, ctx: ExtensionContext) {
       const extra = Object.keys(params).filter((k) => !["action", "query", "limit", "cursor", "ref", "maxTokens"].includes(k));
@@ -145,6 +148,7 @@ export function registerSurface(pi: PiExtensionAPI, state: PluginState): void {
           return;
         }
         state.plan = next;
+        persistPlan(state);
         notify(`fold plan ${next.planId} replacements=${next.replacements.size}`);
         return;
       }

@@ -72,12 +72,12 @@ eval/local/*                4090 本地评测套件（E01–E04）
 
 ```text
 [pctx folded tool result; original retained in session log]
-tool=bash call=toolu_01 outcome=ok bytes=48213 sha256=3f9a2c1e
+tool=bash call=toolu_01 outcome=ok bytes=48213 sha256=3f9a2c1e id=0a1b2c3d
 head: "[INFO] Scanning for projects..."
-read with pctx_history(action="read", ref="pctx:6:...")
+read: pctx_history(action="read", ref="0a1b2c3d")  full ref: pctx:6:...
 ```
 
-确定性生成，≤ 80 估算 token；`head` 是原文第一非空行截到 `stubHeadChars`（默认 120）。不编造 exit code、失败测试名或总结；`outcome` 只取 `isError` 字段。stub 不比原文短就不折叠。
+确定性生成；`head` 是原文第一非空行截到 `stubHeadChars`（默认 120）。`id=` 是 8 位 hex 的原生 entryId（多 text block 时为 `entryId:blockIndex`），`pctx_history read` 接受它作为短 ref 并在当前 session scope 内解析到完整 ref 后再做 hash 校验；小模型抄写长 base64 ref 容易出错，短 id 是为此加的。不编造 exit code、失败测试名或总结；`outcome` 只取 `isError` 字段。stub 不比原文短就不折叠。
 
 ## 索引和可恢复性
 

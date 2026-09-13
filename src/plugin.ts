@@ -2,17 +2,20 @@ import type { LoadedConfig, PctxConfig } from "./config.js";
 import { DEFAULT_CONFIG, configHashOf, parseConfig } from "./config.js";
 import type { ContextUsageLike, FoldEvent, FoldPlan, HistoryRequest, HistoryResult, NativeEntry, Profile, RequestRecord, Scope } from "./contracts.js";
 import type { AssistantRecord } from "./telemetry/metrics.js";
-import { HistoryIndex } from "./history/index.js";
+import { HistoryIndex, defaultPersistentPath } from "./history/index.js";
 import { SearchSnapshotStore, SEARCH_SNAPSHOT_LIMITS } from "./history/page-snapshots.js";
 import { readHistory } from "./history/read.js";
+import { encodeRef, isFieldRef, parseShortRef, resolveShortRef } from "./history/refs.js";
 import { readBudgetFor } from "./projection/budget.js";
 import { searchHistory } from "./history/search.js";
 import { buildScope, normalizeWorkspace } from "./history/scope.js";
 import { buildActiveView, identityIncomplete, mappingFromView } from "./projection/active-view.js";
 import { collectBatches } from "./projection/batches.js";
 import { exposedEntryIds } from "./projection/exposed.js";
-import { planFold, planStillValid, shouldFold } from "./projection/planner.js";
+import { planFold, planStillValid, restorePlan, shouldFold } from "./projection/planner.js";
+import { deletePlan, loadPlan, savePlan, type StoredPlan } from "./projection/plan-store.js";
 import { renderFold, type AgentMessage } from "./projection/render.js";
+import { resolveAgentDir } from "./pi/agent-dir.js";
 import { estimateTokens, sha256Hex, utf8Bytes } from "./contracts.js";
 import { latestCompactionId, mapToolResults, sessionSnapshot, toolCallIdOf, type SessionReader } from "./pi/source-reader.js";
 import { recordFold } from "./telemetry/usage.js";
@@ -38,6 +41,8 @@ export interface PluginState {
   index: HistoryIndex;
   scope: Scope | null;
   plan: FoldPlan | null;
+  /** True once this process has tried to reload the persisted plan for the current session. */
+  planRestoreAttempted: boolean;
   telemetry: PluginTelemetry;
   configHash: string;
   configSource: string;
@@ -77,6 +82,7 @@ export function createPlugin(config: PctxConfig = DEFAULT_CONFIG): PluginState {
     }),
     scope: null,
     plan: null,
+    planRestoreAttempted: false,
     telemetry: { lastRequests: [], folds: 0, foldEvents: [] },
     configHash: configHashOf(config),
     configSource: "default",
@@ -143,7 +149,7 @@ export function openSessionIndex(state: PluginState, cwd?: string): void {
     const persist = cwd ? normalizeWorkspace(cwd).persist : true;
     state.index = HistoryIndex.open({
       mode: persist ? state.config.storage.mode : "memory-only",
-      dbPath: persist ? state.config.storage.dbPath : null,
+      dbPath: persist ? state.config.storage.dbPath ?? defaultPersistentPath(state.agentDir) : null,
       maxIndexBytes: state.config.storage.maxIndexBytes,
     });
   } catch (err) {
@@ -221,9 +227,16 @@ export async function historyTool(
   if ("insufficient" in budget) {
     return { ok: false, code: "insufficient-context", cursor: null, diagnostic: "INSUFFICIENT_CONTEXT" };
   }
+  let ref = req.ref;
+  const short = parseShortRef(ref);
+  if (short) {
+    const resolved = resolveShortRef(scope, short, entries);
+    if (!isFieldRef(resolved)) return { ok: false, code: "denied", cursor: null, diagnostic: resolved.code };
+    ref = encodeRef(resolved);
+  }
   const result = readHistory({
     scope,
-    ref: req.ref,
+    ref,
     cursor: req.cursor,
     budget,
     config: state.config,
@@ -245,8 +258,7 @@ export function applyContext(
     sessionManager: ctx.sessionManager as unknown as SessionReader | undefined,
   });
   state.sessionId = snap.sessionId;
-  const agentDir = (ctx as { agentDir?: string }).agentDir;
-  if (typeof agentDir === "string") state.agentDir = agentDir;
+  state.agentDir = resolveAgentDir((ctx as { agentDir?: string }).agentDir ?? state.agentDir);
   const model = ctx.model as { id?: string; provider?: string; contextWindow?: number } | undefined;
   const modelId = model?.id ?? state.modelId;
   state.modelId = modelId;
@@ -260,6 +272,14 @@ export function applyContext(
   const boundary = view?.compactionBoundary ?? latestCompactionId(snap.entries, snap.leafId);
   const identity = identityOf(state, boundary);
   if (view && identity) confirmPersistedFields(state, view, identity, exposed);
+  const canPlan = Boolean(state.scope && view && identity && !identityIncomplete(view.diagnostics));
+  if (!state.plan && !state.planRestoreAttempted && canPlan && view && state.scope) {
+    // Cold start of a resumed session: reuse the plan the previous process folded with,
+    // so the first request keeps the same replacements instead of re-sending the full
+    // history (see restorePlan for the eligibility rules and why usage is not consulted).
+    state.planRestoreAttempted = true;
+    state.plan = restorePersistedPlan(state, view, exposed, modelId);
+  }
   if (state.plan && !planStillValid(state.plan, {
     sessionId: snap.sessionId,
     compactionBoundary: boundary,
@@ -267,8 +287,8 @@ export function applyContext(
     configHash: state.configHash,
   })) {
     state.plan = null;
+    discardPersistedPlan(state);
   }
-  const canPlan = Boolean(state.scope && view && identity && !identityIncomplete(view.diagnostics));
   if (canPlan && shouldFold(usage, state.plan, state.config.fold) && usage && state.scope && view && identity) {
     const previous = state.plan;
     const foldable = witnessedView(view, state, identity);
@@ -304,6 +324,7 @@ export function applyContext(
           percentBefore: usage.percent ?? 0,
         });
         state.plan = next;
+        persistPlan(state);
         state.lastReceipt = {
           requestId: state.lastWitnessRequestId ?? next.planId,
           identity,
@@ -349,6 +370,68 @@ export function applyContext(
   prepareWitness(state, view, messages, identity);
   if (out.applied === 0) return undefined;
   return { messages: out.messages };
+}
+
+function planStoreDir(state: PluginState): string | null {
+  // The plan store follows the *opened* index: memory-only config, HOME / `/` workspaces
+  // (normalizeWorkspace.persist=false) and an unavailable index leave no pctx disk state.
+  if (state.index.mode !== "persistent") return null;
+  return resolveAgentDir(state.agentDir);
+}
+
+/** Remove the stored plan for the current (workspace, session); used when the plan is invalidated. */
+function discardPersistedPlan(state: PluginState): void {
+  const dir = planStoreDir(state);
+  if (!dir || !state.scope) return;
+  try {
+    deletePlan(dir, state.scope.workspaceId, state.scope.sessionId);
+  } catch {
+    /* best-effort */
+  }
+}
+
+/** Write the active plan for the current (workspace, session); failures never break the context hook. */
+export function persistPlan(state: PluginState): void {
+  const dir = planStoreDir(state);
+  if (!dir || !state.plan || !state.scope) return;
+  try {
+    savePlan(dir, state.scope.workspaceId, state.plan);
+  } catch {
+    /* disk state is best-effort; the in-memory plan still applies */
+  }
+}
+
+function restorePersistedPlan(
+  state: PluginState,
+  view: ActiveView,
+  exposed: ReadonlySet<string>,
+  modelId: string,
+): FoldPlan | null {
+  const dir = planStoreDir(state);
+  if (!dir || !state.scope) return null;
+  const { workspaceId, sessionId } = state.scope;
+  let stored: StoredPlan | null = null;
+  try {
+    stored = loadPlan(dir, workspaceId, sessionId);
+  } catch {
+    return null;
+  }
+  if (!stored) return null;
+  const restored = restorePlan(stored, {
+    view,
+    exposed,
+    batches: collectBatches(view.branch),
+    modelId,
+    configHash: state.configHash,
+    fold: state.config.fold,
+  });
+  try {
+    if (!restored) deletePlan(dir, workspaceId, sessionId);
+    else if (restored.planId !== stored.planId) savePlan(dir, workspaceId, restored);
+  } catch {
+    /* best-effort */
+  }
+  return restored;
 }
 
 function addedSaved(next: FoldPlan, previous: FoldPlan | null): number {

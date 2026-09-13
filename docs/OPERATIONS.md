@@ -49,9 +49,17 @@ warnings=none hostVersion=0.85.1 contextWindow=<n> contextPercent=<n>
 
 `/pctx status --json` prints the same view as JSON and writes `<agentDir>/pctx-status.json`. `hostVersion` must be `0.85.1`. Load failures force observe, keep the error in `warnings`, and notify once.
 
+## On-disk artifacts
+
+All under `<agentDir>` (`PI_CODING_AGENT_DIR` if set, else `~/.pi/agent`). Setting `PI_CODING_AGENT_DIR` moves index, status and plan files to the new dir; files left in `~/.pi/agent` are simply orphaned and can be deleted.
+
+- `pctx-status.json` — last `/pctx status` view.
+- `pctx/index.sqlite` — rebuildable FTS index (persistent workspaces only).
+- `pctx/plans/<workspaceId>/<sessionId>.json` — active fold plan locators (identity + `entryId:blockIndex` + `sourceHash`, no text) so a resumed `pi` process keeps the same fold. Safe to delete; costs one unfolded request on the next resume.
+
 ## Telemetry jsonl
 
-Default `telemetry.jsonl` is `false`. When enabled (`"telemetry": { "jsonl": true }`), files land in `~/.pi/agent/pctx/telemetry/<sessionId>.jsonl`. Rotate or delete that directory; `maxLogBytes` (default 5 MiB) caps a single file. `telemetry.includeContent` cannot be true.
+Default `telemetry.jsonl` is `false`. When enabled (`"telemetry": { "jsonl": true }`), files land in `<agentDir>/pctx/telemetry/<sessionId>.jsonl`. Rotate or delete that directory; `maxLogBytes` (default 5 MiB) caps a single file. `telemetry.includeContent` cannot be true.
 
 Eval episodes also write `artifacts/local-eval/<runId>/episodes/<id>/requests.jsonl` (gitignored).
 
